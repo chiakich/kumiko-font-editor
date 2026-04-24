@@ -348,19 +348,14 @@ export function CanvasWorkspace() {
 
     sceneControllerRef.current = sceneController
 
-    const syncViewportFromCanvas = () => {
+    controller.onViewportChange = (vp) => {
       setCanvasSize({
         width: controller.canvasWidth,
         height: controller.canvasHeight,
       })
-      updateViewport(
-        controller.magnification,
-        controller.origin.x - controller.canvasWidth / 2,
-        controller.origin.y - controller.canvasHeight / 2
-      )
+      updateViewport(vp.zoom, vp.pan.x, vp.pan.y)
     }
 
-    canvas.addEventListener('viewBoxChanged', syncViewportFromCanvas)
     setCanvasSize({
       width: controller.canvasWidth,
       height: controller.canvasHeight,
@@ -368,7 +363,7 @@ export function CanvasWorkspace() {
     controller.draw()
 
     return () => {
-      canvas.removeEventListener('viewBoxChanged', syncViewportFromCanvas)
+      controller.onViewportChange = null
       sceneController.destroy()
       controller.destroy()
       canvasControllerRef.current = null
@@ -416,9 +411,7 @@ export function CanvasWorkspace() {
     sceneController.sceneModel.selection = selectionPointIds
     sceneController.selection = selectionPointIds
 
-    controller.origin.x = controller.canvasWidth / 2 + viewport.pan.x
-    controller.origin.y = controller.canvasHeight / 2 + viewport.pan.y
-    controller.magnification = viewport.zoom
+    controller.setViewport(viewport)
     controller.requestUpdate()
   }, [
     activeToolId,
@@ -466,7 +459,7 @@ export function CanvasWorkspace() {
     }
 
     didCenterInitialGlyphRef.current = true
-    controller.setViewBox(viewBox)
+    controller.fitRect(viewBox)
   }, [canvasSize.height, canvasSize.width, fontData, positionedGlyph])
 
   useEffect(() => {

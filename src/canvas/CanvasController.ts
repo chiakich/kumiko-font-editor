@@ -18,14 +18,16 @@ export interface Rect {
   yMax: number
 }
 
-export type ViewBoxChangeReason =
-  | 'canvas-size'
-  | 'origin'
-  | 'magnification'
-  | 'set-view-box'
-
-export interface ViewBoxChangeEvent {
-  detail: ViewBoxChangeReason
+/**
+ * Viewport state for the canvas.
+ * - `zoom`: the magnification level (font units → screen pixels).
+ * - `pan`: offset from the canvas center, in screen pixels.
+ *   When pan is `{ x: 0, y: 0 }`, the font coordinate origin (0, 0)
+ *   is located at the center of the canvas.
+ */
+export interface Viewport {
+  zoom: number
+  pan: { x: number; y: number }
 }
 
 export class CanvasController {
@@ -34,10 +36,14 @@ export class CanvasController {
   sceneView: SceneView | null = null
   sceneModel: SceneModel | null = null
 
-  magnification = 1
-  origin: Point = { x: 0, y: 0 }
+  /**
+   * Called whenever the viewport changes due to user interaction
+   * (scroll, pinch, resize) or programmatic methods like `fitRect`.
+   * NOT called by `setViewport` to avoid feedback loops.
+   */
+  onViewportChange: ((viewport: Readonly<Viewport>) => void) | null = null
 
-  private _magnificationChangedCallback: ((mag: number) => void) | null = null
+  private _viewport: Viewport = { zoom: 1, pan: { x: 0, y: 0 } }
   private _resizeObserver: ResizeObserver | null = null
   private _initialScrollTarget: EventTarget | null = null
   private _scrollTimerID: number | null = null
@@ -46,25 +52,15 @@ export class CanvasController {
     parentOffsetX: number
     parentOffsetY: number
   } | null = null
-  private _initialMagnification = 0
+  private _initialZoom = 0
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    magnificationChangedCallback?: (mag: number) => void
-  ) {
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     const ctx = canvas.getContext('2d')
     if (!ctx) {
       throw new Error('Failed to get 2D context')
     }
     this.context = ctx
-
-    this.origin = {
-      x: this.canvasWidth / 2,
-      y: 0.85 * this.canvasHeight,
-    }
-
-    this._magnificationChangedCallback = magnificationChangedCallback ?? null
 
     // Setup resize observer
     this._resizeObserver = new ResizeObserver(() => {
@@ -96,6 +92,85 @@ export class CanvasController {
     this.requestUpdate()
   }
 
+  // -- Viewport API --------------------------------------------------------
+
+  /** Current viewport state (read-only). */
+  get viewport(): Readonly<Viewport> {
+    return this._viewport
+  }
+
+  /**
+   * Current zoom level (magnification).
+   * Convenience alias for `viewport.zoom`. Used by visualization layers
+   * and tools to convert screen-space sizes to font-space sizes.
+   */
+  get magnification(): number {
+    return this._viewport.zoom
+  }
+
+  /**
+   * Push a new viewport state from the consumer (e.g. React store).
+   * Does NOT trigger `onViewportChange` to avoid feedback loops.
+   */
+  setViewport(viewport: Viewport) {
+    this._viewport = {
+      zoom: clampZoom(viewport.zoom),
+      pan: { x: viewport.pan.x, y: viewport.pan.y },
+    }
+    this.requestUpdate()
+  }
+
+  /**
+   * Fit a rectangle (in font coordinates) into the canvas viewport,
+   * centering it and choosing the largest zoom that shows the entire rect.
+   */
+  fitRect(rect: Rect) {
+    const validated = validateRect(rect)
+    const zoom = this._computeFitZoom(validated)
+    const center = rectCenter(validated)
+    this._viewport = {
+      zoom,
+      pan: {
+        x: -center.x * zoom,
+        y: center.y * zoom,
+      },
+    }
+    // Reset cached offsets so a subsequent setupSize() from the ResizeObserver
+    // won't apply a stale parent-offset delta that undoes this centering.
+    this._previousOffsets = {
+      parentOffsetX: this.canvas.parentElement?.offsetLeft ?? 0,
+      parentOffsetY: this.canvas.parentElement?.offsetTop ?? 0,
+    }
+    this._notifyViewportChange()
+    this.requestUpdate()
+  }
+
+  /**
+   * Pan the viewport by the given screen-pixel deltas.
+   */
+  panBy(deltaX: number, deltaY: number) {
+    this._viewport.pan.x += deltaX
+    this._viewport.pan.y += deltaY
+    this.requestUpdate()
+    this._notifyViewportChange()
+  }
+
+  // -- Computed origin (internal) ------------------------------------------
+
+  /**
+   * The pixel position on the canvas where font-coordinate (0, 0) is drawn.
+   * Computed from viewport: origin = canvasCenter + pan.
+   */
+  private get _originX(): number {
+    return this.canvasWidth / 2 + this._viewport.pan.x
+  }
+
+  private get _originY(): number {
+    return this.canvasHeight / 2 + this._viewport.pan.y
+  }
+
+  // -- Scroll blocker ------------------------------------------------------
+
   private _setupScrollBlocker() {
     this._initialScrollTarget = null
     this._scrollTimerID = null
@@ -119,6 +194,8 @@ export class CanvasController {
       this._initialScrollTarget && this._initialScrollTarget !== this.canvas
     )
   }
+
+  // -- Canvas size ---------------------------------------------------------
 
   get canvasWidth(): number {
     const rect = this.canvas.parentElement?.getBoundingClientRect()
@@ -148,15 +225,17 @@ export class CanvasController {
     const parentOffsetY = this.canvas.parentElement?.offsetTop ?? 0
 
     if (this._previousOffsets) {
-      // Try to keep the scroll position constant
+      // Compensate for parent element movement to keep visual position stable
       const dx = this._previousOffsets.parentOffsetX - parentOffsetX
       const dy = this._previousOffsets.parentOffsetY - parentOffsetY
-      this.origin.x += dx
-      this.origin.y += dy
+      this._viewport.pan.x += dx
+      this._viewport.pan.y += dy
     }
     this._previousOffsets = { parentOffsetX, parentOffsetY }
-    this._dispatchEvent('viewBoxChanged', 'canvas-size')
+    this._notifyViewportChange()
   }
+
+  // -- Rendering -----------------------------------------------------------
 
   draw() {
     const scale = this.devicePixelRatio
@@ -175,8 +254,8 @@ export class CanvasController {
     try {
       withSavedState(this.context, () => {
         this.context.scale(scale, scale)
-        this.context.translate(this.origin.x, this.origin.y)
-        this.context.scale(this.magnification, -this.magnification)
+        this.context.translate(this._originX, this._originY)
+        this.context.scale(this._viewport.zoom, -this._viewport.zoom)
         this.sceneView!.draw(this, this.sceneModel!)
       })
     } catch (error) {
@@ -196,14 +275,7 @@ export class CanvasController {
     })
   }
 
-  panBy(deltaX: number, deltaY: number) {
-    this.origin.x += deltaX
-    this.origin.y += deltaY
-    this.requestUpdate()
-    this._dispatchEvent('viewBoxChanged', 'origin')
-  }
-
-  // Event handlers
+  // -- Event handlers ------------------------------------------------------
 
   handleWheel(event: WheelEvent) {
     event.preventDefault()
@@ -227,19 +299,19 @@ export class CanvasController {
     } else {
       const scaleDown = clunkyScrollWheel ? 3 : 1
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        this.origin.x -= deltaX / scaleDown
+        this._viewport.pan.x -= deltaX / scaleDown
       } else {
-        this.origin[event.shiftKey ? 'x' : 'y'] -= deltaY / scaleDown
+        this._viewport.pan[event.shiftKey ? 'x' : 'y'] -= deltaY / scaleDown
       }
       this.requestUpdate()
-      this._dispatchEvent('viewBoxChanged', 'origin')
+      this._notifyViewportChange()
     }
   }
 
   handleSafariGestureStart(event: Event) {
     event.preventDefault()
     const gestureEvent = event as unknown as { scale: number }
-    this._initialMagnification = this.magnification
+    this._initialZoom = this._viewport.zoom
     this._doPinchMagnify(
       gestureEvent as unknown as MouseEvent,
       gestureEvent.scale
@@ -250,13 +322,13 @@ export class CanvasController {
     event.preventDefault()
     const gestureEvent = event as unknown as { scale: number }
     const zoomFactor =
-      (this._initialMagnification * gestureEvent.scale) / this.magnification
+      (this._initialZoom * gestureEvent.scale) / this._viewport.zoom
     this._doPinchMagnify(gestureEvent as unknown as MouseEvent, zoomFactor)
   }
 
   handleSafariGestureEnd(event: Event) {
     event.preventDefault()
-    this._initialMagnification = 0
+    this._initialZoom = 0
   }
 
   private _doPinchMagnify(
@@ -264,45 +336,46 @@ export class CanvasController {
     zoomFactor: number
   ) {
     const center = this.localPoint({ x: event.pageX, y: event.pageY })
-    const prevMagnification = this.magnification
+    const prevZoom = this._viewport.zoom
 
-    this.magnification = this.magnification * zoomFactor
-    this.magnification = Math.min(
-      Math.max(this.magnification, MIN_MAGNIFICATION),
-      MAX_MAGNIFICATION
-    )
-    zoomFactor = this.magnification / prevMagnification
+    let newZoom = prevZoom * zoomFactor
+    newZoom = clampZoom(newZoom)
+    zoomFactor = newZoom / prevZoom
 
-    // Adjust origin
-    this.origin.x += (1 - zoomFactor) * center.x * prevMagnification
-    this.origin.y -= (1 - zoomFactor) * center.y * prevMagnification
+    this._viewport.zoom = newZoom
+    // Adjust pan so the point under the cursor stays fixed
+    this._viewport.pan.x += (1 - zoomFactor) * center.x * prevZoom
+    this._viewport.pan.y -= (1 - zoomFactor) * center.y * prevZoom
 
-    this._magnificationChangedCallback?.(this.magnification)
     this.requestUpdate()
-    this._dispatchEvent('viewBoxChanged', 'magnification')
+    this._notifyViewportChange()
   }
 
-  // Coordinate transformation
+  // -- Coordinate transformation -------------------------------------------
 
   localPoint(event: Point): Point {
     const x =
-      (event.x - (this.canvas.parentElement?.offsetLeft ?? 0) - this.origin.x) /
-      this.magnification
+      (event.x -
+        (this.canvas.parentElement?.offsetLeft ?? 0) -
+        this._originX) /
+      this._viewport.zoom
     const y =
-      -(event.y - (this.canvas.parentElement?.offsetTop ?? 0) - this.origin.y) /
-      this.magnification
+      -(event.y -
+        (this.canvas.parentElement?.offsetTop ?? 0) -
+        this._originY) /
+      this._viewport.zoom
 
     return { x, y }
   }
 
   canvasPoint(point: Point): Point {
-    const x = point.x * this.magnification + this.origin.x
-    const y = -point.y * this.magnification + this.origin.y
+    const x = point.x * this._viewport.zoom + this._originX
+    const y = -point.y * this._viewport.zoom + this._originY
     return { x, y }
   }
 
   get onePixelUnit(): number {
-    return 1 / this.magnification
+    return 1 / this._viewport.zoom
   }
 
   getViewBox(): Rect {
@@ -322,24 +395,9 @@ export class CanvasController {
     })
   }
 
-  setViewBox(viewBox: Rect) {
-    const validated = validateRect(viewBox)
-    this.magnification = this._getProposedViewBoxMagnification(validated)
-    const canvasCenter = this.canvasPoint(rectCenter(validated))
-    this.origin.x = this.canvasWidth / 2 + this.origin.x - canvasCenter.x
-    this.origin.y = this.canvasHeight / 2 + this.origin.y - canvasCenter.y
-    // Reset cached offsets so a subsequent setupSize() from the ResizeObserver
-    // won't apply a stale parent-offset delta that undoes this centering.
-    this._previousOffsets = {
-      parentOffsetX: this.canvas.parentElement?.offsetLeft ?? 0,
-      parentOffsetY: this.canvas.parentElement?.offsetTop ?? 0,
-    }
-    this._magnificationChangedCallback?.(this.magnification)
-    this.requestUpdate()
-    this._dispatchEvent('viewBoxChanged', 'set-view-box')
-  }
+  // -- Internal helpers ----------------------------------------------------
 
-  private _getProposedViewBoxMagnification(viewBox: Rect): number {
+  private _computeFitZoom(viewBox: Rect): number {
     const validated = validateRect(viewBox)
     const width = this.canvasWidth
     const height = this.canvasHeight
@@ -349,12 +407,8 @@ export class CanvasController {
     return Math.min(magnificationX, magnificationY)
   }
 
-  private _dispatchEvent(eventName: string, detail: ViewBoxChangeReason) {
-    const event = new CustomEvent(eventName, {
-      bubbles: false,
-      detail,
-    })
-    this.canvas.dispatchEvent(event)
+  private _notifyViewportChange() {
+    this.onViewportChange?.(this._viewport)
   }
 
   destroy() {
@@ -366,6 +420,10 @@ export class CanvasController {
 }
 
 // Utility functions
+
+function clampZoom(zoom: number): number {
+  return Math.min(Math.max(zoom, MIN_MAGNIFICATION), MAX_MAGNIFICATION)
+}
 
 export function withSavedState<T>(
   context: CanvasRenderingContext2D,
