@@ -19,8 +19,7 @@ export function GlyphPreviewStrip({
     <Box
       bg="field.panelMuted"
       borderRadius="sm"
-      px={3}
-      py={3}
+      p="5px"
       minH="88px"
       flexShrink={1}
       overflow="scroll"
@@ -31,20 +30,18 @@ export function GlyphPreviewStrip({
           flexWrap="wrap"
           alignItems="center"
           alignContent="flex-start"
-          columnGap={1}
-          rowGap={1}
-          lineHeight="1.2"
+          columnGap="3px"
+          rowGap="3px"
         >
           {resultGlyphs.map((glyph) => {
             const isActive = glyph.id === previewGlyphId
             return (
               <Button
                 key={glyph.id}
-                size="xs"
+                size="m"
                 variant="ghost"
                 minW="unset"
-                px={1.5}
-                py={1}
+                p="3px"
                 h="auto"
                 color={isActive ? 'field.ink' : 'field.ink'}
                 bg={isActive ? 'field.yellow.400' : 'transparent'}
