@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react'
 import {
   VirtuosoGrid,
   type GridStateSnapshot,
+  type ListRange,
   type VirtuosoGridHandle,
 } from 'react-virtuoso'
 import { GlyphCard } from './GlyphCard'
@@ -21,9 +22,11 @@ interface OverviewContentProps {
   gridRef: React.RefObject<VirtuosoGridHandle | null>
   restoreSnapshot: GridStateSnapshot | null
   selectedGlyphId: string | null
+  topGlyphId: string | null
   visibleSections: OverviewSection[]
   onEnterEditor: (glyphId: string) => void
   onGridStateChange: (state: GridStateSnapshot) => void
+  onRangeChange: (range: ListRange) => void
   onSelectGlyph: (glyphId: string) => void
 }
 
@@ -33,9 +36,11 @@ export function OverviewContent({
   gridRef,
   restoreSnapshot,
   selectedGlyphId,
+  topGlyphId,
   visibleSections,
   onEnterEditor,
   onGridStateChange,
+  onRangeChange,
   onSelectGlyph,
 }: OverviewContentProps) {
   const gridComponents = useMemo(
@@ -49,6 +54,27 @@ export function OverviewContent({
   const getItemKey = useCallback(
     (index: number) => activeSection.glyphs[index]?.id ?? index,
     [activeSection.glyphs]
+  )
+  const restoreTopIndex = useMemo(
+    () =>
+      topGlyphId
+        ? activeSection.glyphs.findIndex((glyph) => glyph.id === topGlyphId)
+        : -1,
+    [activeSection.glyphs, topGlyphId]
+  )
+
+  const handleReadyStateChange = useCallback(
+    (ready: boolean) => {
+      if (!ready || restoreTopIndex < 0) {
+        return
+      }
+
+      gridRef.current?.scrollToIndex({
+        index: restoreTopIndex,
+        align: 'start',
+      })
+    },
+    [gridRef, restoreTopIndex]
   )
 
   return (
@@ -94,7 +120,7 @@ export function OverviewContent({
             p={4}
             bg="field.panel"
             borderRadius="sm"
-            h="calc(100vh - 120px)"
+            h="calc(100vh - 140px)"
             display="flex"
             flexDirection="column"
           >
@@ -113,7 +139,14 @@ export function OverviewContent({
                 style={{ height: '100%', width: '100%' }}
                 totalCount={activeSection.glyphs.length}
                 computeItemKey={getItemKey}
+                initialTopMostItemIndex={
+                  restoreTopIndex >= 0
+                    ? { index: restoreTopIndex, align: 'start' }
+                    : { index: 0, align: 'start' }
+                }
                 restoreStateFrom={restoreSnapshot}
+                rangeChanged={onRangeChange}
+                readyStateChanged={handleReadyStateChange}
                 stateChanged={onGridStateChange}
                 increaseViewportBy={{ top: 800, bottom: 1000 }}
                 components={gridComponents}

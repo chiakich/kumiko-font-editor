@@ -38,21 +38,57 @@ export const generateId = (prefix: string) =>
 export const lerp = (start: number, end: number, t: number) =>
   start + (end - start) * t
 
+export const getGlyphXBounds = (glyph: GlyphData | undefined) => {
+  const allNodes = glyph?.paths.flatMap((path) => path.nodes) ?? []
+  if (allNodes.length === 0) {
+    return null
+  }
+
+  return {
+    xMin: Math.min(...allNodes.map((node) => node.x)),
+    xMax: Math.max(...allNodes.map((node) => node.x)),
+  }
+}
+
+export const translateGlyphHorizontally = (
+  glyph: GlyphData | undefined,
+  deltaX: number
+) => {
+  if (!glyph || deltaX === 0) {
+    return
+  }
+
+  for (const path of glyph.paths) {
+    for (const node of path.nodes) {
+      node.x = Math.round(node.x + deltaX)
+    }
+  }
+
+  for (const componentRef of glyph.componentRefs) {
+    componentRef.x = Math.round(componentRef.x + deltaX)
+  }
+
+  for (const anchor of glyph.anchors ?? []) {
+    anchor.x = Math.round(anchor.x + deltaX)
+  }
+
+  for (const guideline of glyph.guidelines ?? []) {
+    guideline.x = Math.round(guideline.x + deltaX)
+  }
+}
+
 export const recomputeGlyphSidebearings = (glyph: GlyphData | undefined) => {
   if (!glyph) {
     return
   }
 
-  const allNodes = glyph.paths.flatMap((path) => path.nodes)
-  if (allNodes.length === 0) {
+  const bounds = getGlyphXBounds(glyph)
+  if (!bounds) {
     return
   }
 
-  const xMin = Math.min(...allNodes.map((node) => node.x))
-  const xMax = Math.max(...allNodes.map((node) => node.x))
-
-  glyph.metrics.lsb = Math.round(xMin)
-  glyph.metrics.rsb = Math.round(glyph.metrics.width - xMax)
+  glyph.metrics.lsb = Math.round(bounds.xMin)
+  glyph.metrics.rsb = Math.round(glyph.metrics.width - bounds.xMax)
 }
 
 export const orientOpenPathNodesForConnection = (

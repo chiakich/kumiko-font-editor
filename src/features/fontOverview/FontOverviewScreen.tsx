@@ -1,6 +1,10 @@
 import { Grid, GridItem, useToast } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { GridStateSnapshot, VirtuosoGridHandle } from 'react-virtuoso'
+import type {
+  GridStateSnapshot,
+  ListRange,
+  VirtuosoGridHandle,
+} from 'react-virtuoso'
 import {
   getGlyphOverviewSections,
   type OverviewGroupBy,
@@ -34,6 +38,8 @@ export function FontOverviewScreen() {
     (state) => state.overviewGridState
   ) as GridStateSnapshot | null
   const setOverviewGridState = useStore((state) => state.setOverviewGridState)
+  const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
+  const setOverviewTopGlyphId = useStore((state) => state.setOverviewTopGlyphId)
   const gridRef = useRef<VirtuosoGridHandle | null>(null)
   const pendingOverviewGridStateRef = useRef<GridStateSnapshot | null>(
     overviewGridState
@@ -170,6 +176,13 @@ export function FontOverviewScreen() {
     pendingOverviewGridStateRef.current = state
   }, [])
 
+  const handleGridRangeChange = useCallback(
+    (range: ListRange) => {
+      setOverviewTopGlyphId(activeSection.glyphs[range.startIndex]?.id ?? null)
+    },
+    [activeSection.glyphs, setOverviewTopGlyphId]
+  )
+
   return (
     <Grid
       templateColumns="280px minmax(0, 1fr) 320px"
@@ -217,9 +230,11 @@ export function FontOverviewScreen() {
           gridRef={gridRef}
           restoreSnapshot={overviewGridState}
           selectedGlyphId={selectedGlyphId}
+          topGlyphId={overviewTopGlyphId}
           visibleSections={visibleSections}
           onEnterEditor={handleEnterEditor}
           onGridStateChange={handleGridStateChange}
+          onRangeChange={handleGridRangeChange}
           onSelectGlyph={setSelectedGlyphId}
         />
       </GridItem>

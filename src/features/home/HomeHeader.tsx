@@ -19,7 +19,7 @@ export function HomeHeader() {
           letterSpacing="0.16em"
           color="field.muted"
         >
-          BORDER TOOL / TYPE SYSTEM / LOCAL DRAFT TERMINAL
+          FULL WEB BASED / FONT EDITOR
         </Text>
         <Heading
           mt={1}
@@ -27,6 +27,8 @@ export function HomeHeader() {
           lineHeight="0.82"
           letterSpacing="0"
           color="field.ink"
+          fontWeight="700"
+          fontFamily="'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont,'Noto Sans TC', sans-serif"
         >
           Kumiko
           <br />

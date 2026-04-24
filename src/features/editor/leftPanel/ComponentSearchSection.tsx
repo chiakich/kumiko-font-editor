@@ -32,6 +32,7 @@ export function ComponentSearchSection({
               key={component}
               size="sm"
               variant={component === selectedComponent ? 'solid' : 'outline'}
+              fontFamily="glyph"
               onClick={() => onSelectComponent(component)}
             >
               {component}

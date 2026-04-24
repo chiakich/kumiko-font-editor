@@ -76,6 +76,7 @@ export function useGlyphReferenceSearch({
       : null) ??
     resultGlyphs[0] ??
     null
+  const activeComponent = selectedComponent ?? searchState?.activeComponent
 
   useEffect(() => {
     if (!selectedGlyph || !selectedCharacter || !isCjkGlyph) {
@@ -129,6 +130,10 @@ export function useGlyphReferenceSearch({
   ])
 
   const handleSelectComponent = (component: string) => {
+    if (component === activeComponent) {
+      return
+    }
+
     setSelectedComponent(component)
     setManualPreviewGlyphId(null)
     setSearchState(null)
@@ -141,7 +146,7 @@ export function useGlyphReferenceSearch({
     resultGlyphs,
     searchState: searchState ?? EMPTY_SEARCH_STATE,
     selectedCharacter,
-    selectedComponent,
+    selectedComponent: activeComponent,
     setPreviewGlyphId: setManualPreviewGlyphId,
     setSelectedComponent: handleSelectComponent,
   }

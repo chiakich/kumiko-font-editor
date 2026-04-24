@@ -5,6 +5,7 @@ import {
   SceneView,
   VisualizationLayer,
   visualizationLayerDefinitions,
+  type Rect,
   type SceneModel,
 } from '../../../canvas'
 import { SceneController } from '../tools'
@@ -32,6 +33,7 @@ export function CanvasWorkspace() {
   const sceneViewRef = useRef<SceneView | null>(null)
   const temporaryToolRef = useRef<ToolId | null>(null)
   const hiddenTextInputRef = useRef<HTMLTextAreaElement | null>(null)
+  const didCenterInitialGlyphRef = useRef(false)
   const layerGeometryCache = useMemo(
     () => new Map<string, LayerGeometryCacheEntry>(),
     []
@@ -428,6 +430,44 @@ export function CanvasWorkspace() {
     selectedNodeIds,
     viewport,
   ])
+
+  useEffect(() => {
+    const controller = canvasControllerRef.current
+    if (
+      didCenterInitialGlyphRef.current ||
+      !controller ||
+      !positionedGlyph ||
+      canvasSize.width === 0 ||
+      canvasSize.height === 0
+    ) {
+      return
+    }
+
+    const metrics = fontData?.lineMetricsHorizontalLayout
+    const fallbackYMin = metrics?.descender?.value ?? -220
+    const fallbackYMax = metrics?.ascender?.value ?? 900
+    const bounds = positionedGlyph.glyph.path.getControlBounds()
+    const xMin = positionedGlyph.x + Math.min(bounds?.xMin ?? 0, 0)
+    const xMax =
+      positionedGlyph.x +
+      Math.max(
+        bounds?.xMax ?? positionedGlyph.glyph.xAdvance,
+        positionedGlyph.glyph.xAdvance
+      )
+    const yMin = Math.min(bounds?.yMin ?? fallbackYMin, fallbackYMin)
+    const yMax = Math.max(bounds?.yMax ?? fallbackYMax, fallbackYMax)
+    const paddingX = Math.max(80, (xMax - xMin) * 0.18)
+    const paddingY = Math.max(120, (yMax - yMin) * 0.12)
+    const viewBox: Rect = {
+      xMin: xMin - paddingX,
+      yMin: yMin - paddingY,
+      xMax: xMax + paddingX,
+      yMax: yMax + paddingY,
+    }
+
+    didCenterInitialGlyphRef.current = true
+    controller.setViewBox(viewBox)
+  }, [canvasSize.height, canvasSize.width, fontData, positionedGlyph])
 
   useEffect(() => {
     const canvas = canvasRef.current

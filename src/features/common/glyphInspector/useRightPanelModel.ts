@@ -143,7 +143,7 @@ export function useRightPanelModel() {
     field: 'lsb' | 'rsb' | 'width',
     value: string
   ) => {
-    if (!glyph) {
+    if (!glyph || value.trim() === '') {
       return
     }
 

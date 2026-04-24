@@ -13,10 +13,12 @@ import {
   findNode,
   findPath,
   generateId,
+  getGlyphXBounds,
   isPathEndpointNode,
   lerp,
   orientOpenPathNodesForConnection,
   recomputeGlyphSidebearings,
+  translateGlyphHorizontally,
 } from './glyphGeometry'
 import {
   clampEditorActiveGlyphIndex,
@@ -474,10 +476,35 @@ export const useStore = create<GlobalState>()(
             return
           }
 
-          glyph.metrics = {
-            ...glyph.metrics,
-            ...metrics,
+          if (typeof metrics.lsb === 'number') {
+            const nextLsb = Math.round(metrics.lsb)
+            const deltaX = nextLsb - glyph.metrics.lsb
+            translateGlyphHorizontally(glyph, deltaX)
+            glyph.metrics.width = Math.max(
+              0,
+              Math.round(glyph.metrics.width + deltaX)
+            )
+            glyph.metrics.lsb = nextLsb
           }
+
+          if (typeof metrics.width === 'number') {
+            glyph.metrics.width = Math.max(0, Math.round(metrics.width))
+            const bounds = getGlyphXBounds(glyph)
+            glyph.metrics.rsb = Math.round(
+              glyph.metrics.width - (bounds?.xMax ?? 0)
+            )
+          }
+
+          if (typeof metrics.rsb === 'number') {
+            const nextRsb = Math.round(metrics.rsb)
+            const bounds = getGlyphXBounds(glyph)
+            glyph.metrics.width = Math.max(
+              0,
+              Math.round((bounds?.xMax ?? 0) + nextRsb)
+            )
+            glyph.metrics.rsb = nextRsb
+          }
+
           markGlyphDirty(state, glyphId)
         }),
 

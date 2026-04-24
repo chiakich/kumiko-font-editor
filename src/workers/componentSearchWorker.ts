@@ -46,6 +46,9 @@ type WorkerResponseMessage = SearchSuccessMessage | SearchErrorMessage
 
 const IDS_OPERATOR_MIN = 0x2ff0
 const IDS_OPERATOR_MAX = 0x2ffb
+const IDS_SOURCE_PATH = '/ids/ids_lv2.txt'
+const HANSEEKER_DATA_PATH = '/hanseeker/data_nosupp.txt'
+const HANSEEKER_VARIANT_PATH = '/hanseeker/data_vt.txt'
 
 let datasetPromise: Promise<{
   decompositionMap: Map<string, string[]>
@@ -71,8 +74,103 @@ const shouldIgnoreCharacter = (character: string) => {
   )
 }
 
-const loadVariantMap = async () => {
-  const response = await fetch('/hanseeker/data_vt.txt')
+const isPrivateUseCharacter = (character: string) => {
+  const codePoint = character.codePointAt(0)
+  return (
+    typeof codePoint === 'number' &&
+    ((codePoint >= 0xe000 && codePoint <= 0xf8ff) ||
+      (codePoint >= 0xf0000 && codePoint <= 0xffffd) ||
+      (codePoint >= 0x100000 && codePoint <= 0x10fffd))
+  )
+}
+
+const shouldKeepComponent = (component: string, target: string) =>
+  component !== target &&
+  !shouldIgnoreCharacter(component) &&
+  !isPrivateUseCharacter(component)
+
+const parseIdsSequenceComponents = (sequence: string) => {
+  const components: string[] = []
+  let metadataDepth = 0
+
+  for (const character of toCodePointArray(sequence)) {
+    if (character === '(' || character === '[' || character === '{') {
+      metadataDepth += 1
+      continue
+    }
+
+    if (character === ')' || character === ']' || character === '}') {
+      metadataDepth = Math.max(0, metadataDepth - 1)
+      continue
+    }
+
+    if (metadataDepth > 0) {
+      continue
+    }
+
+    if (
+      character === '#' ||
+      character === '?' ||
+      character === ':' ||
+      character === '.' ||
+      shouldIgnoreCharacter(character)
+    ) {
+      continue
+    }
+
+    components.push(character)
+  }
+
+  return components
+}
+
+const parseIdsColumn = (column: string | undefined, target: string) =>
+  (column ?? '')
+    .split(';')
+    .map((sequence) =>
+      parseIdsSequenceComponents(sequence).filter((component) =>
+        shouldKeepComponent(component, target)
+      )
+    )
+    .filter((components) => components.length > 0)
+
+const parseHanseekerVariants = (
+  payload: string,
+  target: string,
+  variantMap: Map<string, string>
+) => {
+  const variants: string[][] = []
+  let current = ''
+
+  for (const character of toCodePointArray(payload)) {
+    if (character === '@' || character === '!') {
+      if (current) {
+        variants.push(
+          toCodePointArray(current)
+            .map((item) => variantMap.get(item) ?? item)
+            .filter((item) => shouldKeepComponent(item, target))
+        )
+      }
+      current = ''
+      continue
+    }
+
+    current += character
+  }
+
+  if (current) {
+    variants.push(
+      toCodePointArray(current)
+        .map((item) => variantMap.get(item) ?? item)
+        .filter((item) => shouldKeepComponent(item, target))
+    )
+  }
+
+  return variants.filter((variant) => variant.length > 0)
+}
+
+const loadHanseekerVariantMap = async () => {
+  const response = await fetch(HANSEEKER_VARIANT_PATH)
   if (!response.ok) {
     throw new Error(`無法載入 Hanseeker 異體資料：${response.status}`)
   }
@@ -86,7 +184,12 @@ const loadVariantMap = async () => {
     }
 
     const [variant, canonical] = line.replace(/^\uFEFF/, '').split('\t')
-    if (variant && canonical) {
+    if (
+      variant &&
+      canonical &&
+      !isPrivateUseCharacter(variant) &&
+      !isPrivateUseCharacter(canonical)
+    ) {
       variantMap.set(variant, canonical)
     }
   }
@@ -94,55 +197,72 @@ const loadVariantMap = async () => {
   return variantMap
 }
 
-const parseDecompositionVariants = (
-  payload: string,
-  variantMap: Map<string, string>
+const addVariantsToIndexes = (
+  target: string,
+  variants: string[][],
+  decompositionMap: Map<string, string[]>,
+  reverseIndex: Map<string, Set<string>>
 ) => {
-  const variants: string[][] = []
-  let current = ''
+  if (variants.length === 0) {
+    return
+  }
 
-  for (const character of toCodePointArray(payload)) {
-    if (character === '@' || character === '!') {
-      if (current) {
-        variants.push(
-          toCodePointArray(current)
-            .filter((item) => !shouldIgnoreCharacter(item))
-            .map((item) => variantMap.get(item) ?? item)
-        )
-      }
-      current = ''
-      continue
+  const existingComponents = decompositionMap.get(target) ?? []
+  decompositionMap.set(target, [
+    ...new Set([...existingComponents, ...variants.flat()]),
+  ])
+
+  const uniqueComponents = new Set(variants.flat())
+  for (const component of uniqueComponents) {
+    if (!reverseIndex.has(component)) {
+      reverseIndex.set(component, new Set())
     }
-
-    current += character
+    reverseIndex.get(component)?.add(target)
   }
-
-  if (current) {
-    variants.push(
-      toCodePointArray(current)
-        .filter((item) => !shouldIgnoreCharacter(item))
-        .map((item) => variantMap.get(item) ?? item)
-    )
-  }
-
-  return variants.filter((variant) => variant.length > 0)
 }
 
 const buildDataset = async () => {
-  const [variantMap, dataResponse] = await Promise.all([
-    loadVariantMap(),
-    fetch('/hanseeker/data_nosupp.txt'),
-  ])
+  const [idsResponse, hanseekerVariantMap, hanseekerResponse] =
+    await Promise.all([
+      fetch(IDS_SOURCE_PATH),
+      loadHanseekerVariantMap(),
+      fetch(HANSEEKER_DATA_PATH),
+    ])
 
-  if (!dataResponse.ok) {
-    throw new Error(`無法載入 Hanseeker 拆字資料：${dataResponse.status}`)
+  if (!idsResponse.ok) {
+    throw new Error(`無法載入 IDS 拆字資料：${idsResponse.status}`)
   }
 
-  const dataText = await dataResponse.text()
+  if (!hanseekerResponse.ok) {
+    throw new Error(`無法載入 Hanseeker 拆字資料：${hanseekerResponse.status}`)
+  }
+
   const decompositionMap = new Map<string, string[]>()
   const reverseIndex = new Map<string, Set<string>>()
+  const idsText = await idsResponse.text()
 
-  for (const rawLine of dataText.split(/\r?\n/)) {
+  for (const rawLine of idsText.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line) {
+      continue
+    }
+
+    const [target, primaryIds, alternativeIds] = line
+      .replace(/^\uFEFF/, '')
+      .split('\t')
+    if (!target || (!primaryIds && !alternativeIds)) {
+      continue
+    }
+
+    const variants = [
+      ...parseIdsColumn(primaryIds, target),
+      ...parseIdsColumn(alternativeIds, target),
+    ]
+    addVariantsToIndexes(target, variants, decompositionMap, reverseIndex)
+  }
+
+  const hanseekerText = await hanseekerResponse.text()
+  for (const rawLine of hanseekerText.split(/\r?\n/)) {
     const line = rawLine.trim()
     if (!line) {
       continue
@@ -151,26 +271,16 @@ const buildDataset = async () => {
     const characters = toCodePointArray(line)
     const target = characters[0]
     const payload = characters.slice(1).join('')
-    if (!target || !payload) {
+    if (!target || !payload || isPrivateUseCharacter(target)) {
       continue
     }
 
-    const variants = parseDecompositionVariants(payload, variantMap)
-    if (variants.length === 0) {
-      continue
-    }
-
-    if (!decompositionMap.has(target)) {
-      decompositionMap.set(target, [...new Set(variants[0])])
-    }
-
-    const uniqueComponents = new Set(variants.flat())
-    for (const component of uniqueComponents) {
-      if (!reverseIndex.has(component)) {
-        reverseIndex.set(component, new Set())
-      }
-      reverseIndex.get(component)?.add(target)
-    }
+    const variants = parseHanseekerVariants(
+      payload,
+      target,
+      hanseekerVariantMap
+    )
+    addVariantsToIndexes(target, variants, decompositionMap, reverseIndex)
   }
 
   return {

@@ -8,7 +8,9 @@ const config: ThemeConfig = {
 const monoStack =
   '"IBM Plex Mono", "SFMono-Regular", "Menlo", "Consolas", monospace'
 const sansStack =
-  '"IBM Plex Sans", "Noto Sans TC", "Segoe UI", system-ui, sans-serif'
+  '"PingFang TC", "Noto Sans TC", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Noto Sans HK", "Segoe UI", system-ui, sans-serif'
+const glyphStack =
+  '"PingFang TC", "Noto Sans TC", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Noto Sans HK", "Noto Sans Symbols 2", "PUAExt", "Segoe UI Symbol", sans-serif'
 const plusMarkerPattern =
   "url(\"data:image/svg+xml,%3Csvg width='26' height='26' viewBox='0 0 26 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 8.5V17.5M8.5 13H17.5' stroke='%23080B0D' stroke-opacity='0.18' stroke-width='1'/%3E%3C/svg%3E\")"
 
@@ -220,6 +222,7 @@ const theme = extendTheme({
     heading: sansStack,
     body: sansStack,
     mono: monoStack,
+    glyph: glyphStack,
   },
   radii: {
     none: '0',
