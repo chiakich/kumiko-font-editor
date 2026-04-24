@@ -31,7 +31,7 @@ export function PendingGitHubImportModal({
     <Modal isOpen={Boolean(importRequest)} onClose={onCancel} isCentered>
       <ModalOverlay />
       <ModalContent borderRadius="sm">
-        <ModalHeader>載入 GitHub 專案</ModalHeader>
+        <ModalHeader fontWeight={800}>載入 GitHub 專案</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <VStack align="stretch" spacing={4}>
@@ -42,7 +42,7 @@ export function PendingGitHubImportModal({
               border="1px solid"
               borderColor="field.line"
               borderRadius="sm"
-              bg="field.paper"
+              bg="white"
               p={4}
             >
               <Text fontSize="xs" color="field.muted" fontFamily="mono">
@@ -55,6 +55,7 @@ export function PendingGitHubImportModal({
                   color="black"
                   wordBreak="break-all"
                   textTransform="uppercase"
+                  fontFamily="'SF Pro Display', 'SF Pro Text', 'Noto Sans TC', sans-serif"
                 >
                   <Box fontWeight="800">
                     {importRequest.repo.split('/')[0] || importRequest.repo}/
