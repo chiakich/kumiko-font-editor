@@ -16,6 +16,12 @@ const createNode = (x: number, y: number, type: PathNode['type'], idx: number): 
   type,
 })
 
+const toGlyphId = (glyph: opentype.Glyph, idx: number) => {
+  if (glyph.name) return glyph.name
+  if (glyph.unicode !== undefined) return `uni${glyph.unicode.toString(16).toUpperCase().padStart(4, '0')}`
+  return `glyph-${idx}`
+}
+
 const contourToPath = (commands: opentype.PathCommand[], contourIndex: number): PathData | null => {
   const nodes: PathNode[] = []
   let closed = false
@@ -51,7 +57,6 @@ export const importBinaryFontFile = async (file: File) => {
 
   for (let idx = 0; idx < font.glyphs.length; idx += 1) {
     const glyph = font.glyphs.get(idx)
-    if (!glyph.name) return
     const commands = glyph.path.commands
     const contours: opentype.PathCommand[][] = []
     let current: opentype.PathCommand[] = []
@@ -70,10 +75,10 @@ export const importBinaryFontFile = async (file: File) => {
       .filter((path): path is PathData => Boolean(path))
 
     const width = glyph.advanceWidth ?? font.unitsPerEm
-    const glyphId = glyph.name
+    const glyphId = toGlyphId(glyph, idx)
     glyphs[glyphId] = {
       id: glyphId,
-      name: glyph.name,
+      name: glyph.name ?? glyphId,
       unicode: toUnicodeString(glyph.unicode),
       metrics: { lsb: glyph.leftSideBearing ?? 0, rsb: 0, width },
       paths,
@@ -109,22 +114,56 @@ export const importBinaryFontFile = async (file: File) => {
   }
 }
 
+
+const appendShapeToPath = (path: opentype.Path, shape: PathData) => {
+  if (shape.nodes.length === 0) return
+
+  const nodes = shape.nodes
+  const first = nodes[0]
+  path.moveTo(first.x, first.y)
+
+  let i = 1
+  while (i < nodes.length) {
+    const node = nodes[i]
+
+    if (node.type === 'offcurve') {
+      const next = nodes[i + 1]
+      if (next?.type === 'offcurve') {
+        const end = nodes[i + 2]
+        if (end) {
+          path.curveTo(node.x, node.y, next.x, next.y, end.x, end.y)
+          i += 3
+          continue
+        }
+      }
+
+      if (next) {
+        path.quadraticCurveTo(node.x, node.y, next.x, next.y)
+        i += 2
+        continue
+      }
+
+      path.lineTo(node.x, node.y)
+      i += 1
+      continue
+    }
+
+    path.lineTo(node.x, node.y)
+    i += 1
+  }
+
+  if (shape.closed) path.close()
+}
+
 export const exportFontAsBinary = (fontData: FontData, format: 'ttf' | 'otf' | 'woff') => {
   const glyphList = Object.values(fontData.glyphs)
   const glyphs = glyphList.map((glyph) => {
     const path = new opentype.Path()
     glyph.paths.forEach((shape) => {
-      if (shape.nodes.length === 0) return
-      const first = shape.nodes[0]
-      path.moveTo(first.x, first.y)
-      for (let i = 1; i < shape.nodes.length; i += 1) {
-        const node = shape.nodes[i]
-        path.lineTo(node.x, node.y)
-      }
-      if (shape.closed) path.close()
+      appendShapeToPath(path, shape)
     })
     return new opentype.Glyph({
-      name: glyph.name,
+      name: glyph.name ?? glyph.id,
       unicode: glyph.unicode ? Number.parseInt(glyph.unicode, 16) : undefined,
       advanceWidth: glyph.metrics.width,
       path,
