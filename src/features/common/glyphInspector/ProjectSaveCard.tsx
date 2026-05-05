@@ -1,4 +1,4 @@
-import { Box, Button, Heading, Stack } from '@chakra-ui/react'
+import { Box, Button, Heading, Menu, MenuButton, MenuItem, MenuList, Stack } from '@chakra-ui/react'
 
 interface ProjectSaveCardProps {
   canSaveDraft: boolean
@@ -8,7 +8,7 @@ interface ProjectSaveCardProps {
   isSavingToLocal: boolean
   loadingText: string
   onOpenGitHubModal: () => void
-  onSaveLocal: () => void
+  onSaveLocal: (format: 'zip' | 'ttf' | 'otf' | 'woff') => void
   onSaveProject: () => void
 }
 
@@ -31,14 +31,22 @@ export function ProjectSaveCard({
         </Heading>
         {hasUfoSource ? (
           <>
-            <Button
-              onClick={onSaveLocal}
-              isDisabled={!canSaveLocal}
-              isLoading={isSavingToLocal}
-              loadingText={loadingText}
-            >
-              匯出 ZIP 下載
-            </Button>
+            <Menu>
+              <MenuButton
+                as={Button}
+                isDisabled={!canSaveLocal}
+                isLoading={isSavingToLocal}
+                loadingText={loadingText}
+              >
+                匯出字型
+              </MenuButton>
+              <MenuList>
+                <MenuItem onClick={() => onSaveLocal('zip')}>UFO (ZIP)</MenuItem>
+                <MenuItem onClick={() => onSaveLocal('ttf')}>TTF</MenuItem>
+                <MenuItem onClick={() => onSaveLocal('otf')}>OTF</MenuItem>
+                <MenuItem onClick={() => onSaveLocal('woff')}>WOFF</MenuItem>
+              </MenuList>
+            </Menu>
             <Button
               variant="outline"
               onClick={onSaveProject}

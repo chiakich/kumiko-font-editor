@@ -8,6 +8,7 @@ import {
 } from '../../../lib/projectArchive'
 import { syncHotFontDataToUfoRecords } from '../../../lib/ufoFormat'
 import { exportUfoAsZipDownload } from '../../../lib/ufoZipExportClient'
+import { exportFontAsBinary } from '../../../lib/fontBinaryFormat'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
@@ -174,13 +175,33 @@ export function useRightPanelModel() {
     })
   }
 
-  const handleSaveUfoToLocal = async () => {
+  const handleSaveUfoToLocal = async (format: 'zip' | 'ttf' | 'otf' | 'woff') => {
     if (!fontData || !projectId || isSavingToLocal) {
       return
     }
 
     try {
       setIsSavingToLocal(true)
+
+    if (format !== 'zip') {
+      const blob = exportFontAsBinary(fontData, format)
+      const fileName = `${projectTitle ?? projectId}.${format}`
+      const href = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = href
+      anchor.download = fileName
+      anchor.click()
+      URL.revokeObjectURL(href)
+      toast({
+        title: `已匯出 ${format.toUpperCase()}`,
+        description: `已下載 ${fileName}`,
+        status: 'success',
+        duration: 2200,
+        isClosable: true,
+      })
+      return
+    }
+
       const projectMetadata = getProjectArchiveMetadata() as {
         activeUfoId?: string | null
       } | null

@@ -2,15 +2,21 @@ import { Button, Flex, Heading, Input, Text } from '@chakra-ui/react'
 import type { RefObject } from 'react'
 
 interface LocalImportCardProps {
-  inputRef: RefObject<HTMLInputElement | null>
+  folderInputRef: RefObject<HTMLInputElement | null>
+  fileInputRef: RefObject<HTMLInputElement | null>
   isLoading: boolean
-  onPackageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onFolderUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onDropUpload: (event: React.DragEvent<HTMLDivElement>) => void
 }
 
 export function LocalImportCard({
-  inputRef,
+  folderInputRef,
+  fileInputRef,
   isLoading,
-  onPackageUpload,
+  onFolderUpload,
+  onFileUpload,
+  onDropUpload,
 }: LocalImportCardProps) {
   return (
     <Flex
@@ -21,31 +27,48 @@ export function LocalImportCard({
       bg="field.paper"
       direction="column"
       justifyContent="center"
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={onDropUpload}
     >
       <Heading size="sm" mb={2} textTransform="uppercase">
         本地匯入
       </Heading>
       <Text fontSize="sm" color="field.muted" mb={4}>
-        請選擇包含各種字重 `.ufo` 的上層資料夾
+        支援拖曳上傳（自動辨識資料夾/檔案），或手動選擇資料夾、字型檔案（.ufo/.ttf/.otf/.woff/.woff2）
       </Text>
-      <Input type="file" onChange={onPackageUpload} display="none" />
+      <Input type="file" onChange={onFileUpload} display="none" />
       <input
-        ref={inputRef}
+        ref={folderInputRef}
         type="file"
         multiple
-        onChange={onPackageUpload}
+        onChange={onFolderUpload}
         style={{ display: 'none' }}
-        id="package-upload"
+        id="package-folder-upload"
       />
-      <Button
-        as="label"
-        htmlFor="package-upload"
-        cursor="pointer"
-        isLoading={isLoading}
-        loadingText="讀取與解析中..."
-      >
-        選擇 UFO 上層資料夾
-      </Button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".ufo,.ttf,.otf,.woff,.woff2,.oft"
+        onChange={onFileUpload}
+        style={{ display: 'none' }}
+        id="package-file-upload"
+      />
+      <Flex gap={2}>
+        <Button
+          as="label"
+          htmlFor="package-folder-upload"
+          cursor="pointer"
+          isLoading={isLoading}
+          loadingText="讀取與解析中..."
+          flex="1"
+        >
+          上傳資料夾
+        </Button>
+        <Button as="label" htmlFor="package-file-upload" cursor="pointer" flex="1">
+          上傳檔案
+        </Button>
+      </Flex>
       {isLoading && (
         <Text fontSize="xs" color="field.red.500" mt={3} fontFamily="mono">
           大型字庫在第一次匯入時需要一些時間，請稍候...

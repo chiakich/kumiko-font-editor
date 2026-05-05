@@ -5,6 +5,7 @@ import {
   importUfoWorkspace,
   loadUfoProjectIntoFontData,
 } from '../../lib/ufoFormat'
+import { importBinaryFontFile } from '../../lib/fontBinaryFormat'
 import {
   deleteUfoProjectData,
   listDirtyUfoGlyphs,
@@ -32,7 +33,8 @@ export function useHomeProjects() {
   const [showGitHubRefInput, setShowGitHubRefInput] = useState(false)
   const [pendingGitHubImport, setPendingGitHubImport] =
     useState<PendingGitHubImport | null>(null)
-  const packageInputRef = useRef<HTMLInputElement | null>(null)
+  const folderInputRef = useRef<HTMLInputElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const hasAutoImportedFromUrlRef = useRef(false)
 
   useEffect(() => {
@@ -40,12 +42,54 @@ export function useHomeProjects() {
   }, [])
 
   useEffect(() => {
-    if (!packageInputRef.current) {
+    if (!folderInputRef.current) {
       return
     }
-    packageInputRef.current.setAttribute('webkitdirectory', '')
-    packageInputRef.current.setAttribute('directory', '')
+    folderInputRef.current.setAttribute('webkitdirectory', '')
+    folderInputRef.current.setAttribute('directory', '')
   }, [])
+
+  const importFromFiles = async (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) {
+      return
+    }
+
+    const hasFolderEntries = selectedFiles.some((file) =>
+      file.webkitRelativePath.includes('/')
+    )
+    if (!hasFolderEntries && selectedFiles.length === 1) {
+      const extension = selectedFiles[0].name.split('.').pop()?.toLowerCase()
+      if (extension && ['ttf', 'otf', 'woff', 'woff2', 'oft'].includes(extension)) {
+        const importedBinary = await importBinaryFontFile(selectedFiles[0])
+        if (!importedBinary) {
+          throw new Error('字型檔解析失敗')
+        }
+        loadProjectState(
+          importedBinary.projectId,
+          importedBinary.projectTitle,
+          importedBinary.fontData,
+          { importedFrom: extension },
+          importedBinary.sourceFormat
+        )
+        return
+      }
+    }
+
+    const importedProject = await importUfoWorkspace(selectedFiles)
+    setProjects((current) => [
+      importedProject.project,
+      ...current.filter(
+        (project) => project.projectId !== importedProject.project.projectId
+      ),
+    ])
+    loadProjectState(
+      importedProject.project.projectId,
+      importedProject.project.title,
+      importedProject.fontData,
+      importedProject.projectMetadata,
+      importedProject.projectSourceFormat
+    )
+  }
 
   const restorePersistedUfoChanges = useCallback(
     async (projectId: string) => {
@@ -63,12 +107,10 @@ export function useHomeProjects() {
     [hydratePersistedLocalChanges]
   )
 
-  const handlePackageUpload = async (
+  const handleFolderUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const selectedFiles = event.target.files
-      ? Array.from(event.target.files)
-      : []
+    const selectedFiles = event.target.files ? Array.from(event.target.files) : []
     if (selectedFiles.length === 0) {
       return
     }
@@ -77,20 +119,7 @@ export function useHomeProjects() {
 
     setTimeout(async () => {
       try {
-        const importedProject = await importUfoWorkspace(selectedFiles)
-        setProjects((current) => [
-          importedProject.project,
-          ...current.filter(
-            (project) => project.projectId !== importedProject.project.projectId
-          ),
-        ])
-        loadProjectState(
-          importedProject.project.projectId,
-          importedProject.project.title,
-          importedProject.fontData,
-          importedProject.projectMetadata,
-          importedProject.projectSourceFormat
-        )
+        await importFromFiles(selectedFiles)
       } catch (error: unknown) {
         console.error(error)
         alert(`讀取 UFO 資料夾失敗: ${getErrorMessage(error)}`)
@@ -99,6 +128,27 @@ export function useHomeProjects() {
         event.target.value = ''
       }
     }, 100)
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await handleFolderUpload(event)
+  }
+
+  const handleDropUpload = async (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const files = Array.from(event.dataTransfer.files ?? [])
+    if (files.length === 0) {
+      return
+    }
+    setIsLoadingLocal(true)
+    try {
+      await importFromFiles(files)
+    } catch (error: unknown) {
+      console.error(error)
+      alert(`拖曳匯入失敗: ${getErrorMessage(error)}`)
+    } finally {
+      setIsLoadingLocal(false)
+    }
   }
 
   const importGitHubProject = useCallback(
@@ -226,7 +276,8 @@ export function useHomeProjects() {
     githubRepoInput,
     isLoadingGitHub,
     isLoadingLocal,
-    packageInputRef,
+    folderInputRef,
+    fileInputRef,
     pendingGitHubImport,
     projects,
     setGithubRefInput: setGitHubRefInput,
@@ -238,6 +289,8 @@ export function useHomeProjects() {
     handleDeleteProject,
     handleGitHubImport,
     handleOpenProject,
-    handlePackageUpload,
+    handleFolderUpload,
+    handleFileUpload,
+    handleDropUpload,
   }
 }

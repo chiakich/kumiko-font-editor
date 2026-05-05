@@ -12,7 +12,8 @@ export function Home() {
     githubRepoInput,
     isLoadingGitHub,
     isLoadingLocal,
-    packageInputRef,
+    folderInputRef,
+    fileInputRef,
     pendingGitHubImport,
     projects,
     setGithubRefInput,
@@ -24,7 +25,9 @@ export function Home() {
     handleDeleteProject,
     handleGitHubImport,
     handleOpenProject,
-    handlePackageUpload,
+    handleFolderUpload,
+    handleFileUpload,
+    handleDropUpload,
   } = useHomeProjects()
 
   return (
@@ -73,9 +76,12 @@ export function Home() {
         <VStack spacing={6} align="stretch">
           <Grid templateColumns="1fr 1fr" gap={6}>
             <LocalImportCard
-              inputRef={packageInputRef}
+              folderInputRef={folderInputRef}
+              fileInputRef={fileInputRef}
               isLoading={isLoadingLocal}
-              onPackageUpload={handlePackageUpload}
+              onFolderUpload={handleFolderUpload}
+              onFileUpload={handleFileUpload}
+              onDropUpload={handleDropUpload}
             />
 
             <GitHubImportCard
