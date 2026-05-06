@@ -84,16 +84,6 @@ export const pairNearestEndpoints = (
 const cloneNodes = (nodes: PathNode[]): PathNode[] =>
   nodes.map((n) => ({ ...n }))
 
-/** Create a new closed PathData from a node list. */
-const createClosedPath = (
-  sourcePathId: string,
-  nodes: PathNode[]
-): PathData => ({
-  id: `${sourcePathId}_${generateId('reconnect')}`,
-  closed: true,
-  nodes: cloneNodes(nodes),
-})
-
 /**
  * Cut a closed path at the given sorted on-curve node indices.
  * Returns one chain per pair of adjacent split points.
