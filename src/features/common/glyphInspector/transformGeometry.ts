@@ -1,6 +1,10 @@
 import type { PathData } from '../../../store'
 
 export type TransformField = 'x' | 'y' | 'width' | 'height'
+export interface TransformOrigin {
+  x: 'left' | 'center' | 'right'
+  y: 'top' | 'middle' | 'bottom'
+}
 export type AlignTarget =
   | 'left'
   | 'centerX'
@@ -113,10 +117,10 @@ export const buildScaledUpdates = (
   nodes: SelectionNode[],
   bounds: SelectionBounds,
   scaleX: number,
-  scaleY: number
+  scaleY: number,
+  origin: TransformOrigin = { x: 'center', y: 'middle' }
 ): NodePositionUpdate[] => {
-  const originX = bounds.xMin + bounds.width / 2
-  const originY = bounds.yMin + bounds.height / 2
+  const { x: originX, y: originY } = getOriginPoint(bounds, origin)
 
   return nodes.map((node) => ({
     pathId: node.pathId,
@@ -131,16 +135,42 @@ export const buildScaledUpdates = (
 export const buildMirrorUpdates = (
   nodes: SelectionNode[],
   bounds: SelectionBounds,
-  axis: 'x' | 'y'
+  axis: 'x' | 'y',
+  origin: TransformOrigin = { x: 'center', y: 'middle' }
 ): NodePositionUpdate[] =>
-  nodes.map((node) => ({
-    pathId: node.pathId,
-    nodeId: node.nodeId,
-    newPos: {
-      x: axis === 'x' ? bounds.xMin + bounds.xMax - node.x : node.x,
-      y: axis === 'y' ? bounds.yMin + bounds.yMax - node.y : node.y,
-    },
-  }))
+  buildScaledUpdates(
+    nodes,
+    bounds,
+    axis === 'x' ? -1 : 1,
+    axis === 'y' ? -1 : 1,
+    origin
+  )
+
+export const buildRotatedUpdates = (
+  nodes: SelectionNode[],
+  bounds: SelectionBounds,
+  degrees: number,
+  origin: TransformOrigin = { x: 'center', y: 'middle' }
+): NodePositionUpdate[] => {
+  const angle = (degrees * Math.PI) / 180
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  const { x: originX, y: originY } = getOriginPoint(bounds, origin)
+
+  return nodes.map((node) => {
+    const dx = node.x - originX
+    const dy = node.y - originY
+
+    return {
+      pathId: node.pathId,
+      nodeId: node.nodeId,
+      newPos: {
+        x: originX + dx * cos - dy * sin,
+        y: originY + dx * sin + dy * cos,
+      },
+    }
+  })
+}
 
 export const buildAlignUpdates = (
   nodes: SelectionNode[],
@@ -173,7 +203,8 @@ export const buildFieldCommitUpdates = (
   field: TransformField,
   value: string,
   nodes: SelectionNode[],
-  bounds: SelectionBounds
+  bounds: SelectionBounds,
+  origin: TransformOrigin = { x: 'center', y: 'middle' }
 ): NodePositionUpdate[] => {
   const nextValue = parseTransformNumber(value)
 
@@ -186,12 +217,42 @@ export const buildFieldCommitUpdates = (
   }
 
   if (field === 'width' && bounds.width !== 0 && nextValue > 0) {
-    return buildScaledUpdates(nodes, bounds, nextValue / bounds.width, 1)
+    return buildScaledUpdates(
+      nodes,
+      bounds,
+      nextValue / bounds.width,
+      1,
+      origin
+    )
   }
 
   if (field === 'height' && bounds.height !== 0 && nextValue > 0) {
-    return buildScaledUpdates(nodes, bounds, 1, nextValue / bounds.height)
+    return buildScaledUpdates(
+      nodes,
+      bounds,
+      1,
+      nextValue / bounds.height,
+      origin
+    )
   }
 
   return []
 }
+
+export const getOriginPoint = (
+  bounds: SelectionBounds,
+  origin: TransformOrigin
+) => ({
+  x:
+    origin.x === 'left'
+      ? bounds.xMin
+      : origin.x === 'right'
+        ? bounds.xMax
+        : bounds.xMin + bounds.width / 2,
+  y:
+    origin.y === 'bottom'
+      ? bounds.yMin
+      : origin.y === 'top'
+        ? bounds.yMax
+        : bounds.yMin + bounds.height / 2,
+})

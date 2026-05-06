@@ -16,7 +16,10 @@ type DragMode =
   | 'line-segment-drag'
   | 'curve-segment-drag'
   | 'curve-segment-deform'
+  | 'transform-scale'
   | 'rect-select'
+
+type TransformHandleId = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
 
 export class PointerTool extends BaseTool {
   identifier = 'pointer-tool'
@@ -46,10 +49,24 @@ export class PointerTool extends BaseTool {
       | undefined
     didMove: boolean
     altKey: boolean
+    transformHandle?: TransformHandleId
+    transformBounds?: { xMin: number; yMin: number; xMax: number; yMax: number }
     pointToggleOnClick?: { selectionKey: string; remove: boolean }
   } = this.createInitialDragState()
 
   handleHover(event: ToolEvent): void {
+    this.updateSelectionTransformBounds()
+    const transformHandle = this.getTransformHandleAtPoint(
+      this.localPoint(event)
+    )
+    if (transformHandle) {
+      this.sceneController.setHoverSelection(new Set())
+      this.sceneController.setHoverPathHit(undefined)
+      this.setCursor(this.getTransformCursor(transformHandle))
+      this.canvasController.requestUpdate()
+      return
+    }
+
     const hit = this.sceneController.hitTestAtPoint(
       this.localPoint(event),
       this.sceneController.mouseClickMargin,
@@ -80,6 +97,7 @@ export class PointerTool extends BaseTool {
     initialEvent.preventDefault()
 
     const point = this.localPoint(initialEvent)
+    const transformHandle = this.getTransformHandleAtPoint(point)
     const hit = this.sceneController.hitTestAtPoint(
       point,
       this.sceneController.mouseClickMargin,
@@ -110,10 +128,19 @@ export class PointerTool extends BaseTool {
       snappedDelta: { x: 0, y: 0, guides: [] },
       didMove: false,
       altKey: initialEvent.altKey,
+      transformHandle,
+      transformBounds: this.sceneModel.selectionTransformBounds
+        ? {
+            xMin: this.sceneModel.selectionTransformBounds.xMin,
+            yMin: this.sceneModel.selectionTransformBounds.yMin,
+            xMax: this.sceneModel.selectionTransformBounds.xMax,
+            yMax: this.sceneModel.selectionTransformBounds.yMax,
+          }
+        : undefined,
       pointToggleOnClick: undefined,
     }
 
-    if (hit.type === 'point' || hit.type === 'handle') {
+    if (!transformHandle && (hit.type === 'point' || hit.type === 'handle')) {
       this.preparePointInteraction(hit, additiveSelection)
     }
 
@@ -185,8 +212,12 @@ export class PointerTool extends BaseTool {
     } else if (this.dragState.mode === 'curve-segment-deform') {
       this.deformDraggedSegment(path, this.dragState.activePointIndices, dx, dy)
       this.sceneModel.alignmentGuides = []
+    } else if (this.dragState.mode === 'transform-scale') {
+      this.updateTransformScale(path, currentPoint)
+      this.sceneModel.alignmentGuides = []
     }
 
+    this.updateSelectionTransformBounds()
     this.updatePreviewGlyphMetrics(path)
     this.invalidateGlyphPaths()
     this.canvasController.requestUpdate()
@@ -221,6 +252,7 @@ export class PointerTool extends BaseTool {
     this.sceneController.setHoverSelection(new Set())
     this.sceneController.setHoverPathHit(undefined)
     this.sceneModel.alignmentGuides = []
+    this.updateSelectionTransformBounds()
     this.canvasController.requestUpdate()
   }
 
@@ -246,6 +278,7 @@ export class PointerTool extends BaseTool {
         }
       }
       this.sceneController.setSelectedPathHit(undefined)
+      this.updateSelectionTransformBounds()
       return
     }
 
@@ -276,18 +309,21 @@ export class PointerTool extends BaseTool {
       }
       this.sceneController.setSelection(new Set())
       this.sceneController.setSelectedPathHit(hit.pathHit)
+      this.updateSelectionTransformBounds()
       return
     }
 
     if (hit.type === 'empty') {
       this.sceneController.setSelection(new Set())
       this.sceneController.setSelectedPathHit(undefined)
+      this.updateSelectionTransformBounds()
       return
     }
 
     if (hit.type === 'contour-interior') {
       this.sceneController.setSelection(new Set())
       this.sceneController.setSelectedPathHit(undefined)
+      this.updateSelectionTransformBounds()
     }
   }
 
@@ -354,6 +390,10 @@ export class PointerTool extends BaseTool {
   }
 
   private resolveDragMode(hit: HitTestResult): DragMode {
+    if (this.dragState.transformHandle) {
+      return 'transform-scale'
+    }
+
     if (hit.type === 'point' || hit.type === 'handle') {
       return 'point-drag'
     }
@@ -397,6 +437,18 @@ export class PointerTool extends BaseTool {
     }
 
     if (!path) {
+      return
+    }
+
+    if (this.dragState.mode === 'transform-scale') {
+      const baseSelection = new Set(this.sceneController.selection)
+      this.dragState.selectionToRestore = new Set(baseSelection)
+      this.dragState.activePointIndices = this.expandPointIndicesForMove(
+        path,
+        this.getSelectedPointIndices(baseSelection)
+      )
+      this.capturePointSnapshot(path, this.dragState.activePointIndices)
+      this.sceneController.setSelectedPathHit(undefined)
       return
     }
 
@@ -471,6 +523,7 @@ export class PointerTool extends BaseTool {
         ? new Set([...this.dragState.initialSelection, ...selection])
         : selection
     )
+    this.updateSelectionTransformBounds()
   }
 
   private getSelectionInRect(currentPoint: {
@@ -587,6 +640,11 @@ export class PointerTool extends BaseTool {
           x: snapshotPoint.x + dx * factor,
           y: snapshotPoint.y + dy * factor,
         }
+      } else if (this.dragState.mode === 'transform-scale') {
+        const point = this.sceneModel.glyph?.glyph.path.getPoint?.(idx)
+        if (point) {
+          newPos = { x: point.x, y: point.y }
+        }
       }
 
       return [
@@ -620,6 +678,8 @@ export class PointerTool extends BaseTool {
       altKey: false,
       linkedHandle: undefined,
       pointToggleOnClick: undefined,
+      transformHandle: undefined,
+      transformBounds: undefined,
     }
   }
 
@@ -1085,6 +1145,182 @@ export class PointerTool extends BaseTool {
       return 10
     }
     return 0
+  }
+
+  private updateSelectionTransformBounds() {
+    if (this.sceneModel.activeToolIdentifier !== 'pointer') {
+      this.sceneModel.selectionTransformBounds = undefined
+      return
+    }
+
+    const path = this.sceneModel.glyph?.glyph.path
+    if (!path?.getPoint || this.sceneController.selectedPathHit) {
+      this.sceneModel.selectionTransformBounds = undefined
+      return
+    }
+
+    const selectedPointIndices = this.getSelectedPointIndices(
+      this.sceneController.selection
+    )
+    if (selectedPointIndices.length < 2) {
+      this.sceneModel.selectionTransformBounds = undefined
+      return
+    }
+
+    const points = selectedPointIndices
+      .map((index) => path.getPoint?.(index))
+      .filter((point): point is Point => Boolean(point))
+    if (points.length < 2) {
+      this.sceneModel.selectionTransformBounds = undefined
+      return
+    }
+
+    const xMin = Math.min(...points.map((point) => point.x))
+    const yMin = Math.min(...points.map((point) => point.y))
+    const xMax = Math.max(...points.map((point) => point.x))
+    const yMax = Math.max(...points.map((point) => point.y))
+    if (xMax === xMin && yMax === yMin) {
+      this.sceneModel.selectionTransformBounds = undefined
+      return
+    }
+
+    const centerX = xMin + (xMax - xMin) / 2
+    const centerY = yMin + (yMax - yMin) / 2
+    this.sceneModel.selectionTransformBounds = {
+      xMin,
+      yMin,
+      xMax,
+      yMax,
+      handles: [
+        { id: 'nw', x: xMin, y: yMax },
+        { id: 'n', x: centerX, y: yMax },
+        { id: 'ne', x: xMax, y: yMax },
+        { id: 'e', x: xMax, y: centerY },
+        { id: 'se', x: xMax, y: yMin },
+        { id: 's', x: centerX, y: yMin },
+        { id: 'sw', x: xMin, y: yMin },
+        { id: 'w', x: xMin, y: centerY },
+      ],
+    }
+  }
+
+  private getTransformHandleAtPoint(point: { x: number; y: number }) {
+    const bounds = this.sceneModel.selectionTransformBounds
+    if (!bounds) {
+      return undefined
+    }
+
+    const handleRadius = 7 / this.canvasController.magnification
+    for (const handle of bounds.handles) {
+      if (
+        Math.abs(point.x - handle.x) <= handleRadius &&
+        Math.abs(point.y - handle.y) <= handleRadius
+      ) {
+        return handle.id
+      }
+    }
+    return undefined
+  }
+
+  private getTransformCursor(handle: TransformHandleId) {
+    if (handle === 'n' || handle === 's') return 'ns-resize'
+    if (handle === 'e' || handle === 'w') return 'ew-resize'
+    if (handle === 'nw' || handle === 'se') return 'nwse-resize'
+    return 'nesw-resize'
+  }
+
+  private updateTransformScale(
+    path: {
+      setPoint?(
+        index: number,
+        point: { x: number; y: number; type?: string; smooth?: boolean }
+      ): void
+      getPoint?(index: number): Point
+    },
+    currentPoint: { x: number; y: number }
+  ) {
+    const handle = this.dragState.transformHandle
+    const bounds = this.dragState.transformBounds
+    if (!handle || !bounds) {
+      return
+    }
+
+    const fixed = this.getTransformFixedPoint(bounds, handle)
+    const moving = this.getTransformMovingPoint(bounds, handle)
+    const origin = this.dragState.altKey
+      ? {
+          x: bounds.xMin + (bounds.xMax - bounds.xMin) / 2,
+          y: bounds.yMin + (bounds.yMax - bounds.yMin) / 2,
+        }
+      : fixed
+
+    let scaleX =
+      handle === 'n' || handle === 's'
+        ? 1
+        : (currentPoint.x - origin.x) / (moving.x - origin.x || 1)
+    let scaleY =
+      handle === 'e' || handle === 'w'
+        ? 1
+        : (currentPoint.y - origin.y) / (moving.y - origin.y || 1)
+
+    if (Math.abs(scaleX) < 0.02) scaleX = Math.sign(scaleX || 1) * 0.02
+    if (Math.abs(scaleY) < 0.02) scaleY = Math.sign(scaleY || 1) * 0.02
+
+    if (this.dragState.altKey) {
+      scaleX = handle === 'n' || handle === 's' ? 1 : scaleX
+      scaleY = handle === 'e' || handle === 'w' ? 1 : scaleY
+    }
+
+    for (const index of this.dragState.activePointIndices) {
+      const snapshot = this.dragState.pathSnapshot.get(index)
+      if (!snapshot) continue
+      this.updatePointPosition(
+        path,
+        index,
+        origin.x + (snapshot.x - origin.x) * scaleX,
+        origin.y + (snapshot.y - origin.y) * scaleY
+      )
+    }
+  }
+
+  private getTransformFixedPoint(
+    bounds: { xMin: number; yMin: number; xMax: number; yMax: number },
+    handle: TransformHandleId
+  ) {
+    const centerX = bounds.xMin + (bounds.xMax - bounds.xMin) / 2
+    const centerY = bounds.yMin + (bounds.yMax - bounds.yMin) / 2
+    return {
+      x: handle.includes('e')
+        ? bounds.xMin
+        : handle.includes('w')
+          ? bounds.xMax
+          : centerX,
+      y: handle.includes('n')
+        ? bounds.yMin
+        : handle.includes('s')
+          ? bounds.yMax
+          : centerY,
+    }
+  }
+
+  private getTransformMovingPoint(
+    bounds: { xMin: number; yMin: number; xMax: number; yMax: number },
+    handle: TransformHandleId
+  ) {
+    const centerX = bounds.xMin + (bounds.xMax - bounds.xMin) / 2
+    const centerY = bounds.yMin + (bounds.yMax - bounds.yMin) / 2
+    return {
+      x: handle.includes('e')
+        ? bounds.xMax
+        : handle.includes('w')
+          ? bounds.xMin
+          : centerX,
+      y: handle.includes('n')
+        ? bounds.yMax
+        : handle.includes('s')
+          ? bounds.yMin
+          : centerY,
+    }
   }
 
   private getSnappedDelta(

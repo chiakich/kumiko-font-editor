@@ -257,6 +257,81 @@ registerVisualizationLayerDefinition({
 })
 
 registerVisualizationLayerDefinition({
+  identifier: 'main.shape.preview',
+  name: 'Shape Preview',
+  selectionFunc: glyphSelector('editing'),
+  zIndex: 546,
+  screenParameters: { strokeWidth: 2, lineDash: [8, 5] },
+  colors: { strokeColor: '#00AFC9', fillColor: '#25DAF214' },
+  draw: (
+    canvasController: CanvasController,
+    _positionedGlyph: PositionedGlyph,
+    parameters: Record<string, number | number[] | string>,
+    model: SceneModel
+  ) => {
+    if (isHandTool(model) || !model.shapePreviewPath) {
+      return
+    }
+
+    const context = canvasController.context
+    context.fillStyle = parameters.fillColor as string
+    context.strokeStyle = parameters.strokeColor as string
+    context.lineWidth = screenLength(
+      canvasController,
+      parameters.strokeWidth as number
+    )
+    context.setLineDash(
+      screenArray(canvasController, parameters.lineDash as number[])
+    )
+    context.fill(model.shapePreviewPath)
+    context.stroke(model.shapePreviewPath)
+    context.setLineDash([])
+  },
+})
+
+registerVisualizationLayerDefinition({
+  identifier: 'main.knife.preview',
+  name: 'Knife Preview',
+  selectionFunc: glyphSelector('editing'),
+  zIndex: 546,
+  screenParameters: { strokeWidth: 1.5, nodeSize: 7 },
+  colors: { strokeColor: '#FF604F', nodeColor: '#F7EB40' },
+  draw: (
+    canvasController: CanvasController,
+    _positionedGlyph: PositionedGlyph,
+    parameters: Record<string, number | number[] | string>,
+    model: SceneModel
+  ) => {
+    if (isHandTool(model) || !model.knifeLine) {
+      return
+    }
+
+    const context = canvasController.context
+    context.strokeStyle = parameters.strokeColor as string
+    context.lineWidth = screenLength(
+      canvasController,
+      parameters.strokeWidth as number
+    )
+    strokeLine(
+      context,
+      model.knifeLine.x1,
+      model.knifeLine.y1,
+      model.knifeLine.x2,
+      model.knifeLine.y2
+    )
+
+    context.fillStyle = parameters.nodeColor as string
+    const nodeSize = screenLength(
+      canvasController,
+      parameters.nodeSize as number
+    )
+    for (const point of model.knifeLine.intersections) {
+      fillRoundNode(context, point, nodeSize)
+    }
+  },
+})
+
+registerVisualizationLayerDefinition({
   identifier: 'main.alignment.guides',
   name: 'Alignment Guides',
   selectionFunc: glyphSelector('editing'),
@@ -290,6 +365,56 @@ registerVisualizationLayerDefinition({
       strokeLine(context, guide.x1, guide.y1, guide.x2, guide.y2)
     }
     context.setLineDash([])
+  },
+})
+
+registerVisualizationLayerDefinition({
+  identifier: 'main.selection.transform',
+  name: 'Selection Transform Handles',
+  selectionFunc: glyphSelector('editing'),
+  zIndex: 549,
+  screenParameters: { strokeWidth: 1.25, handleSize: 8 },
+  colors: { strokeColor: '#00AFC9', handleFill: '#F8F8F8' },
+  draw: (
+    canvasController: CanvasController,
+    _positionedGlyph: PositionedGlyph,
+    parameters: Record<string, number | number[] | string>,
+    model: SceneModel
+  ) => {
+    if (isHandTool(model) || !model.selectionTransformBounds) {
+      return
+    }
+
+    const { xMin, yMin, xMax, yMax, handles } = model.selectionTransformBounds
+    const context = canvasController.context
+    const handleSize = screenLength(
+      canvasController,
+      parameters.handleSize as number
+    )
+
+    context.strokeStyle = parameters.strokeColor as string
+    context.fillStyle = parameters.handleFill as string
+    context.lineWidth = screenLength(
+      canvasController,
+      parameters.strokeWidth as number
+    )
+    context.setLineDash([])
+    context.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin)
+
+    for (const handle of handles) {
+      context.fillRect(
+        handle.x - handleSize / 2,
+        handle.y - handleSize / 2,
+        handleSize,
+        handleSize
+      )
+      context.strokeRect(
+        handle.x - handleSize / 2,
+        handle.y - handleSize / 2,
+        handleSize,
+        handleSize
+      )
+    }
   },
 })
 

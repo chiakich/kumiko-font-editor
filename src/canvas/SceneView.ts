@@ -31,7 +31,26 @@ export interface SceneModel {
   }
   pathInsertHandles?: { points: Array<{ x: number; y: number }> }
   penPreviewPath?: Path2D
+  shapePreviewPath?: Path2D
+  knifeLine?: {
+    x1: number
+    y1: number
+    x2: number
+    y2: number
+    intersections: Array<{ x: number; y: number }>
+  }
   alignmentGuides?: Array<{ x1: number; y1: number; x2: number; y2: number }>
+  selectionTransformBounds?: {
+    xMin: number
+    yMin: number
+    xMax: number
+    yMax: number
+    handles: Array<{
+      id: 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
+      x: number
+      y: number
+    }>
+  }
   textCursor?: { x: number; yMin: number; yMax: number }
   initialClickedPointIndex?: number
   canEdit?: boolean

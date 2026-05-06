@@ -160,6 +160,12 @@ export function useCanvasKeyboardShortcuts({
         selectToolByKey(event, 'pen')
       } else if (event.key === 'b' || event.key === 'B') {
         selectToolByKey(event, 'brush')
+      } else if (event.key === 'r' || event.key === 'R') {
+        selectToolByKey(event, 'shape-rect')
+      } else if (event.key === 'o' || event.key === 'O') {
+        selectToolByKey(event, 'shape-ellipse')
+      } else if (event.key === 'k' || event.key === 'K') {
+        selectToolByKey(event, 'knife')
       } else if (event.key === 'h' || event.key === 'H') {
         selectToolByKey(event, 'hand')
       } else if (event.key === 't' || event.key === 'T') {

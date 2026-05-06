@@ -3,7 +3,10 @@ import {
   DragHandGesture,
   EditPencil,
   DesignNib,
+  Scissor,
+  Square,
   Text,
+  Circle,
 } from 'iconoir-react'
 import type { ToolId } from './types'
 
@@ -13,6 +16,9 @@ export const TOOL_ICONS: Record<ToolId, ToolIcon> = {
   pointer: CursorPointer,
   pen: DesignNib,
   brush: EditPencil,
+  'shape-rect': Square,
+  'shape-ellipse': Circle,
+  knife: Scissor,
   text: Text,
   hand: DragHandGesture,
 }

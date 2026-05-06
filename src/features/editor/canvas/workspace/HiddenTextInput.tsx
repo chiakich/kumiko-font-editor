@@ -1,7 +1,8 @@
 import { Box } from '@chakra-ui/react'
+import type { ToolId } from './types'
 
 interface HiddenTextInputProps {
-  activeToolId: 'pointer' | 'pen' | 'brush' | 'hand' | 'text'
+  activeToolId: ToolId
   compositionOverlayStyle: { left: number; top: number } | null
   compositionText: string
   inputRef: React.RefObject<HTMLTextAreaElement | null>

@@ -1,4 +1,4 @@
-import { Box, Flex, HStack, Text, VStack } from '@chakra-ui/react'
+import { Box, Flex, HStack } from '@chakra-ui/react'
 import type { ToolId } from './types'
 import { AVAILABLE_TOOLS } from './types'
 import { HistoryButton } from './HistoryButton'
@@ -60,35 +60,6 @@ export function CanvasWorkspaceOverlay({
           ))}
         </HStack>
       </Flex>
-
-      <VStack
-        position="absolute"
-        right={4}
-        bottom={4}
-        align="stretch"
-        spacing={1}
-        px={3}
-        py={2}
-        borderRadius="sm"
-        bg="rgba(8, 11, 13, 0.76)"
-        border="1px solid rgba(247, 235, 64, 0.32)"
-        color="whiteAlpha.800"
-        fontSize="xs"
-        fontFamily="mono"
-      >
-        <HStack spacing={2}>
-          <Box as="span" bg="field.yellow.400" color="field.ink" px={1}>
-            Wheel
-          </Box>
-          <Text>Zoom</Text>
-        </HStack>
-        <HStack spacing={2}>
-          <Box as="span" bg="field.yellow.400" color="field.ink" px={1}>
-            Space
-          </Box>
-          <Text>Hand</Text>
-        </HStack>
-      </VStack>
     </>
   )
 }

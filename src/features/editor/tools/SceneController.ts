@@ -12,6 +12,8 @@ import { PenTool } from './PenTool'
 import { BrushTool } from './BrushTool'
 import { HandTool } from './HandTool'
 import { TextTool } from './TextTool'
+import { EllipseTool, RectangleTool } from './ShapeTool'
+import { KnifeTool } from './KnifeTool'
 import type { BaseTool, ToolEvent } from './BaseTool'
 
 export interface SceneControllerOptions {
@@ -110,6 +112,18 @@ export class SceneController {
       new BrushTool(this.canvasController, this, this.sceneModel)
     )
     this.tools.set(
+      'shape-rect',
+      new RectangleTool(this.canvasController, this, this.sceneModel)
+    )
+    this.tools.set(
+      'shape-ellipse',
+      new EllipseTool(this.canvasController, this, this.sceneModel)
+    )
+    this.tools.set(
+      'knife',
+      new KnifeTool(this.canvasController, this, this.sceneModel)
+    )
+    this.tools.set(
       'hand',
       new HandTool(this.canvasController, this, this.sceneModel)
     )
@@ -129,6 +143,7 @@ export class SceneController {
     }
 
     this.sceneModel.selectionRect = undefined
+    this.sceneModel.selectionTransformBounds = undefined
     this.setHoverSelection(new Set())
     this.setHoverPathHit(undefined)
 
