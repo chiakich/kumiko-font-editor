@@ -8,7 +8,7 @@ import {
   getProjectArchiveFirstMasterId,
   ingestProjectData,
 } from '../lib/projectArchive'
-import type { GlobalState, PathNode } from './types'
+import type { GlobalState, GlyphData, PathData, PathNode } from './types'
 import {
   findNode,
   findPath,
@@ -50,6 +50,136 @@ export type {
   ViewportState,
   WorkspaceView,
 } from './types'
+
+type ReconnectEndpoint = {
+  pathId: string
+  nodeId: string
+  node: PathNode
+  endpoint: 'start' | 'end'
+}
+
+const pairNearestEndpoints = (endpoints: ReconnectEndpoint[]) => {
+  const remaining = [...endpoints]
+  const pairs: Array<[ReconnectEndpoint, ReconnectEndpoint]> = []
+
+  while (remaining.length >= 2) {
+    let bestPair: [number, number] | null = null
+    let bestDistance = Number.POSITIVE_INFINITY
+
+    for (
+      let sourceIndex = 0;
+      sourceIndex < remaining.length;
+      sourceIndex += 1
+    ) {
+      for (
+        let targetIndex = sourceIndex + 1;
+        targetIndex < remaining.length;
+        targetIndex += 1
+      ) {
+        const source = remaining[sourceIndex]
+        const target = remaining[targetIndex]
+        if (
+          source.pathId === target.pathId &&
+          source.endpoint === target.endpoint
+        ) {
+          continue
+        }
+
+        const distance = Math.hypot(
+          source.node.x - target.node.x,
+          source.node.y - target.node.y
+        )
+        if (distance < bestDistance) {
+          bestDistance = distance
+          bestPair = [sourceIndex, targetIndex]
+        }
+      }
+    }
+
+    if (!bestPair) {
+      break
+    }
+
+    const [sourceIndex, targetIndex] = bestPair
+    const target = remaining.splice(targetIndex, 1)[0]
+    const source = remaining.splice(sourceIndex, 1)[0]
+    pairs.push([source, target])
+  }
+
+  return pairs
+}
+
+const reconnectFourClosedNodes = (
+  glyph: GlyphData,
+  selectedNodeIds: string[]
+) => {
+  const selectedByPath = new Map<string, Set<string>>()
+  for (const selectionKey of selectedNodeIds) {
+    const [pathId, nodeId] = selectionKey.split(':')
+    if (!pathId || !nodeId) {
+      continue
+    }
+    const nodeIds = selectedByPath.get(pathId) ?? new Set<string>()
+    nodeIds.add(nodeId)
+    selectedByPath.set(pathId, nodeIds)
+  }
+
+  const nextSelection: string[] = []
+  let didReconnect = false
+
+  glyph.paths = glyph.paths.flatMap((path) => {
+    const selectedIds = selectedByPath.get(path.id)
+    if (!path.closed || selectedIds?.size !== 4) {
+      return [path]
+    }
+
+    const selectedIndices = path.nodes
+      .map((node, index) => (selectedIds.has(node.id) ? index : -1))
+      .filter((index) => index >= 0)
+      .sort((a, b) => a - b)
+    if (selectedIndices.length !== 4) {
+      return [path]
+    }
+
+    const chains = selectedIndices.map((start, index) => {
+      const end = selectedIndices[(index + 1) % selectedIndices.length]
+      return start < end
+        ? path.nodes.slice(start, end + 1)
+        : [...path.nodes.slice(start), ...path.nodes.slice(0, end + 1)]
+    })
+
+    const firstPiece = createReconnectedClosedPath(path.id, [
+      ...chains[0],
+      ...chains[2],
+    ])
+    const secondPiece = createReconnectedClosedPath(path.id, [
+      ...chains[1],
+      ...chains[3],
+    ])
+
+    for (const piece of [firstPiece, secondPiece]) {
+      for (const node of piece.nodes) {
+        if (selectedIds.has(node.id)) {
+          nextSelection.push(`${piece.id}:${node.id}`)
+        }
+      }
+    }
+
+    didReconnect = true
+    return [firstPiece, secondPiece]
+  })
+
+  return didReconnect ? Array.from(new Set(nextSelection)) : []
+}
+
+const createReconnectedClosedPath = (
+  sourcePathId: string,
+  nodes: PathNode[]
+): PathData => ({
+  id: `${sourcePathId}_${generateId('reconnect')}`,
+  closed: true,
+  nodes: nodes.map((node) => ({ ...node })),
+})
 
 export const useStore = create<GlobalState>()(
   temporal(
@@ -569,6 +699,39 @@ export const useStore = create<GlobalState>()(
           markGlyphDirty(state, glyphId)
         }),
 
+      replacePathWithOpenPieces: (glyphId, pathId, pieces) =>
+        set((state) => {
+          const glyph = state.fontData?.glyphs[glyphId]
+          if (!glyph || pieces.length === 0) {
+            return
+          }
+
+          const pathIndex = glyph.paths.findIndex((path) => path.id === pathId)
+          if (pathIndex < 0) {
+            return
+          }
+
+          const normalizedPieces = pieces
+            .map((piece) => ({
+              ...piece,
+              id: piece.id || generateId('path'),
+              closed: piece.closed,
+              nodes: piece.nodes.map((node) => ({
+                ...node,
+                id: node.id || generateId('node'),
+              })),
+            }))
+            .filter((piece) => piece.nodes.length > 1)
+
+          if (normalizedPieces.length === 0) {
+            return
+          }
+
+          glyph.paths.splice(pathIndex, 1, ...normalizedPieces)
+          state.selectedSegment = null
+          markGlyphDirty(state, glyphId)
+        }),
+
       closePath: (glyphId, pathId) =>
         set((state) => {
           const glyph = state.fontData?.glyphs[glyphId]
@@ -642,6 +805,118 @@ export const useStore = create<GlobalState>()(
         })
 
         return result
+      },
+
+      reconnectSelectedNodes: (glyphId, selectedNodeIds) => {
+        let nextSelection: string[] = []
+
+        set((state) => {
+          const glyph = state.fontData?.glyphs[glyphId]
+          if (!glyph || selectedNodeIds.length < 2) {
+            return
+          }
+
+          const closedReconnectSelection = reconnectFourClosedNodes(
+            glyph,
+            selectedNodeIds
+          )
+          if (closedReconnectSelection.length > 0) {
+            nextSelection = closedReconnectSelection
+            state.selectedNodeIds = nextSelection
+            state.selectedSegment = null
+            markGlyphDirty(state, glyphId)
+            return
+          }
+
+          const endpoints = selectedNodeIds.flatMap((selectionKey) => {
+            const [pathId, nodeId] = selectionKey.split(':')
+            const path = pathId ? findPath(glyph, pathId) : undefined
+            if (!path || path.closed || !nodeId) {
+              return []
+            }
+
+            const nodeIndex = path.nodes.findIndex((node) => node.id === nodeId)
+            if (nodeIndex !== 0 && nodeIndex !== path.nodes.length - 1) {
+              return []
+            }
+
+            const node = path.nodes[nodeIndex]
+            return [
+              {
+                pathId,
+                nodeId,
+                node,
+                endpoint:
+                  nodeIndex === 0 ? ('start' as const) : ('end' as const),
+              },
+            ]
+          })
+
+          const pairs = pairNearestEndpoints(endpoints)
+          if (pairs.length === 0) {
+            return
+          }
+
+          const selectedAfterReconnect: string[] = []
+          for (const [source, target] of pairs) {
+            const sourcePath = findPath(glyph, source.pathId)
+            const targetPath = findPath(glyph, target.pathId)
+            if (
+              !sourcePath ||
+              !targetPath ||
+              sourcePath.closed ||
+              targetPath.closed ||
+              !isPathEndpointNode(sourcePath, source.nodeId) ||
+              !isPathEndpointNode(targetPath, target.nodeId)
+            ) {
+              continue
+            }
+
+            if (source.pathId === target.pathId) {
+              if (source.nodeId === target.nodeId) {
+                continue
+              }
+              sourcePath.closed = true
+              selectedAfterReconnect.push(
+                `${source.pathId}:${source.nodeId}`,
+                `${source.pathId}:${target.nodeId}`
+              )
+              continue
+            }
+
+            const sourceNodes = orientOpenPathNodesForConnection(
+              sourcePath,
+              source.nodeId,
+              'end'
+            )
+            const targetNodes = orientOpenPathNodesForConnection(
+              targetPath,
+              target.nodeId,
+              'start'
+            )
+
+            sourcePath.nodes = [...sourceNodes, ...targetNodes]
+            sourcePath.closed = false
+            glyph.paths = glyph.paths.filter(
+              (path) => path.id !== target.pathId
+            )
+            selectedAfterReconnect.push(
+              `${source.pathId}:${source.nodeId}`,
+              `${source.pathId}:${target.nodeId}`
+            )
+          }
+
+          if (selectedAfterReconnect.length === 0) {
+            return
+          }
+
+          nextSelection = Array.from(new Set(selectedAfterReconnect))
+          state.selectedNodeIds = nextSelection
+          state.selectedSegment = null
+          markGlyphDirty(state, glyphId)
+        })
+
+        return nextSelection
       },
 
       convertLineSegmentToCurve: (glyphId, pathId, startNodeId, endNodeId) =>

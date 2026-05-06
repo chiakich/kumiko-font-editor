@@ -43,6 +43,10 @@ export function CanvasWorkspace() {
   const [isComposingText, setIsComposingText] = useState(false)
   const [compositionText, setCompositionText] = useState('')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+  } | null>(null)
 
   const fontData = useStore((state) => state.fontData)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
@@ -70,6 +74,9 @@ export function CanvasWorkspace() {
   const setEditorTextState = useStore((state) => state.setEditorTextState)
   const updateViewport = useStore((state) => state.updateViewport)
   const deleteSelectedNodes = useStore((state) => state.deleteSelectedNodes)
+  const reconnectSelectedNodes = useStore(
+    (state) => state.reconnectSelectedNodes
+  )
   const updateNodePositions = useStore((state) => state.updateNodePositions)
   const activeEditorGlyphId =
     editorGlyphIds[editorActiveGlyphIndex] ?? selectedGlyphId ?? null
@@ -87,6 +94,17 @@ export function CanvasWorkspace() {
   const handleRedo = useCallback(() => {
     useStore.temporal.getState().redo()
   }, [])
+
+  const handleReconnectSelectedNodes = useCallback(() => {
+    if (!activeEditorGlyphId || selectedNodeIds.length < 2) {
+      setContextMenu(null)
+      return
+    }
+
+    reconnectSelectedNodes(activeEditorGlyphId, selectedNodeIds)
+    setContextMenu(null)
+    canvasControllerRef.current?.requestUpdate()
+  }, [activeEditorGlyphId, reconnectSelectedNodes, selectedNodeIds])
 
   const { copySelection, pasteSelection } = useCanvasClipboard({
     activeEditorGlyphId,
@@ -533,6 +551,50 @@ export function CanvasWorkspace() {
     setEditorTextCursorIndex,
   ])
 
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) {
+      return
+    }
+
+    const handleCanvasContextMenu = (event: MouseEvent) => {
+      if (
+        activeToolId === 'text' ||
+        !activeEditorGlyphId ||
+        selectedNodeIds.length < 2
+      ) {
+        setContextMenu(null)
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      const rect =
+        canvas.parentElement?.getBoundingClientRect() ??
+        canvas.getBoundingClientRect()
+      setContextMenu({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      })
+    }
+
+    const closeContextMenu = () => setContextMenu(null)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setContextMenu(null)
+      }
+    }
+
+    canvas.addEventListener('contextmenu', handleCanvasContextMenu)
+    window.addEventListener('click', closeContextMenu)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      canvas.removeEventListener('contextmenu', handleCanvasContextMenu)
+      window.removeEventListener('click', closeContextMenu)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [activeEditorGlyphId, activeToolId, selectedNodeIds.length])
+
   useCanvasKeyboardShortcuts({
     activeEditorGlyphId,
     activeToolId,
@@ -563,6 +625,40 @@ export function CanvasWorkspace() {
           cursor: 'default',
         }}
       />
+
+      {contextMenu && (
+        <Box
+          position="absolute"
+          left={`${contextMenu.x}px`}
+          top={`${contextMenu.y}px`}
+          zIndex={20}
+          minW="168px"
+          py="4px"
+          bg="white"
+          border="1px solid"
+          borderColor="gray.200"
+          borderRadius="6px"
+          boxShadow="0 10px 30px rgba(15, 23, 42, 0.18)"
+          overflow="hidden"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Box
+            as="button"
+            type="button"
+            display="block"
+            w="100%"
+            px="12px"
+            py="8px"
+            textAlign="left"
+            fontSize="13px"
+            color="gray.800"
+            _hover={{ bg: 'gray.50' }}
+            onClick={handleReconnectSelectedNodes}
+          >
+            重新連接控制點
+          </Box>
+        </Box>
+      )}
 
       <HiddenTextInput
         activeToolId={activeToolId}

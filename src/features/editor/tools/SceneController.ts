@@ -205,6 +205,7 @@ export class SceneController {
 
   private handleMouseDown(event: MouseEvent) {
     if (!this.activeTool) return
+    if (event.button !== 0) return
 
     const toolEvent = this.mouseEventToToolEvent(event)
     this._eventStream = new EventStreamImpl()

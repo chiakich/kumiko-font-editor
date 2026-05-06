@@ -74,31 +74,172 @@ export class KnifeTool extends BaseTool {
 
   private applyCuts(glyphId: string, cuts: CutCandidate[]) {
     const store = useStore.getState()
+    const glyph = store.fontData?.glyphs[glyphId]
+    if (!glyph) {
+      return
+    }
+
     const insertedSelections: string[] = []
+    const cutsByPath = new Map<string, CutCandidate[]>()
 
-    const orderedCuts = [...cuts]
+    for (const cut of cuts) {
+      if (cut.endIndex <= cut.startIndex) {
+        continue
+      }
+      const pathCuts = cutsByPath.get(cut.pathId) ?? []
+      pathCuts.push(cut)
+      cutsByPath.set(cut.pathId, pathCuts)
+    }
+
+    for (const [pathId, pathCuts] of cutsByPath) {
+      const path = glyph.paths.find((candidate) => candidate.id === pathId)
+      if (!path) {
+        continue
+      }
+
+      const split = this.buildOpenPieces(path, pathCuts)
+      if (split.pieces.length === 0) {
+        continue
+      }
+
+      store.replacePathWithOpenPieces(glyphId, pathId, split.pieces)
+      insertedSelections.push(...split.selectedNodeIds)
+    }
+
+    if (insertedSelections.length > 0) {
+      store.setSelectedNodeIds(insertedSelections)
+    }
+  }
+
+  private buildOpenPieces(path: PathData, cuts: CutCandidate[]) {
+    const usableCuts = [...cuts]
       .filter((cut) => cut.endIndex > cut.startIndex)
-      .sort((a, b) => b.startIndex - a.startIndex)
+      .sort((a, b) => a.startIndex - b.startIndex || a.t - b.t)
+    if (usableCuts.length === 0) {
+      return { pieces: [], selectedNodeIds: [] }
+    }
 
-    for (const cut of orderedCuts) {
+    const expandedNodes: PathNode[] = []
+    const cutNodeIds: string[] = []
+    let cursor = 0
+
+    for (const cut of usableCuts) {
+      expandedNodes.push(...path.nodes.slice(cursor, cut.startIndex))
+
       const inserted = this.createNode(cut.point.x, cut.point.y, 'corner')
       const replacement =
         cut.type === 'line'
           ? [cut.segmentNodes[0], inserted, cut.segmentNodes.at(-1)!]
           : this.splitCurve(cut, inserted)
 
-      store.replacePathNodes(
-        glyphId,
-        cut.pathId,
-        cut.startNodeId,
-        cut.endNodeId,
-        replacement
-      )
-      insertedSelections.push(`${cut.pathId}:${inserted.id}`)
+      expandedNodes.push(...replacement)
+      cutNodeIds.push(inserted.id)
+      cursor =
+        cut.endIndex >= path.nodes.length ? path.nodes.length : cut.endIndex + 1
     }
 
-    if (insertedSelections.length > 0) {
-      store.setSelectedNodeIds(insertedSelections)
+    expandedNodes.push(...path.nodes.slice(cursor))
+    if (
+      expandedNodes.length > 1 &&
+      expandedNodes[0].id === expandedNodes.at(-1)?.id
+    ) {
+      expandedNodes.pop()
+    }
+
+    const cutPositions = cutNodeIds
+      .map((nodeId) => expandedNodes.findIndex((node) => node.id === nodeId))
+      .filter((index) => index >= 0)
+      .sort((a, b) => a - b)
+    if (cutPositions.length === 0) {
+      return { pieces: [], selectedNodeIds: [] }
+    }
+
+    return path.closed
+      ? this.buildClosedPathPieces(path.id, expandedNodes, cutPositions)
+      : this.buildOpenPathPieces(path.id, expandedNodes, cutPositions)
+  }
+
+  private buildOpenPathPieces(
+    sourcePathId: string,
+    nodes: PathNode[],
+    cutPositions: number[]
+  ) {
+    const pieces: PathData[] = []
+    const selectedNodeIds: string[] = []
+    const cutPositionSet = new Set(cutPositions)
+    let start = 0
+
+    for (const cutPosition of cutPositions) {
+      const piece = this.createPiece(
+        sourcePathId,
+        nodes.slice(start, cutPosition + 1),
+        false
+      )
+      if (piece) {
+        pieces.push(piece)
+        if (cutPositionSet.has(start)) {
+          selectedNodeIds.push(`${piece.id}:${piece.nodes[0].id}`)
+        }
+        selectedNodeIds.push(`${piece.id}:${piece.nodes.at(-1)!.id}`)
+      }
+      start = cutPosition
+    }
+
+    const tail = this.createPiece(sourcePathId, nodes.slice(start), false)
+    if (tail) {
+      pieces.push(tail)
+      if (cutPositionSet.has(start)) {
+        selectedNodeIds.push(`${tail.id}:${tail.nodes[0].id}`)
+      }
+    }
+
+    return { pieces, selectedNodeIds }
+  }
+
+  private buildClosedPathPieces(
+    sourcePathId: string,
+    nodes: PathNode[],
+    cutPositions: number[]
+  ) {
+    const pieces: PathData[] = []
+    const selectedNodeIds: string[] = []
+
+    for (let index = 0; index < cutPositions.length; index += 1) {
+      const start = cutPositions[index]
+      const end = cutPositions[(index + 1) % cutPositions.length]
+      const rawNodes =
+        start < end
+          ? nodes.slice(start, end + 1)
+          : [...nodes.slice(start), ...nodes.slice(0, end + 1)]
+      const piece = this.createPiece(sourcePathId, rawNodes, true)
+      if (!piece) {
+        continue
+      }
+      pieces.push(piece)
+      selectedNodeIds.push(`${piece.id}:${piece.nodes[0].id}`)
+      selectedNodeIds.push(`${piece.id}:${piece.nodes.at(-1)!.id}`)
+    }
+
+    return { pieces, selectedNodeIds }
+  }
+
+  private createPiece(
+    sourcePathId: string,
+    nodes: PathNode[],
+    closed: boolean
+  ): PathData | null {
+    if (nodes.length < 2) {
+      return null
+    }
+
+    return {
+      id: `${sourcePathId}_${Math.random().toString(36).slice(2, 8)}`,
+      closed,
+      nodes: nodes.map((node, index) =>
+        index === 0 || index === nodes.length - 1
+          ? { ...node, id: this.generateId('node') }
+          : { ...node }
+      ),
     }
   }
 
@@ -234,11 +375,15 @@ export class KnifeTool extends BaseTool {
 
   private createNode(x: number, y: number, type: PathNode['type']): PathNode {
     return {
-      id: `node_${Math.random().toString(36).slice(2, 10)}`,
+      id: this.generateId('node'),
       x: Math.round(x),
       y: Math.round(y),
       type,
     }
+  }
+
+  private generateId(prefix: string) {
+    return `${prefix}_${Math.random().toString(36).slice(2, 10)}`
   }
 }
 
@@ -284,6 +429,26 @@ function* iterPathSegments(path: PathData): Generator<PathSegment> {
       endIndex,
       nodes: segmentNodes,
       type,
+    }
+  }
+
+  const firstNode = nodes[0]
+  const lastNode = nodes.at(-1)
+  if (
+    path.closed &&
+    firstNode &&
+    lastNode &&
+    isOnCurve(firstNode) &&
+    isOnCurve(lastNode)
+  ) {
+    yield {
+      pathId: path.id,
+      startNodeId: lastNode.id,
+      endNodeId: firstNode.id,
+      startIndex: nodes.length - 1,
+      endIndex: nodes.length,
+      nodes: [lastNode, firstNode],
+      type: 'line',
     }
   }
 }

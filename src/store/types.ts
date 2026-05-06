@@ -207,6 +207,11 @@ export interface GlobalState {
     endNodeId: string,
     nodes: PathNode[]
   ) => void
+  replacePathWithOpenPieces: (
+    glyphId: string,
+    pathId: string,
+    pieces: PathData[]
+  ) => void
   closePath: (glyphId: string, pathId: string) => void
   connectOpenPaths: (
     glyphId: string,
@@ -215,6 +220,10 @@ export interface GlobalState {
     targetPathId: string,
     targetNodeId: string
   ) => { pathId: string; nodeIds: string[] } | null
+  reconnectSelectedNodes: (
+    glyphId: string,
+    selectedNodeIds: string[]
+  ) => string[]
   convertLineSegmentToCurve: (
     glyphId: string,
     pathId: string,
