@@ -11,10 +11,7 @@ import {
   lerp,
   orientOpenPathNodesForConnection,
 } from '../glyphGeometry'
-import {
-  pairNearestEndpoints,
-  reconnectFourClosedNodes,
-} from '../reconnectNodes'
+import { pairNearestEndpoints, performReconnect } from '../reconnectNodes'
 import { markGlyphDirty } from '../dirtyState'
 
 type ImmerSet = Parameters<
@@ -218,10 +215,8 @@ export const buildPathActions = (set: ImmerSet) => ({
         return
       }
 
-      const closedReconnectSelection = reconnectFourClosedNodes(
-        glyph,
-        selectedNodeIds
-      )
+      // ── Try closed-path reconnection first ──────────────────────────────
+      const closedReconnectSelection = performReconnect(glyph, selectedNodeIds)
       if (closedReconnectSelection.length > 0) {
         nextSelection = closedReconnectSelection
         state.selectedNodeIds = nextSelection
@@ -230,6 +225,7 @@ export const buildPathActions = (set: ImmerSet) => ({
         return
       }
 
+      // ── Fall back to open-path endpoint pairing ─────────────────────────
       const endpoints = selectedNodeIds.flatMap((selectionKey) => {
         const [pathId, nodeId] = selectionKey.split(':')
         const path = pathId ? findPath(glyph, pathId) : undefined
