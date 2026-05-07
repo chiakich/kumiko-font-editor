@@ -202,7 +202,7 @@ const components = {
       enclosed: {
         tab: {
           borderRadius: '2px 2px 0 0',
-          borderColor: 'field.line',
+          borderColor: 'transparent',
           fontWeight: 900,
           _selected: {
             color: 'field.ink',

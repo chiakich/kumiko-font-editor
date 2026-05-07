@@ -3,8 +3,8 @@ import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
 import { useFontExport } from 'src/features/common/fontExport/useFontExport'
 import { GitHubCommitModal } from 'src/features/common/glyphInspector/GitHubCommitModal'
 import { GlyphSummaryCard } from 'src/features/common/glyphInspector/GlyphSummaryCard'
-import { ProjectSaveCard } from 'src/features/common/glyphInspector/ProjectSaveCard'
 import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightPanelModel'
+import { ProjectSaveActions } from 'src/features/common/projectSave/ProjectSaveActions'
 
 export function OverviewRightPanel() {
   const panel = useRightPanelModel()
@@ -21,6 +21,28 @@ export function OverviewRightPanel() {
       backgroundRepeat="repeat"
     >
       <Stack spacing={4}>
+        <ProjectSaveActions
+          canSaveDraft={Boolean(
+            panel.fontData &&
+            panel.projectId &&
+            panel.projectTitle &&
+            panel.isDirty
+          )}
+          hasGitHubSource={panel.hasGitHubSource}
+          isDraftCurrent={Boolean(
+            panel.fontData &&
+            panel.projectId &&
+            panel.projectTitle &&
+            !panel.isDirty
+          )}
+          isSavingToLocal={fontExport.isExporting}
+          onOpenExportModal={exportModal.onOpen}
+          onOpenGitHubModal={() =>
+            void panel.gitHubCommitFlow.openGitHubModal()
+          }
+          onSaveProject={panel.handleSaveProject}
+        />
+
         {!panel.glyph ? (
           <Text fontSize="sm" color="field.muted" fontFamily="mono">
             尚未選取字形。
@@ -38,22 +60,6 @@ export function OverviewRightPanel() {
             onLayerChange={panel.setSelectedLayerId}
           />
         )}
-
-        <ProjectSaveCard
-          canSaveDraft={Boolean(
-            panel.fontData &&
-            panel.projectId &&
-            panel.projectTitle &&
-            panel.isDirty
-          )}
-          hasGitHubSource={panel.hasGitHubSource}
-          isSavingToLocal={fontExport.isExporting}
-          onOpenExportModal={exportModal.onOpen}
-          onOpenGitHubModal={() =>
-            void panel.gitHubCommitFlow.openGitHubModal()
-          }
-          onSaveProject={panel.handleSaveProject}
-        />
       </Stack>
 
       <ExportFontModal
