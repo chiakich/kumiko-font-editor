@@ -9,6 +9,7 @@ interface UseCanvasKeyboardShortcutsOptions {
   fontData: FontData | null
   getPreviousPenSelection: () => string | null
   onCopySelection: () => Promise<void>
+  onCutSelection: () => Promise<void>
   onPasteSelection: () => Promise<void>
   onRedo: () => void
   onSelectTool: (toolId: ToolId) => void
@@ -38,6 +39,7 @@ export function useCanvasKeyboardShortcuts({
   fontData,
   getPreviousPenSelection,
   onCopySelection,
+  onCutSelection,
   onPasteSelection,
   onRedo,
   onSelectTool,
@@ -135,6 +137,9 @@ export function useCanvasKeyboardShortcuts({
         } else if (event.key === 'c' || event.key === 'C') {
           event.preventDefault()
           void onCopySelection()
+        } else if (event.key === 'x' || event.key === 'X') {
+          event.preventDefault()
+          void onCutSelection()
         } else if (event.key === 'v' || event.key === 'V') {
           event.preventDefault()
           void onPasteSelection()
@@ -223,6 +228,7 @@ export function useCanvasKeyboardShortcuts({
     fontData,
     getPreviousPenSelection,
     onCopySelection,
+    onCutSelection,
     onPasteSelection,
     onRedo,
     onSelectTool,

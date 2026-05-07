@@ -10,6 +10,7 @@ import {
 
 interface UseCanvasClipboardOptions {
   activeEditorGlyphId: string | null
+  deleteSelectedNodes: (glyphId: string, nodeIds: string[]) => void
   fontData: FontData | null
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
@@ -18,6 +19,7 @@ interface UseCanvasClipboardOptions {
 
 export function useCanvasClipboard({
   activeEditorGlyphId,
+  deleteSelectedNodes,
   fontData,
   selectedNodeIds,
   selectedSegment,
@@ -44,6 +46,15 @@ export function useCanvasClipboard({
 
     await navigator.clipboard.writeText(serializeClipboardPaths(payload))
   }, [activeEditorGlyphId, fontData, selectedNodeIds, selectedSegment])
+
+  const cutSelection = useCallback(async () => {
+    if (!activeEditorGlyphId || selectedNodeIds.length === 0) {
+      return
+    }
+
+    await copySelection()
+    deleteSelectedNodes(activeEditorGlyphId, selectedNodeIds)
+  }, [activeEditorGlyphId, copySelection, deleteSelectedNodes, selectedNodeIds])
 
   const pasteSelection = useCallback(async () => {
     if (!activeEditorGlyphId) {
@@ -73,6 +84,7 @@ export function useCanvasClipboard({
 
   return {
     copySelection,
+    cutSelection,
     pasteSelection,
   }
 }

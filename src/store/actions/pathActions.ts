@@ -420,6 +420,32 @@ export const buildPathActions = (set: ImmerSet) => ({
       markGlyphDirty(state, glyphId)
     }),
 
+  reversePaths: (glyphId: string, pathIds: string[]) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      const pathIdSet = new Set(pathIds)
+      if (!glyph || pathIdSet.size === 0) {
+        return
+      }
+
+      let didReverse = false
+      for (const path of glyph.paths) {
+        if (!pathIdSet.has(path.id) || path.nodes.length < 2) {
+          continue
+        }
+
+        path.nodes = [...path.nodes].reverse()
+        didReverse = true
+      }
+
+      if (!didReverse) {
+        return
+      }
+
+      state.selectedSegment = null
+      markGlyphDirty(state, glyphId)
+    }),
+
   deleteSelectedNodes: (glyphId: string, selectedNodeIds: string[]) =>
     set((state) => {
       const glyph = state.fontData?.glyphs[glyphId]

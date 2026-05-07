@@ -10,6 +10,7 @@ import {
 } from '../../../canvas'
 import { SceneController } from '../tools'
 import { useStore, useTemporalStore } from '../../../store'
+import { CanvasContextMenu } from './workspace/CanvasContextMenu'
 import { CanvasWorkspaceOverlay } from './workspace/CanvasWorkspaceOverlay'
 import { HiddenTextInput } from './workspace/HiddenTextInput'
 import {
@@ -77,6 +78,7 @@ export function CanvasWorkspace() {
   const reconnectSelectedNodes = useStore(
     (state) => state.reconnectSelectedNodes
   )
+  const reversePaths = useStore((state) => state.reversePaths)
   const updateNodePositions = useStore((state) => state.updateNodePositions)
   const activeEditorGlyphId =
     editorGlyphIds[editorActiveGlyphIndex] ?? selectedGlyphId ?? null
@@ -95,24 +97,18 @@ export function CanvasWorkspace() {
     useStore.temporal.getState().redo()
   }, [])
 
-  const handleReconnectSelectedNodes = useCallback(() => {
-    if (!activeEditorGlyphId || selectedNodeIds.length < 2) {
-      setContextMenu(null)
-      return
-    }
-
-    reconnectSelectedNodes(activeEditorGlyphId, selectedNodeIds)
-    setContextMenu(null)
-    canvasControllerRef.current?.requestUpdate()
-  }, [activeEditorGlyphId, reconnectSelectedNodes, selectedNodeIds])
-
-  const { copySelection, pasteSelection } = useCanvasClipboard({
+  const { copySelection, cutSelection, pasteSelection } = useCanvasClipboard({
     activeEditorGlyphId,
+    deleteSelectedNodes,
     fontData,
     selectedNodeIds,
     selectedSegment,
     setSelectedNodeIds,
   })
+
+  const requestCanvasUpdate = useCallback(() => {
+    canvasControllerRef.current?.requestUpdate()
+  }, [])
 
   const handleToolSelect = useCallback(
     (toolId: ToolId) => {
@@ -558,11 +554,7 @@ export function CanvasWorkspace() {
     }
 
     const handleCanvasContextMenu = (event: MouseEvent) => {
-      if (
-        activeToolId === 'text' ||
-        !activeEditorGlyphId ||
-        selectedNodeIds.length < 2
-      ) {
+      if (activeToolId === 'text' || !activeEditorGlyphId) {
         setContextMenu(null)
         return
       }
@@ -593,7 +585,7 @@ export function CanvasWorkspace() {
       window.removeEventListener('click', closeContextMenu)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [activeEditorGlyphId, activeToolId, selectedNodeIds.length])
+  }, [activeEditorGlyphId, activeToolId])
 
   useCanvasKeyboardShortcuts({
     activeEditorGlyphId,
@@ -602,6 +594,7 @@ export function CanvasWorkspace() {
     fontData,
     getPreviousPenSelection,
     onCopySelection: copySelection,
+    onCutSelection: cutSelection,
     onPasteSelection: pasteSelection,
     onRedo: handleRedo,
     onSelectTool: handleToolSelect,
@@ -627,39 +620,21 @@ export function CanvasWorkspace() {
       />
 
       {contextMenu && (
-        <Box
-          position="absolute"
-          left={`${contextMenu.x}px`}
-          top={`${contextMenu.y}px`}
-          zIndex={20}
-          minW="168px"
-          py="4px"
-          bg="white"
-          border="1px solid"
-          borderColor="gray.200"
-          borderRadius="6px"
-          boxShadow="0 10px 30px rgba(15, 23, 42, 0.18)"
-          overflow="hidden"
-          onClick={(event: React.MouseEvent<HTMLDivElement>) =>
-            event.stopPropagation()
-          }
-        >
-          <Box
-            as="button"
-            type="button"
-            display="block"
-            w="100%"
-            px="12px"
-            py="8px"
-            textAlign="left"
-            fontSize="13px"
-            color="gray.800"
-            _hover={{ bg: 'gray.50' }}
-            onClick={handleReconnectSelectedNodes}
-          >
-            重新連接控制點
-          </Box>
-        </Box>
+        <CanvasContextMenu
+          activeEditorGlyphId={activeEditorGlyphId}
+          copySelection={copySelection}
+          cutSelection={cutSelection}
+          fontData={fontData}
+          pasteSelection={pasteSelection}
+          position={contextMenu}
+          reconnectSelectedNodes={reconnectSelectedNodes}
+          reversePaths={reversePaths}
+          selectedLayerId={selectedLayerId}
+          selectedNodeIds={selectedNodeIds}
+          selectedSegment={selectedSegment}
+          onClose={() => setContextMenu(null)}
+          onRequestCanvasUpdate={requestCanvasUpdate}
+        />
       )}
 
       <HiddenTextInput

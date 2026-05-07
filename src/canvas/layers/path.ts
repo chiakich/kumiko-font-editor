@@ -601,7 +601,6 @@ registerVisualizationLayerDefinition({
     )
 
     context.fillStyle = parameters.color as string
-
     for (const pt of glyph.path.iterPoints()) {
       fillNode(context, pt, cornerSize, smoothSize, handleSize)
     }
@@ -705,6 +704,60 @@ registerVisualizationLayerDefinition({
       const pt = getPointByIndex(glyph.path, idx)
       if (pt) {
         fillNode(context, pt, cornerSize, smoothSize, handleSize)
+      }
+    }
+  },
+})
+
+registerVisualizationLayerDefinition({
+  identifier: 'main.start.direction.nodes',
+  name: 'Path Start Direction Nodes',
+  selectionFunc: glyphSelector('editing'),
+  zIndex: 650,
+  screenParameters: { arrowSize: 15, underlayOffset: 3 },
+  colors: { color: '#16A34A', underColor: '#FFFFFF' },
+  colorsDarkMode: { color: '#22C55E', underColor: '#0008' },
+  draw: (
+    canvasController: CanvasController,
+    positionedGlyph: PositionedGlyph,
+    parameters: Record<string, number | number[] | string>,
+    model: SceneModel
+  ) => {
+    if (isHandTool(model)) {
+      return
+    }
+    const context = canvasController.context
+    const glyph = positionedGlyph.glyph
+    if (!glyph.path?.getPoint) return
+
+    const arrowSize = screenLength(
+      canvasController,
+      parameters.arrowSize as number
+    )
+    const underlayOffset = screenLength(
+      canvasController,
+      parameters.underlayOffset as number
+    )
+    const startDirections = buildStartDirectionByIndex(glyph.path)
+
+    context.fillStyle = parameters.underColor as string
+    for (const [startIndex, directionPoint] of startDirections) {
+      const startPoint = glyph.path.getPoint(startIndex)
+      if (startPoint) {
+        fillStartDirectionNode(
+          context,
+          startPoint,
+          directionPoint,
+          arrowSize + underlayOffset
+        )
+      }
+    }
+
+    context.fillStyle = parameters.color as string
+    for (const [startIndex, directionPoint] of startDirections) {
+      const startPoint = glyph.path.getPoint(startIndex)
+      if (startPoint) {
+        fillStartDirectionNode(context, startPoint, directionPoint, arrowSize)
       }
     }
   },
@@ -832,6 +885,36 @@ function fillNode(
   context.fill()
 }
 
+function fillStartDirectionNode(
+  context: CanvasRenderingContext2D,
+  pt: Point,
+  directionPoint: Point,
+  size: number
+) {
+  const dx = directionPoint.x - pt.x
+  const dy = directionPoint.y - pt.y
+  const length = Math.hypot(dx, dy) || 1
+  const ux = dx / length
+  const uy = dy / length
+  const px = -uy
+  const py = ux
+  const tipDistance = size * 0.62
+  const baseDistance = size * 0.38
+  const halfBase = size * 0.48
+
+  context.moveTo(pt.x + ux * tipDistance, pt.y + uy * tipDistance)
+  context.lineTo(
+    pt.x - ux * baseDistance + px * halfBase,
+    pt.y - uy * baseDistance + py * halfBase
+  )
+  context.lineTo(
+    pt.x - ux * baseDistance - px * halfBase,
+    pt.y - uy * baseDistance - py * halfBase
+  )
+  context.closePath()
+  context.fill()
+}
+
 function fillRoundNode(
   context: CanvasRenderingContext2D,
   pt: { x: number; y: number },
@@ -886,6 +969,58 @@ function getPointByIndex(
       return pt
     }
   }
+  return null
+}
+
+function buildStartDirectionByIndex(path: {
+  getPoint?(index: number): Point
+  contourInfo?: Array<{ endPoint: number; isClosed?: boolean }>
+}) {
+  const directions = new Map<number, Point>()
+  if (!path.getPoint || !path.contourInfo?.length) {
+    return directions
+  }
+
+  let start = 0
+  for (const contour of path.contourInfo) {
+    const startPoint = path.getPoint(start)
+    if (startPoint?.type === 'onCurve') {
+      const directionPoint = findNextDistinctPoint(
+        path,
+        start,
+        contour.endPoint
+      )
+      if (directionPoint) {
+        directions.set(start, directionPoint)
+      }
+    }
+    start = contour.endPoint + 1
+  }
+
+  return directions
+}
+
+function findNextDistinctPoint(
+  path: { getPoint?(index: number): Point },
+  startIndex: number,
+  endIndex: number
+) {
+  const startPoint = path.getPoint?.(startIndex)
+  if (!startPoint) {
+    return null
+  }
+
+  for (let index = startIndex + 1; index <= endIndex; index += 1) {
+    const point = path.getPoint?.(index)
+    if (!point) {
+      continue
+    }
+
+    if (point.x !== startPoint.x || point.y !== startPoint.y) {
+      return point
+    }
+  }
+
   return null
 }
 

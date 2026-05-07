@@ -237,6 +237,7 @@ export interface GlobalState {
     startNodeId: string,
     endNodeId: string
   ) => void
+  reversePaths: (glyphId: string, pathIds: string[]) => void
   deleteSelectedNodes: (glyphId: string, selectedNodeIds: string[]) => void
   loadProjectState: (
     id: string,
