@@ -10,20 +10,20 @@ import {
 } from '@chakra-ui/react'
 import { Refresh } from 'iconoir-react'
 import { useMemo, useState } from 'react'
-import type { GlyphData } from '../../../store'
-import type { PathBooleanOperation } from '../../../lib/pathBooleanOperations'
+import type { GlyphData } from 'src/store'
+import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import {
   ScaleActionGroup,
   SkewIcon,
   TransformActionRow,
   type SkewAxis,
-} from './TransformActionControls'
+} from 'src/features/editor/rightPanel/TransformActionControls'
 import {
   AlignControls,
   MirrorControls,
   PathOpsControls,
   TransformFrameControls,
-} from './TransformPanelSections'
+} from 'src/features/editor/rightPanel/TransformPanelSections'
 import {
   buildAlignUpdates,
   buildFieldCommitUpdates,
@@ -39,7 +39,7 @@ import {
   type NodePositionUpdate,
   type TransformField,
   type TransformOrigin,
-} from './transformGeometry'
+} from 'src/features/editor/rightPanel/transformGeometry'
 
 interface TransformCardProps {
   glyph: GlyphData | null

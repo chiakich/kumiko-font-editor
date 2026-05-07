@@ -1,19 +1,22 @@
 import { useToast } from '@chakra-ui/react'
-import { saveDraftSnapshot } from '../../../lib/draftSave'
+import { saveDraftSnapshot } from 'src/lib/draftSave'
 import {
   getArchivedGlyphLayerEntries,
   getProjectArchiveMetadata,
-} from '../../../lib/projectArchive'
+} from 'src/lib/projectArchive'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
   isPathEndpointNode,
   useStore,
   type NodeType,
-} from '../../../store'
-import type { PathBooleanOperation } from '../../../lib/pathBooleanOperations'
-import { useGitHubCommitFlow } from './useGitHubCommitFlow'
-import { parseNumberInput, parseSelectedNode } from './utils'
+} from 'src/store'
+import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
+import { useGitHubCommitFlow } from 'src/features/common/glyphInspector/useGitHubCommitFlow'
+import {
+  parseNumberInput,
+  parseSelectedNode,
+} from 'src/features/common/glyphInspector/utils'
 
 export function useRightPanelModel() {
   const toast = useToast()

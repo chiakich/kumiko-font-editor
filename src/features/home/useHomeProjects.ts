@@ -1,10 +1,13 @@
 import { useCallback, useMemo } from 'react'
-import { UFO_LOCAL_DELETED_GLYPHS_KEY } from '../../lib/draftSave'
-import { listDirtyUfoGlyphs, loadUfoUiValue } from '../../lib/ufoPersistence'
-import { useStore } from '../../store'
-import { useGitHubImport } from './useGitHubImport'
-import { useLocalImport } from './useLocalImport'
-import { type LoadedKumikoProject, useProjectList } from './useProjectList'
+import { UFO_LOCAL_DELETED_GLYPHS_KEY } from 'src/lib/draftSave'
+import { listDirtyUfoGlyphs, loadUfoUiValue } from 'src/lib/ufoPersistence'
+import { useStore } from 'src/store'
+import { useGitHubImport } from 'src/features/home/useGitHubImport'
+import { useLocalImport } from 'src/features/home/useLocalImport'
+import {
+  type LoadedKumikoProject,
+  useProjectList,
+} from 'src/features/home/useProjectList'
 
 export function useHomeProjects() {
   const loadProjectState = useStore((state) => state.loadProjectState)

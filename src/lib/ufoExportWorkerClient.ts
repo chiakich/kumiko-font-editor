@@ -1,4 +1,4 @@
-import type { UfoLocalSaveManifest } from './ufoTypes'
+import type { UfoLocalSaveManifest } from 'src/lib/ufoTypes'
 
 interface UfoExportProgressMessage {
   type: 'export-progress'

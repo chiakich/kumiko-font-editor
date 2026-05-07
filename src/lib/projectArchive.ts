@@ -1,8 +1,8 @@
-import type { FontData, GlyphData, GlyphLayerData } from '../store'
+import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
-} from './projectFormats'
+} from 'src/lib/projectFormats'
 
 interface GlyphLayerArchiveEntry {
   layerOrder: string[]

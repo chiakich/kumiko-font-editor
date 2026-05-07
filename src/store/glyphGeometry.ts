@@ -1,4 +1,4 @@
-import type { GlyphData, PathData, PathNode, NodeType } from './types'
+import type { GlyphData, PathData, PathNode, NodeType } from 'src/store/types'
 
 export const isPathEndpointNode = (path: PathData, nodeId: string) => {
   if (path.closed || path.nodes.length === 0) {

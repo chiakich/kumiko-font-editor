@@ -1,4 +1,4 @@
-import type { GlobalState } from './types'
+import type { GlobalState } from 'src/store/types'
 
 export const markGlyphDirty = (state: GlobalState, glyphId: string) => {
   state.isDirty = true

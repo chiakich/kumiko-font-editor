@@ -3,8 +3,8 @@ import { memo, useCallback, useMemo, type MouseEvent } from 'react'
 import {
   buildGlyphPreviewData,
   getGlyphDisplayCharacter,
-} from '../../lib/glyphOverview'
-import type { GlyphData } from '../../store'
+} from 'src/lib/glyphOverview'
+import type { GlyphData } from 'src/store'
 
 const GlyphPreview = memo(function GlyphPreview({
   glyph,

@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react'
-import { importGitHubUfoRepo } from '../../lib/githubImport'
-import type { KumikoProjectSummary } from '../../lib/projectTypes'
-import { clearGitHubUrlParams, getGitHubRepoUrl } from './githubRepoUrl'
-import type { PendingGitHubImport } from './types'
-import { saveImportedUfoWorkspaceAsProject } from './projectImport'
-import type { LoadedKumikoProject } from './useProjectList'
+import { importGitHubUfoRepo } from 'src/lib/githubImport'
+import type { KumikoProjectSummary } from 'src/lib/projectTypes'
+import {
+  clearGitHubUrlParams,
+  getGitHubRepoUrl,
+} from 'src/features/home/githubRepoUrl'
+import type { PendingGitHubImport } from 'src/features/home/types'
+import { saveImportedUfoWorkspaceAsProject } from 'src/features/home/projectImport'
+import type { LoadedKumikoProject } from 'src/features/home/useProjectList'
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '未知錯誤'

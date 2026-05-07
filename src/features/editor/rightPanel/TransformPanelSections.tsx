@@ -22,13 +22,13 @@ import {
   Substract,
   Union,
 } from 'iconoir-react'
-import type { PathBooleanOperation } from '../../../lib/pathBooleanOperations'
-import { SteppedNumberInput } from './SteppedNumberInput'
+import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
+import { SteppedNumberInput } from 'src/features/editor/rightPanel/SteppedNumberInput'
 import type {
   AlignTarget,
   TransformField,
   TransformOrigin,
-} from './transformGeometry'
+} from 'src/features/editor/rightPanel/transformGeometry'
 
 interface OriginPickerProps {
   origin: TransformOrigin

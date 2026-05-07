@@ -4,9 +4,9 @@ import type {
   GlyphMetrics,
   PathData,
   PathNode,
-} from '../store'
-import type { ProjectSourceFormat } from './projectFormats'
-import { hashString } from './hash'
+} from 'src/store'
+import type { ProjectSourceFormat } from 'src/lib/projectFormats'
+import { hashString } from 'src/lib/hash'
 import {
   deleteUfoGlyphBatch,
   makeUfoGlyphKey,
@@ -21,7 +21,7 @@ import {
   listUfoMetadataForProject,
   loadUfoProject,
   updateUfoGlyphExportState,
-} from './ufoPersistence'
+} from 'src/lib/ufoPersistence'
 import type {
   UfoGithubSource,
   UfoGlyphAdvance,
@@ -33,7 +33,7 @@ import type {
   UfoLayerRecord,
   UfoMetadataRecord,
   UfoProjectRecord,
-} from './ufoTypes'
+} from 'src/lib/ufoTypes'
 
 interface ParsedUfoFolder {
   ufoId: string

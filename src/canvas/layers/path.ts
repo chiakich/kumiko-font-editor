@@ -3,9 +3,9 @@
 import {
   registerVisualizationLayerDefinition,
   glyphSelector,
-} from '../SceneView'
-import type { Point, PositionedGlyph, SceneModel } from '../SceneView'
-import type { CanvasController } from '../CanvasController'
+} from 'src/canvas/SceneView'
+import type { Point, PositionedGlyph, SceneModel } from 'src/canvas/SceneView'
+import type { CanvasController } from 'src/canvas/CanvasController'
 
 function strokeLine(
   context: CanvasRenderingContext2D,

@@ -3,10 +3,10 @@ import {
   deleteKumikoProject,
   listProjectSummaries,
   loadProjectDraft,
-} from '../../lib/projectRepository'
-import type { KumikoProjectSummary } from '../../lib/projectTypes'
-import { loadUfoProjectIntoFontData } from '../../lib/fontAdapters/ufo'
-import type { FontData } from '../../store'
+} from 'src/lib/projectRepository'
+import type { KumikoProjectSummary } from 'src/lib/projectTypes'
+import { loadUfoProjectIntoFontData } from 'src/lib/fontAdapters/ufo'
+import type { FontData } from 'src/store'
 
 export interface LoadedKumikoProject {
   id: string

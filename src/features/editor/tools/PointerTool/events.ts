@@ -1,4 +1,4 @@
-import type { EventStream, ToolEvent } from '../BaseTool'
+import type { EventStream, ToolEvent } from 'src/features/editor/tools/BaseTool'
 
 export async function* asyncEventIterator(
   eventStream: EventStream

@@ -1,4 +1,4 @@
-import type { FontData, GlobalState } from './types'
+import type { FontData, GlobalState } from 'src/store/types'
 
 const getGlyphCharacterById = (
   fontData: FontData | null | undefined,

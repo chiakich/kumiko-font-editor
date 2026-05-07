@@ -1,13 +1,17 @@
 // 指標工具 - 節點、線段與框選互動
 
-import { BaseTool, type EventStream, type ToolEvent } from '../BaseTool'
-import type { PathHitInfo, Point } from '../../../../canvas/SceneView'
+import {
+  BaseTool,
+  type EventStream,
+  type ToolEvent,
+} from 'src/features/editor/tools/BaseTool'
+import type { PathHitInfo, Point } from 'src/canvas/SceneView'
 import {
   getIndexedPointSelectionInRect,
   pointSelectionKey,
-} from '../../../../lib/glyphSelection'
-import type { HitTestResult } from '../SceneController'
-import { useStore } from '../../../../store'
+} from 'src/lib/glyphSelection'
+import type { HitTestResult } from 'src/features/editor/tools/SceneController'
+import { useStore } from 'src/store'
 import {
   applyPointerSelectionMode,
   buildPointSelectionFromSelection,
@@ -18,22 +22,25 @@ import {
   isOpenContourEndpoint,
   isSameSegment,
   type PointerSelectionMode,
-} from './selection'
+} from 'src/features/editor/tools/PointerTool/selection'
 import {
   capturePointSnapshot,
   createInitialPointerDragState,
   type DragMode,
   type PointerDragState,
-} from './state'
-import { getSnappedDelta } from './snap'
+} from 'src/features/editor/tools/PointerTool/state'
+import { getSnappedDelta } from 'src/features/editor/tools/PointerTool/snap'
 import {
   buildSelectionTransformBounds,
   getTransformCursor,
   getTransformHandleAtPoint,
   getTransformScaleUpdate,
-} from './transform'
-import { asyncEventIterator } from './events'
-import { getLinkedHandleDrag, getLinkedSmoothHandlePosition } from './handles'
+} from 'src/features/editor/tools/PointerTool/transform'
+import { asyncEventIterator } from 'src/features/editor/tools/PointerTool/events'
+import {
+  getLinkedHandleDrag,
+  getLinkedSmoothHandlePosition,
+} from 'src/features/editor/tools/PointerTool/handles'
 import {
   deformDraggedSegment,
   expandPointIndicesForMove,
@@ -41,8 +48,8 @@ import {
   invalidateGlyphPathCache,
   toggleSmoothFlag,
   updatePointPosition,
-} from './pathEditing'
-import { commitMovedPoints } from './commit'
+} from 'src/features/editor/tools/PointerTool/pathEditing'
+import { commitMovedPoints } from 'src/features/editor/tools/PointerTool/commit'
 
 export class PointerTool extends BaseTool {
   identifier = 'pointer-tool'

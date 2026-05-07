@@ -1,5 +1,5 @@
 import paper from 'paper'
-import type { PathData, PathNode } from '../store/types'
+import type { PathData, PathNode } from 'src/store/types'
 
 export type PathBooleanOperation = 'union' | 'subtract' | 'intersect' | 'divide'
 

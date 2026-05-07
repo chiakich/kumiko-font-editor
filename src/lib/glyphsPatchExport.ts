@@ -1,7 +1,7 @@
-import { parseOpenStep } from './openstepParser'
-import { serializeOpenStepValue } from './glyphsExport'
-import type { GlyphsDocument } from './glyphsDocument'
-import type { GlyphData } from '../store'
+import { parseOpenStep } from 'src/lib/openstepParser'
+import { serializeOpenStepValue } from 'src/lib/glyphsExport'
+import type { GlyphsDocument } from 'src/lib/glyphsDocument'
+import type { GlyphData } from 'src/store'
 
 interface GlyphBlockRange {
   start: number

@@ -3,7 +3,7 @@
  * update glyph metrics.
  */
 import type { StateCreator } from 'zustand'
-import type { GlobalState, GlyphMetrics, NodeType } from '../types'
+import type { GlobalState, GlyphMetrics, NodeType } from 'src/store/types'
 import {
   findNode,
   findPath,
@@ -11,14 +11,14 @@ import {
   isPathEndpointNode,
   translateGlyphHorizontally,
   recomputeGlyphSidebearings,
-} from '../glyphGeometry'
+} from 'src/store/glyphGeometry'
 import {
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
-} from '../editorLine'
-import { syncFilteredGlyphList } from '../glyphSearch'
-import { syncGlyphTopLevelFromLayer } from '../glyphLayer'
-import { markGlyphDirty } from '../dirtyState'
+} from 'src/store/editorLine'
+import { syncFilteredGlyphList } from 'src/store/glyphSearch'
+import { syncGlyphTopLevelFromLayer } from 'src/store/glyphLayer'
+import { markGlyphDirty } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

@@ -12,7 +12,7 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react'
-import type { PendingGitHubImport } from './types'
+import type { PendingGitHubImport } from 'src/features/home/types'
 
 interface PendingGitHubImportModalProps {
   importRequest: PendingGitHubImport | null

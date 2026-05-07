@@ -4,9 +4,9 @@ import {
   loadProject,
   saveProject,
   type ProjectDraft,
-} from './persistence'
-import { toProjectSummary } from './projectTypes'
-import { deleteUfoProjectData } from './ufoPersistence'
+} from 'src/lib/persistence'
+import { toProjectSummary } from 'src/lib/projectTypes'
+import { deleteUfoProjectData } from 'src/lib/ufoPersistence'
 
 export const listProjectSummaries = async () => {
   const projects = await getAllProjects()
@@ -25,4 +25,7 @@ export const deleteKumikoProject = async (projectId: string) => {
   await deleteUfoProjectData(projectId)
 }
 
-export type { KumikoProjectDraft, KumikoProjectSummary } from './projectTypes'
+export type {
+  KumikoProjectDraft,
+  KumikoProjectSummary,
+} from 'src/lib/projectTypes'

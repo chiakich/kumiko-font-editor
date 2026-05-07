@@ -1,17 +1,17 @@
 import { lazy, Suspense } from 'react'
-import { useAutoDraftSave } from './hooks/useAutoDraftSave'
-import { useStore } from './store'
+import { useAutoDraftSave } from 'src/hooks/useAutoDraftSave'
+import { useStore } from 'src/store'
 
 const Home = lazy(() =>
-  import('./features/home/Home').then((module) => ({ default: module.Home }))
+  import('src/features/home/Home').then((module) => ({ default: module.Home }))
 )
 const FontOverviewScreen = lazy(() =>
-  import('./features/fontOverview/FontOverviewScreen').then((module) => ({
+  import('src/features/fontOverview/FontOverviewScreen').then((module) => ({
     default: module.FontOverviewScreen,
   }))
 )
 const EditorLayout = lazy(() =>
-  import('./features/editor/EditorLayout').then((module) => ({
+  import('src/features/editor/EditorLayout').then((module) => ({
     default: module.EditorLayout,
   }))
 )

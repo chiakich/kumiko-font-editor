@@ -18,8 +18,8 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react'
-import type { GitHubForkStatus, GitHubViewer } from '../../../lib/githubAuth'
-import { GitHubRepoCard } from './GitHubRepoCard'
+import type { GitHubForkStatus, GitHubViewer } from 'src/lib/githubAuth'
+import { GitHubRepoCard } from 'src/features/common/glyphInspector/GitHubRepoCard'
 
 export interface GitHubCommitModalProps {
   isOpen: boolean

@@ -1,6 +1,6 @@
 import { useEffect, type RefObject } from 'react'
-import { getGlyphLayer, type FontData } from '../../../store'
-import type { ToolId } from './workspace/types'
+import { getGlyphLayer, type FontData } from 'src/store'
+import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 
 interface UseCanvasKeyboardShortcutsOptions {
   activeEditorGlyphId: string | null

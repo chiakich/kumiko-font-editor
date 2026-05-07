@@ -1,10 +1,10 @@
 import { Divider, HStack, Stack, Text, VStack } from '@chakra-ui/react'
-import type { GlyphData } from '../../../store'
-import { ComponentSearchSection } from './ComponentSearchSection'
-import { GlyphPreviewCard } from './GlyphPreviewCard'
-import { GlyphPreviewStrip } from './GlyphPreviewStrip'
-import { LeftPanelHeader } from './LeftPanelHeader'
-import { useGlyphReferenceSearch } from './useGlyphReferenceSearch'
+import type { GlyphData } from 'src/store'
+import { ComponentSearchSection } from 'src/features/editor/leftPanel/ComponentSearchSection'
+import { GlyphPreviewCard } from 'src/features/editor/leftPanel/GlyphPreviewCard'
+import { GlyphPreviewStrip } from 'src/features/editor/leftPanel/GlyphPreviewStrip'
+import { LeftPanelHeader } from 'src/features/editor/leftPanel/LeftPanelHeader'
+import { useGlyphReferenceSearch } from 'src/features/editor/leftPanel/useGlyphReferenceSearch'
 
 interface LeftPanelContentProps {
   glyphMap: Record<string, GlyphData>

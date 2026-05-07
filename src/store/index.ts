@@ -2,16 +2,19 @@ import { useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { temporal, type TemporalState } from 'zundo'
-import type { GlobalState } from './types'
-import { IDS_DICTIONARY } from './glyphSearch'
-import { buildUiActions } from './actions/uiActions'
-import { buildGlyphActions } from './actions/glyphActions'
-import { buildPathActions } from './actions/pathActions'
-import { buildProjectActions } from './actions/projectActions'
+import type { GlobalState } from 'src/store/types'
+import { IDS_DICTIONARY } from 'src/store/glyphSearch'
+import { buildUiActions } from 'src/store/actions/uiActions'
+import { buildGlyphActions } from 'src/store/actions/glyphActions'
+import { buildPathActions } from 'src/store/actions/pathActions'
+import { buildProjectActions } from 'src/store/actions/projectActions'
 
-export { getGlyphLayer } from './glyphLayer'
-export { getEffectiveNodeType, isPathEndpointNode } from './glyphGeometry'
-export { deterministicStringify } from './deterministicStringify'
+export { getGlyphLayer } from 'src/store/glyphLayer'
+export {
+  getEffectiveNodeType,
+  isPathEndpointNode,
+} from 'src/store/glyphGeometry'
+export { deterministicStringify } from 'src/store/deterministicStringify'
 export type {
   FontData,
   GlyphAnchor,
@@ -29,7 +32,7 @@ export type {
   SelectedSegmentState,
   ViewportState,
   WorkspaceView,
-} from './types'
+} from 'src/store/types'
 
 const initialState = {
   fontData: null,

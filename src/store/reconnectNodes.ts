@@ -1,5 +1,5 @@
-import type { GlyphData, PathData, PathNode } from './types'
-import { generateId } from './glyphGeometry'
+import type { GlyphData, PathData, PathNode } from 'src/store/types'
+import { generateId } from 'src/store/glyphGeometry'
 
 /** Fixed nudge distance (font units) to avoid overlapping closing segments. */
 const EXTENSION_DISTANCE = 2

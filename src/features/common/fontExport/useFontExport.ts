@@ -1,13 +1,13 @@
 import { useToast } from '@chakra-ui/react'
 import { zipSync } from 'fflate'
 import { useState } from 'react'
-import { exportFontAsBinary } from '../../../lib/fontAdapters/binary'
-import { exportFontDataAsUfoZip } from '../../../lib/fontUfoZipExport'
-import { getProjectArchiveMetadata } from '../../../lib/projectArchive'
-import { syncHotFontDataToUfoRecords } from '../../../lib/fontAdapters/ufo'
-import { exportUfoAsZipBlob } from '../../../lib/ufoZipExportClient'
-import { useStore } from '../../../store'
-import type { FontExportFormat } from './ExportFontModal'
+import { exportFontAsBinary } from 'src/lib/fontAdapters/binary'
+import { exportFontDataAsUfoZip } from 'src/lib/fontUfoZipExport'
+import { getProjectArchiveMetadata } from 'src/lib/projectArchive'
+import { syncHotFontDataToUfoRecords } from 'src/lib/fontAdapters/ufo'
+import { exportUfoAsZipBlob } from 'src/lib/ufoZipExportClient'
+import { useStore } from 'src/store'
+import type { FontExportFormat } from 'src/features/common/fontExport/ExportFontModal'
 
 const triggerBlobDownload = (blob: Blob, fileName: string) => {
   const href = URL.createObjectURL(blob)

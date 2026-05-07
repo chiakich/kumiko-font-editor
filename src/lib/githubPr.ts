@@ -1,15 +1,15 @@
-import { hashString } from './hash'
+import { hashString } from 'src/lib/hash'
 import {
   loadUfoProject,
   loadUfoMetadata,
   listDirtyUfoGlyphs,
   updateUfoGlyphExportState,
-} from './ufoPersistence'
+} from 'src/lib/ufoPersistence'
 import {
   pickDefaultLayer,
   serializeGlifRecord,
   serializeXmlPlist,
-} from './fontAdapters/ufo'
+} from 'src/lib/fontAdapters/ufo'
 
 export interface GitHubCommitFileInput {
   path: string

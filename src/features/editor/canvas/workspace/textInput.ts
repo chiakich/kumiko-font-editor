@@ -1,4 +1,4 @@
-import type { FontData } from '../../../../store'
+import type { FontData } from 'src/store'
 
 export const charIndexToCodeUnitIndex = (text: string, charIndex: number) =>
   Array.from(text).slice(0, charIndex).join('').length

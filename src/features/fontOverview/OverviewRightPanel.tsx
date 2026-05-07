@@ -1,10 +1,10 @@
 import { Box, Stack, Text, useDisclosure } from '@chakra-ui/react'
-import { ExportFontModal } from '../common/fontExport/ExportFontModal'
-import { useFontExport } from '../common/fontExport/useFontExport'
-import { GitHubCommitModal } from '../common/glyphInspector/GitHubCommitModal'
-import { GlyphSummaryCard } from '../common/glyphInspector/GlyphSummaryCard'
-import { ProjectSaveCard } from '../common/glyphInspector/ProjectSaveCard'
-import { useRightPanelModel } from '../common/glyphInspector/useRightPanelModel'
+import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
+import { useFontExport } from 'src/features/common/fontExport/useFontExport'
+import { GitHubCommitModal } from 'src/features/common/glyphInspector/GitHubCommitModal'
+import { GlyphSummaryCard } from 'src/features/common/glyphInspector/GlyphSummaryCard'
+import { ProjectSaveCard } from 'src/features/common/glyphInspector/ProjectSaveCard'
+import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightPanelModel'
 
 export function OverviewRightPanel() {
   const panel = useRightPanelModel()

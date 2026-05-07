@@ -2,20 +2,20 @@
  * Project-level store actions: load, close, hydrate, and mark save state.
  */
 import type { StateCreator } from 'zustand'
-import type { FontData, GlobalState } from '../types'
+import type { FontData, GlobalState } from 'src/store/types'
 import {
   clearProjectArchive,
   getArchivedGlyphLayer,
   getProjectArchiveFirstMasterId,
   ingestProjectData,
-} from '../../lib/projectArchive'
+} from 'src/lib/projectArchive'
 import type {
   ProjectSourceFormat,
   ProjectRoundTripFormat,
-} from '../../lib/projectFormats'
-import { syncEditorTextFromGlyphIds } from '../editorLine'
-import { syncFilteredGlyphList } from '../glyphSearch'
-import { syncGlyphTopLevelFromLayer } from '../glyphLayer'
+} from 'src/lib/projectFormats'
+import { syncEditorTextFromGlyphIds } from 'src/store/editorLine'
+import { syncFilteredGlyphList } from 'src/store/glyphSearch'
+import { syncGlyphTopLevelFromLayer } from 'src/store/glyphLayer'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

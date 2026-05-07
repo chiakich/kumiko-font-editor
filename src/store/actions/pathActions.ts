@@ -6,17 +6,20 @@ import type { StateCreator } from 'zustand'
 import {
   buildBooleanOperationPaths,
   type PathBooleanOperation,
-} from '../../lib/pathBooleanOperations'
-import type { GlobalState, PathData, PathNode } from '../types'
+} from 'src/lib/pathBooleanOperations'
+import type { GlobalState, PathData, PathNode } from 'src/store/types'
 import {
   findPath,
   generateId,
   isPathEndpointNode,
   lerp,
   orientOpenPathNodesForConnection,
-} from '../glyphGeometry'
-import { pairNearestEndpoints, performReconnect } from '../reconnectNodes'
-import { markGlyphDirty } from '../dirtyState'
+} from 'src/store/glyphGeometry'
+import {
+  pairNearestEndpoints,
+  performReconnect,
+} from 'src/store/reconnectNodes'
+import { markGlyphDirty } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

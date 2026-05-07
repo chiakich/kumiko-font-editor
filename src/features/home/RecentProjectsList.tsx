@@ -1,6 +1,6 @@
 import { Box, Button, Heading, HStack, Text, VStack } from '@chakra-ui/react'
-import type { KumikoProjectSummary } from '../../lib/projectTypes'
-import type { ProjectOpenHandler } from './types'
+import type { KumikoProjectSummary } from 'src/lib/projectTypes'
+import type { ProjectOpenHandler } from 'src/features/home/types'
 
 interface RecentProjectsListProps {
   projects: KumikoProjectSummary[]

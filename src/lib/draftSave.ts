@@ -3,15 +3,15 @@ import {
   getProjectArchiveMetadata,
   getProjectArchiveRoundTripFormat,
   getProjectArchiveSourceFormat,
-} from './projectArchive'
-import { loadProjectDraft, saveProjectDraft } from './projectRepository'
+} from 'src/lib/projectArchive'
+import { loadProjectDraft, saveProjectDraft } from 'src/lib/projectRepository'
 import {
   loadUfoProject,
   saveUfoProject,
   saveUfoUiValue,
-} from './ufoPersistence'
-import { syncHotFontDataToUfoRecords } from './fontAdapters/ufo'
-import type { FontData } from '../store'
+} from 'src/lib/ufoPersistence'
+import { syncHotFontDataToUfoRecords } from 'src/lib/fontAdapters/ufo'
+import type { FontData } from 'src/store'
 
 export const UFO_LOCAL_DELETED_GLYPHS_KEY = 'ufo-local-deleted-glyph-ids'
 

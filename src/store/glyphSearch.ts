@@ -1,4 +1,4 @@
-import type { FontData, GlyphData, GlobalState } from './types'
+import type { FontData, GlyphData, GlobalState } from 'src/store/types'
 
 export const IDS_DICTIONARY: Record<string, string[]> = {
   林: ['木', '木'],

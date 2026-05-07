@@ -1,4 +1,4 @@
-import { getEffectiveNodeType, type GlyphData } from '../store'
+import { getEffectiveNodeType, type GlyphData } from 'src/store'
 
 export interface GlyphSelectionNodeEntry {
   key: string

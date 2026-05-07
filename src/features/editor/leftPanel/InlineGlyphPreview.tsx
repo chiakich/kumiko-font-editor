@@ -1,7 +1,7 @@
 import { Box } from '@chakra-ui/react'
 import { useMemo } from 'react'
-import { buildGlyphPreviewData } from '../../../lib/glyphOverview'
-import type { GlyphData } from '../../../store'
+import { buildGlyphPreviewData } from 'src/lib/glyphOverview'
+import type { GlyphData } from 'src/store'
 
 const READONLY_FLIP_OFFSET = 680
 

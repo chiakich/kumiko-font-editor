@@ -1,11 +1,11 @@
 import { strToU8, zipSync } from 'fflate'
-import type { FontData, GlyphData, GlyphLayerData } from '../store'
+import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
 import {
   pathToUfoContour,
   serializeGlifRecord,
   serializeXmlPlist,
-} from './fontAdapters/ufo'
-import type { UfoGlyphRecord } from './ufoTypes'
+} from 'src/lib/fontAdapters/ufo'
+import type { UfoGlyphRecord } from 'src/lib/ufoTypes'
 
 const DEFAULT_LAYER_ID = 'public.default'
 const DEFAULT_GLYPH_DIR = 'glyphs'

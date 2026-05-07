@@ -7,25 +7,25 @@ import {
   visualizationLayerDefinitions,
   type Rect,
   type SceneModel,
-} from '../../../canvas'
-import { SceneController } from '../tools'
-import { useStore, useTemporalStore } from '../../../store'
-import { CanvasContextMenu } from './workspace/CanvasContextMenu'
-import { CanvasWorkspaceOverlay } from './workspace/CanvasWorkspaceOverlay'
-import { HiddenTextInput } from './workspace/HiddenTextInput'
+} from 'src/canvas'
+import { SceneController } from 'src/features/editor/tools'
+import { useStore, useTemporalStore } from 'src/store'
+import { CanvasContextMenu } from 'src/features/editor/canvas/workspace/CanvasContextMenu'
+import { CanvasWorkspaceOverlay } from 'src/features/editor/canvas/workspace/CanvasWorkspaceOverlay'
+import { HiddenTextInput } from 'src/features/editor/canvas/workspace/HiddenTextInput'
 import {
   buildPositionedGlyphs,
   getGlyphFrameAtPoint,
   type LayerGeometryCacheEntry,
-} from './workspace/positionedGlyphs'
+} from 'src/features/editor/canvas/workspace/positionedGlyphs'
 import {
   buildGlyphIdByCharacter,
   charIndexToCodeUnitIndex,
   codeUnitIndexToCharIndex,
-} from './workspace/textInput'
-import type { ToolId } from './workspace/types'
-import { useCanvasClipboard } from './useCanvasClipboard'
-import { useCanvasKeyboardShortcuts } from './useCanvasKeyboardShortcuts'
+} from 'src/features/editor/canvas/workspace/textInput'
+import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import { useCanvasClipboard } from 'src/features/editor/canvas/useCanvasClipboard'
+import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/useCanvasKeyboardShortcuts'
 
 export function CanvasWorkspace() {
   const canvasRef = useRef<HTMLCanvasElement>(null)

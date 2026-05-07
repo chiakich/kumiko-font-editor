@@ -3,15 +3,15 @@
  * overview panel, viewport, and preview glyph metrics.
  */
 import type { StateCreator } from 'zustand'
-import type { GlobalState, GlyphMetrics } from '../types'
+import type { GlobalState, GlyphMetrics } from 'src/store/types'
 import {
   clampEditorActiveGlyphIndex,
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
   syncSelectedGlyphFromEditorLine,
-} from '../editorLine'
-import { syncFilteredGlyphList } from '../glyphSearch'
-import { syncGlyphTopLevelFromLayer } from '../glyphLayer'
+} from 'src/store/editorLine'
+import { syncFilteredGlyphList } from 'src/store/glyphSearch'
+import { syncGlyphTopLevelFromLayer } from 'src/store/glyphLayer'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

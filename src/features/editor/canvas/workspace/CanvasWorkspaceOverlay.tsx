@@ -1,8 +1,8 @@
 import { Box, Flex, HStack } from '@chakra-ui/react'
-import type { ToolId } from './types'
-import { AVAILABLE_TOOLS } from './types'
-import { HistoryButton } from './HistoryButton'
-import { ToolButton } from './ToolButton'
+import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import { AVAILABLE_TOOLS } from 'src/features/editor/canvas/workspace/types'
+import { HistoryButton } from 'src/features/editor/canvas/workspace/HistoryButton'
+import { ToolButton } from 'src/features/editor/canvas/workspace/ToolButton'
 
 interface CanvasWorkspaceOverlayProps {
   activeToolId: ToolId

@@ -1,6 +1,6 @@
 import { Box, Button, Text } from '@chakra-ui/react'
-import type { GlyphData } from '../../../store'
-import { InlineGlyphPreview } from './InlineGlyphPreview'
+import type { GlyphData } from 'src/store'
+import { InlineGlyphPreview } from 'src/features/editor/leftPanel/InlineGlyphPreview'
 
 interface GlyphPreviewStripProps {
   glyphMap: Record<string, GlyphData>

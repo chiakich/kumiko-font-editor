@@ -2,8 +2,8 @@ import { unzipSync } from 'fflate'
 import {
   importUfoWorkspaceEntries,
   type UfoWorkspaceEntry,
-} from './fontAdapters/ufo'
-import type { UfoGithubSource } from './ufoTypes'
+} from 'src/lib/fontAdapters/ufo'
+import type { UfoGithubSource } from 'src/lib/ufoTypes'
 
 interface ParsedGitHubInput {
   owner: string

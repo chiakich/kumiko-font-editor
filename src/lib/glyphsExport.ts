@@ -1,11 +1,11 @@
-import type { GlyphsDocument } from './glyphsDocument'
+import type { GlyphsDocument } from 'src/lib/glyphsDocument'
 import type {
   FontData,
   GlyphData,
   GlyphLayerData,
   PathData,
   PathNode,
-} from '../store'
+} from 'src/store'
 
 const quoteString = (value: string) => {
   if (/^[A-Za-z0-9._/+-]+$/.test(value)) {

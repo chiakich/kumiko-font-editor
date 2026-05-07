@@ -1,5 +1,5 @@
-import type { GitHubForkStatus } from '../../../lib/githubAuth'
-import { getProjectArchiveMetadata } from '../../../lib/projectArchive'
+import type { GitHubForkStatus } from 'src/lib/githubAuth'
+import { getProjectArchiveMetadata } from 'src/lib/projectArchive'
 
 export const isMissingGitHubTokenError = (message: string) =>
   /登入 GitHub/.test(message) ||

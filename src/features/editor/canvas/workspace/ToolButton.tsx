@@ -1,6 +1,6 @@
 import { Button, Tooltip } from '@chakra-ui/react'
-import type { ToolId } from './types'
-import { TOOL_ICONS } from './toolIcons'
+import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import { TOOL_ICONS } from 'src/features/editor/canvas/workspace/toolIcons'
 
 interface ToolButtonProps {
   isActive: boolean

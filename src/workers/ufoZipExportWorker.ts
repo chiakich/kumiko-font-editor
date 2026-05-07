@@ -1,18 +1,18 @@
 /// <reference lib="webworker" />
 import { Zip, ZipDeflate } from 'fflate'
-import { hashString } from '../lib/hash'
+import { hashString } from 'src/lib/hash'
 import {
   serializeGlifRecord,
   serializeXmlPlist,
   pickDefaultLayer,
-} from '../lib/fontAdapters/ufo'
+} from 'src/lib/fontAdapters/ufo'
 import {
   listUfoGlyphsInLayer,
   listUfoMetadataForProject,
   loadUfoProject,
   updateUfoGlyphExportState,
-} from '../lib/ufoPersistence'
-import type { UfoGlyphPrimaryKey } from '../lib/ufoTypes'
+} from 'src/lib/ufoPersistence'
+import type { UfoGlyphPrimaryKey } from 'src/lib/ufoTypes'
 
 interface ZipExportRequest {
   type: 'zip-export'

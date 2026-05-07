@@ -15,12 +15,12 @@ import type {
 import {
   getGlyphOverviewSections,
   type OverviewGroupBy,
-} from '../../lib/glyphOverview'
-import { useStore } from '../../store'
-import { OverviewContent } from './OverviewContent'
-import { OverviewRightPanel } from './OverviewRightPanel'
-import { OverviewSidebar } from './OverviewSidebar'
-import { parseGlyphAdditionInput } from './glyphInput'
+} from 'src/lib/glyphOverview'
+import { useStore } from 'src/store'
+import { OverviewContent } from 'src/features/fontOverview/OverviewContent'
+import { OverviewRightPanel } from 'src/features/fontOverview/OverviewRightPanel'
+import { OverviewSidebar } from 'src/features/fontOverview/OverviewSidebar'
+import { parseGlyphAdditionInput } from 'src/features/fontOverview/glyphInput'
 
 export function FontOverviewScreen() {
   const toast = useToast()

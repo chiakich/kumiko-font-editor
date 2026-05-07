@@ -14,8 +14,8 @@ import {
   mergeGitHubUpstream,
   type GitHubCompareStatusResponse,
   type GitHubForkStatus,
-} from './githubAuth'
-import { githubQueryKeys } from './githubQueryKeys'
+} from 'src/lib/githubAuth'
+import { githubQueryKeys } from 'src/lib/githubQueryKeys'
 
 export const fetchCachedGitHubForkStatus = (
   queryClient: QueryClient,

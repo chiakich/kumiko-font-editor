@@ -1,4 +1,8 @@
-import { BaseTool, type EventStream, type ToolEvent } from './BaseTool'
+import {
+  BaseTool,
+  type EventStream,
+  type ToolEvent,
+} from 'src/features/editor/tools/BaseTool'
 
 export class TextTool extends BaseTool {
   identifier = 'text'

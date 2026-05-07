@@ -1,4 +1,7 @@
-import type { KumikoProjectDraft, KumikoProjectSummary } from './projectTypes'
+import type {
+  KumikoProjectDraft,
+  KumikoProjectSummary,
+} from 'src/lib/projectTypes'
 
 const DB_NAME = 'kumiko-font-editor'
 const STORE_NAME = 'projects'

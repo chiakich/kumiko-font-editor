@@ -12,8 +12,8 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react'
-import type { OverviewGroupBy } from '../../lib/glyphOverview'
-import type { GlyphData } from '../../store'
+import type { OverviewGroupBy } from 'src/lib/glyphOverview'
+import type { GlyphData } from 'src/store'
 
 interface OverviewSection {
   id: string

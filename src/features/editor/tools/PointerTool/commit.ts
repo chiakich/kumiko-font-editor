@@ -1,7 +1,7 @@
-import type { PositionedGlyph } from '../../../../canvas/SceneView'
-import type { SceneControllerInterface } from '../BaseTool'
-import { getLinkedSmoothHandlePosition } from './handles'
-import type { PointerDragState } from './state'
+import type { PositionedGlyph } from 'src/canvas/SceneView'
+import type { SceneControllerInterface } from 'src/features/editor/tools/BaseTool'
+import { getLinkedSmoothHandlePosition } from 'src/features/editor/tools/PointerTool/handles'
+import type { PointerDragState } from 'src/features/editor/tools/PointerTool/state'
 
 export const commitMovedPoints = (
   glyph: PositionedGlyph | undefined,

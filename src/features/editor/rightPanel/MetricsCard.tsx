@@ -1,6 +1,6 @@
 import { Box, Grid, GridItem, Heading, Input, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
-import type { GlyphMetrics } from '../../../store'
+import type { GlyphMetrics } from 'src/store'
 
 type MetricField = 'lsb' | 'rsb' | 'width'
 

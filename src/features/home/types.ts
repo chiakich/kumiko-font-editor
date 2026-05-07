@@ -1,4 +1,4 @@
-import type { KumikoProjectSummary } from '../../lib/projectTypes'
+import type { KumikoProjectSummary } from 'src/lib/projectTypes'
 
 export interface PendingGitHubImport {
   repo: string

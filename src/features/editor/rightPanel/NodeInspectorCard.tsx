@@ -9,8 +9,9 @@ import {
   Tag,
   Text,
 } from '@chakra-ui/react'
-import { CornerNodeIcon, SmoothNodeIcon } from '../../../icons'
-import type { NodeType, SelectedSegmentState } from '../../../store'
+import SmoothNodeIcon from 'src/assets/icons/SmoothNodeIcon.svg?react'
+import CornerNodeIcon from 'src/assets/icons/CornerNodeIcon.svg?react'
+import type { NodeType, SelectedSegmentState } from 'src/store'
 
 interface NodeInspectorCardProps {
   effectiveNodeType: NodeType | undefined

@@ -1,10 +1,10 @@
-import type { FontData } from '../store'
-import type { GlyphsDocument } from './glyphsDocument'
-import type { GlyphsPackageData } from './glyphsPackage'
+import type { FontData } from 'src/store'
+import type { GlyphsDocument } from 'src/lib/glyphsDocument'
+import type { GlyphsPackageData } from 'src/lib/glyphsPackage'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
-} from './projectFormats'
+} from 'src/lib/projectFormats'
 
 export type ProjectSourceType = 'local' | 'github'
 

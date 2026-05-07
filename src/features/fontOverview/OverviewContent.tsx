@@ -6,9 +6,12 @@ import {
   type ListRange,
   type VirtuosoGridHandle,
 } from 'react-virtuoso'
-import { GlyphCard } from './GlyphCard'
-import { OverviewGridItem, OverviewGridList } from './OverviewGridComponents'
-import type { GlyphData } from '../../store'
+import { GlyphCard } from 'src/features/fontOverview/GlyphCard'
+import {
+  OverviewGridItem,
+  OverviewGridList,
+} from 'src/features/fontOverview/OverviewGridComponents'
+import type { GlyphData } from 'src/store'
 
 interface OverviewSection {
   id: string

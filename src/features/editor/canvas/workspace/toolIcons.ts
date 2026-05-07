@@ -8,7 +8,7 @@ import {
   Text,
   Circle,
 } from 'iconoir-react'
-import type { ToolId } from './types'
+import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 
 type ToolIcon = typeof CursorPointer
 

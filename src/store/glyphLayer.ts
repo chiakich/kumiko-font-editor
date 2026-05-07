@@ -2,8 +2,8 @@ import {
   getArchivedGlyphLayer,
   getHotGlyphLayerSnapshot,
   getGlyphLayerSnapshot,
-} from '../lib/projectArchive'
-import type { GlyphData } from './types'
+} from 'src/lib/projectArchive'
+import type { GlyphData } from 'src/store/types'
 
 export const getGlyphLayer = (
   glyph: GlyphData | undefined,

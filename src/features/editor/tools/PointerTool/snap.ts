@@ -1,5 +1,5 @@
-import type { Point } from '../../../../canvas/SceneView'
-import type { DragMode } from './state'
+import type { Point } from 'src/canvas/SceneView'
+import type { DragMode } from 'src/features/editor/tools/PointerTool/state'
 
 export const getGridSnapStep = (magnification: number) => {
   if (magnification >= 32) {

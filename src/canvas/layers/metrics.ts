@@ -3,9 +3,9 @@
 import {
   registerVisualizationLayerDefinition,
   glyphSelector,
-} from '../SceneView'
-import type { PositionedGlyph, SceneModel } from '../SceneView'
-import type { CanvasController } from '../CanvasController'
+} from 'src/canvas/SceneView'
+import type { PositionedGlyph, SceneModel } from 'src/canvas/SceneView'
+import type { CanvasController } from 'src/canvas/CanvasController'
 
 type LineMetrics = NonNullable<SceneModel['lineMetricsHorizontalLayout']>
 

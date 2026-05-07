@@ -1,10 +1,14 @@
-import { BaseTool, type EventStream, type ToolEvent } from './BaseTool'
+import {
+  BaseTool,
+  type EventStream,
+  type ToolEvent,
+} from 'src/features/editor/tools/BaseTool'
 import {
   useStore,
   type NodeType,
   type PathData,
   type PathNode,
-} from '../../../store'
+} from 'src/store'
 
 type ShapeKind = 'rect' | 'ellipse'
 

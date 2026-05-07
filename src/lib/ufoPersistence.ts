@@ -4,14 +4,14 @@ import {
   UFO_METADATA_STORE,
   UFO_PROJECTS_STORE,
   UFO_UI_STATE_STORE,
-} from './persistence'
+} from 'src/lib/persistence'
 import type {
   UfoGlyphPrimaryKey,
   UfoGlyphRecord,
   UfoMetadataRecord,
   UfoProjectRecord,
   UfoUiStateRecord,
-} from './ufoTypes'
+} from 'src/lib/ufoTypes'
 
 const requestToPromise = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {

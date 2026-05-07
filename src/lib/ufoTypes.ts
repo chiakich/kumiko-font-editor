@@ -1,4 +1,4 @@
-import type { GitHubProjectSource } from './projectTypes'
+import type { GitHubProjectSource } from 'src/lib/projectTypes'
 
 export interface UfoProjectRecord {
   projectId: string

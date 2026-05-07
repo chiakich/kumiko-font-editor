@@ -1,4 +1,4 @@
-import type { GlyphData } from '../store'
+import type { GlyphData } from 'src/store'
 
 const IDS_OPERATOR_MIN = 0x2ff0
 const IDS_OPERATOR_MAX = 0x2ffb

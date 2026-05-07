@@ -13,8 +13,8 @@ import {
   getGlyphDisplayCharacter,
   getGlyphOverviewStats,
   getGlyphScriptLabel,
-} from '../../../lib/glyphOverview'
-import type { GlyphData, GlyphLayerData, WorkspaceView } from '../../../store'
+} from 'src/lib/glyphOverview'
+import type { GlyphData, GlyphLayerData, WorkspaceView } from 'src/store'
 
 interface GlyphSummaryCardProps {
   activeLayer: GlyphLayerData | null

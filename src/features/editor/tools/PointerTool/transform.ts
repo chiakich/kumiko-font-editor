@@ -1,4 +1,4 @@
-import type { Point, SceneModel } from '../../../../canvas/SceneView'
+import type { Point, SceneModel } from 'src/canvas/SceneView'
 
 export type TransformHandleId =
   | 'nw'

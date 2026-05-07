@@ -1,6 +1,6 @@
 import opentype from 'opentype.js'
-import type { FontData, GlyphData, PathData, PathNode } from '../store'
-import type { ProjectSourceFormat } from './projectFormats'
+import type { FontData, GlyphData, PathData, PathNode } from 'src/store'
+import type { ProjectSourceFormat } from 'src/lib/projectFormats'
 
 const DEFAULT_LAYER_ID = 'public.default'
 const WOFF2_WASM_URL = new URL(

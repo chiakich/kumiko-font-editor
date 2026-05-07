@@ -9,4 +9,4 @@ export {
   syncHotFontDataToUfoRecords,
   type ImportedUfoWorkspace,
   type UfoWorkspaceEntry,
-} from '../ufoFormat'
+} from 'src/lib/ufoFormat'

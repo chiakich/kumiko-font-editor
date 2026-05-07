@@ -1,13 +1,13 @@
 import { Box, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { VarPackedPath } from '../../../font/VarPackedPath'
+import { VarPackedPath } from 'src/font/VarPackedPath'
 import {
   useStore,
   type GlyphData,
   type GlyphComponentRef,
   type PathData,
   type PathNode,
-} from '../../../store'
+} from 'src/store'
 
 const PREVIEW_PADDING_X = 80
 const PREVIEW_ASCENDER = 900

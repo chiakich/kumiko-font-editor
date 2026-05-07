@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { searchProjectGlyphsByComponent } from '../../../lib/componentSearchWorkerClient'
+import { searchProjectGlyphsByComponent } from 'src/lib/componentSearchWorkerClient'
 import {
   getGlyphCharacter,
   getRelatedGlyphs,
   isCjkCharacter,
-} from '../../../lib/glyphRelations'
-import type { GlyphData } from '../../../store'
+} from 'src/lib/glyphRelations'
+import type { GlyphData } from 'src/store'
 
 interface SearchState {
   components: string[]

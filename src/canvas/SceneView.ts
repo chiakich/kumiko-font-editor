@@ -1,6 +1,9 @@
 // SceneView 與 Visualization Layers 架構
 
-import { withSavedState, type CanvasController } from './CanvasController'
+import {
+  withSavedState,
+  type CanvasController,
+} from 'src/canvas/CanvasController'
 
 export interface SceneModel {
   glyph?: PositionedGlyph

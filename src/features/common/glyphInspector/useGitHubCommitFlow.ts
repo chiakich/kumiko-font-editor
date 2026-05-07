@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   startGitHubOAuthLogin,
   type GitHubForkStatus,
-} from '../../../lib/githubAuth'
+} from 'src/lib/githubAuth'
 import {
   applyCompareToForkStatus,
   fetchCachedGitHubCompareStatus,
@@ -17,13 +17,10 @@ import {
   useLoginGitHubMutation,
   useLogoutGitHubMutation,
   useMergeGitHubUpstreamMutation,
-} from '../../../lib/githubQueries'
-import {
-  markGitHubCommitSynced,
-  prepareGitHubCommit,
-} from '../../../lib/githubPr'
-import { syncHotFontDataToUfoRecords } from '../../../lib/fontAdapters/ufo'
-import type { FontData } from '../../../store'
+} from 'src/lib/githubQueries'
+import { markGitHubCommitSynced, prepareGitHubCommit } from 'src/lib/githubPr'
+import { syncHotFontDataToUfoRecords } from 'src/lib/fontAdapters/ufo'
+import type { FontData } from 'src/store'
 import {
   buildSuggestedGitHubBranchName,
   getActiveUfoIdFromArchive,
@@ -31,8 +28,8 @@ import {
   isExistingGitHubBranch,
   isMissingGitHubTokenError,
   resolveGitHubBranchSelection,
-} from './githubCommitFlowUtils'
-import type { GitHubCommitModalProps } from './GitHubCommitModal'
+} from 'src/features/common/glyphInspector/githubCommitFlowUtils'
+import type { GitHubCommitModalProps } from 'src/features/common/glyphInspector/GitHubCommitModal'
 
 interface UseGitHubCommitFlowInput {
   projectId: string | null

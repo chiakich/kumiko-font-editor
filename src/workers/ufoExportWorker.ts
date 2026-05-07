@@ -1,18 +1,18 @@
 /// <reference lib="webworker" />
-import { hashString } from '../lib/hash'
+import { hashString } from 'src/lib/hash'
 import {
   serializeGlifRecord,
   serializeXmlPlist,
   pickDefaultLayer,
-} from '../lib/fontAdapters/ufo'
+} from 'src/lib/fontAdapters/ufo'
 import {
   listDirtyUfoGlyphs,
   listUfoGlyphsInLayer,
   listUfoMetadataForProject,
   loadUfoProject,
   updateUfoGlyphExportState,
-} from '../lib/ufoPersistence'
-import type { UfoLocalSaveManifest } from '../lib/ufoTypes'
+} from 'src/lib/ufoPersistence'
+import type { UfoLocalSaveManifest } from 'src/lib/ufoTypes'
 
 interface UfoExportRequestMessage {
   type: 'export-ufo'

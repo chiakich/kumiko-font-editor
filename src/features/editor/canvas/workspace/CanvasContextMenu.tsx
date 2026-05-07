@@ -4,7 +4,7 @@ import {
   getGlyphLayer,
   type FontData,
   type SelectedSegmentState,
-} from '../../../../store'
+} from 'src/store'
 
 interface CanvasContextMenuProps {
   activeEditorGlyphId: string | null

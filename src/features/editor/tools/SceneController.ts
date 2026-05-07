@@ -1,20 +1,20 @@
 // 場景控制器 - 管理編輯狀態和互動
 
-import type { CanvasController } from '../../../canvas/CanvasController'
-import type { PathHitInfo, Point, SceneModel } from '../../../canvas/SceneView'
+import type { CanvasController } from 'src/canvas/CanvasController'
+import type { PathHitInfo, Point, SceneModel } from 'src/canvas/SceneView'
 import {
   getOnCurveContourPointSelection,
   parsePointSelection,
   pointSelectionKey,
-} from '../../../lib/glyphSelection'
-import { PointerTool } from './PointerTool'
-import { PenTool } from './PenTool'
-import { BrushTool } from './BrushTool'
-import { HandTool } from './HandTool'
-import { TextTool } from './TextTool'
-import { EllipseTool, RectangleTool } from './ShapeTool'
-import { KnifeTool } from './KnifeTool'
-import type { BaseTool, ToolEvent } from './BaseTool'
+} from 'src/lib/glyphSelection'
+import { PointerTool } from 'src/features/editor/tools/PointerTool'
+import { PenTool } from 'src/features/editor/tools/PenTool'
+import { BrushTool } from 'src/features/editor/tools/BrushTool'
+import { HandTool } from 'src/features/editor/tools/HandTool'
+import { TextTool } from 'src/features/editor/tools/TextTool'
+import { EllipseTool, RectangleTool } from 'src/features/editor/tools/ShapeTool'
+import { KnifeTool } from 'src/features/editor/tools/KnifeTool'
+import type { BaseTool, ToolEvent } from 'src/features/editor/tools/BaseTool'
 
 export interface SceneControllerOptions {
   canvasController: CanvasController

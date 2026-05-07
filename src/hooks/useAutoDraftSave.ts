@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { saveDraftSnapshot } from '../lib/draftSave'
-import { useStore } from '../store'
+import { saveDraftSnapshot } from 'src/lib/draftSave'
+import { useStore } from 'src/store'
 
 const AUTO_DRAFT_SAVE_DELAY_MS = 60_000
 

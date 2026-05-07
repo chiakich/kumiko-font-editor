@@ -1,5 +1,5 @@
-import { VarPackedPath } from '../font/VarPackedPath'
-import type { GlyphData } from '../store'
+import { VarPackedPath } from 'src/font/VarPackedPath'
+import type { GlyphData } from 'src/store'
 
 export type OverviewGroupBy = 'none' | 'script' | 'block'
 

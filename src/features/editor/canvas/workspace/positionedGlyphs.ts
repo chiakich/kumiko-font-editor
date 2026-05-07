@@ -1,16 +1,12 @@
-import { VarPackedPath } from '../../../../font/VarPackedPath'
+import { VarPackedPath } from 'src/font/VarPackedPath'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
   type FontData,
   type NodeType,
-} from '../../../../store'
-import type {
-  ComponentData,
-  GuidelineData,
-  PositionedGlyph,
-} from '../../../../canvas'
-import type { ToolId } from './types'
+} from 'src/store'
+import type { ComponentData, GuidelineData, PositionedGlyph } from 'src/canvas'
+import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 
 export interface LayerGeometryCacheEntry {
   layerRef: object

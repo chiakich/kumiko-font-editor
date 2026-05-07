@@ -1,8 +1,11 @@
-import { extractGlyphsMetadata, type GlyphsDocument } from './glyphsDocument'
-import { serializeOpenStepValue } from './glyphsExport'
-import { patchGlyphText } from './glyphsPatchExport'
-import { parseOpenStep } from './openstepParser'
-import type { GlyphData } from '../store'
+import {
+  extractGlyphsMetadata,
+  type GlyphsDocument,
+} from 'src/lib/glyphsDocument'
+import { serializeOpenStepValue } from 'src/lib/glyphsExport'
+import { patchGlyphText } from 'src/lib/glyphsPatchExport'
+import { parseOpenStep } from 'src/lib/openstepParser'
+import type { GlyphData } from 'src/store'
 
 export interface GlyphsPackageData {
   packageName: string

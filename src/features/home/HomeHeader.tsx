@@ -1,5 +1,5 @@
 import { Box, Heading, HStack, Image, Text } from '@chakra-ui/react'
-import logoUrl from '../../assets/logo.svg'
+import logoUrl from 'src/assets/logo.svg'
 
 export function HomeHeader() {
   return (

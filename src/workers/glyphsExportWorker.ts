@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
 
-import { exportGlyphsByPatchingText } from '../lib/glyphsPatchExport'
-import { loadProjectDraft } from '../lib/projectRepository'
-import type { GlyphData } from '../store'
+import { exportGlyphsByPatchingText } from 'src/lib/glyphsPatchExport'
+import { loadProjectDraft } from 'src/lib/projectRepository'
+import type { GlyphData } from 'src/store'
 
 interface ExportRequestMessage {
   type: 'export-glyphs'

@@ -1,11 +1,15 @@
-import { BaseTool, type EventStream, type ToolEvent } from './BaseTool'
-import type { PathHitInfo } from '../../../canvas/SceneView'
+import {
+  BaseTool,
+  type EventStream,
+  type ToolEvent,
+} from 'src/features/editor/tools/BaseTool'
+import type { PathHitInfo } from 'src/canvas/SceneView'
 import {
   useStore,
   type NodeType,
   type PathData,
   type PathNode,
-} from '../../../store'
+} from 'src/store'
 
 type AppendTarget = {
   mode: 'append' | 'prepend'

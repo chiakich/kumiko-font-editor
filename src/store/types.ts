@@ -1,8 +1,8 @@
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
-} from '../lib/projectFormats'
-import type { PathBooleanOperation } from '../lib/pathBooleanOperations'
+} from 'src/lib/projectFormats'
+import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 
 export type NodeType = 'corner' | 'smooth' | 'offcurve' | 'qcurve'
 

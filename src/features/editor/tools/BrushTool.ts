@@ -1,7 +1,11 @@
 // Brush tool - freehand polyline drawing
 
-import { BaseTool, type EventStream, type ToolEvent } from './BaseTool'
-import { useStore, type PathData, type PathNode } from '../../../store'
+import {
+  BaseTool,
+  type EventStream,
+  type ToolEvent,
+} from 'src/features/editor/tools/BaseTool'
+import { useStore, type PathData, type PathNode } from 'src/store'
 
 export class BrushTool extends BaseTool {
   identifier = 'brush'

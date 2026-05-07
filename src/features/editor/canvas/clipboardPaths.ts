@@ -1,4 +1,4 @@
-import type { PathData, PathNode, NodeType, GlyphData } from '../../../store'
+import type { PathData, PathNode, NodeType, GlyphData } from 'src/store'
 
 export interface ClipboardPathPayload {
   type: 'kumiko-paths'
