@@ -9,8 +9,13 @@ import {
   Stack,
   Text,
   IconButton,
+  Select,
 } from '@chakra-ui/react'
 import { XmarkCircle } from 'iconoir-react'
+
+import { getLanguageOptions } from './languages'
+
+const COMMON_LANGUAGES = getLanguageOptions()
 
 const editableNameKeys = [
   ['fontFamily', 'Family name'],
@@ -86,17 +91,27 @@ export function LocalizedNamesEditor({
                 +
               </Button>
             </HStack>
-            <Grid templateColumns="100px 1fr min-content" gap={2}>
+            <Grid templateColumns="240px 1fr min-content" gap={2}>
               {entries.map(([language, value]) => (
                 <>
                   <FormControl>
                     <FormLabel fontSize="xs">Language</FormLabel>
-                    <Input
+                    <Select
                       value={language}
                       onChange={(event) =>
                         updateLanguage(nameKey, language, event.target.value)
                       }
-                    />
+                    >
+                      {!COMMON_LANGUAGES.some((l) => l.tag === language) &&
+                        language && (
+                          <option value={language}>{language}</option>
+                        )}
+                      {COMMON_LANGUAGES.map((lang) => (
+                        <option key={lang.tag} value={lang.tag}>
+                          {lang.label} ({lang.tag})
+                        </option>
+                      ))}
+                    </Select>
                   </FormControl>
                   <FormControl>
                     <FormLabel fontSize="xs">Value</FormLabel>
