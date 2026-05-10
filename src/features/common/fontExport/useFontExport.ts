@@ -3,6 +3,12 @@ import { zipSync } from 'fflate'
 import { useState } from 'react'
 import { exportFontAsBinary } from 'src/lib/fontAdapters/binary'
 import { exportFontDataAsUfoZip } from 'src/lib/fontUfoZipExport'
+import {
+  deriveOpenTypeExportWarnings,
+  hasBlockingExportWarnings,
+  hasManagedFeatureEdits,
+  validateFeatures,
+} from 'src/lib/openTypeFeatures'
 import { getProjectArchiveMetadata } from 'src/lib/projectArchive'
 import { syncHotFontDataToUfoRecords } from 'src/lib/fontAdapters/ufo'
 import { exportUfoAsZipBlob } from 'src/lib/ufoZipExportClient'
@@ -50,8 +56,21 @@ export function useFontExport() {
   const localDirtyGlyphIds = useStore((state) => state.localDirtyGlyphIds)
   const localDeletedGlyphIds = useStore((state) => state.localDeletedGlyphIds)
   const markLocalSaved = useStore((state) => state.markLocalSaved)
+  const openTypeExportWarnings = fontData?.openTypeFeatures
+    ? deriveOpenTypeExportWarnings(fontData.openTypeFeatures, {
+        diagnostics: validateFeatures(fontData.openTypeFeatures, fontData),
+        hasGeneratedFeatureEdits: hasManagedFeatureEdits(
+          fontData.openTypeFeatures
+        ),
+      })
+    : []
+  const hasBlockingOpenTypeWarnings = hasBlockingExportWarnings(
+    openTypeExportWarnings
+  )
 
-  const canExport = Boolean(fontData && projectId && !isExporting)
+  const canExport = Boolean(
+    fontData && projectId && !isExporting && !hasBlockingOpenTypeWarnings
+  )
   const loadingText = ufoExportProgress
     ? ufoExportProgress.phase === 'zip'
       ? `壓縮中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
@@ -64,6 +83,7 @@ export function useFontExport() {
       !fontData ||
       !projectId ||
       isExporting ||
+      hasBlockingOpenTypeWarnings ||
       selectedFormats.length === 0
     ) {
       return
@@ -181,6 +201,7 @@ export function useFontExport() {
   return {
     canExport,
     exportFont,
+    openTypeExportWarnings,
     isExporting,
     loadingText,
     ufoExportProgress,

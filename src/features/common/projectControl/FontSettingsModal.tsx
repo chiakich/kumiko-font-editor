@@ -34,6 +34,10 @@ import {
   toSourceDrafts,
 } from 'src/features/common/projectControl/fontSettings/model'
 import { defaultFontAxes } from 'src/lib/fontInfoSettings'
+import {
+  createEmptyOpenTypeFeaturesState,
+  createFontFingerprint,
+} from 'src/lib/openTypeFeatures'
 import type {
   CrossAxisMapping,
   FontAxis,
@@ -86,6 +90,13 @@ export function FontSettingsModal({
   const [exports, setExports] = useState(() => toExportDrafts(fontData))
   const [featuresText, setFeaturesText] = useState(
     () => fontData?.features?.text ?? ''
+  )
+  const [openTypeFeatures, setOpenTypeFeatures] = useState(
+    () =>
+      fontData?.openTypeFeatures ??
+      createEmptyOpenTypeFeaturesState(
+        fontData ? createFontFingerprint(fontData) : null
+      )
   )
   const [fontType, setFontType] = useState(
     () => initialSettings.fontType ?? 'static'
@@ -140,6 +151,7 @@ export function FontSettingsModal({
         text: featuresText,
         customData: fontData?.features?.customData ?? {},
       },
+      openTypeFeatures,
       statusDefinitions,
       settings: nextSettings,
     })
@@ -216,8 +228,11 @@ export function FontSettingsModal({
               </TabPanel>
               <TabPanel p={0} h="100%" overflow="auto">
                 <FontFeaturesTab
+                  fontData={fontData}
                   featuresText={featuresText}
+                  openTypeFeatures={openTypeFeatures}
                   onFeaturesTextChange={setFeaturesText}
+                  onOpenTypeFeaturesChange={setOpenTypeFeatures}
                 />
               </TabPanel>
               <TabPanel p={0} h="100%" overflow="auto">

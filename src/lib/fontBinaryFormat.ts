@@ -1,4 +1,8 @@
 import opentype from 'opentype.js'
+import {
+  createEmptyOpenTypeFeaturesState,
+  createFontFingerprint,
+} from 'src/lib/openTypeFeatures'
 import type {
   FontData,
   FontInfo,
@@ -279,6 +283,7 @@ export const importBinaryFontFile = async (file: File) => {
       : rawBuffer
   const font = opentype.parse(buffer)
   const glyphs: Record<string, GlyphData> = {}
+  const glyphOrder: string[] = []
 
   for (let idx = 0; idx < font.glyphs.length; idx += 1) {
     const glyph = font.glyphs.get(idx)
@@ -302,6 +307,7 @@ export const importBinaryFontFile = async (file: File) => {
     const width = glyph.advanceWidth ?? font.unitsPerEm
     const metrics = buildGlyphMetrics(glyph, width)
     const glyphId = toGlyphId(glyph, idx)
+    glyphOrder.push(glyphId)
     glyphs[glyphId] = {
       id: glyphId,
       name: glyph.name ?? glyphId,
@@ -335,15 +341,22 @@ export const importBinaryFontFile = async (file: File) => {
           ? 'woff2'
           : 'woff'
 
+  const fontData = {
+    glyphs,
+    glyphOrder,
+    fontInfo: buildFontInfoFromOpenTypeFont(font),
+    unitsPerEm: font.unitsPerEm,
+    lineMetricsHorizontalLayout: buildLineMetricsFromOpenTypeFont(font),
+  } as FontData
+
+  fontData.openTypeFeatures = createEmptyOpenTypeFeaturesState(
+    createFontFingerprint(fontData)
+  )
+
   return {
     projectId: `font-${Date.now()}`,
     projectTitle: file.name.replace(/\.[^.]+$/, ''),
-    fontData: {
-      glyphs,
-      fontInfo: buildFontInfoFromOpenTypeFont(font),
-      unitsPerEm: font.unitsPerEm,
-      lineMetricsHorizontalLayout: buildLineMetricsFromOpenTypeFont(font),
-    } as FontData,
+    fontData,
     sourceFormat,
   }
 }

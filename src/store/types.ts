@@ -4,6 +4,10 @@ import type {
 } from 'src/lib/projectFormats'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import type { GlyphEditTimes } from 'src/lib/glyphEditTimes'
+import type {
+  GlyphSelector,
+  OpenTypeFeaturesState,
+} from 'src/lib/openTypeFeatures'
 
 export type NodeType = 'corner' | 'smooth' | 'offcurve' | 'qcurve'
 
@@ -85,10 +89,14 @@ export interface GlyphData {
 
 export interface FontData {
   glyphs: Record<string, GlyphData>
+  glyphOrder?: string[]
+  kerningGroups?: KerningGroup[]
+  kerningPairs?: KerningPair[]
   fontInfo?: FontInfo
   axes?: FontAxes
   sources?: Record<string, FontSource>
   features?: OpenTypeFeatures
+  openTypeFeatures?: OpenTypeFeaturesState
   exportInstances?: FontExportInstance[]
   statusDefinitions?: DevelopmentStatusDefinition[]
   settings?: FontProjectSettings
@@ -100,6 +108,20 @@ export interface FontData {
       zone?: number
     }
   >
+}
+
+export interface KerningGroup {
+  id: string
+  side: 'left' | 'right'
+  name: string
+  glyphs: string[]
+}
+
+export interface KerningPair {
+  id?: string
+  left: GlyphSelector
+  right: GlyphSelector
+  value: number
 }
 
 export type FontInfoCustomDataValue =

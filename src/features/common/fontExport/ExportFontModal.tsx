@@ -1,4 +1,8 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Button,
   Checkbox,
   HStack,
@@ -13,6 +17,7 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import type { OpenTypeExportWarning } from 'src/lib/openTypeFeatures'
 
 export type FontExportFormat = 'zip' | 'ttf' | 'otf' | 'woff' | 'woff2'
 
@@ -21,6 +26,7 @@ interface ExportFontModalProps {
   canExport: boolean
   isExporting: boolean
   loadingText: string
+  openTypeWarnings?: OpenTypeExportWarning[]
   onClose: () => void
   onExport: (formats: FontExportFormat[]) => void
 }
@@ -57,11 +63,52 @@ const exportOptions: Array<{
   },
 ]
 
+const getAlertStatus = (severity: OpenTypeExportWarning['severity']) => {
+  if (severity === 'error') {
+    return 'error'
+  }
+  if (severity === 'warning') {
+    return 'warning'
+  }
+  return 'info'
+}
+
+function OpenTypeExportWarnings({
+  warnings,
+}: {
+  warnings: OpenTypeExportWarning[]
+}) {
+  if (warnings.length === 0) {
+    return null
+  }
+
+  return (
+    <Stack spacing={2}>
+      {warnings.map((warning) => (
+        <Alert
+          key={warning.id}
+          status={getAlertStatus(warning.severity)}
+          variant="subtle"
+          alignItems="flex-start"
+          borderRadius="md"
+        >
+          <AlertIcon mt={1} />
+          <Stack spacing={0}>
+            <AlertTitle fontSize="sm">{warning.title}</AlertTitle>
+            <AlertDescription fontSize="sm">{warning.message}</AlertDescription>
+          </Stack>
+        </Alert>
+      ))}
+    </Stack>
+  )
+}
+
 export function ExportFontModal({
   isOpen,
   canExport,
   isExporting,
   loadingText,
+  openTypeWarnings = [],
   onClose,
   onExport,
 }: ExportFontModalProps) {
@@ -86,6 +133,7 @@ export function ExportFontModal({
         <ModalCloseButton />
         <ModalBody>
           <Stack spacing={3}>
+            <OpenTypeExportWarnings warnings={openTypeWarnings} />
             {exportOptions.map((option) => (
               <Button
                 key={option.format}
