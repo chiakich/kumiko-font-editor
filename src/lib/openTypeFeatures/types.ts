@@ -380,4 +380,5 @@ export interface OpenTypeFeaturesState {
   ignoredSuggestionIds: string[]
   exportPolicy: ExportPolicy
   rawPrelude?: string
+  diagnostics?: FeatureDiagnostic[]
 }

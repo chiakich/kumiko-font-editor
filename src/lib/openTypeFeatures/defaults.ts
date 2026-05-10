@@ -97,6 +97,7 @@ export const createEmptyOpenTypeFeaturesState = (
   autoFeatureConfig: DEFAULT_AUTO_FEATURE_CONFIG,
   ignoredSuggestionIds: [],
   exportPolicy: 'rebuild-managed-layout-tables',
+  diagnostics: [],
 })
 
 export const getGlyphOrder = (fontData: FontData) =>

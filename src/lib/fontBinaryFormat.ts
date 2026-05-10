@@ -1,7 +1,7 @@
 import opentype from 'opentype.js'
 import {
-  createEmptyOpenTypeFeaturesState,
   createFontFingerprint,
+  extractBinaryFeatures,
 } from 'src/lib/openTypeFeatures'
 import type {
   FontData,
@@ -349,7 +349,8 @@ export const importBinaryFontFile = async (file: File) => {
     lineMetricsHorizontalLayout: buildLineMetricsFromOpenTypeFont(font),
   } as FontData
 
-  fontData.openTypeFeatures = createEmptyOpenTypeFeaturesState(
+  fontData.openTypeFeatures = extractBinaryFeatures(
+    buffer,
     createFontFingerprint(fontData)
   )
 

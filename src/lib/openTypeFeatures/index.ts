@@ -20,7 +20,10 @@ export { buildAutoFeatureSuggestions } from 'src/lib/openTypeFeatures/buildAutoF
 export { buildKerningSuggestions } from 'src/lib/openTypeFeatures/buildKerningSuggestions'
 export { buildMarkSuggestions } from 'src/lib/openTypeFeatures/buildMarkSuggestions'
 export { compileFontWithFeatures } from 'src/lib/openTypeFeatures/compileFontWithFeatures'
+export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
 export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
 export { serializeFeaDocument } from 'src/lib/openTypeFeatures/serializeFea'
 export { validateFeatures } from 'src/lib/openTypeFeatures/validateFeatures'
 export {
