@@ -1,5 +1,6 @@
 import opentype from 'opentype.js'
 import {
+  compileManagedFontFeatures,
   createFontFingerprint,
   extractBinaryFeatures,
 } from 'src/lib/openTypeFeatures'
@@ -431,15 +432,20 @@ export const exportFontAsBinary = (
   })
   const sfntBuffer = font.toArrayBuffer()
   const getOutputBuffer = async () => {
+    const compiledBuffer = await compileManagedFontFeatures(
+      sfntBuffer,
+      fontData.openTypeFeatures
+    )
+
     if (format === 'woff') {
       const fonteditorCore = await loadFontEditorCore()
-      return fonteditorCore.ttf2woff(sfntBuffer)
+      return fonteditorCore.ttf2woff(compiledBuffer)
     }
     if (format === 'woff2') {
       const fonteditorCore = await ensureWoff2Ready()
-      return toExactArrayBuffer(fonteditorCore.ttftowoff2(sfntBuffer))
+      return toExactArrayBuffer(fonteditorCore.ttftowoff2(compiledBuffer))
     }
-    return sfntBuffer
+    return compiledBuffer
   }
   const mime =
     format === 'woff2'

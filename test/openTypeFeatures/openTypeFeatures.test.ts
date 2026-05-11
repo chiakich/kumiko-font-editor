@@ -340,8 +340,8 @@ describe('OpenType FEA source maps', () => {
 })
 
 describe('OpenType compiler runtime scaffold', () => {
-  it('documents why installed dependencies cannot compile generated FEA', () => {
-    expect(canInstalledDependenciesCompileGeneratedFeaOffline()).toBe(false)
+  it('documents the configured Pyodide fontTools compiler runtime', () => {
+    expect(canInstalledDependenciesCompileGeneratedFeaOffline()).toBe(true)
 
     expect(getInstalledCompilerDependencyCapabilities()).toEqual([
       expect.objectContaining({
@@ -358,16 +358,31 @@ describe('OpenType compiler runtime scaffold', () => {
           'Rebuild GSUB, GPOS, and GDEF tables from editable feature rules.',
         ]),
       }),
+      expect.objectContaining({
+        dependency: 'pyodide-fonttools',
+        status: 'available',
+        missingCapabilities: [],
+      }),
     ])
 
     expect(getOpenTypeCompilerRuntimeRequirement()).toMatchObject({
-      canCompileGeneratedFeaWithInstalledDependencies: false,
+      canCompileGeneratedFeaWithInstalledDependencies: true,
       recommendedBackends: ['pyodide-fonttools', 'wasm-fonttools'],
     })
   })
 
-  it('reports an explicit not-configured compiler status', () => {
+  it('reports a ready Pyodide compiler status by default', () => {
     expect(createCompilerRuntimeStatus()).toEqual({
+      backend: 'pyodide-fonttools',
+      canCompile: true,
+      message:
+        'OpenType feature compilation is available through a lazy-loaded Pyodide fontTools worker runtime.',
+      state: 'ready',
+    })
+  })
+
+  it('can still construct an explicit not-configured compiler status', () => {
+    expect(createCompilerRuntimeStatus('not-configured')).toEqual({
       backend: 'not-configured',
       canCompile: false,
       message:
@@ -454,7 +469,7 @@ describe('OpenType binary export compiler gate', () => {
         meta: { origin: 'manual' },
       }),
       {
-        compilerRuntimeStatus: createCompilerRuntimeStatus(),
+        compilerRuntimeStatus: createCompilerRuntimeStatus('not-configured'),
         diagnostics: [],
       }
     )

@@ -11,7 +11,7 @@ export const AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS: OpenTypeCompilerBackend[] =
   ['not-configured', 'pyodide-fonttools', 'wasm-fonttools']
 
 export const DEFAULT_OPEN_TYPE_COMPILER_BACKEND: OpenTypeCompilerBackend =
-  'not-configured'
+  'pyodide-fonttools'
 
 const RUNTIME_NOT_CONFIGURED_MESSAGE =
   'OpenType feature compilation is not configured yet. Generated FEA can be inspected, but binary layout compilation needs an offline WASM font compiler runtime.'
@@ -25,6 +25,16 @@ export const createCompilerRuntimeStatus = (
       canCompile: false,
       message: RUNTIME_NOT_CONFIGURED_MESSAGE,
       state: 'not-configured',
+    }
+  }
+
+  if (backend === 'pyodide-fonttools') {
+    return {
+      backend,
+      canCompile: true,
+      message:
+        'OpenType feature compilation is available through a lazy-loaded Pyodide fontTools worker runtime.',
+      state: 'ready',
     }
   }
 
@@ -71,7 +81,7 @@ export const makeCompilerErrorResponse = ({
 })
 
 export const makeRuntimeNotConfiguredResponse = (): CompileErrorMessage => {
-  const runtimeStatus = createCompilerRuntimeStatus()
+  const runtimeStatus = createCompilerRuntimeStatus('not-configured')
 
   return {
     type: 'compile-error',
