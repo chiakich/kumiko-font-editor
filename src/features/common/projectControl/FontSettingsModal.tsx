@@ -226,7 +226,7 @@ export function FontSettingsModal({
                   onExportsChange={setExports}
                 />
               </TabPanel>
-              <TabPanel p={0} h="100%" overflow="auto">
+              <TabPanel p={0} h="100%" overflow="hidden">
                 <FontFeaturesTab
                   fontData={fontData}
                   featuresText={featuresText}

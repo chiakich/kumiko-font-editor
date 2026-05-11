@@ -1,19 +1,15 @@
-import { Divider, Grid, GridItem, Stack } from '@chakra-ui/react'
+import { Box, Grid, GridItem, Stack } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { AutoFeatureSuggestions } from 'src/features/common/projectControl/fontSettings/features/AutoFeatureSuggestions'
-import { ExportPolicyControl } from 'src/features/common/projectControl/fontSettings/features/ExportPolicyControl'
 import { FeatureClassesPanel } from 'src/features/common/projectControl/fontSettings/features/FeatureClassesPanel'
 import { FeatureDetailPanel } from 'src/features/common/projectControl/fontSettings/features/FeatureDetailPanel'
-import { FeatureDiagnosticsList } from 'src/features/common/projectControl/fontSettings/features/FeatureDiagnosticsList'
 import { FeaturePreludePanel } from 'src/features/common/projectControl/fontSettings/features/FeaturePreludePanel'
 import { FeatureSummary } from 'src/features/common/projectControl/fontSettings/features/FeatureSummary'
 import {
   FeatureWorkbenchSidebar,
   type FeatureWorkbenchSelection,
 } from 'src/features/common/projectControl/fontSettings/features/FeatureWorkbenchSidebar'
-import { GeneratedFeaPreview } from 'src/features/common/projectControl/fontSettings/features/GeneratedFeaPreview'
+import { FeatureWorkflowPanel } from 'src/features/common/projectControl/fontSettings/features/FeatureWorkflowPanel'
 import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/ruleEditorState'
-import { UnsupportedLookupList } from 'src/features/common/projectControl/fontSettings/features/UnsupportedLookupList'
 import {
   applyAutoFeatureSuggestion,
   buildAutoFeatureSuggestions,
@@ -91,24 +87,41 @@ export function FontFeaturesTab({
       : selected
 
   return (
-    <Stack spacing={5}>
+    <Stack spacing={5} h="100%" minH={0}>
       <FeatureSummary state={openTypeFeatures} diagnostics={diagnostics} />
       <Grid
         gap={5}
+        flex={1}
+        minH={0}
+        overflow="hidden"
         templateColumns={{ base: '1fr', lg: '280px minmax(0, 1fr)' }}
       >
-        <GridItem>
+        <GridItem minH={0} overflow="auto" pr={{ base: 0, lg: 1 }}>
           <FeatureWorkbenchSidebar
             diagnostics={diagnostics}
             selected={activeSelection}
             state={openTypeFeatures}
+            suggestionsCount={suggestions.length}
             onSelect={setSelected}
           />
         </GridItem>
-        <GridItem minW={0}>
-          <Stack spacing={5}>
+        <GridItem minH={0} minW={0} overflow="auto" pr={1}>
+          <Box pb={1}>
             {activeSelection.kind === 'classes' ? (
               <FeatureClassesPanel state={openTypeFeatures} />
+            ) : activeSelection.kind === 'workflow' ? (
+              <FeatureWorkflowPanel
+                diagnostics={diagnostics}
+                generatedFea={generatedFea}
+                state={openTypeFeatures}
+                suggestions={suggestions}
+                onAcceptSuggestion={acceptSuggestion}
+                onExportPolicyChange={updateExportPolicy}
+                onIgnoreSuggestion={ignoreSuggestion}
+                onScanSuggestions={() =>
+                  onOpenTypeFeaturesChange({ ...openTypeFeatures })
+                }
+              />
             ) : selectedFeature ? (
               <FeatureDetailPanel
                 diagnostics={diagnostics}
@@ -123,37 +136,7 @@ export function FontFeaturesTab({
                 onFeaturesTextChange={onFeaturesTextChange}
               />
             )}
-
-            {activeSelection.kind === 'prelude' ? (
-              <>
-                <Divider />
-                <ExportPolicyControl
-                  state={openTypeFeatures}
-                  onChange={updateExportPolicy}
-                />
-                <Divider />
-                <AutoFeatureSuggestions
-                  suggestions={suggestions}
-                  onAccept={acceptSuggestion}
-                  onIgnore={ignoreSuggestion}
-                  onScan={() =>
-                    onOpenTypeFeaturesChange({ ...openTypeFeatures })
-                  }
-                />
-                <Divider />
-                <UnsupportedLookupList
-                  unsupportedLookups={openTypeFeatures.unsupportedLookups}
-                />
-                <Divider />
-                <FeatureDiagnosticsList diagnostics={diagnostics} />
-                <Divider />
-                <GeneratedFeaPreview
-                  feaText={generatedFea.text}
-                  sourceMap={generatedFea.sourceMap}
-                />
-              </>
-            ) : null}
-          </Stack>
+          </Box>
         </GridItem>
       </Grid>
     </Stack>

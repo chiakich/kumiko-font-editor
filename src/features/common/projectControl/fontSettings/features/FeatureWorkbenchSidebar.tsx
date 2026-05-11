@@ -7,6 +7,7 @@ import type {
 
 export type FeatureWorkbenchSelection =
   | { kind: 'prelude' }
+  | { kind: 'workflow' }
   | { kind: 'classes' }
   | { kind: 'feature'; featureId: string }
 
@@ -14,6 +15,7 @@ interface FeatureWorkbenchSidebarProps {
   diagnostics: FeatureDiagnostic[]
   selected: FeatureWorkbenchSelection
   state: OpenTypeFeaturesState
+  suggestionsCount: number
   onSelect: (selection: FeatureWorkbenchSelection) => void
 }
 
@@ -21,6 +23,7 @@ export function FeatureWorkbenchSidebar({
   diagnostics,
   selected,
   state,
+  suggestionsCount,
   onSelect,
 }: FeatureWorkbenchSidebarProps) {
   return (
@@ -36,6 +39,16 @@ export function FeatureWorkbenchSidebar({
           label="Prelude"
           detail={`${state.languagesystems.length} language systems`}
           onClick={() => onSelect({ kind: 'prelude' })}
+        />
+      </SidebarSection>
+
+      <SidebarSection title="工作流程">
+        <SidebarButton
+          isSelected={selected.kind === 'workflow'}
+          label="Workflow"
+          detail={`${suggestionsCount} suggestions / ${state.unsupportedLookups.length} unsupported`}
+          badge={diagnosticsForWorkflow(diagnostics)}
+          onClick={() => onSelect({ kind: 'workflow' })}
         />
       </SidebarSection>
 
@@ -138,4 +151,9 @@ function diagnosticsForFeature(
       diagnostic.target.kind === 'feature' &&
       diagnostic.target.featureId === featureId
   ).length
+}
+
+function diagnosticsForWorkflow(diagnostics: FeatureDiagnostic[]) {
+  return diagnostics.filter((diagnostic) => diagnostic.target.kind === 'global')
+    .length
 }
