@@ -19,6 +19,8 @@ import {
   statusDefinitionsFromLib,
   settingsFromLib,
 } from 'src/lib/fontInfoSettings'
+import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { selectUfoFeatureText } from 'src/lib/openTypeFeatures/legacyFeatureText'
 import {
   deleteUfoGlyphBatch,
   makeUfoGlyphKey,
@@ -793,6 +795,7 @@ const buildFontDataFromUfoGlyphs = (
     settings: settingsFromLib(metadata.lib, axes),
     unitsPerEm: getUnitsPerEm(metadata.fontinfo),
     lineMetricsHorizontalLayout: buildLineMetrics(metadata.fontinfo),
+    openTypeFeatures: createEmptyOpenTypeFeaturesState(),
   }
 }
 
@@ -1238,7 +1241,7 @@ export const syncHotFontDataToUfoRecords = async (input: {
     await saveUfoMetadata({
       ...metadata,
       contents: nextContents,
-      featuresText: input.fontData.features?.text ?? metadata.featuresText,
+      featuresText: selectUfoFeatureText(input.fontData),
       fontinfo: nextFontInfo,
       glyphOrder: nextGlyphOrder,
       lib: buildUfoLibFromFontData(input.fontData, metadata.lib),

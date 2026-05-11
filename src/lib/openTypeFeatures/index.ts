@@ -29,6 +29,10 @@ export {
 } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
 export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
 export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+export {
+  hasActiveManagedFeatureText,
+  selectUfoFeatureText,
+} from 'src/lib/openTypeFeatures/legacyFeatureText'
 export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
 export { serializeFeaDocument } from 'src/lib/openTypeFeatures/serializeFea'

@@ -9,6 +9,7 @@ import {
   serializeGlifRecord,
   serializeXmlPlist,
 } from 'src/lib/fontAdapters/ufo'
+import { selectUfoFeatureText } from 'src/lib/openTypeFeatures/legacyFeatureText'
 import type { UfoGlyphRecord } from 'src/lib/ufoTypes'
 
 const DEFAULT_LAYER_ID = 'public.default'
@@ -193,8 +194,9 @@ export const exportFontDataAsUfoZip = (input: {
   )
   files[`${ufoDir}/groups.plist`] = strToU8(serializeXmlPlist({}))
   files[`${ufoDir}/kerning.plist`] = strToU8(serializeXmlPlist({}))
-  if (input.fontData.features?.text) {
-    files[`${ufoDir}/features.fea`] = strToU8(input.fontData.features.text)
+  const featureText = selectUfoFeatureText(input.fontData)
+  if (featureText !== null) {
+    files[`${ufoDir}/features.fea`] = strToU8(featureText)
   }
   files[`${ufoDir}/layercontents.plist`] = strToU8(
     serializeXmlPlist([[DEFAULT_LAYER_ID, DEFAULT_GLYPH_DIR]])
