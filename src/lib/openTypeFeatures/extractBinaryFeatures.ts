@@ -26,11 +26,13 @@ import type {
   FeatureEntry,
   FeatureRecord,
   FontFingerprint,
+  GlyphClass,
   GposLookupType,
   GsubLookupType,
   LanguageSystem,
   LookupFlagIR,
   LookupRecord,
+  MarkClass,
   OpenTypeFeaturesState,
   UnsupportedLookup,
 } from 'src/lib/openTypeFeatures/types'
@@ -39,6 +41,20 @@ interface ParsedLookupState {
   lookup: LayoutLookupInventory
   parseResult: GsubRuleParseResult | GposRuleParseResult | null
 }
+
+const getParsedGlyphClasses = (
+  parseResult: GsubRuleParseResult | GposRuleParseResult | null
+): GlyphClass[] =>
+  parseResult && 'glyphClasses' in parseResult
+    ? (parseResult.glyphClasses ?? [])
+    : []
+
+const getParsedMarkClasses = (
+  parseResult: GsubRuleParseResult | GposRuleParseResult | null
+): MarkClass[] =>
+  parseResult && 'markClasses' in parseResult
+    ? (parseResult.markClasses ?? [])
+    : []
 
 const GSUB_LOOKUP_TYPES: Record<number, GsubLookupType> = {
   1: 'singleSubst',
@@ -380,6 +396,12 @@ export const extractBinaryFeatures = (
   )
   state.lookups = parsedLookupEntries.flatMap((entry) =>
     entry.lookups.map((lookup) => toLookupRecord(entry.inventory.table, lookup))
+  )
+  state.glyphClasses = parsedLookupEntries.flatMap((entry) =>
+    entry.lookups.flatMap((lookup) => getParsedGlyphClasses(lookup.parseResult))
+  )
+  state.markClasses = parsedLookupEntries.flatMap((entry) =>
+    entry.lookups.flatMap((lookup) => getParsedMarkClasses(lookup.parseResult))
   )
   state.unsupportedLookups = parsedLookupEntries.flatMap((entry) =>
     entry.lookups
