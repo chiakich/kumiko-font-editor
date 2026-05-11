@@ -251,6 +251,63 @@ const makeLigatureSubstitutionSubtable = () =>
     writeUint16(view, 22, 2)
   })
 
+const makeExtensionSingleSubstitutionSubtable = () => {
+  const innerSubtable = makeSingleSubstitutionSubtable()
+  const bytes = makeBytes(8 + innerSubtable.byteLength, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 1)
+    writeUint32(view, 4, 8)
+  })
+  bytes.set(innerSubtable, 8)
+  return bytes
+}
+
+const makeContextSubstitutionSubtable = () =>
+  makeBytes(28, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 22)
+    writeUint16(view, 4, 1)
+    writeUint16(view, 6, 8)
+
+    writeUint16(view, 8, 1)
+    writeUint16(view, 10, 4)
+
+    writeUint16(view, 12, 2)
+    writeUint16(view, 14, 1)
+    writeUint16(view, 16, 2)
+    writeUint16(view, 18, 1)
+    writeUint16(view, 20, 0)
+
+    writeUint16(view, 22, 1)
+    writeUint16(view, 24, 1)
+    writeUint16(view, 26, 1)
+  })
+
+const makeChainingContextSubstitutionSubtable = () =>
+  makeBytes(36, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 30)
+    writeUint16(view, 4, 1)
+    writeUint16(view, 6, 8)
+
+    writeUint16(view, 8, 1)
+    writeUint16(view, 10, 4)
+
+    writeUint16(view, 12, 1)
+    writeUint16(view, 14, 3)
+    writeUint16(view, 16, 2)
+    writeUint16(view, 18, 2)
+    writeUint16(view, 20, 1)
+    writeUint16(view, 22, 4)
+    writeUint16(view, 24, 1)
+    writeUint16(view, 26, 1)
+    writeUint16(view, 28, 0)
+
+    writeUint16(view, 30, 1)
+    writeUint16(view, 32, 1)
+    writeUint16(view, 34, 1)
+  })
+
 const makeSinglePositioningSubtable = () =>
   makeBytes(14, (view) => {
     writeUint16(view, 0, 1)
@@ -538,6 +595,150 @@ describe('SFNT binary inventory', () => {
                 table: 'GSUB',
                 lookupIndex: 0,
                 lookupType: 4,
+                subtableIndex: 0,
+                subtableFormat: 1,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts editable GSUB rules through ExtensionSubst wrappers', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GSUB',
+          data: makeGsubTable(
+            'salt',
+            7,
+            makeExtensionSingleSubstitutionSubtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'b', 'b.salt']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gsub_0',
+        lookupType: 'extensionSubst',
+        editable: true,
+        origin: 'imported',
+        rules: [
+          {
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'b' },
+            replacement: 'b.salt',
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GSUB',
+                lookupIndex: 0,
+                lookupType: 7,
+                subtableIndex: 0,
+                subtableFormat: 1,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts editable GSUB ContextSubst glyph sequence rules', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GSUB',
+          data: makeGsubTable('calt', 5, makeContextSubstitutionSubtable()),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'B']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gsub_0',
+        lookupType: 'contextSubst',
+        editable: true,
+        origin: 'imported',
+        rules: [
+          {
+            kind: 'contextualSubstitution',
+            mode: 'context',
+            backtrack: [],
+            input: [
+              { selector: { kind: 'glyph', glyph: 'A' } },
+              {
+                selector: { kind: 'glyph', glyph: 'B' },
+                lookupIds: ['lookup_gsub_0'],
+              },
+            ],
+            lookahead: [],
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GSUB',
+                lookupIndex: 0,
+                lookupType: 5,
+                subtableIndex: 0,
+                subtableFormat: 1,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts editable GSUB ChainingContextSubst glyph sequence rules', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GSUB',
+          data: makeGsubTable(
+            'calt',
+            6,
+            makeChainingContextSubstitutionSubtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'B', 'X', 'Y']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gsub_0',
+        lookupType: 'chainingContextSubst',
+        editable: true,
+        origin: 'imported',
+        rules: [
+          {
+            kind: 'contextualSubstitution',
+            mode: 'chaining',
+            backtrack: [{ kind: 'glyph', glyph: 'X' }],
+            input: [
+              { selector: { kind: 'glyph', glyph: 'A' } },
+              {
+                selector: { kind: 'glyph', glyph: 'B' },
+                lookupIds: ['lookup_gsub_0'],
+              },
+            ],
+            lookahead: [{ kind: 'glyph', glyph: 'Y' }],
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GSUB',
+                lookupIndex: 0,
+                lookupType: 6,
                 subtableIndex: 0,
                 subtableFormat: 1,
               },

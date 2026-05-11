@@ -1,4 +1,8 @@
 import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import {
+  parseChainingContextSubstitutionFormat1,
+  parseContextSubstitutionFormat1,
+} from 'src/lib/openTypeFeatures/gsubContextRuleParser'
 import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 import type {
   AlternateSubstitutionRule,
@@ -397,6 +401,15 @@ const parseSupportedSubtable = (
   const format = subtableReader.uint16(0)
   if (format !== lookup.subtableFormats[subtableIndex]) return null
 
+  if (lookup.lookupType === 7 && format === 1) {
+    return parseExtensionSubstitution(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
+    )
+  }
+
   if (lookup.lookupType === 1) {
     return parseSingleSubstitution(
       subtableReader,
@@ -429,7 +442,79 @@ const parseSupportedSubtable = (
       subtableIndex
     )
   }
+  if (lookup.lookupType === 5 && format === 1) {
+    return parseContextSubstitutionFormat1(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
+    )
+  }
+  if (lookup.lookupType === 6 && format === 1) {
+    return parseChainingContextSubstitutionFormat1(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
+    )
+  }
   return null
+}
+
+const withExtensionProvenance = (
+  rules: Rule[],
+  lookup: LayoutLookupInventory,
+  subtableIndex: number
+): Rule[] =>
+  rules.map((rule) => ({
+    ...rule,
+    meta: {
+      ...rule.meta,
+      provenance: makeProvenance(lookup, subtableIndex),
+      reason: 'Reconstructed from a GSUB ExtensionSubst wrapper.',
+    },
+  }))
+
+const parseExtensionSubstitution = (
+  subtableReader: BinaryReader,
+  glyphOrder: string[],
+  lookup: LayoutLookupInventory,
+  subtableIndex: number
+): Rule[] | null => {
+  const extensionLookupType = subtableReader.uint16(2)
+  const extensionOffset = subtableReader.uint32(4)
+  if (
+    extensionLookupType === null ||
+    extensionOffset === null ||
+    extensionLookupType === 7
+  ) {
+    return null
+  }
+
+  const extensionReader = subtableReader.at(extensionOffset)
+  const extensionFormat = extensionReader?.uint16(0)
+  if (
+    !extensionReader ||
+    extensionFormat === null ||
+    extensionFormat === undefined
+  ) {
+    return null
+  }
+
+  const delegatedLookup: LayoutLookupInventory = {
+    ...lookup,
+    lookupType: extensionLookupType,
+    subtableFormats: [extensionFormat],
+    subtableOffsets: [lookup.subtableOffsets[subtableIndex] + extensionOffset],
+  }
+  const rules = parseSupportedSubtable(
+    extensionReader,
+    glyphOrder,
+    delegatedLookup,
+    0
+  )
+
+  return rules ? withExtensionProvenance(rules, lookup, subtableIndex) : null
 }
 
 export const parseGsubLookupRules = (
@@ -439,7 +524,16 @@ export const parseGsubLookupRules = (
   glyphOrder: string[],
   lookupId: string
 ): GsubRuleParseResult => {
-  if (![1, 2, 3, 4].includes(lookup.lookupType)) {
+  if (lookup.lookupType === 8) {
+    return {
+      rules: [],
+      diagnostics: [],
+      unsupportedReason:
+        'GSUB ReverseChainingSingleSubst is preserved as unsupported because the current IR has no reverse-chaining replacement rule shape yet.',
+    }
+  }
+
+  if (![1, 2, 3, 4, 5, 6, 7].includes(lookup.lookupType)) {
     return {
       rules: [],
       diagnostics: [],
