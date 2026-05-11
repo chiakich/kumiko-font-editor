@@ -76,6 +76,17 @@ export interface PositioningNode {
   secondValue?: ValueRecord
 }
 
+export interface ContextualSubstitutionNode {
+  kind: 'ContextualSubstitution'
+  ruleId?: string
+  backtrack: GlyphSelector[]
+  input: Array<{
+    selector: GlyphSelector
+    lookupNames: string[]
+  }>
+  lookahead: GlyphSelector[]
+}
+
 export interface MarkAttachment {
   markClassName: string
   anchor: { x: number; y: number }
@@ -112,6 +123,7 @@ export type FeaNode =
   | ScriptStatementNode
   | LanguageStatementNode
   | SubstitutionNode
+  | ContextualSubstitutionNode
   | PositioningNode
   | MarkToBaseNode
   | MarkToMarkNode

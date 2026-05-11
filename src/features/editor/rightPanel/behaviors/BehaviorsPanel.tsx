@@ -13,10 +13,12 @@ import { useMemo, useRef, useState } from 'react'
 import {
   deriveGlyphAlternateBehaviors,
   deriveGlyphCombinationBehaviors,
+  deriveGlyphContextualBehaviors,
   deriveGlyphSpacingBehaviors,
   isGlyphReferencedByOpenTypeBehaviors,
   type AlternateBehaviorRow,
   type CombinationBehaviorRow,
+  type ContextualBehaviorRow,
   type SpacingBehaviorRow,
 } from 'src/lib/openTypeFeatures'
 import { useStore, type FontData, type GlyphData } from 'src/store'
@@ -24,6 +26,7 @@ import { CombinationBehaviorList } from 'src/features/editor/rightPanel/behavior
 import { BehaviorPlaceholderSections } from 'src/features/editor/rightPanel/behaviors/BehaviorPlaceholderSections'
 import { AlternateBehaviorList } from 'src/features/editor/rightPanel/behaviors/AlternateBehaviorList'
 import { SpacingBehaviorList } from 'src/features/editor/rightPanel/behaviors/SpacingBehaviorList'
+import { ContextualBehaviorList } from 'src/features/editor/rightPanel/behaviors/ContextualBehaviorList'
 
 interface BehaviorsPanelProps {
   fontData: FontData | null
@@ -34,6 +37,9 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const [draftRowIds, setDraftRowIds] = useState<string[]>([])
   const [alternateDraftRowIds, setAlternateDraftRowIds] = useState<string[]>([])
   const [spacingDraftRowIds, setSpacingDraftRowIds] = useState<string[]>([])
+  const [contextualDraftRowIds, setContextualDraftRowIds] = useState<string[]>(
+    []
+  )
   const [unusedGlyphPrompt, setUnusedGlyphPrompt] =
     useState<UnusedGlyphPrompt | null>(null)
   const cancelUnusedGlyphRef = useRef<HTMLButtonElement | null>(null)
@@ -52,6 +58,12 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   )
   const upsertSpacingBehavior = useStore((state) => state.upsertSpacingBehavior)
   const deleteSpacingBehavior = useStore((state) => state.deleteSpacingBehavior)
+  const upsertContextualBehavior = useStore(
+    (state) => state.upsertContextualBehavior
+  )
+  const deleteContextualBehavior = useStore(
+    (state) => state.deleteContextualBehavior
+  )
   const addGlyphToEditor = useStore((state) => state.addGlyphToEditor)
   const insertGlyphIntoEditor = useStore((state) => state.insertGlyphIntoEditor)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
@@ -68,6 +80,10 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   )
   const spacingRows = useMemo(
     () => (fontData ? deriveGlyphSpacingBehaviors(fontData, glyph.id) : []),
+    [fontData, glyph.id]
+  )
+  const contextualRows = useMemo(
+    () => (fontData ? deriveGlyphContextualBehaviors(fontData, glyph.id) : []),
     [fontData, glyph.id]
   )
 
@@ -157,6 +173,10 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
     deleteSpacingBehavior(row.lookupId, row.ruleId)
   }
 
+  const deleteContextualRow = (row: ContextualBehaviorRow) => {
+    deleteContextualBehavior(row.lookupId, row.ruleId)
+  }
+
   return (
     <>
       <Stack spacing={4}>
@@ -210,6 +230,24 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
             )
           }
           onOpenPair={openSpacingPair}
+        />
+        <ContextualBehaviorList
+          currentGlyphId={glyph.id}
+          draftRowIds={contextualDraftRowIds}
+          rows={contextualRows}
+          onAddDraftRow={() =>
+            setContextualDraftRowIds((rowIds) => [
+              ...rowIds,
+              `contextual-draft-${Date.now()}`,
+            ])
+          }
+          onCommit={(draft) => upsertContextualBehavior(draft)}
+          onDelete={deleteContextualRow}
+          onDraftCommitted={(rowId) =>
+            setContextualDraftRowIds((rowIds) =>
+              rowIds.filter((id) => id !== rowId)
+            )
+          }
         />
         <BehaviorPlaceholderSections />
       </Stack>

@@ -6,19 +6,23 @@ import type { StateCreator } from 'zustand'
 import {
   canCommitAlternateBehavior,
   canCommitCombinationBehavior,
+  canCommitContextualBehavior,
   canCommitSpacingBehavior,
   createEmptyOpenTypeFeaturesState,
   deleteAlternateBehavior,
   deleteCombinationBehavior,
+  deleteContextualBehavior,
   deleteSpacingBehavior,
   makeEditableGlyphCopy,
   makeCompositeGlyphFromComponents,
   parseCombinationInput,
   upsertAlternateBehavior,
   upsertCombinationBehavior,
+  upsertContextualBehavior,
   upsertSpacingBehavior,
   type AlternateBehaviorDraft,
   type CombinationBehaviorDraft,
+  type ContextualBehaviorDraft,
   type SpacingBehaviorDraft,
 } from 'src/lib/openTypeFeatures'
 import { syncFilteredGlyphList } from 'src/store/glyphSearch'
@@ -155,6 +159,33 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
       if (!state.fontData?.openTypeFeatures) return
 
       state.fontData.openTypeFeatures = deleteSpacingBehavior(
+        state.fontData.openTypeFeatures,
+        { lookupId, ruleId }
+      )
+      state.isDirty = true
+      state.hasLocalChanges = true
+    }),
+
+  upsertContextualBehavior: (draft: ContextualBehaviorDraft) =>
+    set((state) => {
+      if (!state.fontData) return
+      if (!canCommitContextualBehavior(draft)) return
+
+      const currentFeatures =
+        state.fontData.openTypeFeatures ?? createEmptyOpenTypeFeaturesState()
+      state.fontData.openTypeFeatures = upsertContextualBehavior(
+        currentFeatures,
+        draft
+      )
+      state.isDirty = true
+      state.hasLocalChanges = true
+    }),
+
+  deleteContextualBehavior: (lookupId: string, ruleId: string) =>
+    set((state) => {
+      if (!state.fontData?.openTypeFeatures) return
+
+      state.fontData.openTypeFeatures = deleteContextualBehavior(
         state.fontData.openTypeFeatures,
         { lookupId, ruleId }
       )

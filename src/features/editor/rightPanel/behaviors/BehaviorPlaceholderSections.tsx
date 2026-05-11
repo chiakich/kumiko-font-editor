@@ -1,9 +1,6 @@
 import { Badge, Box, HStack, Stack, Text } from '@chakra-ui/react'
 
-const UPCOMING_SECTIONS = [
-  ['Contextual', 'When / Then substitution rules'],
-  ['Anchors', 'Mark attachment points'],
-] as const
+const UPCOMING_SECTIONS = [['Anchors', 'Mark attachment points']] as const
 
 export function BehaviorPlaceholderSections() {
   return (

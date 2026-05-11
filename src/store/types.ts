@@ -7,6 +7,7 @@ import type { GlyphEditTimes } from 'src/lib/glyphEditTimes'
 import type {
   AlternateBehaviorDraft,
   CombinationBehaviorDraft,
+  ContextualBehaviorDraft,
   GlyphSelector,
   OpenTypeFeaturesState,
   SpacingBehaviorDraft,
@@ -311,6 +312,8 @@ export interface GlobalState {
   ) => void
   upsertSpacingBehavior: (draft: SpacingBehaviorDraft) => void
   deleteSpacingBehavior: (lookupId: string, ruleId: string) => void
+  upsertContextualBehavior: (draft: ContextualBehaviorDraft) => void
+  deleteContextualBehavior: (lookupId: string, ruleId: string) => void
   setSelectedNodeIds: (ids: string[]) => void
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void

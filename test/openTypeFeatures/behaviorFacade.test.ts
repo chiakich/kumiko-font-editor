@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createEmptyOpenTypeFeaturesState,
+  deriveGlyphContextualBehaviors,
   deriveGlyphAlternateBehaviors,
   deriveGlyphCombinationBehaviors,
   deriveGlyphSpacingBehaviors,
@@ -8,7 +9,9 @@ import {
   makeCompositeGlyphFromComponents,
   upsertAlternateBehavior,
   upsertCombinationBehavior,
+  upsertContextualBehavior,
   upsertSpacingBehavior,
+  generateFea,
   type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 import type { FontData, GlyphData } from 'src/store'
@@ -176,6 +179,30 @@ describe('OpenType behavior facade', () => {
         featureTag: 'kern',
       },
     ])
+  })
+
+  it('derives and serializes contextual behavior rows', () => {
+    const state = upsertContextualBehavior(createEmptyOpenTypeFeaturesState(), {
+      before: '',
+      source: 'f',
+      after: 'period',
+      replacement: 'f.end',
+    })
+    const fontData = makeFontData(state)
+    fontData.glyphs.period = makeGlyph('period', 250)
+    fontData.glyphs['f.end'] = makeGlyph('f.end', 500)
+
+    expect(deriveGlyphContextualBehaviors(fontData, 'f')).toMatchObject([
+      {
+        source: 'f',
+        after: 'period',
+        replacement: 'f.end',
+        featureTag: 'calt',
+      },
+    ])
+    expect(generateFea(state).text).toContain(
+      `sub f' lookup lookup_calt_behavior_contextual_f_f_end period;`
+    )
   })
 })
 
