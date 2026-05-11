@@ -14,7 +14,6 @@ import type {
   Rule,
 } from 'src/lib/openTypeFeatures'
 import { RuleEditorList } from 'src/features/common/projectControl/fontSettings/features/RuleEditorList'
-import { RuleListSummary } from 'src/features/common/projectControl/fontSettings/features/RuleListSummary'
 
 interface LookupInspectorProps {
   state: OpenTypeFeaturesState
@@ -156,7 +155,6 @@ function LookupDetails({
           ))}
         </Stack>
       ) : null}
-      <RuleListSummary rules={lookup.rules} />
       <RuleEditorList
         lookup={lookup}
         onRuleChange={(rule) => onRuleChange(lookup.id, rule)}

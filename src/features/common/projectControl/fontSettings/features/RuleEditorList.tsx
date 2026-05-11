@@ -12,22 +12,10 @@ interface RuleEditorListProps {
 }
 
 export function RuleEditorList({ lookup, onRuleChange }: RuleEditorListProps) {
-  if (!lookup.editable) {
+  if (lookup.rules.length === 0) {
     return (
       <Text fontSize="sm" color="field.muted">
-        This lookup can be inspected but not visually edited yet. If you rebuild
-        OpenType features on export, unsupported data may be removed.
-      </Text>
-    )
-  }
-
-  const editableRules = lookup.rules.filter(isRuleEditorSupported)
-
-  if (editableRules.length === 0) {
-    return (
-      <Text fontSize="sm" color="field.muted">
-        No visual editor is available for these rule types yet. The rules remain
-        visible in the summary above.
+        No rules in this lookup.
       </Text>
     )
   }
@@ -35,31 +23,102 @@ export function RuleEditorList({ lookup, onRuleChange }: RuleEditorListProps) {
   return (
     <Stack spacing={2}>
       <Text fontWeight="semibold" fontSize="sm">
-        Rule editors
+        Rules
       </Text>
-      {editableRules.map((rule) => (
-        <Stack
+      {!lookup.editable ? (
+        <Text fontSize="sm" color="field.muted">
+          This lookup can be inspected but not visually edited yet. If you
+          rebuild OpenType features on export, unsupported data may be removed.
+        </Text>
+      ) : null}
+      {lookup.rules.map((rule) => (
+        <RuleSurface
           key={rule.id}
-          spacing={2}
-          borderWidth="1px"
-          borderRadius="sm"
-          p={3}
-        >
-          <HStack justify="space-between" align="flex-start">
-            <Stack spacing={1}>
-              <Badge alignSelf="flex-start">{rule.kind}</Badge>
-              <Text fontSize="xs" fontFamily="mono" color="field.muted">
-                {formatRuleSummary(rule)}
-              </Text>
-            </Stack>
-            {rule.meta.userOverridden ? (
-              <Badge colorScheme="purple">user overridden</Badge>
-            ) : null}
-          </HStack>
-          <RuleEditor rule={rule} onChange={onRuleChange} />
-        </Stack>
+          rule={rule}
+          lookupEditable={lookup.editable}
+          canEdit={lookup.editable && isRuleEditorSupported(rule)}
+          onRuleChange={onRuleChange}
+        />
       ))}
     </Stack>
+  )
+}
+
+function RuleSurface({
+  rule,
+  lookupEditable,
+  canEdit,
+  onRuleChange,
+}: {
+  rule: Rule
+  lookupEditable: boolean
+  canEdit: boolean
+  onRuleChange: (rule: Rule) => void
+}) {
+  return (
+    <Stack spacing={2} borderWidth="1px" borderRadius="sm" p={3}>
+      <RuleHeader rule={rule} canEdit={canEdit} />
+      {canEdit ? (
+        <RuleEditor rule={rule} onChange={onRuleChange} />
+      ) : (
+        <InspectOnlyRule rule={rule} lookupEditable={lookupEditable} />
+      )}
+    </Stack>
+  )
+}
+
+function RuleHeader({ rule, canEdit }: { rule: Rule; canEdit: boolean }) {
+  return (
+    <HStack justify="space-between" align="flex-start">
+      <Stack spacing={1}>
+        <HStack wrap="wrap">
+          <Badge alignSelf="flex-start">{rule.kind}</Badge>
+          <Badge colorScheme={canEdit ? 'green' : 'gray'}>
+            {canEdit ? 'editable' : 'inspect only'}
+          </Badge>
+        </HStack>
+        <Text fontSize="xs" fontFamily="mono" color="field.muted">
+          {formatRuleSummary(rule)}
+        </Text>
+      </Stack>
+      <HStack justify="flex-end" wrap="wrap">
+        <Badge colorScheme={rule.meta.userOverridden ? 'purple' : 'gray'}>
+          {rule.meta.origin}
+        </Badge>
+        {rule.meta.userOverridden ? (
+          <Badge colorScheme="purple">user overridden</Badge>
+        ) : null}
+      </HStack>
+    </HStack>
+  )
+}
+
+function InspectOnlyRule({
+  rule,
+  lookupEditable,
+}: {
+  rule: Rule
+  lookupEditable: boolean
+}) {
+  const reason = getInspectOnlyReason(rule, lookupEditable)
+
+  return (
+    <Text fontSize="xs" color="field.muted">
+      {reason}
+    </Text>
+  )
+}
+
+function getInspectOnlyReason(rule: Rule, lookupEditable: boolean) {
+  if (!lookupEditable) {
+    return (
+      rule.meta.reason ??
+      'This lookup is inspect-only, so this rule cannot be edited here.'
+    )
+  }
+
+  return (
+    rule.meta.reason ?? 'No visual editor is available for this rule type yet.'
   )
 }
 
