@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { applyAutoFeatureSuggestion } from 'src/lib/openTypeFeatures/applySuggestion'
 import { buildAutoFeatureSuggestions } from 'src/lib/openTypeFeatures/buildAutoFeatureSuggestions'
 import {
+  canInstalledDependenciesCompileGeneratedFeaOffline,
+  getInstalledCompilerDependencyCapabilities,
+  getOpenTypeCompilerRuntimeRequirement,
+} from 'src/lib/openTypeFeatures/compilerRuntimeCapabilities'
+import {
   createCompilerRuntimeStatus,
   makeRuntimeNotConfiguredResponse,
 } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
@@ -248,6 +253,32 @@ describe('OpenType FEA source maps', () => {
 })
 
 describe('OpenType compiler runtime scaffold', () => {
+  it('documents why installed dependencies cannot compile generated FEA', () => {
+    expect(canInstalledDependenciesCompileGeneratedFeaOffline()).toBe(false)
+
+    expect(getInstalledCompilerDependencyCapabilities()).toEqual([
+      expect.objectContaining({
+        dependency: 'opentype.js',
+        status: 'insufficient',
+        missingCapabilities: expect.arrayContaining([
+          'Parse generated .fea feature-file syntax.',
+        ]),
+      }),
+      expect.objectContaining({
+        dependency: 'fonteditor-core',
+        status: 'insufficient',
+        missingCapabilities: expect.arrayContaining([
+          'Rebuild GSUB, GPOS, and GDEF tables from editable feature rules.',
+        ]),
+      }),
+    ])
+
+    expect(getOpenTypeCompilerRuntimeRequirement()).toMatchObject({
+      canCompileGeneratedFeaWithInstalledDependencies: false,
+      recommendedBackends: ['pyodide-fonttools', 'wasm-fonttools'],
+    })
+  })
+
   it('reports an explicit not-configured compiler status', () => {
     expect(createCompilerRuntimeStatus()).toEqual({
       backend: 'not-configured',

@@ -27,6 +27,11 @@ export {
   makeRuntimeNotConfiguredDiagnostic,
   makeRuntimeNotConfiguredResponse,
 } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
+export {
+  canInstalledDependenciesCompileGeneratedFeaOffline,
+  getInstalledCompilerDependencyCapabilities,
+  getOpenTypeCompilerRuntimeRequirement,
+} from 'src/lib/openTypeFeatures/compilerRuntimeCapabilities'
 export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
 export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
 export {
