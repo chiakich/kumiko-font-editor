@@ -1,9 +1,11 @@
 import { makeDiagnostic } from 'src/lib/openTypeFeatures/diagnostics'
+import { mapCompilerErrorsToDiagnostics } from 'src/lib/openTypeFeatures/compilerErrorMapping'
 import type {
   CompileErrorMessage,
   CompilerRuntimeStatus,
   OpenTypeCompilerBackend,
 } from 'src/lib/openTypeFeatures/compilerTypes'
+import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
 
 export const AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS: OpenTypeCompilerBackend[] =
   ['not-configured', 'pyodide-fonttools', 'wasm-fonttools']
@@ -40,6 +42,33 @@ export const makeRuntimeNotConfiguredDiagnostic = () =>
     'compiler-runtime',
     'not-configured',
   ])
+
+export const makeCompilerErrorResponse = ({
+  backend,
+  message,
+  rawCompilerOutput,
+  runtimeStatus,
+  sourceMap,
+}: {
+  backend: OpenTypeCompilerBackend
+  message: string
+  rawCompilerOutput?: string
+  runtimeStatus: CompilerRuntimeStatus
+  sourceMap?: GeneratedFeaSourceMap
+}): CompileErrorMessage => ({
+  type: 'compile-error',
+  payload: {
+    backend,
+    diagnostics: mapCompilerErrorsToDiagnostics({
+      fallbackMessage: message,
+      rawCompilerOutput,
+      sourceMap,
+    }),
+    message,
+    rawCompilerOutput,
+    runtimeStatus,
+  },
+})
 
 export const makeRuntimeNotConfiguredResponse = (): CompileErrorMessage => {
   const runtimeStatus = createCompilerRuntimeStatus()

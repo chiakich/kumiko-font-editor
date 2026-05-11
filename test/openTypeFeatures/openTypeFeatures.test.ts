@@ -8,8 +8,14 @@ import {
 } from 'src/lib/openTypeFeatures/compilerRuntimeCapabilities'
 import {
   createCompilerRuntimeStatus,
+  makeCompilerErrorResponse,
   makeRuntimeNotConfiguredResponse,
 } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
+import {
+  mapCompilerErrorsToDiagnostics,
+  mapFeaLineToDiagnosticTarget,
+  parseCompilerErrorLocations,
+} from 'src/lib/openTypeFeatures/compilerErrorMapping'
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
 import {
   deriveOpenTypeExportWarnings,
@@ -250,6 +256,87 @@ describe('OpenType FEA source maps', () => {
     expect(generated.text).toContain('sub f i by f_i;')
     expect(generated.sourceMap.entries.length > 0).toBe(true)
   })
+
+  it('maps compiler line numbers back to generated rule diagnostics', () => {
+    const generated = generateFea(
+      makeStateWithRule({
+        id: 'rule_f_i',
+        kind: 'ligatureSubstitution',
+        components: ['f', 'i'],
+        replacement: 'f_i',
+        meta: { origin: 'manual' },
+      })
+    )
+    const ruleLine =
+      generated.text
+        .split('\n')
+        .findIndex((line) => line.trim() === 'sub f i by f_i;') + 1
+
+    expect(mapFeaLineToDiagnosticTarget(generated.sourceMap, ruleLine)).toEqual(
+      {
+        kind: 'rule',
+        ruleId: 'rule_f_i',
+      }
+    )
+  })
+
+  it('parses fontTools-style FEA error locations', () => {
+    expect(
+      parseCompilerErrorLocations(
+        'features.fea:12:7: Expected glyph name\nline 18, column 3: Bad lookup'
+      )
+    ).toEqual([
+      {
+        column: 7,
+        line: 12,
+        message: 'features.fea:12:7: Expected glyph name',
+      },
+      {
+        column: 3,
+        line: 18,
+        message: 'line 18, column 3: Bad lookup',
+      },
+    ])
+  })
+
+  it('builds mapped compiler diagnostics from source map entries', () => {
+    const sourceMap = {
+      entries: [
+        {
+          featureId: 'feature_liga',
+          lineStart: 4,
+          lineEnd: 12,
+        },
+        {
+          lookupId: 'lookup_liga_manual',
+          lineStart: 6,
+          lineEnd: 11,
+        },
+        {
+          ruleId: 'rule_f_i',
+          lineStart: 9,
+          lineEnd: 9,
+        },
+      ],
+    }
+
+    expect(
+      mapCompilerErrorsToDiagnostics({
+        fallbackMessage: 'Compilation failed',
+        rawCompilerOutput: 'features.fea:9:5: Unknown glyph "f_i"',
+        sourceMap,
+      })
+    ).toMatchObject([
+      {
+        message: 'features.fea:9:5: Unknown glyph "f_i"',
+        severity: 'error',
+        target: {
+          kind: 'rule',
+          ruleId: 'rule_f_i',
+        },
+      },
+    ])
+  })
 })
 
 describe('OpenType compiler runtime scaffold', () => {
@@ -299,6 +386,35 @@ describe('OpenType compiler runtime scaffold', () => {
       {
         severity: 'error',
         target: { kind: 'global' },
+      },
+    ])
+  })
+
+  it('can create mapped compiler error payloads without a runtime', () => {
+    const runtimeStatus = createCompilerRuntimeStatus('pyodide-fonttools')
+    const response = makeCompilerErrorResponse({
+      backend: runtimeStatus.backend,
+      message: 'fontTools compilation failed',
+      rawCompilerOutput: 'features.fea:21:1: Unknown lookup',
+      runtimeStatus,
+      sourceMap: {
+        entries: [
+          {
+            lookupId: 'lookup_kern_imported',
+            lineStart: 20,
+            lineEnd: 24,
+          },
+        ],
+      },
+    })
+
+    expect(response.payload.diagnostics).toMatchObject([
+      {
+        severity: 'error',
+        target: {
+          kind: 'lookup',
+          lookupId: 'lookup_kern_imported',
+        },
       },
     ])
   })

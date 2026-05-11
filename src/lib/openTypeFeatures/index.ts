@@ -24,9 +24,16 @@ export {
   AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS,
   DEFAULT_OPEN_TYPE_COMPILER_BACKEND,
   createCompilerRuntimeStatus,
+  makeCompilerErrorResponse,
   makeRuntimeNotConfiguredDiagnostic,
   makeRuntimeNotConfiguredResponse,
 } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
+export {
+  findFeaSourceMapEntryForLine,
+  mapCompilerErrorsToDiagnostics,
+  mapFeaLineToDiagnosticTarget,
+  parseCompilerErrorLocations,
+} from 'src/lib/openTypeFeatures/compilerErrorMapping'
 export {
   canInstalledDependenciesCompileGeneratedFeaOffline,
   getInstalledCompilerDependencyCapabilities,

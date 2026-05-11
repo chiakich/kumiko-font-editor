@@ -3,11 +3,13 @@ import type {
   CompileResponseMessage,
   CompileResult,
 } from 'src/lib/openTypeFeatures/compilerTypes'
+import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
 
 export const compileFontWithFeatures = (
   inputFontBuffer: ArrayBuffer,
   generatedFea: string,
-  options: CompileOptions
+  options: CompileOptions,
+  sourceMap?: GeneratedFeaSourceMap
 ): Promise<CompileResult> =>
   new Promise((resolve, reject) => {
     const worker = new Worker(
@@ -45,6 +47,7 @@ export const compileFontWithFeatures = (
           inputFontBuffer,
           generatedFea,
           options,
+          sourceMap,
         },
       },
       [inputFontBuffer]

@@ -1,4 +1,5 @@
 import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures/types'
+import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
 
 export type OpenTypeCompilerBackend =
   | 'not-configured'
@@ -35,6 +36,7 @@ export interface CompileRequestMessage {
     inputFontBuffer: ArrayBuffer
     generatedFea: string
     options: CompileOptions
+    sourceMap?: GeneratedFeaSourceMap
   }
 }
 
