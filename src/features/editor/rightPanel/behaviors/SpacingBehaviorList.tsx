@@ -22,6 +22,7 @@ interface SpacingBehaviorListProps {
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: (row: SpacingBehaviorRow) => void
   onDraftCommitted: (rowId: string) => void
+  onOpenPair: (left: string, right: string) => void
 }
 
 export function SpacingBehaviorList({
@@ -32,6 +33,7 @@ export function SpacingBehaviorList({
   onCommit,
   onDelete,
   onDraftCommitted,
+  onOpenPair,
 }: SpacingBehaviorListProps) {
   return (
     <Stack spacing={2}>
@@ -78,6 +80,7 @@ export function SpacingBehaviorList({
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
+            onOpenPair={onOpenPair}
           />
         ))}
         {draftRowIds.map((rowId) => (
@@ -88,6 +91,7 @@ export function SpacingBehaviorList({
             onCommit={onCommit}
             onDelete={() => onDraftCommitted(rowId)}
             onDraftCommitted={() => onDraftCommitted(rowId)}
+            onOpenPair={onOpenPair}
           />
         ))}
       </Box>
@@ -99,7 +103,7 @@ function SpacingHeader() {
   return (
     <Box
       display="grid"
-      gridTemplateColumns="minmax(48px, 1fr) minmax(48px, 1fr) 70px"
+      gridTemplateColumns="minmax(48px, 1fr) minmax(48px, 1fr) 96px"
       gap={1}
       px={3}
       py={2}

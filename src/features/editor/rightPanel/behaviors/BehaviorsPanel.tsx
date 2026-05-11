@@ -23,7 +23,6 @@ import { useStore, type FontData, type GlyphData } from 'src/store'
 import { CombinationBehaviorList } from 'src/features/editor/rightPanel/behaviors/CombinationBehaviorList'
 import { BehaviorPlaceholderSections } from 'src/features/editor/rightPanel/behaviors/BehaviorPlaceholderSections'
 import { AlternateBehaviorList } from 'src/features/editor/rightPanel/behaviors/AlternateBehaviorList'
-import { BehaviorPreviewPanel } from 'src/features/editor/rightPanel/behaviors/BehaviorPreviewPanel'
 import { SpacingBehaviorList } from 'src/features/editor/rightPanel/behaviors/SpacingBehaviorList'
 
 interface BehaviorsPanelProps {
@@ -54,6 +53,7 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const upsertSpacingBehavior = useStore((state) => state.upsertSpacingBehavior)
   const deleteSpacingBehavior = useStore((state) => state.deleteSpacingBehavior)
   const addGlyphToEditor = useStore((state) => state.addGlyphToEditor)
+  const insertGlyphIntoEditor = useStore((state) => state.insertGlyphIntoEditor)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
   const setSelectedGlyphId = useStore((state) => state.setSelectedGlyphId)
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
@@ -75,6 +75,13 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
     if (!fontData?.glyphs[glyphId]) return
     addGlyphToEditor(glyphId)
     setSelectedGlyphId(glyphId)
+    setWorkspaceView('editor')
+  }
+
+  const openSpacingPair = (left: string, right: string) => {
+    if (!fontData?.glyphs[left] || !fontData.glyphs[right]) return
+    addGlyphToEditor(left)
+    insertGlyphIntoEditor(right, left)
     setWorkspaceView('editor')
   }
 
@@ -202,14 +209,9 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
               rowIds.filter((id) => id !== rowId)
             )
           }
+          onOpenPair={openSpacingPair}
         />
         <BehaviorPlaceholderSections />
-        <BehaviorPreviewPanel
-          alternates={alternateRows}
-          combinations={combinationRows}
-          currentGlyphId={glyph.id}
-          spacing={spacingRows}
-        />
       </Stack>
 
       <AlertDialog

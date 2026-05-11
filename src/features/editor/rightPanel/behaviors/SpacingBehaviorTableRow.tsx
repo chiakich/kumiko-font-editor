@@ -1,13 +1,15 @@
 import {
   Badge,
   Box,
+  Button,
   HStack,
   IconButton,
   Input,
+  Text,
   Stack,
   Tooltip,
 } from '@chakra-ui/react'
-import { Minus, Plus, Trash } from 'iconoir-react'
+import { Minus, Plus, Trash, View360 } from 'iconoir-react'
 import { useEffect, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
@@ -23,6 +25,7 @@ interface SpacingBehaviorTableRowProps {
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: () => void
   onDraftCommitted?: () => void
+  onOpenPair: (left: string, right: string) => void
 }
 
 export function SpacingBehaviorTableRow({
@@ -32,6 +35,7 @@ export function SpacingBehaviorTableRow({
   onCommit,
   onDelete,
   onDraftCommitted,
+  onOpenPair,
 }: SpacingBehaviorTableRowProps) {
   const [left, setLeft] = useState(row?.left ?? currentGlyphId)
   const [right, setRight] = useState(row?.right ?? '')
@@ -88,19 +92,24 @@ export function SpacingBehaviorTableRow({
     >
       <Box
         display="grid"
-        gridTemplateColumns="minmax(48px, 1fr) minmax(48px, 1fr) 70px 28px"
+        gridTemplateColumns="minmax(48px, 1fr) minmax(48px, 1fr) 96px 28px"
         gap={1}
         alignItems="center"
       >
-        <Input
-          aria-label="Spacing left glyph"
-          value={left}
-          size="xs"
-          placeholder="A"
-          onBlur={commit}
-          onChange={(event) => setLeft(event.target.value)}
-          onKeyDown={commitOnEnter}
-        />
+        <Box
+          minH={7}
+          px={2}
+          display="flex"
+          alignItems="center"
+          bg="field.panelMuted"
+          borderRadius="2px"
+          fontFamily="mono"
+          fontSize="xs"
+        >
+          <Text as="span" isTruncated>
+            {left || 'Left'}
+          </Text>
+        </Box>
         <Input
           aria-label="Spacing right glyph"
           value={right}
@@ -110,15 +119,32 @@ export function SpacingBehaviorTableRow({
           onChange={(event) => setRight(event.target.value)}
           onKeyDown={commitOnEnter}
         />
-        <Input
-          aria-label="Spacing value"
-          value={value}
-          size="xs"
-          inputMode="numeric"
-          onBlur={commit}
-          onChange={(event) => setValue(event.target.value)}
-          onKeyDown={commitOnEnter}
-        />
+        <HStack spacing={0}>
+          <IconButton
+            aria-label="Decrease spacing"
+            icon={<Minus width={14} height={14} aria-hidden="true" />}
+            size="xs"
+            variant="ghost"
+            onClick={() => nudge(-10)}
+          />
+          <Input
+            aria-label="Spacing value"
+            value={value}
+            size="xs"
+            inputMode="numeric"
+            textAlign="center"
+            onBlur={commit}
+            onChange={(event) => setValue(event.target.value)}
+            onKeyDown={commitOnEnter}
+          />
+          <IconButton
+            aria-label="Increase spacing"
+            icon={<Plus width={14} height={14} aria-hidden="true" />}
+            size="xs"
+            variant="ghost"
+            onClick={() => nudge(10)}
+          />
+        </HStack>
         <Tooltip label="Delete spacing pair">
           <IconButton
             aria-label="刪除 spacing pair"
@@ -133,13 +159,6 @@ export function SpacingBehaviorTableRow({
 
       <HStack justify="space-between" align="center">
         <HStack spacing={1}>
-          <IconButton
-            aria-label="Decrease spacing"
-            icon={<Minus width={14} height={14} aria-hidden="true" />}
-            size="xs"
-            variant="ghost"
-            onClick={() => nudge(-10)}
-          />
           <Box
             px={2}
             py={1}
@@ -151,13 +170,16 @@ export function SpacingBehaviorTableRow({
             {left || 'Left'}
             {right || 'Right'}
           </Box>
-          <IconButton
-            aria-label="Increase spacing"
-            icon={<Plus width={14} height={14} aria-hidden="true" />}
+          <Button
+            aria-label="Add spacing pair to editor"
+            leftIcon={<View360 width={14} height={14} aria-hidden="true" />}
             size="xs"
             variant="ghost"
-            onClick={() => nudge(10)}
-          />
+            isDisabled={!left || !right}
+            onClick={() => onOpenPair(left, right)}
+          >
+            Edit
+          </Button>
         </HStack>
         <HStack spacing={1} wrap="wrap" justify="flex-end">
           {row?.sourceLabel ? (
