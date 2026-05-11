@@ -3,10 +3,12 @@ import {
   createEmptyOpenTypeFeaturesState,
   deriveGlyphAlternateBehaviors,
   deriveGlyphCombinationBehaviors,
+  deriveGlyphSpacingBehaviors,
   makeEditableGlyphCopy,
   makeCompositeGlyphFromComponents,
   upsertAlternateBehavior,
   upsertCombinationBehavior,
+  upsertSpacingBehavior,
   type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 import type { FontData, GlyphData } from 'src/store'
@@ -133,6 +135,47 @@ describe('OpenType behavior facade', () => {
     })
     expect(glyph?.paths[0]?.id).toBe('f.alt_f_path')
     expect(glyph?.paths[0]?.nodes[0]?.id).toBe('f.alt_f_node_0')
+  })
+
+  it('derives and upserts spacing rows through semantic behavior fields', () => {
+    const state = upsertSpacingBehavior(createEmptyOpenTypeFeaturesState(), {
+      left: 'A',
+      right: 'V',
+      value: -80,
+    })
+    const fontData = makeFontData(state)
+    fontData.glyphs.A = makeGlyph('A', 700)
+    fontData.glyphs.V = makeGlyph('V', 700)
+
+    expect(state.features).toMatchObject([
+      {
+        tag: 'kern',
+        entries: [{ lookupIds: ['lookup_kern_behavior_spacing'] }],
+      },
+    ])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_kern_behavior_spacing',
+        table: 'GPOS',
+        lookupType: 'pairPos',
+        rules: [
+          {
+            kind: 'pairPositioning',
+            left: { kind: 'glyph', glyph: 'A' },
+            right: { kind: 'glyph', glyph: 'V' },
+            firstValue: { xAdvance: -80 },
+          },
+        ],
+      },
+    ])
+    expect(deriveGlyphSpacingBehaviors(fontData, 'A')).toMatchObject([
+      {
+        left: 'A',
+        right: 'V',
+        value: -80,
+        featureTag: 'kern',
+      },
+    ])
   })
 })
 

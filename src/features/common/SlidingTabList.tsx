@@ -64,10 +64,17 @@ export function SlidingTabList({
 }: SlidingTabListProps) {
   return (
     <LayoutGroup id={layoutGroupId}>
-      <TabList overflowX="auto" overflowY="hidden" maxW="100%">
+      <TabList
+        overflowX="auto"
+        overflowY="hidden"
+        maxW="100%"
+        bg="field.panelMuted"
+        borderRadius="full"
+        p={1}
+      >
         {labels.map((label, index) => (
           <SlidingTab
-            key={String(label)}
+            key={`${layoutGroupId}-${index}`}
             isSelected={activeIndex === index}
             layoutId={`${layoutGroupId}-active-tab`}
           >

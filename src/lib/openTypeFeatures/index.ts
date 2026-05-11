@@ -69,10 +69,14 @@ export {
   COMBINATION_BEHAVIOR_TYPES,
   canCommitAlternateBehavior,
   canCommitCombinationBehavior,
+  canCommitSpacingBehavior,
   deleteAlternateBehavior,
   deleteCombinationBehavior,
+  deleteSpacingBehavior,
   deriveGlyphAlternateBehaviors,
   deriveGlyphCombinationBehaviors,
+  deriveGlyphSpacingBehaviors,
+  isGlyphReferencedByOpenTypeBehaviors,
   makeCompositeGlyphFromComponents,
   makeEditableGlyphCopy,
   parseCombinationInput,
@@ -82,6 +86,7 @@ export {
   suggestCombinationOutput,
   upsertAlternateBehavior,
   upsertCombinationBehavior,
+  upsertSpacingBehavior,
 } from 'src/lib/openTypeFeatures/behaviorFacade'
 export {
   deriveOpenTypeExportWarnings,

@@ -1,7 +1,6 @@
 import { Badge, Box, HStack, Stack, Text } from '@chakra-ui/react'
 
 const UPCOMING_SECTIONS = [
-  ['Spacing', 'Visual kerning and pair positioning'],
   ['Contextual', 'When / Then substitution rules'],
   ['Anchors', 'Mark attachment points'],
 ] as const

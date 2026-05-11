@@ -1,19 +1,19 @@
 import {
   Box,
   Stack,
-  Tab,
-  TabList,
   TabPanel,
   TabPanels,
   Tabs,
   Text,
   useDisclosure,
 } from '@chakra-ui/react'
+import { useState } from 'react'
 import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
 import { useFontExport } from 'src/features/common/fontExport/useFontExport'
 import { GitHubCommitModal } from 'src/features/common/glyphInspector/GitHubCommitModal'
 import { GlyphSummaryCard } from 'src/features/common/glyphInspector/GlyphSummaryCard'
 import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightPanelModel'
+import { SlidingTabList } from 'src/features/common/SlidingTabList'
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
 import { MetricsCard } from 'src/features/editor/rightPanel/MetricsCard'
@@ -28,6 +28,7 @@ export function EditorRightPanel() {
   const fontSettingsModal = useDisclosure()
   const fontExport = useFontExport()
   const updateFontSettings = useStore((state) => state.updateFontSettings)
+  const [activeTabIndex, setActiveTabIndex] = useState(0)
 
   return (
     <Box
@@ -67,12 +68,18 @@ export function EditorRightPanel() {
             尚未選取字形。
           </Text>
         ) : (
-          <Tabs variant="enclosed" size="sm" isLazy>
-            <TabList>
-              <Tab>Inspect</Tab>
-              <Tab>Transform</Tab>
-              <Tab>Behaviors</Tab>
-            </TabList>
+          <Tabs
+            variant="unstyled"
+            size="sm"
+            isLazy
+            index={activeTabIndex}
+            onChange={setActiveTabIndex}
+          >
+            <SlidingTabList
+              activeIndex={activeTabIndex}
+              labels={rightPanelTabLabels}
+              layoutGroupId="editor-right-panel-tabs"
+            />
             <TabPanels>
               <TabPanel px={0} pb={0}>
                 <Stack spacing={4}>
@@ -148,3 +155,15 @@ export function EditorRightPanel() {
     </Box>
   )
 }
+
+const rightPanelTabLabels = [
+  <Text key="inspect" as="span" fontSize="xs" fontWeight="800">
+    Inspect
+  </Text>,
+  <Text key="transform" as="span" fontSize="xs" fontWeight="800">
+    Transform
+  </Text>,
+  <Text key="behaviors" as="span" fontSize="xs" fontWeight="800">
+    Behaviors
+  </Text>,
+]

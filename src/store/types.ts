@@ -9,6 +9,7 @@ import type {
   CombinationBehaviorDraft,
   GlyphSelector,
   OpenTypeFeaturesState,
+  SpacingBehaviorDraft,
 } from 'src/lib/openTypeFeatures'
 
 export type NodeType = 'corner' | 'smooth' | 'offcurve' | 'qcurve'
@@ -308,6 +309,8 @@ export interface GlobalState {
     ruleId: string,
     alternate: string
   ) => void
+  upsertSpacingBehavior: (draft: SpacingBehaviorDraft) => void
+  deleteSpacingBehavior: (lookupId: string, ruleId: string) => void
   setSelectedNodeIds: (ids: string[]) => void
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void

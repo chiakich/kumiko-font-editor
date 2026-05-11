@@ -6,16 +6,20 @@ import type { StateCreator } from 'zustand'
 import {
   canCommitAlternateBehavior,
   canCommitCombinationBehavior,
+  canCommitSpacingBehavior,
   createEmptyOpenTypeFeaturesState,
   deleteAlternateBehavior,
   deleteCombinationBehavior,
+  deleteSpacingBehavior,
   makeEditableGlyphCopy,
   makeCompositeGlyphFromComponents,
   parseCombinationInput,
   upsertAlternateBehavior,
   upsertCombinationBehavior,
+  upsertSpacingBehavior,
   type AlternateBehaviorDraft,
   type CombinationBehaviorDraft,
+  type SpacingBehaviorDraft,
 } from 'src/lib/openTypeFeatures'
 import { syncFilteredGlyphList } from 'src/store/glyphSearch'
 import type { GlobalState } from 'src/store/types'
@@ -126,6 +130,33 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
       state.fontData.openTypeFeatures = deleteAlternateBehavior(
         state.fontData.openTypeFeatures,
         { lookupId, ruleId, alternate }
+      )
+      state.isDirty = true
+      state.hasLocalChanges = true
+    }),
+
+  upsertSpacingBehavior: (draft: SpacingBehaviorDraft) =>
+    set((state) => {
+      if (!state.fontData) return
+      if (!canCommitSpacingBehavior(draft)) return
+
+      const currentFeatures =
+        state.fontData.openTypeFeatures ?? createEmptyOpenTypeFeaturesState()
+      state.fontData.openTypeFeatures = upsertSpacingBehavior(
+        currentFeatures,
+        draft
+      )
+      state.isDirty = true
+      state.hasLocalChanges = true
+    }),
+
+  deleteSpacingBehavior: (lookupId: string, ruleId: string) =>
+    set((state) => {
+      if (!state.fontData?.openTypeFeatures) return
+
+      state.fontData.openTypeFeatures = deleteSpacingBehavior(
+        state.fontData.openTypeFeatures,
+        { lookupId, ruleId }
       )
       state.isDirty = true
       state.hasLocalChanges = true

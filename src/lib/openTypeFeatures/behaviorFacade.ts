@@ -7,6 +7,7 @@ import {
   isFourCharTag,
   isValidGlyphName,
 } from 'src/lib/openTypeFeatures/validationNames'
+import { getRuleGlyphReferences } from 'src/lib/openTypeFeatures/ruleReferences'
 import type {
   AlternateSubstitutionRule,
   FeatureRecord,
@@ -91,6 +92,39 @@ export interface AlternateBehaviorDraft {
   alternate: string
   type: AlternateBehaviorType
   customFeatureTag?: string
+}
+
+export interface SpacingBehaviorRow {
+  id: string
+  lookupId: string
+  ruleId: string
+  left: string
+  right: string
+  value: number
+  featureTag: 'kern'
+  origin: Rule['meta']['origin']
+  sourceLabel: string
+  status: SpacingBehaviorStatus[]
+}
+
+export type SpacingBehaviorStatus =
+  | 'Duplicate'
+  | 'Conflict'
+  | 'Missing Glyph'
+  | 'Invalid Input'
+
+export interface SpacingBehaviorDraft {
+  lookupId?: string
+  ruleId?: string
+  left: string
+  right: string
+  value: number
+}
+
+export interface BehaviorRuleReferenceTarget {
+  lookupId?: string
+  ruleId?: string
+  alternate?: string
 }
 
 const BEHAVIOR_TYPE_TO_FEATURE_TAG: Record<
@@ -312,6 +346,65 @@ export function deriveGlyphAlternateBehaviors(
   })
 }
 
+export function deriveGlyphSpacingBehaviors(
+  fontData: FontData,
+  glyphId: string
+): SpacingBehaviorRow[] {
+  const state = fontData.openTypeFeatures
+  if (!state) return []
+
+  const featureTagsByLookupId = mapFeatureTagsByLookupId(state.features)
+  const duplicateKeys = countSpacingKeys(state.lookups)
+
+  return state.lookups.flatMap((lookup) => {
+    if (lookup.table !== 'GPOS' || lookup.lookupType !== 'pairPos') {
+      return []
+    }
+
+    const featureTag = featureTagsByLookupId.get(lookup.id)?.[0] ?? 'kern'
+    if (featureTag !== 'kern') return []
+
+    return lookup.rules.flatMap((rule) => {
+      if (
+        rule.kind !== 'pairPositioning' ||
+        rule.left.kind !== 'glyph' ||
+        rule.right.kind !== 'glyph'
+      ) {
+        return []
+      }
+      if (rule.left.glyph !== glyphId && rule.right.glyph !== glyphId) {
+        return []
+      }
+
+      const value = rule.firstValue?.xAdvance ?? 0
+      const duplicateCount =
+        duplicateKeys.get(makeSpacingKey(rule.left.glyph, rule.right.glyph)) ??
+        0
+
+      return [
+        {
+          id: `${lookup.id}:${rule.id}`,
+          lookupId: lookup.id,
+          ruleId: rule.id,
+          left: rule.left.glyph,
+          right: rule.right.glyph,
+          value,
+          featureTag,
+          origin: rule.meta.origin,
+          sourceLabel: formatSourceLabel(rule.meta.origin, featureTag),
+          status: getSpacingStatus({
+            fontData,
+            left: rule.left.glyph,
+            right: rule.right.glyph,
+            value,
+            duplicateCount,
+          }),
+        },
+      ]
+    })
+  })
+}
+
 export function parseCombinationInput(input: string) {
   return input
     .split('+')
@@ -360,6 +453,14 @@ export function canCommitAlternateBehavior(draft: AlternateBehaviorDraft) {
     isValidGlyphName(draft.source.trim()) &&
     isValidGlyphName(draft.alternate.trim()) &&
     isFourCharTag(featureTag)
+  )
+}
+
+export function canCommitSpacingBehavior(draft: SpacingBehaviorDraft) {
+  return (
+    isValidGlyphName(draft.left.trim()) &&
+    isValidGlyphName(draft.right.trim()) &&
+    Number.isFinite(draft.value)
   )
 }
 
@@ -551,6 +652,95 @@ export function deleteAlternateBehavior(
   }
 }
 
+export function upsertSpacingBehavior(
+  state: OpenTypeFeaturesState,
+  draft: SpacingBehaviorDraft
+): OpenTypeFeaturesState {
+  const left = draft.left.trim()
+  const right = draft.right.trim()
+  const value = Math.round(draft.value)
+  if (
+    !isValidGlyphName(left) ||
+    !isValidGlyphName(right) ||
+    !Number.isFinite(value)
+  ) {
+    return state
+  }
+
+  const nextState = deleteSpacingBehavior(state, draft)
+  const lookupId = findWritablePairPositioningLookupId(nextState)
+  const rule = makePairPositioningRule(left, right, value)
+
+  if (lookupId) {
+    return {
+      ...nextState,
+      features: ensureFeatureReferencesLookup(
+        nextState.features,
+        'kern',
+        lookupId
+      ),
+      lookups: nextState.lookups.map((lookup) =>
+        lookup.id === lookupId
+          ? {
+              ...lookup,
+              origin: markLookupOriginAsEdited(lookup.origin),
+              rules: [...lookup.rules, rule],
+            }
+          : lookup
+      ),
+    }
+  }
+
+  const nextLookupId = makeLookupId('kern', 'behavior_spacing')
+  const lookup: LookupRecord = {
+    id: nextLookupId,
+    name: nextLookupId,
+    table: 'GPOS',
+    lookupType: 'pairPos',
+    lookupFlag: {},
+    rules: [rule],
+    editable: true,
+    origin: 'manual',
+  }
+
+  return {
+    ...nextState,
+    features: ensureFeatureReferencesLookup(
+      nextState.features,
+      'kern',
+      nextLookupId
+    ),
+    lookups: [...nextState.lookups, lookup],
+  }
+}
+
+export function deleteSpacingBehavior(
+  state: OpenTypeFeaturesState,
+  target: Pick<SpacingBehaviorDraft, 'lookupId' | 'ruleId'>
+): OpenTypeFeaturesState {
+  if (!target.lookupId || !target.ruleId) return state
+
+  return {
+    ...state,
+    features: state.features.map((feature) =>
+      feature.entries.some((entry) =>
+        entry.lookupIds.includes(target.lookupId ?? '')
+      )
+        ? { ...feature, origin: markFeatureOriginAsEdited(feature.origin) }
+        : feature
+    ),
+    lookups: state.lookups.map((lookup) =>
+      lookup.id === target.lookupId
+        ? {
+            ...lookup,
+            origin: markLookupOriginAsEdited(lookup.origin),
+            rules: lookup.rules.filter((rule) => rule.id !== target.ruleId),
+          }
+        : lookup
+    ),
+  }
+}
+
 export function makeCompositeGlyphFromComponents(
   fontData: FontData,
   glyphId: string,
@@ -650,6 +840,36 @@ export function makeEditableGlyphCopy(
     layers: undefined,
     layerOrder: undefined,
   }
+}
+
+export function isGlyphReferencedByOpenTypeBehaviors(
+  state: OpenTypeFeaturesState | null | undefined,
+  glyphId: string,
+  ignoredTarget: BehaviorRuleReferenceTarget = {}
+) {
+  if (!state) return false
+
+  return state.lookups.some((lookup) =>
+    lookup.rules.some((rule) => {
+      if (
+        ignoredTarget.lookupId === lookup.id &&
+        ignoredTarget.ruleId === rule.id
+      ) {
+        if (
+          ignoredTarget.alternate &&
+          isAlternateSubstitutionRule(rule) &&
+          rule.alternates.length > 1
+        ) {
+          return rule.alternates
+            .filter((alternate) => alternate !== ignoredTarget.alternate)
+            .includes(glyphId)
+        }
+        return false
+      }
+
+      return getRuleGlyphReferences(rule).includes(glyphId)
+    })
+  )
 }
 
 function mapFeatureTagsByLookupId(features: FeatureRecord[]) {
@@ -822,6 +1042,56 @@ function makeAlternateKey(source: string, alternate: string) {
   return `${source}=>${alternate}`
 }
 
+function countSpacingKeys(lookups: LookupRecord[]) {
+  const counts = new Map<string, number>()
+  for (const lookup of lookups) {
+    if (lookup.table !== 'GPOS' || lookup.lookupType !== 'pairPos') continue
+    for (const rule of lookup.rules) {
+      if (
+        rule.kind !== 'pairPositioning' ||
+        rule.left.kind !== 'glyph' ||
+        rule.right.kind !== 'glyph'
+      ) {
+        continue
+      }
+      const key = makeSpacingKey(rule.left.glyph, rule.right.glyph)
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+  }
+  return counts
+}
+
+function makeSpacingKey(left: string, right: string) {
+  return `${left}+${right}`
+}
+
+function getSpacingStatus(input: {
+  fontData: FontData
+  left: string
+  right: string
+  value: number
+  duplicateCount: number
+}): SpacingBehaviorStatus[] {
+  const status: SpacingBehaviorStatus[] = []
+  if (
+    !isValidGlyphName(input.left) ||
+    !isValidGlyphName(input.right) ||
+    !Number.isFinite(input.value)
+  ) {
+    status.push('Invalid Input')
+  }
+  if (
+    !input.fontData.glyphs[input.left] ||
+    !input.fontData.glyphs[input.right]
+  ) {
+    status.push('Missing Glyph')
+  }
+  if (input.duplicateCount > 1) {
+    status.push('Duplicate')
+  }
+  return status
+}
+
 function formatCombinationInput(components: string[]) {
   return components.join('+')
 }
@@ -886,6 +1156,21 @@ function findWritableSingleSubstitutionLookupId(
       lookupIds.has(lookup.id) &&
       lookup.table === 'GSUB' &&
       lookup.lookupType === 'singleSubst' &&
+      lookup.editable
+  )?.id
+}
+
+function findWritablePairPositioningLookupId(state: OpenTypeFeaturesState) {
+  const feature = state.features.find((item) => item.tag === 'kern')
+  const lookupIds = new Set(
+    feature?.entries.flatMap((entry) => entry.lookupIds)
+  )
+
+  return state.lookups.find(
+    (lookup) =>
+      lookupIds.has(lookup.id) &&
+      lookup.table === 'GPOS' &&
+      lookup.lookupType === 'pairPos' &&
       lookup.editable
   )?.id
 }
@@ -979,6 +1264,25 @@ function makeSingleSubstitutionRule(
     kind: 'singleSubstitution',
     target: { kind: 'glyph', glyph: source },
     replacement: alternate,
+    meta: {
+      origin: 'manual',
+      userOverridden: true,
+      dirty: true,
+    },
+  }
+}
+
+function makePairPositioningRule(
+  left: string,
+  right: string,
+  value: number
+): Extract<Rule, { kind: 'pairPositioning' }> {
+  return {
+    id: makeRuleId(['kern', left, right]),
+    kind: 'pairPositioning',
+    left: { kind: 'glyph', glyph: left },
+    right: { kind: 'glyph', glyph: right },
+    firstValue: { xAdvance: value },
     meta: {
       origin: 'manual',
       userOverridden: true,
