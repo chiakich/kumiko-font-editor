@@ -12,21 +12,23 @@ import {
 import { useMemo, useRef, useState } from 'react'
 import {
   deriveGlyphAlternateBehaviors,
+  deriveGlyphAnchorBehaviors,
   deriveGlyphCombinationBehaviors,
   deriveGlyphContextualBehaviors,
   deriveGlyphSpacingBehaviors,
   isGlyphReferencedByOpenTypeBehaviors,
   type AlternateBehaviorRow,
+  type AnchorBehaviorRow,
   type CombinationBehaviorRow,
   type ContextualBehaviorRow,
   type SpacingBehaviorRow,
 } from 'src/lib/openTypeFeatures'
 import { useStore, type FontData, type GlyphData } from 'src/store'
 import { CombinationBehaviorList } from 'src/features/editor/rightPanel/behaviors/CombinationBehaviorList'
-import { BehaviorPlaceholderSections } from 'src/features/editor/rightPanel/behaviors/BehaviorPlaceholderSections'
 import { AlternateBehaviorList } from 'src/features/editor/rightPanel/behaviors/AlternateBehaviorList'
 import { SpacingBehaviorList } from 'src/features/editor/rightPanel/behaviors/SpacingBehaviorList'
 import { ContextualBehaviorList } from 'src/features/editor/rightPanel/behaviors/ContextualBehaviorList'
+import { AnchorBehaviorList } from 'src/features/editor/rightPanel/behaviors/AnchorBehaviorList'
 
 interface BehaviorsPanelProps {
   fontData: FontData | null
@@ -40,6 +42,7 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const [contextualDraftRowIds, setContextualDraftRowIds] = useState<string[]>(
     []
   )
+  const [anchorDraftRowIds, setAnchorDraftRowIds] = useState<string[]>([])
   const [unusedGlyphPrompt, setUnusedGlyphPrompt] =
     useState<UnusedGlyphPrompt | null>(null)
   const cancelUnusedGlyphRef = useRef<HTMLButtonElement | null>(null)
@@ -64,6 +67,8 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const deleteContextualBehavior = useStore(
     (state) => state.deleteContextualBehavior
   )
+  const upsertAnchorBehavior = useStore((state) => state.upsertAnchorBehavior)
+  const deleteAnchorBehavior = useStore((state) => state.deleteAnchorBehavior)
   const addGlyphToEditor = useStore((state) => state.addGlyphToEditor)
   const insertGlyphIntoEditor = useStore((state) => state.insertGlyphIntoEditor)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
@@ -84,6 +89,10 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   )
   const contextualRows = useMemo(
     () => (fontData ? deriveGlyphContextualBehaviors(fontData, glyph.id) : []),
+    [fontData, glyph.id]
+  )
+  const anchorRows = useMemo(
+    () => (fontData ? deriveGlyphAnchorBehaviors(fontData, glyph.id) : []),
     [fontData, glyph.id]
   )
 
@@ -177,6 +186,10 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
     deleteContextualBehavior(row.lookupId, row.ruleId)
   }
 
+  const deleteAnchorRow = (row: AnchorBehaviorRow) => {
+    deleteAnchorBehavior(row.glyphId, row.id)
+  }
+
   return (
     <>
       <Stack spacing={4}>
@@ -249,7 +262,24 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
             )
           }
         />
-        <BehaviorPlaceholderSections />
+        <AnchorBehaviorList
+          currentGlyphId={glyph.id}
+          draftRowIds={anchorDraftRowIds}
+          rows={anchorRows}
+          onAddDraftRow={() =>
+            setAnchorDraftRowIds((rowIds) => [
+              ...rowIds,
+              `anchor-draft-${Date.now()}`,
+            ])
+          }
+          onCommit={(draft) => upsertAnchorBehavior(draft)}
+          onDelete={deleteAnchorRow}
+          onDraftCommitted={(rowId) =>
+            setAnchorDraftRowIds((rowIds) =>
+              rowIds.filter((id) => id !== rowId)
+            )
+          }
+        />
       </Stack>
 
       <AlertDialog

@@ -8,6 +8,7 @@ import type {
   AlternateBehaviorDraft,
   CombinationBehaviorDraft,
   ContextualBehaviorDraft,
+  AnchorBehaviorDraft,
   GlyphSelector,
   OpenTypeFeaturesState,
   SpacingBehaviorDraft,
@@ -314,6 +315,8 @@ export interface GlobalState {
   deleteSpacingBehavior: (lookupId: string, ruleId: string) => void
   upsertContextualBehavior: (draft: ContextualBehaviorDraft) => void
   deleteContextualBehavior: (lookupId: string, ruleId: string) => void
+  upsertAnchorBehavior: (draft: AnchorBehaviorDraft) => void
+  deleteAnchorBehavior: (glyphId: string, anchorId: string) => void
   setSelectedNodeIds: (ids: string[]) => void
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void

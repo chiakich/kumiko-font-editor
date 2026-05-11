@@ -3,11 +3,13 @@ import {
   createEmptyOpenTypeFeaturesState,
   deriveGlyphContextualBehaviors,
   deriveGlyphAlternateBehaviors,
+  deriveGlyphAnchorBehaviors,
   deriveGlyphCombinationBehaviors,
   deriveGlyphSpacingBehaviors,
   makeEditableGlyphCopy,
   makeCompositeGlyphFromComponents,
   upsertAlternateBehavior,
+  upsertAnchorBehavior,
   upsertCombinationBehavior,
   upsertContextualBehavior,
   upsertSpacingBehavior,
@@ -203,6 +205,40 @@ describe('OpenType behavior facade', () => {
     expect(generateFea(state).text).toContain(
       `sub f' lookup lookup_calt_behavior_contextual_f_f_end period;`
     )
+  })
+
+  it('edits glyph anchors and syncs OpenType anchor definitions', () => {
+    const fontData = makeFontData(createEmptyOpenTypeFeaturesState())
+    const nextFontData = upsertAnchorBehavior(fontData, {
+      glyphId: 'f',
+      name: 'top',
+      x: 250,
+      y: 700,
+    })
+
+    expect(nextFontData.glyphs.f?.anchors).toMatchObject([
+      {
+        name: 'top',
+        x: 250,
+        y: 700,
+      },
+    ])
+    expect(nextFontData.openTypeFeatures?.anchors).toMatchObject([
+      {
+        glyph: 'f',
+        name: 'top',
+        x: 250,
+        y: 700,
+      },
+    ])
+    expect(deriveGlyphAnchorBehaviors(nextFontData, 'f')).toMatchObject([
+      {
+        glyphId: 'f',
+        name: 'top',
+        kind: 'base',
+        status: [],
+      },
+    ])
   })
 })
 

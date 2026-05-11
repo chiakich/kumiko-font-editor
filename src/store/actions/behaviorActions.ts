@@ -5,11 +5,13 @@
 import type { StateCreator } from 'zustand'
 import {
   canCommitAlternateBehavior,
+  canCommitAnchorBehavior,
   canCommitCombinationBehavior,
   canCommitContextualBehavior,
   canCommitSpacingBehavior,
   createEmptyOpenTypeFeaturesState,
   deleteAlternateBehavior,
+  deleteAnchorBehavior,
   deleteCombinationBehavior,
   deleteContextualBehavior,
   deleteSpacingBehavior,
@@ -17,10 +19,12 @@ import {
   makeCompositeGlyphFromComponents,
   parseCombinationInput,
   upsertAlternateBehavior,
+  upsertAnchorBehavior,
   upsertCombinationBehavior,
   upsertContextualBehavior,
   upsertSpacingBehavior,
   type AlternateBehaviorDraft,
+  type AnchorBehaviorDraft,
   type CombinationBehaviorDraft,
   type ContextualBehaviorDraft,
   type SpacingBehaviorDraft,
@@ -189,6 +193,27 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         state.fontData.openTypeFeatures,
         { lookupId, ruleId }
       )
+      state.isDirty = true
+      state.hasLocalChanges = true
+    }),
+
+  upsertAnchorBehavior: (draft: AnchorBehaviorDraft) =>
+    set((state) => {
+      if (!state.fontData) return
+      if (!canCommitAnchorBehavior(draft)) return
+
+      state.fontData = upsertAnchorBehavior(state.fontData, draft)
+      markGlyphDirty(state, draft.glyphId)
+      state.isDirty = true
+      state.hasLocalChanges = true
+    }),
+
+  deleteAnchorBehavior: (glyphId: string, anchorId: string) =>
+    set((state) => {
+      if (!state.fontData) return
+
+      state.fontData = deleteAnchorBehavior(state.fontData, glyphId, anchorId)
+      markGlyphDirty(state, glyphId)
       state.isDirty = true
       state.hasLocalChanges = true
     }),
