@@ -142,6 +142,51 @@ const makeGsubTable = (
   return bytes
 }
 
+const makeGposTable = (
+  featureTag: string,
+  lookupType: number,
+  subtable: Uint8Array
+) => {
+  const tableLength = 56 + subtable.byteLength
+  const bytes = makeBytes(tableLength, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 0)
+    writeUint16(view, 4, 10)
+    writeUint16(view, 6, 30)
+    writeUint16(view, 8, 44)
+
+    writeUint16(view, 10, 1)
+    writeTag(view, 12, 'latn')
+    writeUint16(view, 16, 8)
+
+    writeUint16(view, 18, 4)
+    writeUint16(view, 20, 0)
+
+    writeUint16(view, 22, 0)
+    writeUint16(view, 24, 0xffff)
+    writeUint16(view, 26, 1)
+    writeUint16(view, 28, 0)
+
+    writeUint16(view, 30, 1)
+    writeTag(view, 32, featureTag)
+    writeUint16(view, 36, 8)
+
+    writeUint16(view, 38, 0)
+    writeUint16(view, 40, 1)
+    writeUint16(view, 42, 0)
+
+    writeUint16(view, 44, 1)
+    writeUint16(view, 46, 4)
+
+    writeUint16(view, 48, lookupType)
+    writeUint16(view, 50, 0)
+    writeUint16(view, 52, 1)
+    writeUint16(view, 54, 8)
+  })
+  bytes.set(subtable, 56)
+  return bytes
+}
+
 const makeSingleSubstitutionSubtable = () =>
   makeBytes(14, (view) => {
     writeUint16(view, 0, 2)
@@ -171,6 +216,36 @@ const makeLigatureSubstitutionSubtable = () =>
     writeUint16(view, 18, 3)
     writeUint16(view, 20, 2)
     writeUint16(view, 22, 2)
+  })
+
+const makeSinglePositioningSubtable = () =>
+  makeBytes(14, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 8)
+    writeUint16(view, 4, 0x0004)
+    writeUint16(view, 6, 0xffce)
+
+    writeUint16(view, 8, 1)
+    writeUint16(view, 10, 1)
+    writeUint16(view, 12, 1)
+  })
+
+const makePairPositioningSubtable = () =>
+  makeBytes(26, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 14)
+    writeUint16(view, 4, 0x0004)
+    writeUint16(view, 6, 0)
+    writeUint16(view, 8, 1)
+    writeUint16(view, 10, 20)
+
+    writeUint16(view, 14, 1)
+    writeUint16(view, 16, 1)
+    writeUint16(view, 18, 1)
+
+    writeUint16(view, 20, 1)
+    writeUint16(view, 22, 2)
+    writeUint16(view, 24, 0xffb0)
   })
 
 const makeDummyTable = (length = 4) => new Uint8Array(length)
@@ -350,6 +425,87 @@ describe('SFNT binary inventory', () => {
                 table: 'GSUB',
                 lookupIndex: 0,
                 lookupType: 4,
+                subtableIndex: 0,
+                subtableFormat: 1,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts editable GPOS SinglePos rules from straightforward subtables', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GPOS',
+          data: makeGposTable('mark', 1, makeSinglePositioningSubtable()),
+        },
+      ]),
+      null,
+      ['.notdef', 'acutecomb']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gpos_0',
+        lookupType: 'singlePos',
+        editable: true,
+        origin: 'imported',
+        rules: [
+          {
+            kind: 'singlePositioning',
+            target: { kind: 'glyph', glyph: 'acutecomb' },
+            value: { xAdvance: -50 },
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GPOS',
+                lookupIndex: 0,
+                lookupType: 1,
+                subtableIndex: 0,
+                subtableFormat: 1,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts editable GPOS PairPos glyph-pair rules from straightforward subtables', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GPOS',
+          data: makeGposTable('kern', 2, makePairPositioningSubtable()),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'V']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gpos_0',
+        lookupType: 'pairPos',
+        editable: true,
+        origin: 'imported',
+        rules: [
+          {
+            kind: 'pairPositioning',
+            left: { kind: 'glyph', glyph: 'A' },
+            right: { kind: 'glyph', glyph: 'V' },
+            firstValue: { xAdvance: -80 },
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GPOS',
+                lookupIndex: 0,
+                lookupType: 2,
                 subtableIndex: 0,
                 subtableFormat: 1,
               },

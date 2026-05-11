@@ -15,6 +15,10 @@ import {
   parseGsubLookupRules,
   type GsubRuleParseResult,
 } from 'src/lib/openTypeFeatures/gsubRuleParser'
+import {
+  parseGposLookupRules,
+  type GposRuleParseResult,
+} from 'src/lib/openTypeFeatures/gposRuleParser'
 import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
 import type {
   FeatureDiagnostic,
@@ -32,7 +36,7 @@ import type {
 
 interface ParsedLookupState {
   lookup: LayoutLookupInventory
-  parseResult: GsubRuleParseResult | null
+  parseResult: GsubRuleParseResult | GposRuleParseResult | null
 }
 
 const GSUB_LOOKUP_TYPES: Record<number, GsubLookupType> = {
@@ -275,7 +279,13 @@ const parseInventoryLookups = (
             glyphOrder,
             lookupId
           )
-        : null
+        : parseGposLookupRules(
+            buffer,
+            inventory.tableOffset,
+            lookup,
+            glyphOrder,
+            lookupId
+          )
 
     return { lookup, parseResult }
   })
