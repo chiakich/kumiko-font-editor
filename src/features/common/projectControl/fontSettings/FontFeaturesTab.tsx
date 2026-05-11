@@ -13,6 +13,7 @@ import { FeatureList } from 'src/features/common/projectControl/fontSettings/fea
 import { FeatureSummary } from 'src/features/common/projectControl/fontSettings/features/FeatureSummary'
 import { GeneratedFeaPreview } from 'src/features/common/projectControl/fontSettings/features/GeneratedFeaPreview'
 import { LookupInspector } from 'src/features/common/projectControl/fontSettings/features/LookupInspector'
+import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/ruleEditorState'
 import { UnsupportedLookupList } from 'src/features/common/projectControl/fontSettings/features/UnsupportedLookupList'
 import {
   applyAutoFeatureSuggestion,
@@ -23,6 +24,7 @@ import {
   type AutoFeatureSuggestion,
   type ExportPolicy,
   type OpenTypeFeaturesState,
+  type Rule,
 } from 'src/lib/openTypeFeatures'
 import type { FontData } from 'src/store'
 
@@ -71,6 +73,10 @@ export function FontFeaturesTab({
     onOpenTypeFeaturesChange({ ...openTypeFeatures, exportPolicy })
   }
 
+  const updateRule = (lookupId: string, rule: Rule) => {
+    onOpenTypeFeaturesChange(updateLookupRule(openTypeFeatures, lookupId, rule))
+  }
+
   return (
     <Stack spacing={5}>
       <FeatureSummary state={openTypeFeatures} diagnostics={diagnostics} />
@@ -88,7 +94,11 @@ export function FontFeaturesTab({
       <Divider />
       <FeatureList state={openTypeFeatures} />
       <Divider />
-      <LookupInspector state={openTypeFeatures} diagnostics={diagnostics} />
+      <LookupInspector
+        state={openTypeFeatures}
+        diagnostics={diagnostics}
+        onRuleChange={updateRule}
+      />
       <Divider />
       <UnsupportedLookupList
         unsupportedLookups={openTypeFeatures.unsupportedLookups}

@@ -11,15 +11,22 @@ import type {
   FeatureDiagnostic,
   LookupRecord,
   OpenTypeFeaturesState,
+  Rule,
 } from 'src/lib/openTypeFeatures'
+import { RuleEditorList } from 'src/features/common/projectControl/fontSettings/features/RuleEditorList'
 import { RuleListSummary } from 'src/features/common/projectControl/fontSettings/features/RuleListSummary'
 
 interface LookupInspectorProps {
   state: OpenTypeFeaturesState
   diagnostics: FeatureDiagnostic[]
+  onRuleChange: (lookupId: string, rule: Rule) => void
 }
 
-export function LookupInspector({ state, diagnostics }: LookupInspectorProps) {
+export function LookupInspector({
+  state,
+  diagnostics,
+  onRuleChange,
+}: LookupInspectorProps) {
   const [selectedLookupId, setSelectedLookupId] = useState<string | null>(null)
   const selectedLookup = useMemo(
     () =>
@@ -51,7 +58,11 @@ export function LookupInspector({ state, diagnostics }: LookupInspectorProps) {
           onSelect={setSelectedLookupId}
         />
         {selectedLookup ? (
-          <LookupDetails lookup={selectedLookup} diagnostics={diagnostics} />
+          <LookupDetails
+            lookup={selectedLookup}
+            diagnostics={diagnostics}
+            onRuleChange={onRuleChange}
+          />
         ) : null}
       </SimpleGrid>
     </Stack>
@@ -105,9 +116,14 @@ function LookupList({
 interface LookupDetailsProps {
   lookup: LookupRecord
   diagnostics: FeatureDiagnostic[]
+  onRuleChange: (lookupId: string, rule: Rule) => void
 }
 
-function LookupDetails({ lookup, diagnostics }: LookupDetailsProps) {
+function LookupDetails({
+  lookup,
+  diagnostics,
+  onRuleChange,
+}: LookupDetailsProps) {
   const lookupDiagnostics = diagnosticsForLookup(diagnostics, lookup.id)
 
   return (
@@ -135,6 +151,10 @@ function LookupDetails({ lookup, diagnostics }: LookupDetailsProps) {
         </Stack>
       ) : null}
       <RuleListSummary rules={lookup.rules} />
+      <RuleEditorList
+        lookup={lookup}
+        onRuleChange={(rule) => onRuleChange(lookup.id, rule)}
+      />
     </Stack>
   )
 }
