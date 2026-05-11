@@ -40,8 +40,14 @@ export {
   getInstalledCompilerDependencyCapabilities,
   getOpenTypeCompilerRuntimeRequirement,
 } from 'src/lib/openTypeFeatures/compilerRuntimeCapabilities'
+export {
+  createHarfBuzzRuntimeStatus,
+  getHarfBuzzRuntimeCapabilities,
+} from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
 export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
 export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+export { loadHarfBuzzRuntime } from 'src/lib/openTypeFeatures/harfbuzzRuntime'
+export { resolveHarfBuzzWasmLocation } from 'src/lib/openTypeFeatures/harfbuzzWasmLocation'
 export {
   hasActiveManagedFeatureText,
   selectUfoFeatureText,
@@ -49,6 +55,7 @@ export {
 export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
 export { serializeFeaDocument } from 'src/lib/openTypeFeatures/serializeFea'
+export { shapeTextWithHarfBuzz } from 'src/lib/openTypeFeatures/shapeTextWithHarfBuzz'
 export { validateFeatures } from 'src/lib/openTypeFeatures/validateFeatures'
 export {
   applyAutoFeatureSuggestion,
@@ -61,6 +68,7 @@ export {
   needsOpenTypeFeatureCompilationForBinaryExport,
 } from 'src/lib/openTypeFeatures/exportPolicy'
 export type * from 'src/lib/openTypeFeatures/feaAst'
+export type * from 'src/lib/openTypeFeatures/harfbuzzTypes'
 export type * from 'src/lib/openTypeFeatures/compilerTypes'
 export type * from 'src/lib/openTypeFeatures/exportPolicy'
 export type * from 'src/lib/openTypeFeatures/types'

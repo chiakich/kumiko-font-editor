@@ -27,6 +27,7 @@
     "fflate": "^0.8.2",
     "fonteditor-core": "2.6.3",
     "framer-motion": "12.38.0",
+    "harfbuzzjs": "0.10.3",
     "iconoir-react": "7.11.0",
     "immer": "11.1.4",
     "opentype.js": "^1.3.5",
