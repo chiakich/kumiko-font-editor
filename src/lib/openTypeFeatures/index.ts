@@ -46,7 +46,6 @@ export {
 } from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
 export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
 export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-export { loadHarfBuzzRuntime } from 'src/lib/openTypeFeatures/harfbuzzRuntime'
 export { resolveHarfBuzzWasmLocation } from 'src/lib/openTypeFeatures/harfbuzzWasmLocation'
 export {
   hasActiveManagedFeatureText,

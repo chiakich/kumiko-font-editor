@@ -1,8 +1,5 @@
 import { createHarfBuzzRuntimeStatus } from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
-import {
-  loadHarfBuzzRuntime,
-  type HarfBuzzBufferGlyph,
-} from 'src/lib/openTypeFeatures/harfbuzzRuntime'
+import type { HarfBuzzBufferGlyph } from 'src/lib/openTypeFeatures/harfbuzzRuntime'
 import type {
   HarfBuzzRuntimeStatus,
   ShapeTextOptions,
@@ -57,6 +54,8 @@ export const shapeTextWithHarfBuzz = async (
   }
 
   try {
+    const { loadHarfBuzzRuntime } =
+      await import('src/lib/openTypeFeatures/harfbuzzRuntime')
     const hb = await loadHarfBuzzRuntime()
     const blob = hb.createBlob(fontBuffer)
     try {

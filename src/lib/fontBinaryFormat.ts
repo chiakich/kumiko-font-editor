@@ -13,7 +13,6 @@ import type {
 } from 'src/store'
 import type { ProjectSourceFormat } from 'src/lib/projectFormats'
 
-const DEFAULT_LAYER_ID = 'public.default'
 const WOFF2_WASM_URL = new URL(
   '../../node_modules/fonteditor-core/woff2/woff2.wasm',
   import.meta.url
@@ -52,7 +51,7 @@ const createNode = (
   type: PathNode['type'],
   idx: number
 ): PathNode => ({
-  id: `node-${idx}-${Math.random().toString(36).slice(2, 8)}`,
+  id: `n${idx.toString(36)}`,
   x,
   y,
   type,
@@ -269,7 +268,7 @@ const contourToPath = (
   })
 
   if (nodes.length === 0) return null
-  return { id: `path-${contourIndex}`, nodes, closed }
+  return { id: `p${contourIndex.toString(36)}`, nodes, closed }
 }
 
 export const importBinaryFontFile = async (file: File) => {
@@ -317,19 +316,6 @@ export const importBinaryFontFile = async (file: File) => {
       paths,
       components: [],
       componentRefs: [],
-      layers: {
-        [DEFAULT_LAYER_ID]: {
-          id: DEFAULT_LAYER_ID,
-          name: 'Default',
-          paths,
-          components: [],
-          componentRefs: [],
-          anchors: [],
-          guidelines: [],
-          metrics,
-        },
-      },
-      layerOrder: [DEFAULT_LAYER_ID],
     }
   }
 

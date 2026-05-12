@@ -207,7 +207,12 @@ const buildTypeNodes = (glyphs: GlyphData[]) => {
   const typeMap = new Map<string, GlyphData[]>()
   for (const glyph of glyphs) {
     const type = getGlyphTypeDefinition(glyph)
-    typeMap.set(type.id, [...(typeMap.get(type.id) ?? []), glyph])
+    const typeGlyphs = typeMap.get(type.id)
+    if (typeGlyphs) {
+      typeGlyphs.push(glyph)
+    } else {
+      typeMap.set(type.id, [glyph])
+    }
   }
 
   const orderedTypes = [
@@ -228,7 +233,12 @@ const buildScriptNodes = (glyphs: GlyphData[]) => {
   const scriptMap = new Map<string, GlyphData[]>()
   for (const glyph of glyphs) {
     const label = getGlyphScriptLabel(glyph)
-    scriptMap.set(label, [...(scriptMap.get(label) ?? []), glyph])
+    const scriptGlyphs = scriptMap.get(label)
+    if (scriptGlyphs) {
+      scriptGlyphs.push(glyph)
+    } else {
+      scriptMap.set(label, [glyph])
+    }
   }
 
   const labelsByOrder = [
