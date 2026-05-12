@@ -16,6 +16,7 @@ import type {
   LigatureSubstitutionRule,
   LookupRecord,
   OpenTypeFeaturesState,
+  PairPositioningRule,
   Rule,
   SingleSubstitutionRule,
 } from 'src/lib/openTypeFeatures/types'
@@ -844,9 +845,17 @@ export function upsertSpacingBehavior(
     return state
   }
 
+  const rule = makePairPositioningRule(left, right, value)
+  const replacedState =
+    draft.lookupId && draft.ruleId
+      ? replaceSpacingBehaviorInPlace(state, draft.lookupId, draft.ruleId, rule)
+      : null
+  if (replacedState) {
+    return replacedState
+  }
+
   const nextState = deleteSpacingBehavior(state, draft)
   const lookupId = findWritablePairPositioningLookupId(nextState)
-  const rule = makePairPositioningRule(left, right, value)
 
   if (lookupId) {
     return {
@@ -907,6 +916,46 @@ function isUnchangedSpacingBehavior(
     rule.right.glyph === next.right &&
     (rule.firstValue?.xAdvance ?? 0) === next.value
   )
+}
+
+function replaceSpacingBehaviorInPlace(
+  state: OpenTypeFeaturesState,
+  lookupId: string,
+  ruleId: string,
+  rule: PairPositioningRule
+) {
+  const lookup = state.lookups.find((item) => item.id === lookupId)
+  if (
+    lookup?.table !== 'GPOS' ||
+    lookup.lookupType !== 'pairPos' ||
+    !lookup.rules.some((item) => item.id === ruleId)
+  ) {
+    return null
+  }
+
+  return {
+    ...state,
+    features: ensureFeatureReferencesLookup(
+      state.features.map((feature) =>
+        feature.entries.some((entry) => entry.lookupIds.includes(lookupId))
+          ? { ...feature, origin: markFeatureOriginAsEdited(feature.origin) }
+          : feature
+      ),
+      'kern',
+      lookupId
+    ),
+    lookups: state.lookups.map((item) =>
+      item.id === lookupId
+        ? {
+            ...item,
+            origin: markLookupOriginAsEdited(item.origin),
+            rules: item.rules.map((existingRule) =>
+              existingRule.id === ruleId ? rule : existingRule
+            ),
+          }
+        : item
+    ),
+  }
 }
 
 export function deleteSpacingBehavior(

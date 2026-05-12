@@ -206,6 +206,49 @@ describe('OpenType behavior facade', () => {
     expect(nextState.lookups[0]?.rules[0]?.meta.origin).toBe('imported')
   })
 
+  it('preserves spacing row order when editing a pair value', () => {
+    const firstState = upsertSpacingBehavior(
+      createEmptyOpenTypeFeaturesState(),
+      {
+        left: 'A',
+        right: 'V',
+        value: -80,
+      }
+    )
+    const state = upsertSpacingBehavior(firstState, {
+      left: 'A',
+      right: 'W',
+      value: -40,
+    })
+    const fontData = makeFontData(state)
+    fontData.glyphs.A = makeGlyph('A', 700)
+    fontData.glyphs.V = makeGlyph('V', 700)
+    fontData.glyphs.W = makeGlyph('W', 800)
+    const firstRow = deriveGlyphSpacingBehaviors(fontData, 'A')[0]
+    const nextState = upsertSpacingBehavior(state, {
+      lookupId: firstRow?.lookupId,
+      ruleId: firstRow?.ruleId,
+      left: 'A',
+      right: 'V',
+      value: -90,
+    })
+    const nextFontData = makeFontData(nextState)
+    nextFontData.glyphs.A = makeGlyph('A', 700)
+    nextFontData.glyphs.V = makeGlyph('V', 700)
+    nextFontData.glyphs.W = makeGlyph('W', 800)
+
+    expect(
+      deriveGlyphSpacingBehaviors(nextFontData, 'A').map((row) => [
+        row.left,
+        row.right,
+        row.value,
+      ])
+    ).toEqual([
+      ['A', 'V', -90],
+      ['A', 'W', -40],
+    ])
+  })
+
   it('derives and serializes contextual behavior rows', () => {
     const state = upsertContextualBehavior(createEmptyOpenTypeFeaturesState(), {
       before: '',

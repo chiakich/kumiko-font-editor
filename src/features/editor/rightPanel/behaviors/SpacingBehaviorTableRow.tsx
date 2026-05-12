@@ -9,7 +9,7 @@ import {
   Stack,
   Tooltip,
 } from '@chakra-ui/react'
-import { Minus, Plus, Trash, View360 } from 'iconoir-react'
+import { Minus, Plus, Trash, ArrowLeftTag } from 'iconoir-react'
 import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
@@ -91,6 +91,49 @@ export function SpacingBehaviorTableRow({
       borderTopWidth={row || rowId ? '1px' : 0}
       borderColor="field.panelMuted"
     >
+      <HStack justify="space-between" align="center">
+        <HStack spacing={1}>
+          <Box
+            px={2}
+            py={1}
+            bg="field.panelMuted"
+            borderRadius="2px"
+            fontFamily="mono"
+            fontSize="xs"
+          >
+            {left || 'Left'}
+            {right || 'Right'}
+          </Box>
+          <Button
+            aria-label="Add spacing pair to editor"
+            leftIcon={
+              <ArrowLeftTag width={14} height={14} aria-hidden="true" />
+            }
+            size="xs"
+            variant="ghost"
+            isDisabled={!left || !right}
+            onClick={() => onOpenPair(left, right)}
+          >
+            Edit
+          </Button>
+        </HStack>
+        <HStack spacing={1} wrap="wrap" justify="flex-end">
+          {row?.sourceLabel ? (
+            <Badge variant="subtle" colorScheme="gray">
+              {row.sourceLabel}
+            </Badge>
+          ) : null}
+          {row?.status.map((status) => (
+            <Badge key={status} colorScheme="red">
+              {status}
+            </Badge>
+          ))}
+          {!canCommit && (left || right || value) ? (
+            <Badge colorScheme="red">Invalid Input</Badge>
+          ) : null}
+        </HStack>
+      </HStack>
+
       <Box
         display="grid"
         gridTemplateColumns="minmax(48px, 1fr) minmax(48px, 1fr) 96px 28px"
@@ -160,47 +203,6 @@ export function SpacingBehaviorTableRow({
           />
         </Tooltip>
       </Box>
-
-      <HStack justify="space-between" align="center">
-        <HStack spacing={1}>
-          <Box
-            px={2}
-            py={1}
-            bg="field.panelMuted"
-            borderRadius="2px"
-            fontFamily="mono"
-            fontSize="xs"
-          >
-            {left || 'Left'}
-            {right || 'Right'}
-          </Box>
-          <Button
-            aria-label="Add spacing pair to editor"
-            leftIcon={<View360 width={14} height={14} aria-hidden="true" />}
-            size="xs"
-            variant="ghost"
-            isDisabled={!left || !right}
-            onClick={() => onOpenPair(left, right)}
-          >
-            Edit
-          </Button>
-        </HStack>
-        <HStack spacing={1} wrap="wrap" justify="flex-end">
-          {row?.sourceLabel ? (
-            <Badge variant="subtle" colorScheme="gray">
-              {row.sourceLabel}
-            </Badge>
-          ) : null}
-          {row?.status.map((status) => (
-            <Badge key={status} colorScheme="red">
-              {status}
-            </Badge>
-          ))}
-          {!canCommit && (left || right || value) ? (
-            <Badge colorScheme="red">Invalid Input</Badge>
-          ) : null}
-        </HStack>
-      </HStack>
     </Stack>
   )
 }
