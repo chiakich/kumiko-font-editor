@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { NavArrowRight, Trash } from 'iconoir-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
   COMBINATION_BEHAVIOR_TYPE_LABELS,
@@ -48,14 +48,6 @@ export function CombinationBehaviorTableRow({
     row?.type === 'customFeature' ? row.featureTag : ''
   )
   const [outputEdited, setOutputEdited] = useState(Boolean(row?.output))
-
-  useEffect(() => {
-    setInput(row?.input ?? '')
-    setOutput(row?.output ?? '')
-    setType(row?.type ?? 'standardLigature')
-    setCustomFeatureTag(row?.type === 'customFeature' ? row.featureTag : '')
-    setOutputEdited(Boolean(row?.output))
-  }, [row?.featureTag, row?.input, row?.output, row?.type])
 
   const draft: CombinationBehaviorDraft = {
     lookupId: row?.lookupId,

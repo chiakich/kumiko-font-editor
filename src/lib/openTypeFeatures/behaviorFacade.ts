@@ -832,6 +832,17 @@ export function upsertSpacingBehavior(
   ) {
     return state
   }
+  if (
+    draft.lookupId &&
+    draft.ruleId &&
+    isUnchangedSpacingBehavior(state, draft.lookupId, draft.ruleId, {
+      left,
+      right,
+      value,
+    })
+  ) {
+    return state
+  }
 
   const nextState = deleteSpacingBehavior(state, draft)
   const lookupId = findWritablePairPositioningLookupId(nextState)
@@ -878,6 +889,24 @@ export function upsertSpacingBehavior(
     ),
     lookups: [...nextState.lookups, lookup],
   }
+}
+
+function isUnchangedSpacingBehavior(
+  state: OpenTypeFeaturesState,
+  lookupId: string,
+  ruleId: string,
+  next: { left: string; right: string; value: number }
+) {
+  const lookup = state.lookups.find((item) => item.id === lookupId)
+  const rule = lookup?.rules.find((item) => item.id === ruleId)
+  return (
+    rule?.kind === 'pairPositioning' &&
+    rule.left.kind === 'glyph' &&
+    rule.right.kind === 'glyph' &&
+    rule.left.glyph === next.left &&
+    rule.right.glyph === next.right &&
+    (rule.firstValue?.xAdvance ?? 0) === next.value
+  )
 }
 
 export function deleteSpacingBehavior(

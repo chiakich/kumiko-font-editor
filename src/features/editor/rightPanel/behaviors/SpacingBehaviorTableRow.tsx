@@ -10,7 +10,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { Minus, Plus, Trash, View360 } from 'iconoir-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
   canCommitSpacingBehavior,
@@ -21,6 +21,7 @@ import {
 interface SpacingBehaviorTableRowProps {
   row?: SpacingBehaviorRow
   rowId?: string
+  side: 'left' | 'right'
   currentGlyphId?: string
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: () => void
@@ -31,23 +32,21 @@ interface SpacingBehaviorTableRowProps {
 export function SpacingBehaviorTableRow({
   row,
   rowId,
+  side,
   currentGlyphId = '',
   onCommit,
   onDelete,
   onDraftCommitted,
   onOpenPair,
 }: SpacingBehaviorTableRowProps) {
-  const [left, setLeft] = useState(row?.left ?? currentGlyphId)
-  const [right, setRight] = useState(row?.right ?? '')
+  const [editableGlyph, setEditableGlyph] = useState(
+    getInitialEditableGlyph(row, side)
+  )
   const [value, setValue] = useState(String(row?.value ?? -40))
 
-  useEffect(() => {
-    setLeft(row?.left ?? currentGlyphId)
-    setRight(row?.right ?? '')
-    setValue(String(row?.value ?? -40))
-  }, [currentGlyphId, row?.left, row?.right, row?.value])
-
   const numericValue = Number.parseInt(value, 10)
+  const left = side === 'left' ? editableGlyph : currentGlyphId
+  const right = side === 'left' ? currentGlyphId : editableGlyph
   const draft: SpacingBehaviorDraft = {
     lookupId: row?.lookupId,
     ruleId: row?.ruleId,
@@ -56,9 +55,11 @@ export function SpacingBehaviorTableRow({
     value: Number.isFinite(numericValue) ? numericValue : Number.NaN,
   }
   const canCommit = canCommitSpacingBehavior(draft)
+  const hasChanges = row ? !isSameSpacingDraft(row, draft) : true
 
   const commit = () => {
     if (!canCommit) return
+    if (!hasChanges) return
     onCommit(draft)
     onDraftCommitted?.()
   }
@@ -96,29 +97,32 @@ export function SpacingBehaviorTableRow({
         gap={1}
         alignItems="center"
       >
-        <Box
-          minH={7}
-          px={2}
-          display="flex"
-          alignItems="center"
-          bg="field.panelMuted"
-          borderRadius="2px"
-          fontFamily="mono"
-          fontSize="xs"
-        >
-          <Text as="span" isTruncated>
-            {left || 'Left'}
-          </Text>
-        </Box>
-        <Input
-          aria-label="Spacing right glyph"
-          value={right}
-          size="xs"
-          placeholder="V"
-          onBlur={commit}
-          onChange={(event) => setRight(event.target.value)}
-          onKeyDown={commitOnEnter}
-        />
+        {side === 'left' ? (
+          <Input
+            aria-label="Spacing left glyph"
+            value={editableGlyph}
+            size="xs"
+            placeholder="V"
+            onBlur={commit}
+            onChange={(event) => setEditableGlyph(event.target.value)}
+            onKeyDown={commitOnEnter}
+          />
+        ) : (
+          <FixedGlyphCell label={left || 'Left'} />
+        )}
+        {side === 'left' ? (
+          <FixedGlyphCell label={right || 'Right'} />
+        ) : (
+          <Input
+            aria-label="Spacing right glyph"
+            value={editableGlyph}
+            size="xs"
+            placeholder="V"
+            onBlur={commit}
+            onChange={(event) => setEditableGlyph(event.target.value)}
+            onKeyDown={commitOnEnter}
+          />
+        )}
         <HStack spacing={0}>
           <IconButton
             aria-label="Decrease spacing"
@@ -199,4 +203,42 @@ export function SpacingBehaviorTableRow({
       </HStack>
     </Stack>
   )
+}
+
+function isSameSpacingDraft(
+  row: SpacingBehaviorRow,
+  draft: SpacingBehaviorDraft
+) {
+  return (
+    row.left === draft.left.trim() &&
+    row.right === draft.right.trim() &&
+    row.value === Math.round(draft.value)
+  )
+}
+
+function FixedGlyphCell({ label }: { label: string }) {
+  return (
+    <Box
+      minH={7}
+      px={2}
+      display="flex"
+      alignItems="center"
+      bg="field.panelMuted"
+      borderRadius="2px"
+      fontFamily="mono"
+      fontSize="xs"
+    >
+      <Text as="span" isTruncated>
+        {label}
+      </Text>
+    </Box>
+  )
+}
+
+function getInitialEditableGlyph(
+  row: SpacingBehaviorRow | undefined,
+  side: 'left' | 'right'
+) {
+  if (!row) return ''
+  return side === 'left' ? row.left : row.right
 }

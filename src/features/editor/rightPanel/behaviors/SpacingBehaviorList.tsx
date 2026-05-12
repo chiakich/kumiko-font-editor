@@ -16,25 +16,34 @@ import { SpacingBehaviorTableRow } from 'src/features/editor/rightPanel/behavior
 
 interface SpacingBehaviorListProps {
   rows: SpacingBehaviorRow[]
-  draftRowIds: string[]
+  leftDraftRowIds: string[]
+  rightDraftRowIds: string[]
   currentGlyphId: string
-  onAddDraftRow: () => void
+  onAddLeftDraftRow: () => void
+  onAddRightDraftRow: () => void
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: (row: SpacingBehaviorRow) => void
-  onDraftCommitted: (rowId: string) => void
+  onLeftDraftCommitted: (rowId: string) => void
+  onRightDraftCommitted: (rowId: string) => void
   onOpenPair: (left: string, right: string) => void
 }
 
 export function SpacingBehaviorList({
   rows,
-  draftRowIds,
+  leftDraftRowIds,
+  rightDraftRowIds,
   currentGlyphId,
-  onAddDraftRow,
+  onAddLeftDraftRow,
+  onAddRightDraftRow,
   onCommit,
   onDelete,
-  onDraftCommitted,
+  onLeftDraftCommitted,
+  onRightDraftCommitted,
   onOpenPair,
 }: SpacingBehaviorListProps) {
+  const leftRows = rows.filter((row) => row.right === currentGlyphId)
+  const rightRows = rows.filter((row) => row.left === currentGlyphId)
+
   return (
     <Stack spacing={2}>
       <HStack justify="space-between" align="center">
@@ -44,11 +53,86 @@ export function SpacingBehaviorList({
           </Text>
           <Badge colorScheme="gray">{rows.length}</Badge>
         </HStack>
+      </HStack>
+
+      <SpacingBehaviorGroup
+        title="Left spacing"
+        side="left"
+        rows={leftRows}
+        draftRowIds={leftDraftRowIds}
+        currentGlyphId={currentGlyphId}
+        emptyLabel="No left-side pairs yet."
+        onAddDraftRow={onAddLeftDraftRow}
+        onCommit={onCommit}
+        onDelete={onDelete}
+        onDraftCommitted={onLeftDraftCommitted}
+        onOpenPair={onOpenPair}
+      />
+      <SpacingBehaviorGroup
+        title="Right spacing"
+        side="right"
+        rows={rightRows}
+        draftRowIds={rightDraftRowIds}
+        currentGlyphId={currentGlyphId}
+        emptyLabel="No right-side pairs yet."
+        onAddDraftRow={onAddRightDraftRow}
+        onCommit={onCommit}
+        onDelete={onDelete}
+        onDraftCommitted={onRightDraftCommitted}
+        onOpenPair={onOpenPair}
+      />
+    </Stack>
+  )
+}
+
+interface SpacingBehaviorGroupProps {
+  title: string
+  side: 'left' | 'right'
+  rows: SpacingBehaviorRow[]
+  draftRowIds: string[]
+  currentGlyphId: string
+  emptyLabel: string
+  onAddDraftRow: () => void
+  onCommit: (draft: SpacingBehaviorDraft) => void
+  onDelete: (row: SpacingBehaviorRow) => void
+  onDraftCommitted: (rowId: string) => void
+  onOpenPair: (left: string, right: string) => void
+}
+
+function SpacingBehaviorGroup({
+  title,
+  side,
+  rows,
+  draftRowIds,
+  currentGlyphId,
+  emptyLabel,
+  onAddDraftRow,
+  onCommit,
+  onDelete,
+  onDraftCommitted,
+  onOpenPair,
+}: SpacingBehaviorGroupProps) {
+  return (
+    <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
+      <HStack
+        justify="space-between"
+        px={3}
+        py={2}
+        bg="field.panelMuted"
+        borderBottomWidth="1px"
+        borderColor="field.line"
+      >
+        <HStack spacing={2}>
+          <Text fontSize="xs" fontWeight="bold">
+            {title}
+          </Text>
+          <Badge colorScheme="gray">{rows.length}</Badge>
+        </HStack>
         <HStack spacing={1}>
-          <Tooltip label="Add spacing pair">
+          <Tooltip label={`Add ${title.toLowerCase()} pair`}>
             <IconButton
-              aria-label="新增 spacing pair"
-              icon={<PlusCircle width={17} height={17} aria-hidden="true" />}
+              aria-label={`新增 ${title} pair`}
+              icon={<PlusCircle width={16} height={16} aria-hidden="true" />}
               size="xs"
               variant="ghost"
               onClick={onAddDraftRow}
@@ -56,8 +140,8 @@ export function SpacingBehaviorList({
           </Tooltip>
           <Tooltip label="Remove the last draft row">
             <IconButton
-              aria-label="移除最後一列 spacing 草稿"
-              icon={<MinusCircle width={17} height={17} aria-hidden="true" />}
+              aria-label={`移除最後一列 ${title} 草稿`}
+              icon={<MinusCircle width={16} height={16} aria-hidden="true" />}
               size="xs"
               variant="ghost"
               isDisabled={draftRowIds.length === 0}
@@ -66,40 +150,51 @@ export function SpacingBehaviorList({
           </Tooltip>
         </HStack>
       </HStack>
-
-      <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
-        <SpacingHeader />
-        {rows.length === 0 && draftRowIds.length === 0 ? (
-          <Text fontSize="xs" color="field.muted" px={3} py={3}>
-            No spacing pairs for this glyph yet.
-          </Text>
-        ) : null}
-        {rows.map((row) => (
-          <SpacingBehaviorTableRow
-            key={row.id}
-            row={row}
-            onCommit={onCommit}
-            onDelete={() => onDelete(row)}
-            onOpenPair={onOpenPair}
-          />
-        ))}
-        {draftRowIds.map((rowId) => (
-          <SpacingBehaviorTableRow
-            key={rowId}
-            rowId={rowId}
-            currentGlyphId={currentGlyphId}
-            onCommit={onCommit}
-            onDelete={() => onDraftCommitted(rowId)}
-            onDraftCommitted={() => onDraftCommitted(rowId)}
-            onOpenPair={onOpenPair}
-          />
-        ))}
-      </Box>
-    </Stack>
+      <SpacingHeader side={side} />
+      {rows.length === 0 && draftRowIds.length === 0 ? (
+        <Text fontSize="xs" color="field.muted" px={3} py={3}>
+          {emptyLabel}
+        </Text>
+      ) : null}
+      {rows.map((row) => (
+        <SpacingBehaviorTableRow
+          key={getSpacingRowKey(row)}
+          row={row}
+          side={side}
+          currentGlyphId={currentGlyphId}
+          onCommit={onCommit}
+          onDelete={() => onDelete(row)}
+          onOpenPair={onOpenPair}
+        />
+      ))}
+      {draftRowIds.map((rowId) => (
+        <SpacingBehaviorTableRow
+          key={rowId}
+          rowId={rowId}
+          side={side}
+          currentGlyphId={currentGlyphId}
+          onCommit={onCommit}
+          onDelete={() => onDraftCommitted(rowId)}
+          onDraftCommitted={() => onDraftCommitted(rowId)}
+          onOpenPair={onOpenPair}
+        />
+      ))}
+    </Box>
   )
 }
 
-function SpacingHeader() {
+function getSpacingRowKey(row: SpacingBehaviorRow) {
+  return [
+    row.id,
+    row.left,
+    row.right,
+    row.value,
+    row.featureTag,
+    row.sourceLabel,
+  ].join(':')
+}
+
+function SpacingHeader({ side }: { side: 'left' | 'right' }) {
   return (
     <Box
       display="grid"
@@ -112,10 +207,10 @@ function SpacingHeader() {
       borderColor="field.line"
     >
       <Text fontSize="10px" fontWeight="bold" color="field.muted">
-        Left
+        {side === 'left' ? 'Editable left' : 'Fixed left'}
       </Text>
       <Text fontSize="10px" fontWeight="bold" color="field.muted">
-        Right
+        {side === 'left' ? 'Fixed right' : 'Editable right'}
       </Text>
       <Text fontSize="10px" fontWeight="bold" color="field.muted">
         Value

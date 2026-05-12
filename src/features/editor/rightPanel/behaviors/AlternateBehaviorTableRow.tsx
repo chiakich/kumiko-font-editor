@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { NavArrowRight, Trash } from 'iconoir-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
   ALTERNATE_BEHAVIOR_TYPE_LABELS,
@@ -54,14 +54,6 @@ export function AlternateBehaviorTableRow({
   const [alternateEdited, setAlternateEdited] = useState(
     Boolean(row?.alternate)
   )
-
-  useEffect(() => {
-    setSource(row?.source ?? currentGlyphId)
-    setAlternate(row?.alternate ?? suggestAlternateGlyphName(currentGlyphId))
-    setType(row?.type ?? 'stylisticAlternate')
-    setCustomFeatureTag(row?.type === 'customFeature' ? row.featureTag : '')
-    setAlternateEdited(Boolean(row?.alternate))
-  }, [currentGlyphId, row?.alternate, row?.featureTag, row?.source, row?.type])
 
   const draft: AlternateBehaviorDraft = {
     lookupId: row?.lookupId,

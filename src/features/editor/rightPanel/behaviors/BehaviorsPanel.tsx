@@ -38,7 +38,12 @@ interface BehaviorsPanelProps {
 export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const [draftRowIds, setDraftRowIds] = useState<string[]>([])
   const [alternateDraftRowIds, setAlternateDraftRowIds] = useState<string[]>([])
-  const [spacingDraftRowIds, setSpacingDraftRowIds] = useState<string[]>([])
+  const [leftSpacingDraftRowIds, setLeftSpacingDraftRowIds] = useState<
+    string[]
+  >([])
+  const [rightSpacingDraftRowIds, setRightSpacingDraftRowIds] = useState<
+    string[]
+  >([])
   const [contextualDraftRowIds, setContextualDraftRowIds] = useState<string[]>(
     []
   )
@@ -227,18 +232,30 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
         />
         <SpacingBehaviorList
           currentGlyphId={glyph.id}
-          draftRowIds={spacingDraftRowIds}
+          leftDraftRowIds={leftSpacingDraftRowIds}
+          rightDraftRowIds={rightSpacingDraftRowIds}
           rows={spacingRows}
-          onAddDraftRow={() =>
-            setSpacingDraftRowIds((rowIds) => [
+          onAddLeftDraftRow={() =>
+            setLeftSpacingDraftRowIds((rowIds) => [
               ...rowIds,
-              `spacing-draft-${Date.now()}`,
+              `left-spacing-draft-${Date.now()}`,
+            ])
+          }
+          onAddRightDraftRow={() =>
+            setRightSpacingDraftRowIds((rowIds) => [
+              ...rowIds,
+              `right-spacing-draft-${Date.now()}`,
             ])
           }
           onCommit={(draft) => upsertSpacingBehavior(draft)}
           onDelete={deleteSpacingRow}
-          onDraftCommitted={(rowId) =>
-            setSpacingDraftRowIds((rowIds) =>
+          onLeftDraftCommitted={(rowId) =>
+            setLeftSpacingDraftRowIds((rowIds) =>
+              rowIds.filter((id) => id !== rowId)
+            )
+          }
+          onRightDraftCommitted={(rowId) =>
+            setRightSpacingDraftRowIds((rowIds) =>
               rowIds.filter((id) => id !== rowId)
             )
           }

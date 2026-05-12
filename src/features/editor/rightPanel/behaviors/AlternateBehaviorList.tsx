@@ -76,7 +76,7 @@ export function AlternateBehaviorList({
         ) : null}
         {rows.map((row) => (
           <AlternateBehaviorTableRow
-            key={row.id}
+            key={getAlternateRowKey(row)}
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
@@ -97,6 +97,17 @@ export function AlternateBehaviorList({
       </Box>
     </Stack>
   )
+}
+
+function getAlternateRowKey(row: AlternateBehaviorRow) {
+  return [
+    row.id,
+    row.source,
+    row.alternate,
+    row.type,
+    row.featureTag,
+    row.sourceLabel,
+  ].join(':')
 }
 
 function AlternateHeader() {

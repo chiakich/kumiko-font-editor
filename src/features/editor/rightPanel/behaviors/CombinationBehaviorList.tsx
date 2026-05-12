@@ -74,7 +74,7 @@ export function CombinationBehaviorList({
         ) : null}
         {rows.map((row) => (
           <CombinationBehaviorTableRow
-            key={row.id}
+            key={getCombinationRowKey(row)}
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
@@ -94,6 +94,17 @@ export function CombinationBehaviorList({
       </Box>
     </Stack>
   )
+}
+
+function getCombinationRowKey(row: CombinationBehaviorRow) {
+  return [
+    row.id,
+    row.input,
+    row.output,
+    row.type,
+    row.featureTag,
+    row.sourceLabel,
+  ].join(':')
 }
 
 function CombinationHeader() {

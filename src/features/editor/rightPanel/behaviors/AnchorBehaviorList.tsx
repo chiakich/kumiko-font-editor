@@ -74,7 +74,7 @@ export function AnchorBehaviorList({
         ) : null}
         {rows.map((row) => (
           <AnchorBehaviorTableRow
-            key={row.id}
+            key={getAnchorRowKey(row)}
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
@@ -93,6 +93,10 @@ export function AnchorBehaviorList({
       </Box>
     </Stack>
   )
+}
+
+function getAnchorRowKey(row: AnchorBehaviorRow) {
+  return [row.id, row.name, row.x, row.y, ...row.status].join(':')
 }
 
 function AnchorHeader() {

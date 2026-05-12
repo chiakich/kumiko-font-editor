@@ -73,7 +73,7 @@ export function ContextualBehaviorList({
         ) : null}
         {rows.map((row) => (
           <ContextualBehaviorTableRow
-            key={row.id}
+            key={getContextualRowKey(row)}
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
@@ -92,4 +92,15 @@ export function ContextualBehaviorList({
       </Box>
     </Stack>
   )
+}
+
+function getContextualRowKey(row: ContextualBehaviorRow) {
+  return [
+    row.id,
+    row.before,
+    row.source,
+    row.after,
+    row.replacement,
+    row.sourceLabel,
+  ].join(':')
 }

@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { NavArrowRight, Trash } from 'iconoir-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
   canCommitContextualBehavior,
@@ -40,13 +40,6 @@ export function ContextualBehaviorTableRow({
   const [replacement, setReplacement] = useState(
     row?.replacement ?? `${currentGlyphId}.end`
   )
-
-  useEffect(() => {
-    setBefore(row?.before ?? '')
-    setSource(row?.source ?? currentGlyphId)
-    setAfter(row?.after ?? '')
-    setReplacement(row?.replacement ?? `${currentGlyphId}.end`)
-  }, [currentGlyphId, row?.after, row?.before, row?.replacement, row?.source])
 
   const draft: ContextualBehaviorDraft = {
     lookupId: row?.lookupId,

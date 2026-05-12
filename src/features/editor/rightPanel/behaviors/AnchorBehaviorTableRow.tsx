@@ -8,7 +8,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { Trash } from 'iconoir-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import {
   canCommitAnchorBehavior,
@@ -36,12 +36,6 @@ export function AnchorBehaviorTableRow({
   const [name, setName] = useState(row?.name ?? 'top')
   const [x, setX] = useState(String(row?.x ?? 0))
   const [y, setY] = useState(String(row?.y ?? 700))
-
-  useEffect(() => {
-    setName(row?.name ?? 'top')
-    setX(String(row?.x ?? 0))
-    setY(String(row?.y ?? 700))
-  }, [row?.name, row?.x, row?.y])
 
   const numericX = Number.parseInt(x, 10)
   const numericY = Number.parseInt(y, 10)

@@ -181,6 +181,29 @@ describe('OpenType behavior facade', () => {
         featureTag: 'kern',
       },
     ])
+    expect(deriveGlyphSpacingBehaviors(fontData, 'V')).toMatchObject([
+      {
+        left: 'A',
+        right: 'V',
+        value: -80,
+        featureTag: 'kern',
+      },
+    ])
+  })
+
+  it('keeps imported spacing origin when a row is committed without changes', () => {
+    const state = makeImportedKerningState()
+    const nextState = upsertSpacingBehavior(state, {
+      lookupId: 'lookup_kern_imported',
+      ruleId: 'rule_A_V',
+      left: 'A',
+      right: 'V',
+      value: -80,
+    })
+
+    expect(nextState).toBe(state)
+    expect(nextState.lookups[0]?.origin).toBe('imported')
+    expect(nextState.lookups[0]?.rules[0]?.meta.origin).toBe('imported')
   })
 
   it('derives and serializes contextual behavior rows', () => {
@@ -277,6 +300,49 @@ function makeFeatureState(): OpenTypeFeaturesState {
             components: ['f', 'i'],
             replacement: 'f_i',
             meta: { origin: 'manual' },
+          },
+        ],
+      },
+    ],
+  }
+}
+
+function makeImportedKerningState(): OpenTypeFeaturesState {
+  return {
+    ...createEmptyOpenTypeFeaturesState(),
+    features: [
+      {
+        id: 'feature_kern_imported',
+        tag: 'kern',
+        isActive: true,
+        entries: [
+          {
+            id: 'entry_kern_imported',
+            script: 'DFLT',
+            language: 'dflt',
+            lookupIds: ['lookup_kern_imported'],
+          },
+        ],
+        origin: 'imported',
+      },
+    ],
+    lookups: [
+      {
+        id: 'lookup_kern_imported',
+        name: 'lookup_kern_imported',
+        table: 'GPOS',
+        lookupType: 'pairPos',
+        lookupFlag: {},
+        editable: true,
+        origin: 'imported',
+        rules: [
+          {
+            id: 'rule_A_V',
+            kind: 'pairPositioning',
+            left: { kind: 'glyph', glyph: 'A' },
+            right: { kind: 'glyph', glyph: 'V' },
+            firstValue: { xAdvance: -80 },
+            meta: { origin: 'imported' },
           },
         ],
       },
