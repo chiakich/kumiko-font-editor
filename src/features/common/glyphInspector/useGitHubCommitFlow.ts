@@ -30,6 +30,7 @@ import {
   resolveGitHubBranchSelection,
 } from 'src/features/common/glyphInspector/githubCommitFlowUtils'
 import type { GitHubCommitModalProps } from 'src/features/common/glyphInspector/GitHubCommitModal'
+import { useGitHubSyncStatus } from 'src/features/common/glyphInspector/useGitHubSyncStatus'
 
 interface UseGitHubCommitFlowInput {
   projectId: string | null
@@ -132,6 +133,14 @@ export const useGitHubCommitFlow = ({
   const createCommitMutation = useCreateGitHubCommitMutation()
   const mergeUpstreamMutation = useMergeGitHubUpstreamMutation()
   const githubForkStatus = forkStatusOverride ?? forkStatusQuery.data ?? null
+  const syncStatus = useGitHubSyncStatus({
+    projectId,
+    enabled: gitHubModal.isOpen && hasGitHubSource,
+  })
+  const refetchSyncReport = syncStatus.refetch
+  const hasBlockingSyncConflicts = Boolean(
+    syncStatus.report && syncStatus.report.conflicts.length > 0
+  )
 
   const loadGitHubForkStatus = async (branchName?: string) => {
     if (!githubRepoFullName) {
@@ -382,6 +391,18 @@ export const useGitHubCommitFlow = ({
       return
     }
 
+    if (hasBlockingSyncConflicts) {
+      toast({
+        title: '有尚未處理的同步衝突',
+        description:
+          '請先在上方選擇每個衝突字符要保留哪個版本，再套用遠端更新。',
+        status: 'warning',
+        duration: 3600,
+        isClosable: true,
+      })
+      return
+    }
+
     try {
       const syncResult = await syncHotFontDataToUfoRecords({
         projectId,
@@ -405,8 +426,14 @@ export const useGitHubCommitFlow = ({
           gitHubCommitMessage.trim() || preparedCommit.request.commitMessage,
         branchName: gitHubBranchName.trim(),
       })
-      await markGitHubCommitSynced(preparedCommit.exportStateUpdates)
+      await markGitHubCommitSynced(preparedCommit.exportStateUpdates, {
+        projectId,
+        headOwner: result.headOwner,
+        branchName: result.branchName,
+        commitSha: result.commitSha,
+      })
       markDraftSaved()
+      void refetchSyncReport()
       if (githubForkStatus) {
         setForkStatusOverride(
           setForkStatusQueryData(queryClient, githubForkStatus, {
@@ -488,6 +515,27 @@ export const useGitHubCommitFlow = ({
     }
   }
 
+  const handleApplyRemoteSync = async () => {
+    try {
+      const result = await syncStatus.applyRemote()
+      toast({
+        title: '已套用遠端更新',
+        description: `更新了 ${result.appliedCount} 個檔案。`,
+        status: 'success',
+        duration: 3200,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: '套用遠端更新失敗',
+        description: getErrorMessage(error, '目前無法套用遠端更新。'),
+        status: 'error',
+        duration: 4200,
+        isClosable: true,
+      })
+    }
+  }
+
   const modalProps: GitHubCommitModalProps = {
     isOpen: gitHubModal.isOpen,
     onClose: gitHubModal.onClose,
@@ -538,6 +586,17 @@ export const useGitHubCommitFlow = ({
     },
     onMergeUpstream: () => void handleMergeGitHubUpstream(),
     onCreateCommit: () => void handleCreateGitHubCommit(),
+    sync: {
+      isLoading: syncStatus.isLoading,
+      errorMessage: syncStatus.errorMessage,
+      report: syncStatus.report,
+      resolutions: syncStatus.resolutions,
+      isApplying: syncStatus.isApplying,
+      unresolvedConflictCount: syncStatus.unresolvedConflictCount,
+      onResolutionChange: syncStatus.setResolution,
+      onApplyRemote: () => void handleApplyRemoteSync(),
+    },
+    hasBlockingSyncConflicts,
   }
 
   return {

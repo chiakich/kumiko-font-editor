@@ -1,4 +1,5 @@
 import type { GitHubProjectSource } from 'src/lib/projectTypes'
+import type { GitHubSyncTarget } from 'src/lib/githubSync/types'
 
 export interface UfoProjectRecord {
   projectId: string
@@ -10,6 +11,9 @@ export interface UfoProjectRecord {
   updatedAt: number
   sourceType?: 'local' | 'github'
   githubSource?: UfoGithubSource | null
+  // Tracking branch for sync-state comparison; moves to the fork branch
+  // after the first commit pushed from the editor.
+  lastSync?: GitHubSyncTarget | null
 }
 
 export type UfoGithubSource = GitHubProjectSource
@@ -97,7 +101,11 @@ export interface UfoGlyphRecord {
   layerId: string
   glyphName: string
   fileName: string
+  // Lightweight content hash for incremental local export, unrelated to git.
   sourceHash: string | null
+  // Git blob SHA of this glyph at the last point local and remote agreed;
+  // null for glyphs that never touched GitHub.
+  remoteBlobSha?: string | null
   unicodes: string[]
   advance: UfoGlyphAdvance
   anchors: UfoGlyphAnchor[]

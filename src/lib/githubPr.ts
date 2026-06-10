@@ -1,8 +1,10 @@
 import { hashString } from 'src/lib/hash'
+import { gitBlobShaFromText } from 'src/lib/githubSync/gitBlobSha'
 import {
   loadUfoProject,
   loadUfoMetadata,
   listDirtyUfoGlyphs,
+  saveUfoProject,
   updateUfoGlyphExportState,
 } from 'src/lib/ufoPersistence'
 import {
@@ -32,6 +34,7 @@ interface GitHubPreparedCommit {
     key: [string, string, string, string]
     dirty: boolean
     sourceHash: string | null
+    remoteBlobSha: string | null
   }>
 }
 
@@ -83,6 +86,8 @@ export const prepareGitHubCommit = async (input: {
       key: [glyph.projectId, glyph.ufoId, glyph.layerId, glyph.glyphName],
       dirty: false,
       sourceHash: nextHash,
+      // The pushed content becomes the new agreed baseline with the remote.
+      remoteBlobSha: await gitBlobShaFromText(glifText),
     })
   }
 
@@ -126,7 +131,33 @@ export const prepareGitHubCommit = async (input: {
 }
 
 export const markGitHubCommitSynced = async (
-  updates: GitHubPreparedCommit['exportStateUpdates']
+  updates: GitHubPreparedCommit['exportStateUpdates'],
+  commitTarget?: {
+    projectId: string
+    headOwner: string
+    branchName: string
+    commitSha: string
+  }
 ) => {
   await updateUfoGlyphExportState(updates)
+
+  if (!commitTarget) {
+    return
+  }
+  const project = await loadUfoProject(commitTarget.projectId)
+  if (!project?.githubSource) {
+    return
+  }
+  // The fork branch we pushed to is now the tracking branch for sync checks.
+  await saveUfoProject({
+    ...project,
+    lastSync: {
+      owner: commitTarget.headOwner,
+      repo: project.githubSource.repo,
+      ref: commitTarget.branchName,
+      commitSha: commitTarget.commitSha,
+      syncedAt: Date.now(),
+    },
+    updatedAt: Date.now(),
+  })
 }

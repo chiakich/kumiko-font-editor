@@ -146,6 +146,52 @@ const fetchPublicRepoMetadata = async (
   }
 }
 
+export interface GitHubArchiveSnapshot {
+  ufoEntries: UfoWorkspaceEntry[]
+  archiveRoot: string
+  resolvedRef: string | null
+  zipballUrl: string
+  commitSha: string | null
+}
+
+export const fetchGitHubArchiveSnapshot = async (input: {
+  repo: string
+  ref?: string
+}): Promise<GitHubArchiveSnapshot> => {
+  const archiveUrl = new URL('/api/github/archive', window.location.origin)
+  archiveUrl.searchParams.set('repo', input.repo)
+  if (input.ref?.trim()) {
+    archiveUrl.searchParams.set('ref', input.ref.trim())
+  }
+
+  const archiveResponse = await fetch(archiveUrl.toString(), {
+    credentials: 'include',
+  })
+  if (!archiveResponse.ok) {
+    const payload = await parseResponseBody(archiveResponse)
+    throw new Error(
+      payload?.message ||
+        `下載 GitHub ZIP 失敗（HTTP ${archiveResponse.status}）`
+    )
+  }
+
+  const zipBuffer = new Uint8Array(await archiveResponse.arrayBuffer())
+  const { archiveRoot, ufoEntries } = collectUfoEntriesFromZip(zipBuffer)
+  if (ufoEntries.length === 0) {
+    throw new Error('這個 repo 的 ZIP 檔裡沒有找到可解析的 UFO 專案')
+  }
+
+  return {
+    ufoEntries,
+    archiveRoot,
+    resolvedRef: archiveResponse.headers.get('x-kumiko-github-ref'),
+    zipballUrl:
+      archiveResponse.headers.get('x-kumiko-github-url') ??
+      archiveUrl.toString(),
+    commitSha: archiveResponse.headers.get('x-kumiko-github-sha'),
+  }
+}
+
 export const importGitHubUfoRepo = async (input: {
   repo: string
   ref?: string
@@ -167,36 +213,16 @@ export const importGitHubUfoRepo = async (input: {
         return fetchJsonOrThrow<RepoMetadataResponse>(metadataResponse)
       })()
 
-  const archiveUrl = new URL('/api/github/archive', window.location.origin)
-  archiveUrl.searchParams.set('repo', `${parsed.owner}/${parsed.repo}`)
-  if (input.ref?.trim()) {
-    archiveUrl.searchParams.set('ref', input.ref.trim())
-  }
-
-  const archiveResponse = await fetch(archiveUrl.toString(), {
-    credentials: 'include',
+  const snapshot = await fetchGitHubArchiveSnapshot({
+    repo: `${parsed.owner}/${parsed.repo}`,
+    ref: input.ref,
   })
-  if (!archiveResponse.ok) {
-    const payload = await parseResponseBody(archiveResponse)
-    throw new Error(
-      payload?.message ||
-        `下載 GitHub ZIP 失敗（HTTP ${archiveResponse.status}）`
-    )
-  }
-
-  const zipBuffer = new Uint8Array(await archiveResponse.arrayBuffer())
   const resolvedRef =
-    archiveResponse.headers.get('x-kumiko-github-ref') ??
+    snapshot.resolvedRef ??
     input.ref?.trim() ??
     repoMetadata.defaultBranch ??
     'unknown'
-  const zipballUrl =
-    archiveResponse.headers.get('x-kumiko-github-url') ?? archiveUrl.toString()
-
-  const { archiveRoot, ufoEntries } = collectUfoEntriesFromZip(zipBuffer)
-  if (ufoEntries.length === 0) {
-    throw new Error('這個 repo 的 ZIP 檔裡沒有找到可解析的 UFO 專案')
-  }
+  const { archiveRoot, ufoEntries, zipballUrl } = snapshot
 
   const githubSource: UfoGithubSource = {
     owner: parsed.owner,
@@ -206,7 +232,7 @@ export const importGitHubUfoRepo = async (input: {
     repoUrl: repoMetadata.repoUrl,
     zipballUrl,
     archiveRoot,
-    commitSha: null,
+    commitSha: snapshot.commitSha,
   }
 
   return importUfoWorkspaceEntries(ufoEntries, {

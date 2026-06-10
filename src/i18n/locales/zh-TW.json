@@ -188,7 +188,17 @@
     "signInToGitHub": "登入 GitHub",
     "signOut": "登出",
     "sourceRepo": "來源 repo",
-    "unicode": "Unicode"
+    "unicode": "Unicode",
+    "syncChecking": "正在檢查遠端同步狀態…",
+    "syncCheckFailed": "無法檢查遠端狀態：{{message}}",
+    "syncUpToDate": "與遠端一致（{{ref}} @ {{sha}}）",
+    "syncRemoteChanges": "遠端有 {{count}} 個檔案更新，建議先套用再提交。",
+    "syncConflicts": "{{count}} 個字符在本地與遠端同時被修改：",
+    "syncRemoteDeleted": "遠端已刪除",
+    "syncKeepLocal": "保留本地",
+    "syncTakeRemote": "採用遠端",
+    "syncApplyRemote": "套用遠端更新",
+    "syncResolveFirst": "還有 {{count}} 個衝突尚未選擇處理方式。"
   },
   "home": {
     "cancel": "取消",

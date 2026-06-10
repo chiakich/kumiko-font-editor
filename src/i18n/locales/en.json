@@ -188,7 +188,17 @@
     "signInToGitHub": "Sign in to GitHub",
     "signOut": "Sign out",
     "sourceRepo": "Source repo",
-    "unicode": "Unicode"
+    "unicode": "Unicode",
+    "syncChecking": "Checking remote sync status…",
+    "syncCheckFailed": "Could not check remote status: {{message}}",
+    "syncUpToDate": "In sync with remote ({{ref}} @ {{sha}})",
+    "syncRemoteChanges": "{{count}} file(s) updated on the remote. Apply them before committing.",
+    "syncConflicts": "{{count}} glyph(s) modified both locally and on the remote:",
+    "syncRemoteDeleted": "Deleted on remote",
+    "syncKeepLocal": "Keep mine",
+    "syncTakeRemote": "Take remote",
+    "syncApplyRemote": "Apply remote updates",
+    "syncResolveFirst": "{{count}} conflict(s) still need a resolution."
   },
   "home": {
     "cancel": "Cancel",

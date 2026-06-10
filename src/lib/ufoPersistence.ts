@@ -149,6 +149,7 @@ export const updateUfoGlyphExportState = async (
     key: UfoGlyphPrimaryKey
     dirty: boolean
     sourceHash: string | null
+    remoteBlobSha?: string | null
   }>
 ) => {
   if (updates.length === 0) {
@@ -171,6 +172,9 @@ export const updateUfoGlyphExportState = async (
       dirty: update.dirty,
       dirtyIndex: update.dirty ? 1 : 0,
       sourceHash: update.sourceHash,
+      ...(update.remoteBlobSha !== undefined
+        ? { remoteBlobSha: update.remoteBlobSha }
+        : {}),
       updatedAt: Date.now(),
     })
   }

@@ -8,6 +8,35 @@ import {
   type Env,
 } from './_utils'
 
+const resolveCommitSha = async (
+  token: string | null,
+  owner: string,
+  repo: string,
+  ref: string
+) => {
+  try {
+    const headers: Record<string, string> = {
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'Kumiko-Font-Editor',
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}`,
+      { headers }
+    )
+    if (!response.ok) {
+      return null
+    }
+    const payload = (await response.json()) as { sha?: string }
+    return payload.sha ?? null
+  } catch {
+    return null
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url)
   let parsed: { owner: string; repo: string }
@@ -67,6 +96,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const contentType =
       response.headers.get('content-type') ?? 'application/zip'
     const archiveBuffer = await response.arrayBuffer()
+    // The snapshot's commit SHA anchors later sync-state comparisons.
+    const commitSha = await resolveCommitSha(
+      token,
+      parsed.owner,
+      parsed.repo,
+      attempt.ref
+    )
     return new Response(archiveBuffer, {
       status: 200,
       headers: {
@@ -74,6 +110,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         'cache-control': 'no-store',
         'x-kumiko-github-ref': attempt.ref,
         'x-kumiko-github-url': attempt.url,
+        ...(commitSha ? { 'x-kumiko-github-sha': commitSha } : {}),
       },
     })
   }

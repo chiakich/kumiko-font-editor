@@ -20,6 +20,10 @@ import {
 } from '@chakra-ui/react'
 import type { GitHubForkStatus, GitHubViewer } from 'src/lib/githubAuth'
 import { GitHubRepoCard } from 'src/features/common/glyphInspector/GitHubRepoCard'
+import {
+  GitHubSyncSection,
+  type GitHubSyncSectionProps,
+} from 'src/features/common/glyphInspector/GitHubSyncSection'
 import { useTranslation } from 'react-i18next'
 
 export interface GitHubCommitModalProps {
@@ -47,6 +51,8 @@ export interface GitHubCommitModalProps {
   onOpenCompare: () => void
   onMergeUpstream: () => void
   onCreateCommit: () => void
+  sync: GitHubSyncSectionProps
+  hasBlockingSyncConflicts: boolean
 }
 
 export function GitHubCommitModal({
@@ -74,6 +80,8 @@ export function GitHubCommitModal({
   onOpenCompare,
   onMergeUpstream,
   onCreateCommit,
+  sync,
+  hasBlockingSyncConflicts,
 }: GitHubCommitModalProps) {
   const { t } = useTranslation()
 
@@ -158,6 +166,8 @@ export function GitHubCommitModal({
                 )}
               </HStack>
             </Box>
+
+            <GitHubSyncSection {...sync} />
 
             {githubViewer ? (
               <>
@@ -311,7 +321,8 @@ export function GitHubCommitModal({
               isEditableRepoReadonly ||
               !editableRepo ||
               !canCommitToGitHub ||
-              isPreparingGitHubCommit
+              isPreparingGitHubCommit ||
+              hasBlockingSyncConflicts
             }
             loadingText="推送中..."
           >

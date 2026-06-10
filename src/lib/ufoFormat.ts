@@ -7,6 +7,7 @@ import type {
 } from 'src/store'
 import type { ProjectSourceFormat } from 'src/lib/projectFormats'
 import { hashString } from 'src/lib/hash'
+import { gitBlobShaFromText } from 'src/lib/githubSync/gitBlobSha'
 import {
   buildUfoLibFromFontData,
   defaultFontSource,
@@ -49,7 +50,7 @@ import type {
   UfoProjectRecord,
 } from 'src/lib/ufoTypes'
 
-interface ParsedUfoFolder {
+export interface ParsedUfoFolder {
   ufoId: string
   relativePath: string
   files: Record<string, string>
@@ -278,7 +279,7 @@ const inferOffcurveType = (
   return normalized
 }
 
-const parseGlifText = (
+export const parseGlifText = (
   text: string,
   fileName: string
 ): Omit<
@@ -806,7 +807,9 @@ export const pickDefaultLayer = (metadata: UfoMetadataRecord) =>
     glyphDir: 'glyphs',
   }
 
-const buildWorkspaceFileMapFromEntries = (entries: UfoWorkspaceEntry[]) => {
+export const buildWorkspaceFileMapFromEntries = (
+  entries: UfoWorkspaceEntry[]
+) => {
   const candidateEntries = entries.filter((entry) =>
     isRelevantUfoTextFile(entry.relativePath)
   )
@@ -966,6 +969,9 @@ export const importUfoWorkspaceEntries = async (
         projectId,
         ufoId: ufo.ufoId,
         layerId: defaultLayer.layerId,
+        remoteBlobSha: options.githubSource
+          ? await gitBlobShaFromText(glifText)
+          : null,
         dirty: false,
         dirtyIndex: 0,
         updatedAt: createdAt,
@@ -983,6 +989,15 @@ export const importUfoWorkspaceEntries = async (
     updatedAt: createdAt,
     sourceType: options.sourceType ?? 'local',
     githubSource: options.githubSource ?? null,
+    lastSync: options.githubSource
+      ? {
+          owner: options.githubSource.owner,
+          repo: options.githubSource.repo,
+          ref: options.githubSource.ref,
+          commitSha: options.githubSource.commitSha ?? null,
+          syncedAt: createdAt,
+        }
+      : null,
   }
 
   const activeMetadata =
@@ -1159,6 +1174,7 @@ export const syncHotFontDataToUfoRecords = async (input: {
       glyphName: glyph.id,
       fileName: nextFileName,
       sourceHash: existingRecord?.sourceHash ?? null,
+      remoteBlobSha: existingRecord?.remoteBlobSha ?? null,
       unicodes: glyph.unicode ? [glyph.unicode.toUpperCase()] : [],
       advance: {
         width: glyph.metrics.width,
