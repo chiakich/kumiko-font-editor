@@ -23,13 +23,14 @@ import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-const OUTPUT_PATH = path.join(
+const OUTPUT_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
   'public',
-  'glyphwiki',
-  'composition.txt'
+  'glyphwiki'
 )
+const OUTPUT_PATH = path.join(OUTPUT_DIR, 'composition.txt')
+const VARIANTS_OUTPUT_PATH = path.join(OUTPUT_DIR, 'variants.txt')
 
 const GLYPH_NAME_PATTERN = /^u([0-9a-f]{4,6})(?:-(.+))?$/
 const IDC_MIN = 0x2ff0
@@ -97,8 +98,15 @@ const mergeBounds = (bounds, x, y) => {
   bounds.yMax = Math.max(bounds.yMax, y)
 }
 
+// Radical/compatibility forms worth mapping to their canonical character
+// (e.g. ⺣ → 灬, ⽕ → 火) so IDS components match GlyphWiki part chars.
+const isVariantFormCodePoint = (codePoint) =>
+  (codePoint >= 0x2e80 && codePoint <= 0x2fdf) ||
+  (codePoint >= 0xf900 && codePoint <= 0xfaff)
+
 const main = async () => {
   const glyphData = new Map()
+  const variantPairs = []
   const reader = createInterface({
     input: createReadStream(dumpPath, 'utf-8'),
     crlfDelay: Infinity,
@@ -114,8 +122,38 @@ const main = async () => {
     if (name && data && !name.includes('_')) {
       glyphData.set(name, data)
     }
+
+    const nameMatch = name.match(/^u([0-9a-f]{4,6})$/)
+    if (
+      nameMatch &&
+      isVariantFormCodePoint(Number.parseInt(nameMatch[1], 16))
+    ) {
+      const related = parsePartName(columns[1].trim())
+      const variantChar = String.fromCodePoint(
+        Number.parseInt(nameMatch[1], 16)
+      )
+      if (
+        related &&
+        related.char !== variantChar &&
+        // U+3013 (〓) is GlyphWiki's "no related character" placeholder.
+        related.char !== '〓' &&
+        !related.suffix
+      ) {
+        variantPairs.push(`${variantChar}\t${related.char}`)
+      }
+    }
   }
   console.log(`Loaded ${glyphData.size.toLocaleString()} glyph records`)
+
+  variantPairs.sort()
+  writeFileSync(
+    VARIANTS_OUTPUT_PATH,
+    `${[...new Set(variantPairs)].join('\n')}\n`,
+    'utf-8'
+  )
+  console.log(
+    `Wrote ${variantPairs.length} variant mappings to ${VARIANTS_OUTPUT_PATH}`
+  )
 
   const bboxCache = new Map()
 

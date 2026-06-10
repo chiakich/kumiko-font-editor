@@ -1,3 +1,8 @@
+import {
+  canonicalizeComponent,
+  getGlyphwikiVariantMap,
+} from 'src/lib/glyphwikiVariants'
+
 interface ProjectGlyphSummary {
   id: string
   name: string
@@ -52,11 +57,10 @@ const IDS_SOURCE_PATH = '/ids/ids_babelstone.txt'
 // How many decomposition levels feed the reverse index: with one-level
 // source data (煙→火垔), depth 2 lets a search for 土 still find 煙.
 const DECOMPOSITION_EXPANSION_DEPTH = 2
-const HANSEEKER_DATA_PATH = '/hanseeker/data_nosupp.txt'
-const HANSEEKER_VARIANT_PATH = '/hanseeker/data_vt.txt'
 
 let datasetPromise: Promise<{
   decompositionMap: Map<string, string[]>
+  variantMap: Map<string, string>
   reverseIndex: Map<string, string[]>
 }> | null = null
 
@@ -139,69 +143,6 @@ const parseIdsColumn = (column: string | undefined, target: string) =>
     )
     .filter((components) => components.length > 0)
 
-const parseHanseekerVariants = (
-  payload: string,
-  target: string,
-  variantMap: Map<string, string>
-) => {
-  const variants: string[][] = []
-  let current = ''
-
-  for (const character of toCodePointArray(payload)) {
-    if (character === '@' || character === '!') {
-      if (current) {
-        variants.push(
-          toCodePointArray(current)
-            .map((item) => variantMap.get(item) ?? item)
-            .filter((item) => shouldKeepComponent(item, target))
-        )
-      }
-      current = ''
-      continue
-    }
-
-    current += character
-  }
-
-  if (current) {
-    variants.push(
-      toCodePointArray(current)
-        .map((item) => variantMap.get(item) ?? item)
-        .filter((item) => shouldKeepComponent(item, target))
-    )
-  }
-
-  return variants.filter((variant) => variant.length > 0)
-}
-
-const loadHanseekerVariantMap = async () => {
-  const response = await fetch(HANSEEKER_VARIANT_PATH)
-  if (!response.ok) {
-    throw new Error(`無法載入 Hanseeker 異體資料：${response.status}`)
-  }
-
-  const text = await response.text()
-  const variantMap = new Map<string, string>()
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim()
-    if (!line) {
-      continue
-    }
-
-    const [variant, canonical] = line.replace(/^\uFEFF/, '').split('\t')
-    if (
-      variant &&
-      canonical &&
-      !isPrivateUseCharacter(variant) &&
-      !isPrivateUseCharacter(canonical)
-    ) {
-      variantMap.set(variant, canonical)
-    }
-  }
-
-  return variantMap
-}
-
 const addVariantsToIndexes = (
   target: string,
   variants: string[][],
@@ -227,19 +168,14 @@ const addVariantsToIndexes = (
 }
 
 const buildDataset = async () => {
-  const [idsResponse, hanseekerVariantMap, hanseekerResponse] =
-    await Promise.all([
-      fetch(IDS_SOURCE_PATH),
-      loadHanseekerVariantMap(),
-      fetch(HANSEEKER_DATA_PATH),
-    ])
+  const [idsResponse, variantMap] = await Promise.all([
+    fetch(IDS_SOURCE_PATH),
+    // Variant-form matching is an enhancement; search still works without it.
+    getGlyphwikiVariantMap().catch(() => new Map<string, string>()),
+  ])
 
   if (!idsResponse.ok) {
     throw new Error(`無法載入 IDS 拆字資料：${idsResponse.status}`)
-  }
-
-  if (!hanseekerResponse.ok) {
-    throw new Error(`無法載入 Hanseeker 拆字資料：${hanseekerResponse.status}`)
   }
 
   const decompositionMap = new Map<string, string[]>()
@@ -266,34 +202,25 @@ const buildDataset = async () => {
     addVariantsToIndexes(target, variants, decompositionMap, reverseIndex)
   }
 
-  const hanseekerText = await hanseekerResponse.text()
-  for (const rawLine of hanseekerText.split(/\r?\n/)) {
-    const line = rawLine.trim()
-    if (!line) {
-      continue
-    }
-
-    const characters = toCodePointArray(line)
-    const target = characters[0]
-    const payload = characters.slice(1).join('')
-    if (!target || !payload || isPrivateUseCharacter(target)) {
-      continue
-    }
-
-    const variants = parseHanseekerVariants(
-      payload,
-      target,
-      hanseekerVariantMap
-    )
-    addVariantsToIndexes(target, variants, decompositionMap, reverseIndex)
-  }
-
   expandDecompositions(decompositionMap, reverseIndex)
+
+  // Index by canonical form so searching 火 also finds chars decomposed
+  // with ⺣/灬-style variant components, and vice versa.
+  const canonicalReverseIndex = new Map<string, Set<string>>()
+  for (const [component, characters] of reverseIndex) {
+    const canonical = canonicalizeComponent(variantMap, component)
+    const merged = canonicalReverseIndex.get(canonical) ?? new Set<string>()
+    for (const character of characters) {
+      merged.add(character)
+    }
+    canonicalReverseIndex.set(canonical, merged)
+  }
 
   return {
     decompositionMap,
+    variantMap,
     reverseIndex: new Map(
-      [...reverseIndex.entries()].map(([component, characters]) => [
+      [...canonicalReverseIndex.entries()].map(([component, characters]) => [
         component,
         [...characters],
       ])
@@ -376,7 +303,11 @@ const handleSearch = async (message: SearchComponentsMessage) => {
       : (components[0] ?? null)
 
   const matchingCharacters = activeComponent
-    ? new Set(dataset.reverseIndex.get(activeComponent) ?? [])
+    ? new Set(
+        dataset.reverseIndex.get(
+          canonicalizeComponent(dataset.variantMap, activeComponent)
+        ) ?? []
+      )
     : new Set<string>()
 
   const glyphIds = message.payload.projectGlyphs

@@ -8,8 +8,11 @@ import {
 import {
   getGlyphwikiComposition,
   type GlyphwikiPartBox,
-  type GlyphwikiPartPlacement,
 } from 'src/lib/glyphwikiComposition'
+import {
+  canonicalizeComponent,
+  getGlyphwikiVariantMap,
+} from 'src/lib/glyphwikiVariants'
 import { scorePartFit } from 'src/lib/componentAssembly'
 import type { GlyphData } from 'src/store'
 
@@ -81,10 +84,11 @@ export function useGlyphReferenceSearch({
     isCjkGlyph && selectedCharacter && activeComponentForRanking
       ? `${selectedCharacter}:${activeComponentForRanking}`
       : null
+  const searchComponents = searchState?.components ?? null
   const [partFitState, setPartFitState] = useState<{
     key: string
-    targetParts: GlyphwikiPartPlacement[] | null
     targetPartBox: GlyphwikiPartBox | null
+    partBoxesByComponent: Map<string, GlyphwikiPartBox[]>
     scoreByGlyphId: Map<string, number>
   } | null>(null)
   // Stale results are filtered by key instead of being reset synchronously.
@@ -99,9 +103,28 @@ export function useGlyphReferenceSearch({
     let cancelled = false
     void (async () => {
       try {
-        const targetParts = await getGlyphwikiComposition(selectedCharacter)
+        const [targetParts, variantMap] = await Promise.all([
+          getGlyphwikiComposition(selectedCharacter),
+          getGlyphwikiVariantMap().catch(() => new Map<string, string>()),
+        ])
+        // Datasets may name the same radical differently (⺣ vs 灬);
+        // compare canonical forms on both sides.
+        const canon = (character: string) =>
+          canonicalizeComponent(variantMap, character)
+        const activeCanonical = canon(activeComponentForRanking)
+
+        const partBoxesByComponent = new Map<string, GlyphwikiPartBox[]>()
+        for (const component of searchComponents ?? []) {
+          const boxes = (targetParts ?? [])
+            .filter((part) => canon(part.char) === canon(component))
+            .map((part) => part.box)
+          if (boxes.length > 0) {
+            partBoxesByComponent.set(component, boxes)
+          }
+        }
+
         const targetPartBox =
-          targetParts?.find((part) => part.char === activeComponentForRanking)
+          targetParts?.find((part) => canon(part.char) === activeCanonical)
             ?.box ?? null
         const scoreByGlyphId = new Map<string, number>()
         if (targetPartBox) {
@@ -112,7 +135,7 @@ export function useGlyphReferenceSearch({
             }
             const donorParts = await getGlyphwikiComposition(character)
             const donorBox = donorParts?.find(
-              (part) => part.char === activeComponentForRanking
+              (part) => canon(part.char) === activeCanonical
             )?.box
             if (donorBox) {
               scoreByGlyphId.set(
@@ -125,8 +148,8 @@ export function useGlyphReferenceSearch({
         if (!cancelled) {
           setPartFitState({
             key: partFitKey,
-            targetParts: targetParts ?? null,
             targetPartBox,
+            partBoxesByComponent,
             scoreByGlyphId,
           })
         }
@@ -143,6 +166,7 @@ export function useGlyphReferenceSearch({
   }, [
     activeComponentForRanking,
     partFitKey,
+    searchComponents,
     selectedCharacter,
     unsortedResultGlyphs,
   ])
@@ -239,7 +263,7 @@ export function useGlyphReferenceSearch({
     selectedCharacter,
     selectedComponent: activeComponent,
     targetPartBox: partFit?.targetPartBox ?? null,
-    targetParts: partFit?.targetParts ?? null,
+    partBoxesByComponent: partFit?.partBoxesByComponent ?? null,
     setPreviewGlyphId: setManualPreviewGlyphId,
     setSelectedComponent: handleSelectComponent,
   }

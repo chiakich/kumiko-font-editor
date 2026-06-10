@@ -4,7 +4,6 @@ import {
   getFontVerticalBox,
   mapGlyphwikiBoxToFontUnits,
 } from 'src/lib/componentAssembly'
-import type { GlyphwikiPartBox } from 'src/lib/glyphwikiComposition'
 import { useStore, type GlyphData } from 'src/store'
 import { ComponentSearchSection } from 'src/features/editor/leftPanel/ComponentSearchSection'
 import { GlyphPreviewCard } from 'src/features/editor/leftPanel/GlyphPreviewCard'
@@ -39,7 +38,7 @@ export function LeftPanelContent({
     searchState,
     selectedComponent,
     targetPartBox,
-    targetParts,
+    partBoxesByComponent,
     setPreviewGlyphId,
     setSelectedComponent,
   } = useGlyphReferenceSearch({
@@ -47,14 +46,6 @@ export function LeftPanelContent({
     glyphMap,
     selectedGlyph,
   })
-
-  const partBoxesByComponent = useMemo(() => {
-    const boxes = new Map<string, GlyphwikiPartBox[]>()
-    for (const part of targetParts ?? []) {
-      boxes.set(part.char, [...(boxes.get(part.char) ?? []), part.box])
-    }
-    return boxes
-  }, [targetParts])
 
   // Where the active component should land inside the edited glyph,
   // in font units; null when GlyphWiki has no layout for this character.
@@ -92,7 +83,7 @@ export function LeftPanelContent({
             components={searchState.components}
             loading={loading}
             selectedComponent={selectedComponent ?? searchState.activeComponent}
-            partBoxesByComponent={partBoxesByComponent}
+            partBoxesByComponent={partBoxesByComponent ?? undefined}
             onSelectComponent={setSelectedComponent}
           />
         ) : null}
