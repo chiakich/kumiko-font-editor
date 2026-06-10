@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   FormControl,
@@ -24,6 +25,7 @@ import {
   GitHubSyncSection,
   type GitHubSyncSectionProps,
 } from 'src/features/common/glyphInspector/GitHubSyncSection'
+import type { QualitySummary } from 'src/features/common/qualityCheck/qualityLint'
 import { useTranslation } from 'react-i18next'
 
 export interface GitHubCommitModalProps {
@@ -53,6 +55,8 @@ export interface GitHubCommitModalProps {
   onCreateCommit: () => void
   sync: GitHubSyncSectionProps
   hasBlockingSyncConflicts: boolean
+  qualitySummary?: QualitySummary
+  onOpenQualityCheck?: () => void
 }
 
 export function GitHubCommitModal({
@@ -82,6 +86,8 @@ export function GitHubCommitModal({
   onCreateCommit,
   sync,
   hasBlockingSyncConflicts,
+  qualitySummary,
+  onOpenQualityCheck,
 }: GitHubCommitModalProps) {
   const { t } = useTranslation()
 
@@ -168,6 +174,13 @@ export function GitHubCommitModal({
             </Box>
 
             <GitHubSyncSection {...sync} />
+
+            {qualitySummary ? (
+              <QualitySummaryCard
+                summary={qualitySummary}
+                onOpenQualityCheck={onOpenQualityCheck}
+              />
+            ) : null}
 
             {githubViewer ? (
               <>
@@ -322,14 +335,57 @@ export function GitHubCommitModal({
               !editableRepo ||
               !canCommitToGitHub ||
               isPreparingGitHubCommit ||
-              hasBlockingSyncConflicts
+              hasBlockingSyncConflicts ||
+              Boolean(qualitySummary?.hasBlockingIssues)
             }
             loadingText="推送中..."
           >
-            {t('glyphInspector.createCommit')}
+            {qualitySummary?.hasBlockingIssues
+              ? '修正品質問題後提交'
+              : t('glyphInspector.createCommit')}
           </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
+  )
+}
+
+function QualitySummaryCard({
+  summary,
+  onOpenQualityCheck,
+}: {
+  summary: QualitySummary
+  onOpenQualityCheck?: () => void
+}) {
+  const statusText = summary.hasBlockingIssues
+    ? `${summary.blockingCount} 阻擋 · ${summary.warningCount} 警告`
+    : summary.warningCount > 0
+      ? `${summary.warningCount} 警告 · 可提交`
+      : '沒有阻擋問題'
+
+  return (
+    <Box borderWidth={1} borderRadius="lg" p={4} bg="gray.50">
+      <HStack justify="space-between" align="center" spacing={4}>
+        <Box>
+          <HStack spacing={2} mb={1}>
+            <Text fontWeight="medium">提交前品質檢查</Text>
+            <Badge colorScheme={summary.hasBlockingIssues ? 'red' : 'green'}>
+              {summary.hasBlockingIssues ? '阻擋' : '通過'}
+            </Badge>
+          </HStack>
+          <Text fontSize="sm" color="gray.600">
+            {statusText}，已檢查 {summary.glyphCount} glyphs
+            {summary.deletedCount !== null
+              ? `，刪除 ${summary.deletedCount}`
+              : ''}
+          </Text>
+        </Box>
+        {onOpenQualityCheck ? (
+          <Button size="sm" variant="outline" onClick={onOpenQualityCheck}>
+            打開檢查
+          </Button>
+        ) : null}
+      </HStack>
+    </Box>
   )
 }

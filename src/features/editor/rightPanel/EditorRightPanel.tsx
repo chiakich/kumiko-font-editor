@@ -16,6 +16,7 @@ import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightP
 import { SlidingTabList } from 'src/features/common/SlidingTabList'
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
+import { QualityCheckModal } from 'src/features/common/qualityCheck/QualityCheckModal'
 import { MetricsCard } from 'src/features/editor/rightPanel/MetricsCard'
 import { NodeInspectorCard } from 'src/features/editor/rightPanel/NodeInspectorCard'
 import { TransformCard } from 'src/features/editor/rightPanel/TransformCard'
@@ -29,6 +30,7 @@ export function EditorRightPanel() {
   const panel = useRightPanelModel()
   const exportModal = useDisclosure()
   const fontSettingsModal = useDisclosure()
+  const qualityCheckModal = useDisclosure()
   const fontExport = useFontExport()
   const updateFontSettings = useStore((state) => state.updateFontSettings)
   const [activeTabIndex, setActiveTabIndex] = useState(0)
@@ -63,6 +65,7 @@ export function EditorRightPanel() {
           onOpenGitHubModal={() =>
             void panel.gitHubCommitFlow.openGitHubModal()
           }
+          onOpenQualityCheckModal={qualityCheckModal.onOpen}
           onSaveProject={panel.handleSaveProject}
         />
 
@@ -154,7 +157,15 @@ export function EditorRightPanel() {
           onSave={updateFontSettings}
         />
       ) : null}
-      <GitHubCommitModal {...panel.gitHubCommitFlow.modalProps} />
+      <GitHubCommitModal
+        {...panel.gitHubCommitFlow.modalProps}
+        qualitySummary={panel.commitQualityReport.summary}
+        onOpenQualityCheck={qualityCheckModal.onOpen}
+      />
+      <QualityCheckModal
+        isOpen={qualityCheckModal.isOpen}
+        onClose={qualityCheckModal.onClose}
+      />
     </Box>
   )
 }

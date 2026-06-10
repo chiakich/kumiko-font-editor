@@ -40,6 +40,7 @@ interface UseGitHubCommitFlowInput {
   hasGitHubSource: boolean
   githubRepoFullName: string | null
   canCommitToGitHub: boolean
+  hasBlockingQualityIssues: boolean
   localDirtyGlyphIds: string[]
   localDeletedGlyphIds: string[]
   markDraftSaved: () => void
@@ -74,6 +75,7 @@ export const useGitHubCommitFlow = ({
   hasGitHubSource,
   githubRepoFullName,
   canCommitToGitHub,
+  hasBlockingQualityIssues,
   localDirtyGlyphIds,
   localDeletedGlyphIds,
   markDraftSaved,
@@ -396,6 +398,17 @@ export const useGitHubCommitFlow = ({
         title: '有尚未處理的同步衝突',
         description:
           '請先在上方選擇每個衝突字符要保留哪個版本，再套用遠端更新。',
+        status: 'warning',
+        duration: 3600,
+        isClosable: true,
+      })
+      return
+    }
+
+    if (hasBlockingQualityIssues) {
+      toast({
+        title: '有阻擋品質問題',
+        description: '請先打開品質檢查，修正 blocking lint 後再提交。',
         status: 'warning',
         duration: 3600,
         isClosable: true,

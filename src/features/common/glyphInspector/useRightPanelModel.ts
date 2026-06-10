@@ -1,4 +1,5 @@
 import { useToast } from '@chakra-ui/react'
+import { useMemo } from 'react'
 import { saveDraftSnapshot } from 'src/lib/draftSave'
 import {
   getArchivedGlyphLayerEntries,
@@ -13,6 +14,7 @@ import {
 } from 'src/store'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import { useGitHubCommitFlow } from 'src/features/common/glyphInspector/useGitHubCommitFlow'
+import { buildQualityReport } from 'src/features/common/qualityCheck/qualityLint'
 import {
   parseNumberInput,
   parseSelectedNode,
@@ -70,6 +72,17 @@ export function useRightPanelModel() {
     hasGitHubSource &&
     (localDirtyGlyphIds.length > 0 || localDeletedGlyphIds.length > 0)
   )
+  const commitQualityReport = useMemo(
+    () =>
+      buildQualityReport({
+        fontData,
+        scope: 'changed',
+        selectedGlyphId,
+        dirtyGlyphIds: localDirtyGlyphIds,
+        deletedGlyphIds: localDeletedGlyphIds,
+      }),
+    [fontData, localDeletedGlyphIds, localDirtyGlyphIds, selectedGlyphId]
+  )
 
   const glyph =
     selectedGlyphId && fontData ? fontData.glyphs[selectedGlyphId] : null
@@ -107,6 +120,7 @@ export function useRightPanelModel() {
     hasGitHubSource,
     githubRepoFullName,
     canCommitToGitHub,
+    hasBlockingQualityIssues: commitQualityReport.summary.hasBlockingIssues,
     localDirtyGlyphIds,
     localDeletedGlyphIds,
     markDraftSaved,
@@ -239,6 +253,7 @@ export function useRightPanelModel() {
     effectiveNodeType,
     glyph,
     gitHubCommitFlow,
+    commitQualityReport,
     hasGitHubSource,
     hasLocalChanges,
     isDirty,

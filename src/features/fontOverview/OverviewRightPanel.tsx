@@ -6,6 +6,7 @@ import { GlyphSummaryCard } from 'src/features/common/glyphInspector/GlyphSummar
 import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightPanelModel'
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
+import { QualityCheckModal } from 'src/features/common/qualityCheck/QualityCheckModal'
 import { useStore } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
@@ -15,6 +16,7 @@ export function OverviewRightPanel() {
   const panel = useRightPanelModel()
   const exportModal = useDisclosure()
   const fontSettingsModal = useDisclosure()
+  const qualityCheckModal = useDisclosure()
   const fontExport = useFontExport()
   const updateFontSettings = useStore((state) => state.updateFontSettings)
 
@@ -48,6 +50,7 @@ export function OverviewRightPanel() {
           onOpenGitHubModal={() =>
             void panel.gitHubCommitFlow.openGitHubModal()
           }
+          onOpenQualityCheckModal={qualityCheckModal.onOpen}
           onSaveProject={panel.handleSaveProject}
         />
 
@@ -88,7 +91,15 @@ export function OverviewRightPanel() {
           onSave={updateFontSettings}
         />
       ) : null}
-      <GitHubCommitModal {...panel.gitHubCommitFlow.modalProps} />
+      <GitHubCommitModal
+        {...panel.gitHubCommitFlow.modalProps}
+        qualitySummary={panel.commitQualityReport.summary}
+        onOpenQualityCheck={qualityCheckModal.onOpen}
+      />
+      <QualityCheckModal
+        isOpen={qualityCheckModal.isOpen}
+        onClose={qualityCheckModal.onClose}
+      />
     </Box>
   )
 }
