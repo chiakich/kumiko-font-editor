@@ -157,7 +157,16 @@
     "selected": "已選",
     "showOnlyEmptyGlyphs": "只看空白待編輯字符",
     "sourceLabel": "來源：",
-    "total": "合計"
+    "total": "合計",
+    "charsetCoverage": "待補字清單",
+    "coverageDrawn": "已繪製",
+    "coverageEmpty": "未繪製",
+    "coverageMissing": "未收錄",
+    "coverageMissingTitle": "未收錄的字符（尚未加入專案）",
+    "coverageEmptyTitle": "未繪製的字符（已在專案中但還是空白）",
+    "coverageComplete": "這個字集已全部完成！",
+    "coverageAddMissing": "把 {{count}} 個缺字加入專案",
+    "coverageMoreHidden": "…還有 {{count}} 個未顯示"
   },
   "glyphInspector": {
     "block": "Block",

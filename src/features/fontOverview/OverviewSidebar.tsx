@@ -25,6 +25,7 @@ interface OverviewSidebarProps {
   onSearchQueryChange: (value: string) => void
   onSectionSelect: (sectionId: string) => void
   onShowOnlyEmptyGlyphsChange: (value: boolean) => void
+  onOpenCoverage: () => void
 }
 
 export function OverviewSidebar({
@@ -39,6 +40,7 @@ export function OverviewSidebar({
   onSearchQueryChange,
   onSectionSelect,
   onShowOnlyEmptyGlyphsChange,
+  onOpenCoverage,
 }: OverviewSidebarProps) {
   const { t } = useTranslation()
 
@@ -111,6 +113,10 @@ export function OverviewSidebar({
         >
           {t('fontOverview.showOnlyEmptyGlyphs')}
         </Checkbox>
+
+        <Button size="sm" variant="outline" onClick={onOpenCoverage}>
+          {t('fontOverview.charsetCoverage')}
+        </Button>
       </VStack>
 
       <Divider mb={4} borderColor="field.haze" opacity={0.55} />

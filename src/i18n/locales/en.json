@@ -157,7 +157,16 @@
     "selected": "Selected",
     "showOnlyEmptyGlyphs": "Only show empty glyphs to edit",
     "sourceLabel": "Source:",
-    "total": "Total"
+    "total": "Total",
+    "charsetCoverage": "Coverage / To-do list",
+    "coverageDrawn": "Drawn",
+    "coverageEmpty": "Empty",
+    "coverageMissing": "Missing",
+    "coverageMissingTitle": "Missing glyphs (not in the project yet)",
+    "coverageEmptyTitle": "Empty glyphs (in the project but not drawn)",
+    "coverageComplete": "This character set is complete!",
+    "coverageAddMissing": "Add {{count}} missing glyph(s) to project",
+    "coverageMoreHidden": "…{{count}} more not shown"
   },
   "glyphInspector": {
     "block": "Block",
