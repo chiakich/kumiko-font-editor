@@ -42,7 +42,6 @@ const issueKeys = (fontData: FontData, dirtyGlyphIds: string[] = []) =>
   buildQualityReport({
     fontData,
     scope: dirtyGlyphIds.length ? 'changed' : 'font',
-    selectedGlyphId: null,
     dirtyGlyphIds,
     deletedGlyphIds: [],
   }).issues.map((issue) => issue.id)
@@ -67,7 +66,6 @@ describe('quality lint report', () => {
     const report = buildQualityReport({
       fontData,
       scope: 'font',
-      selectedGlyphId: null,
       dirtyGlyphIds: [],
       deletedGlyphIds: [],
     })
@@ -157,7 +155,6 @@ describe('quality lint report', () => {
     const report = buildQualityReport({
       fontData,
       scope: 'changed',
-      selectedGlyphId: null,
       dirtyGlyphIds: ['dirty'],
       deletedGlyphIds: ['deleted.glif'],
     })

@@ -169,6 +169,10 @@ export function FontOverviewScreen() {
     }
     return selectedGlyphIds
   }, [overviewSelectedGlyphIds, selectedGlyphId])
+  const overviewSelectedGlyphIdList = useMemo(
+    () => [...overviewSelectedGlyphIdSet],
+    [overviewSelectedGlyphIdSet]
+  )
 
   const selectOverviewGlyphs = useCallback(
     (glyphIds: string[], primaryGlyphId: string | null) => {
@@ -506,7 +510,7 @@ export function FontOverviewScreen() {
         </GridItem>
 
         <GridItem area="right" minW={0} minH={0}>
-          <OverviewRightPanel />
+          <OverviewRightPanel selectedGlyphIds={overviewSelectedGlyphIdList} />
         </GridItem>
       </Grid>
 

@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   Button,
   HStack,
@@ -25,6 +26,7 @@ import { LintPanel } from 'src/features/common/qualityCheck/LintPanel'
 import { MixedProofPanel } from 'src/features/common/qualityCheck/MixedProofPanel'
 import { GrayProofPanel } from 'src/features/common/qualityCheck/GrayProofPanel'
 import { StructurePanel } from 'src/features/common/qualityCheck/StructurePanel'
+import type { QualityCheckMode } from 'src/features/common/qualityCheck/qualityCheckMode'
 import {
   buildQualityReport,
   type QualityIssue,
@@ -35,9 +37,16 @@ import { mixedProofPresets } from 'src/features/common/qualityCheck/qualityProof
 interface QualityCheckModalProps {
   isOpen: boolean
   onClose: () => void
+  /** 'font'＝右上角入口檢查全部字；'selected'＝總覽複選後只檢查選取的字 */
+  mode?: QualityCheckMode
+  initialScope?: Exclude<QualityScope, 'selected'>
+  selectedGlyphIds?: string[]
 }
 
-const scopeOptions: Array<{ id: QualityScope; label: string }> = [
+const scopeOptions: Array<{
+  id: Exclude<QualityScope, 'selected'>
+  label: string
+}> = [
   { id: 'changed', label: '本次變更' },
   { id: 'current', label: '目前字符' },
   { id: 'font', label: '整套字體' },
@@ -58,8 +67,17 @@ const qualityTabLabels = [
   </TabLabel>,
 ]
 
-export function QualityCheckModal({ isOpen, onClose }: QualityCheckModalProps) {
-  const [scope, setScope] = useState<QualityScope>('changed')
+const EMPTY_SELECTED_GLYPH_IDS: string[] = []
+
+export function QualityCheckModal({
+  isOpen,
+  onClose,
+  mode = 'font',
+  initialScope = 'changed',
+  selectedGlyphIds = EMPTY_SELECTED_GLYPH_IDS,
+}: QualityCheckModalProps) {
+  const [scope, setScope] =
+    useState<Exclude<QualityScope, 'selected'>>(initialScope)
   const [activeTabIndex, setActiveTabIndex] = useState(0)
   const [proofText, setProofText] = useState(mixedProofPresets[0])
   const fontData = useStore((state) => state.fontData)
@@ -72,18 +90,32 @@ export function QualityCheckModal({ isOpen, onClose }: QualityCheckModalProps) {
   const qualityReport = useMemo(
     () =>
       buildQualityReport({
-        fontData,
-        scope,
+        // 關閉時不重算整套字體的報告
+        fontData: isOpen ? fontData : null,
+        scope: mode === 'selected' ? 'selected' : scope,
         selectedGlyphId,
+        selectedGlyphIds,
         dirtyGlyphIds: localDirtyGlyphIds,
         deletedGlyphIds: localDeletedGlyphIds,
       }),
-    [fontData, localDeletedGlyphIds, localDirtyGlyphIds, scope, selectedGlyphId]
+    [
+      fontData,
+      isOpen,
+      localDeletedGlyphIds,
+      localDirtyGlyphIds,
+      mode,
+      selectedGlyphIds,
+      selectedGlyphId,
+      scope,
+    ]
   )
   const { glyphs, issues, summary } = qualityReport
-  const handleLocateIssue = (issue: QualityIssue) => {
-    addGlyphToEditor(issue.glyphId)
+  const handleLocateGlyph = (glyphId: string) => {
+    addGlyphToEditor(glyphId)
     setWorkspaceView('editor')
+  }
+  const handleLocateIssue = (issue: QualityIssue) => {
+    handleLocateGlyph(issue.glyphId)
   }
 
   return (
@@ -98,12 +130,19 @@ export function QualityCheckModal({ isOpen, onClose }: QualityCheckModalProps) {
             spacing={3}
           >
             <Box>
-              <Text as="span">品質檢查</Text>
+              <HStack spacing={3} align="center">
+                <Text as="span">品質檢查</Text>
+                {mode === 'selected' ? (
+                  <Badge colorScheme="orange">選取的字 {glyphs.length}</Badge>
+                ) : null}
+              </HStack>
               <Text fontSize="xs" color="field.muted" fontWeight="800" mt={1}>
                 Lint、混排、灰度與結構 proof
               </Text>
             </Box>
-            <ScopeSelector scope={scope} onScopeChange={setScope} />
+            {mode === 'selected' ? null : (
+              <ScopeSelector scope={scope} onScopeChange={setScope} />
+            )}
           </Stack>
         </ModalHeader>
         <ModalCloseButton />
@@ -158,6 +197,7 @@ export function QualityCheckModal({ isOpen, onClose }: QualityCheckModalProps) {
                   <MixedProofPanel
                     fontData={fontData}
                     scopedGlyphs={glyphs}
+                    mode={mode}
                     proofText={proofText}
                     onProofTextChange={setProofText}
                   />
@@ -166,11 +206,16 @@ export function QualityCheckModal({ isOpen, onClose }: QualityCheckModalProps) {
                   <GrayProofPanel
                     fontData={fontData}
                     scopedGlyphs={glyphs}
-                    proofText={proofText}
+                    mode={mode}
                   />
                 </TabPanel>
                 <TabPanel px={0}>
-                  <StructurePanel />
+                  <StructurePanel
+                    fontData={fontData}
+                    scopedGlyphs={glyphs}
+                    mode={mode}
+                    onLocateGlyph={handleLocateGlyph}
+                  />
                 </TabPanel>
               </TabPanels>
             </Tabs>
@@ -216,8 +261,8 @@ function ScopeSelector({
   scope,
   onScopeChange,
 }: {
-  scope: QualityScope
-  onScopeChange: (scope: QualityScope) => void
+  scope: Exclude<QualityScope, 'selected'>
+  onScopeChange: (scope: Exclude<QualityScope, 'selected'>) => void
 }) {
   return (
     <HStack

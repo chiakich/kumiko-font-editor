@@ -1,4 +1,13 @@
-import { Box, Stack, Text, useDisclosure } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  HStack,
+  Stack,
+  Text,
+  useDisclosure,
+} from '@chakra-ui/react'
+import { useState } from 'react'
+import { PageSearch } from 'iconoir-react'
 import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
 import { useFontExport } from 'src/features/common/fontExport/useFontExport'
 import { GitHubCommitModal } from 'src/features/common/glyphInspector/GitHubCommitModal'
@@ -7,18 +16,41 @@ import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightP
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
 import { QualityCheckModal } from 'src/features/common/qualityCheck/QualityCheckModal'
+import type { QualityCheckMode } from 'src/features/common/qualityCheck/qualityCheckMode'
+import type { QualityScope } from 'src/features/common/qualityCheck/qualityLint'
 import { useStore } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
-export function OverviewRightPanel() {
+interface OverviewRightPanelProps {
+  selectedGlyphIds?: string[]
+}
+
+export function OverviewRightPanel({
+  selectedGlyphIds = [],
+}: OverviewRightPanelProps) {
   const { t } = useTranslation()
 
   const panel = useRightPanelModel()
   const exportModal = useDisclosure()
   const fontSettingsModal = useDisclosure()
   const qualityCheckModal = useDisclosure()
+  const [qualityCheckMode, setQualityCheckMode] =
+    useState<QualityCheckMode>('font')
+  const [qualityCheckScope, setQualityCheckScope] =
+    useState<Exclude<QualityScope, 'selected'>>('font')
   const fontExport = useFontExport()
   const updateFontSettings = useStore((state) => state.updateFontSettings)
+
+  const openQualityCheck = (
+    mode: QualityCheckMode,
+    scope: Exclude<QualityScope, 'selected'> = 'font'
+  ) => {
+    setQualityCheckMode(mode)
+    setQualityCheckScope(scope)
+    qualityCheckModal.onOpen()
+  }
+
+  const hasMultiSelection = selectedGlyphIds.length >= 2
 
   return (
     <Box
@@ -50,9 +82,29 @@ export function OverviewRightPanel() {
           onOpenGitHubModal={() =>
             void panel.gitHubCommitFlow.openGitHubModal()
           }
-          onOpenQualityCheckModal={qualityCheckModal.onOpen}
+          onOpenQualityCheckModal={() => openQualityCheck('font')}
           onSaveProject={panel.handleSaveProject}
         />
+
+        {hasMultiSelection ? (
+          <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={3}>
+            <HStack justify="space-between" spacing={3}>
+              <Text fontSize="sm" fontWeight="800">
+                已選取 {selectedGlyphIds.length} 個字符
+              </Text>
+              <Button
+                size="xs"
+                leftIcon={<PageSearch width={14} height={14} />}
+                onClick={() => openQualityCheck('selected')}
+              >
+                品質檢查
+              </Button>
+            </HStack>
+            <Text fontSize="xs" color="field.muted" mt={1}>
+              只對選取的字進行 Lint、混排、灰度與結構檢查。
+            </Text>
+          </Box>
+        ) : null}
 
         {!panel.glyph ? (
           <Text fontSize="sm" color="field.muted" fontFamily="mono">
@@ -94,11 +146,17 @@ export function OverviewRightPanel() {
       <GitHubCommitModal
         {...panel.gitHubCommitFlow.modalProps}
         qualitySummary={panel.commitQualityReport.summary}
-        onOpenQualityCheck={qualityCheckModal.onOpen}
+        onOpenQualityCheck={() => openQualityCheck('font', 'changed')}
       />
       <QualityCheckModal
+        key={`${qualityCheckMode}-${qualityCheckScope}`}
         isOpen={qualityCheckModal.isOpen}
         onClose={qualityCheckModal.onClose}
+        mode={qualityCheckMode}
+        initialScope={qualityCheckScope}
+        selectedGlyphIds={
+          qualityCheckMode === 'selected' ? selectedGlyphIds : undefined
+        }
       />
     </Box>
   )

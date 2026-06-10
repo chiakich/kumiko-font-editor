@@ -6,8 +6,9 @@ import {
   type PathData,
   type PathNode,
 } from 'src/store'
+import { isHanGlyph } from 'src/features/common/qualityCheck/structureMetrics'
 
-export type QualityScope = 'changed' | 'current' | 'font'
+export type QualityScope = 'changed' | 'current' | 'selected' | 'font'
 export type QualityIssueSeverity = 'blocking' | 'warning' | 'info'
 
 export interface QualityIssue {
@@ -37,7 +38,8 @@ export interface QualityReport {
 export interface BuildQualityReportInput {
   fontData: FontData | null | undefined
   scope: QualityScope
-  selectedGlyphId: string | null
+  selectedGlyphId?: string | null
+  selectedGlyphIds?: string[]
   dirtyGlyphIds: string[]
   deletedGlyphIds: string[]
 }
@@ -63,11 +65,18 @@ const getActiveLayer = (glyph: GlyphData): GlyphData | GlyphLayerData =>
 export const getQualityScopeGlyphs = ({
   fontData,
   scope,
-  selectedGlyphId,
+  selectedGlyphId = null,
+  selectedGlyphIds = [],
   dirtyGlyphIds,
 }: Omit<BuildQualityReportInput, 'deletedGlyphIds'>) => {
   if (!fontData) {
     return []
+  }
+
+  if (scope === 'selected') {
+    return selectedGlyphIds
+      .map((glyphId) => fontData.glyphs[glyphId])
+      .filter((glyph): glyph is GlyphData => Boolean(glyph))
   }
 
   if (scope === 'current') {
@@ -310,6 +319,7 @@ const buildGlyphIssues = (
   }
 
   if (
+    isHanGlyph(glyph) &&
     activeLayer.metrics.width > 0 &&
     Math.round(activeLayer.metrics.width) !== Math.round(unitsPerEm)
   ) {
@@ -318,7 +328,7 @@ const buildGlyphIssues = (
         key: 'advance-width',
         severity: 'warning',
         group: '度量',
-        message: `advance width ${round(activeLayer.metrics.width)}，UPM ${unitsPerEm}`,
+        message: `漢字 advance width ${round(activeLayer.metrics.width)} 不是全形（UPM ${unitsPerEm}）`,
       })
     )
   }
@@ -434,7 +444,8 @@ export const summarizeQualityIssues = (
 export const buildQualityReport = ({
   fontData,
   scope,
-  selectedGlyphId,
+  selectedGlyphId = null,
+  selectedGlyphIds = [],
   dirtyGlyphIds,
   deletedGlyphIds,
 }: BuildQualityReportInput): QualityReport => {
@@ -442,6 +453,7 @@ export const buildQualityReport = ({
     fontData,
     scope,
     selectedGlyphId,
+    selectedGlyphIds,
     dirtyGlyphIds,
   })
   const unitsPerEm = fontData?.unitsPerEm ?? DEFAULT_UNITS_PER_EM

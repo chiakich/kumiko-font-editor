@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildGlyphInkSamples,
+  buildGrayProofText,
+  buildGrayStats,
   buildProofRun,
 } from 'src/features/common/qualityCheck/qualityProof'
 import type { FontData, GlyphData, PathData } from 'src/store/types'
@@ -52,6 +54,14 @@ const fontData: FontData = {
         [50, 700],
       ]),
     ]),
+    uni4E00: makeGlyph('uni4E00', '4E00', 1000, [
+      makePath('small_box', [
+        [100, 0],
+        [200, 0],
+        [200, 1000],
+        [100, 1000],
+      ]),
+    ]),
   },
 }
 
@@ -72,8 +82,22 @@ describe('quality proof helpers', () => {
       fontData
     )
 
-    expect(samples).toHaveLength(2)
+    expect(samples).toHaveLength(3)
     expect(samples[0].inkRatio).not.toBeNull()
     expect(samples[0].inkRatio).toBeGreaterThan(samples[1].inkRatio ?? 0)
+  })
+
+  it('keeps selected glyphs before gray proof text truncation', () => {
+    expect(buildGrayProofText('文章', ['永', '一']).startsWith('永一 ')).toBe(
+      true
+    )
+  })
+
+  it('computes gray averages by proof text occurrence', () => {
+    const proofRun = buildProofRun(fontData, '永永一')
+    const stats = buildGrayStats(proofRun, fontData)
+
+    expect(stats.sampleCount).toBe(3)
+    expect(stats.meanInkRatio).toBeCloseTo((0.64 + 0.64 + 0.1) / 3, 2)
   })
 })
