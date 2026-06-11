@@ -4,10 +4,10 @@ import {
   flattenContour,
 } from 'src/features/common/qualityCheck/polygonGeometry'
 import {
-  buildRadarAnalysis,
   buildRobustStat,
   radarZScore,
 } from 'src/features/common/qualityCheck/qualityRadar'
+import { analyzeFontPopulation } from 'src/features/common/qualityCheck/useQualityAnalysis'
 import type { FontData, GlyphData, PathData } from 'src/store'
 
 const squarePolygon = (
@@ -124,7 +124,7 @@ describe('buildRadarAnalysis', () => {
     // 離群字：整體大幅偏右
     glyphs.push(makeHanGlyph(24, makeSquarePath(320, -55, 990, 815)))
 
-    const radar = buildRadarAnalysis(makeFontData(glyphs))!
+    const radar = analyzeFontPopulation(makeFontData(glyphs)).radar!
     expect(radar.sampleCount).toBe(25)
     expect(radar.suspects.length).toBeGreaterThan(0)
     expect(radar.suspects[0]!.glyphId).toBe('g24')
@@ -144,7 +144,7 @@ describe('buildRadarAnalysis', () => {
 
   it('returns null when there are not enough Han samples', () => {
     const glyphs = [makeHanGlyph(0, makeSquarePath(50, -50, 950, 820))]
-    expect(buildRadarAnalysis(makeFontData(glyphs))).toBeNull()
+    expect(analyzeFontPopulation(makeFontData(glyphs)).radar).toBeNull()
   })
 })
 

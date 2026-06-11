@@ -11,7 +11,7 @@ import {
 } from 'src/features/common/qualityCheck/hanClassification'
 import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
 import { buildGlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
-import { analyzeFontPopulation } from 'src/features/common/qualityCheck/populationAnalysis'
+import { analyzeFontPopulation } from 'src/features/common/qualityCheck/useQualityAnalysis'
 import type { FontData, GlyphData, PathData } from 'src/store/types'
 
 const makePath = (

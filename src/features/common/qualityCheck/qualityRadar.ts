@@ -1,9 +1,4 @@
-import type { FontData } from 'src/store'
-import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
-import {
-  buildFontGeometrySamples,
-  type GlyphGeometrySample,
-} from 'src/features/common/qualityCheck/glyphSampling'
+import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
 import {
   sideLabels,
   strokeTypeLabels,
@@ -358,18 +353,6 @@ export const computeRadarFromSamples = (
     suspects,
     evaluationByGlyphId,
   }
-}
-
-/** 便利函數：從 FontData 一路算出離群分析（主執行緒用）。 */
-export const buildRadarAnalysis = (
-  fontData: FontData | null | undefined
-): RadarAnalysis | null => {
-  if (!fontData) {
-    return null
-  }
-  const resolvedFont = resolveFontGlyphs(fontData)
-  const samples = buildFontGeometrySamples(resolvedFont)
-  return computeRadarFromSamples(samples, resolvedFont.bodyBox)
 }
 
 export const formatRadarValue = (

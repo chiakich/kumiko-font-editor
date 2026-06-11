@@ -1,8 +1,4 @@
-import type { FontData } from 'src/store'
-import {
-  resolveFontGlyphs,
-  type ResolvedFont,
-} from 'src/features/common/qualityCheck/resolvedGlyph'
+import type { ResolvedFont } from 'src/features/common/qualityCheck/resolvedGlyph'
 import { buildFontGeometrySamples } from 'src/features/common/qualityCheck/glyphSampling'
 import {
   buildStructureBaseline,
@@ -31,14 +27,4 @@ export const runPopulationAnalysis = (
     baseline: buildStructureBaseline(samples, resolvedFont.bodyBox),
     radar: computeRadarFromSamples(samples, resolvedFont.bodyBox),
   }
-}
-
-/** 主執行緒便利函數：同步從 FontData 算出母體分析（小字體或測試用）。 */
-export const analyzeFontPopulation = (
-  fontData: FontData | null | undefined
-): PopulationAnalysis => {
-  if (!fontData) {
-    return { baseline: null, radar: null }
-  }
-  return runPopulationAnalysis(resolveFontGlyphs(fontData))
 }

@@ -5,6 +5,7 @@ import {
   Divider,
   HStack,
   SimpleGrid,
+  Spinner,
   Stack,
   Tag,
   Text,
@@ -25,7 +26,7 @@ import {
   buildGlyphGeometrySample,
   type GlyphGeometrySample,
 } from 'src/features/common/qualityCheck/glyphSampling'
-import { analyzeFontPopulation } from 'src/features/common/qualityCheck/populationAnalysis'
+import { useQualityAnalysis } from 'src/features/common/qualityCheck/useQualityAnalysis'
 import {
   formatRadarReason,
   radarDimensionLabels,
@@ -327,11 +328,10 @@ export function StructurePanel({
   mode,
   onLocateGlyph,
 }: StructurePanelProps) {
-  // 單次取樣：結構基準與離群偵測共用同一組 sample（一次攤平）。
-  const { baseline, radar } = useMemo(
-    () => analyzeFontPopulation(fontData),
-    [fontData]
-  )
+  // 母體分析在 Worker 背景跑（解析在主執行緒做一次，重計算丟背景）。
+  const { analysis, isAnalyzing } = useQualityAnalysis(fontData, true)
+  const baseline = analysis?.baseline ?? null
+  const radar = analysis?.radar ?? null
 
   const scopedSamples = useMemo(() => {
     if (!fontData || !baseline || mode !== 'selected') {
@@ -369,9 +369,18 @@ export function StructurePanel({
   if (!baseline) {
     return (
       <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={6}>
-        <Text fontSize="sm" color="field.muted" fontWeight="800">
-          字體中還沒有可分析的漢字輪廓，無法推導結構基準值。
-        </Text>
+        {isAnalyzing ? (
+          <HStack spacing={3}>
+            <Spinner size="sm" color="field.yellow.400" />
+            <Text fontSize="sm" color="field.muted" fontWeight="800">
+              正在背景分析字體幾何…
+            </Text>
+          </HStack>
+        ) : (
+          <Text fontSize="sm" color="field.muted" fontWeight="800">
+            字體中還沒有可分析的漢字輪廓，無法推導結構基準值。
+          </Text>
+        )}
       </Box>
     )
   }
