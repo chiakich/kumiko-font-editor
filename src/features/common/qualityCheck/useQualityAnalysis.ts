@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FontData } from 'src/store'
 import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
 import {
@@ -42,6 +42,47 @@ const getWorker = () => {
   return workerInstance
 }
 
+// requestId 必須跨 hook 實例唯一：worker 是單例，多個 hook（編輯頁
+// insight + 品質 modal）同時掛 listener 時，各自的計數器會互相接受對方的結果。
+let nextRequestId = 0
+
+/**
+ * 同一份 fontData 快照只解析、傳輸、計算一次，所有 hook 共用同一個
+ * promise，避免重複的主執行緒 resolve + structured clone 卡頓。
+ */
+const analysisCache = new WeakMap<FontData, Promise<PopulationAnalysis>>()
+
+const requestAnalysis = (fontData: FontData): Promise<PopulationAnalysis> => {
+  const cached = analysisCache.get(fontData)
+  if (cached) {
+    return cached
+  }
+  const promise = new Promise<PopulationAnalysis>((resolve, reject) => {
+    nextRequestId += 1
+    const requestId = nextRequestId
+    const worker = getWorker()
+    const handleMessage = (event: MessageEvent<WorkerResponse>) => {
+      if (event.data.payload.requestId !== requestId) {
+        return
+      }
+      worker.removeEventListener('message', handleMessage)
+      if (event.data.type === 'analysis-success') {
+        resolve(event.data.payload.analysis)
+      } else {
+        analysisCache.delete(fontData)
+        reject(new Error(event.data.payload.message))
+      }
+    }
+    worker.addEventListener('message', handleMessage)
+    worker.postMessage({
+      type: 'analyze',
+      payload: { requestId, resolvedFont: resolveFontGlyphs(fontData) },
+    })
+  })
+  analysisCache.set(fontData, promise)
+  return promise
+}
+
 export interface QualityAnalysisState {
   analysis: PopulationAnalysis | null
   isAnalyzing: boolean
@@ -71,47 +112,29 @@ export const useQualityAnalysis = (
     analysis: null,
     error: null,
   })
-  const requestIdRef = useRef(0)
 
   useEffect(() => {
     if (!enabled || !fontData) {
       return
     }
 
-    const requestId = requestIdRef.current + 1
-    requestIdRef.current = requestId
-    const resolvedFont = resolveFontGlyphs(fontData)
-    const worker = getWorker()
-
-    const handleMessage = (event: MessageEvent<WorkerResponse>) => {
-      // 只接受最後一次請求的結果，丟棄過期回應
-      if (event.data.payload.requestId !== requestIdRef.current) {
-        return
+    // effect 已被新一輪取代（fontData 變動）時丟棄過期結果
+    let cancelled = false
+    requestAnalysis(fontData).then(
+      (analysis) => {
+        if (!cancelled) {
+          setResult({ source: fontData, analysis, error: null })
+        }
+      },
+      (error: Error) => {
+        if (!cancelled) {
+          setResult({ source: fontData, analysis: null, error: error.message })
+        }
       }
-      worker.removeEventListener('message', handleMessage)
-      if (event.data.type === 'analysis-success') {
-        setResult({
-          source: fontData,
-          analysis: event.data.payload.analysis,
-          error: null,
-        })
-      } else {
-        setResult({
-          source: fontData,
-          analysis: null,
-          error: event.data.payload.message,
-        })
-      }
-    }
-
-    worker.addEventListener('message', handleMessage)
-    worker.postMessage({
-      type: 'analyze',
-      payload: { requestId, resolvedFont },
-    })
+    )
 
     return () => {
-      worker.removeEventListener('message', handleMessage)
+      cancelled = true
     }
   }, [enabled, fontData])
 
