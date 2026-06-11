@@ -193,8 +193,34 @@ const isPointInPolygon = (point: GeometryPoint, polygon: GeometryPoint[]) => {
 interface ClassifiedContour {
   polygon: GeometryPoint[]
   area: number
+  bounds: GeometryBounds
   /** +1 實心、-1 挖空（counter） */
   sign: number
+}
+
+const boundsContain = (outer: GeometryBounds, inner: GeometryBounds) =>
+  outer.xMin <= inner.xMin &&
+  outer.xMax >= inner.xMax &&
+  outer.yMin <= inner.yMin &&
+  outer.yMax >= inner.yMax
+
+const CONTAINMENT_SAMPLES = 8
+
+/**
+ * 過半取樣頂點在外輪廓內才算巢狀。單點判定會把「交疊但不巢狀」的
+ * 獨立筆畫誤判成挖空（CJK 組字常見），導致墨量互相抵消成垃圾值。
+ */
+const containsContour = (outer: GeometryPoint[], inner: GeometryPoint[]) => {
+  const step = Math.max(1, Math.floor(inner.length / CONTAINMENT_SAMPLES))
+  let insideCount = 0
+  let sampleCount = 0
+  for (let index = 0; index < inner.length; index += step) {
+    sampleCount += 1
+    if (isPointInPolygon(inner[index], outer)) {
+      insideCount += 1
+    }
+  }
+  return insideCount * 2 > sampleCount
 }
 
 /**
@@ -204,23 +230,27 @@ interface ClassifiedContour {
 const classifyInkContours = (
   polygons: GeometryPoint[][]
 ): ClassifiedContour[] => {
-  const contours = polygons
-    .map((polygon) => ({
-      polygon,
-      area: Math.abs(getSignedArea(polygon)),
-      sign: 1,
-    }))
-    .filter((contour) => contour.area > 0)
-    .sort((left, right) => right.area - left.area)
+  const contours: ClassifiedContour[] = []
+  for (const polygon of polygons) {
+    const area = Math.abs(getSignedArea(polygon))
+    const bounds = getPolygonsBounds([polygon])
+    if (area > 0 && bounds) {
+      contours.push({ polygon, area, bounds, sign: 1 })
+    }
+  }
+  contours.sort((left, right) => right.area - left.area)
 
   for (let index = 0; index < contours.length; index += 1) {
-    const samplePoint = contours[index].polygon[0]
+    const contour = contours[index]
+    // bbox 預過濾：真巢狀必然 bbox 也巢狀，避免逐對做頂點取樣
     const depth = contours
       .slice(0, index)
-      .filter((candidate) =>
-        isPointInPolygon(samplePoint, candidate.polygon)
+      .filter(
+        (candidate) =>
+          boundsContain(candidate.bounds, contour.bounds) &&
+          containsContour(candidate.polygon, contour.polygon)
       ).length
-    contours[index].sign = depth % 2 === 0 ? 1 : -1
+    contour.sign = depth % 2 === 0 ? 1 : -1
   }
 
   return contours

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  computeInkArea,
   computeInkMoments,
   flattenContour,
 } from 'src/features/common/qualityCheck/polygonGeometry'
@@ -49,6 +50,31 @@ describe('computeInkMoments', () => {
     const moments = computeInkMoments([clockwise])!
     expect(moments.area).toBeCloseTo(10000)
     expect(moments.centroidX).toBeCloseTo(50)
+  })
+
+  it('does not misclassify a partially overlapping stroke as a counter', () => {
+    // L 形筆畫：底橫 (0,0)-(300,100) + 右豎 (200,0)-(300,300)，面積 50000
+    const lShape = [
+      { x: 0, y: 0 },
+      { x: 300, y: 0 },
+      { x: 300, y: 300 },
+      { x: 200, y: 300 },
+      { x: 200, y: 100 },
+      { x: 0, y: 100 },
+    ]
+    // 交疊筆畫：第一個頂點 (250,150) 落在 L 的墨水內，但多數頂點在外
+    const crossingStroke = [
+      { x: 250, y: 150 },
+      { x: 250, y: 250 },
+      { x: 150, y: 250 },
+      { x: 150, y: 150 },
+    ]
+    // 單點判定會把整條筆畫當挖空（50000 − 10000）；多數決應視為實心
+    expect(computeInkArea([lShape, crossingStroke])).toBeGreaterThan(50000)
+    const moments = computeInkMoments([lShape, crossingStroke])!
+    expect(moments.centroidX).toBeGreaterThan(0)
+    expect(moments.centroidX).toBeLessThan(300)
+    expect(moments.spreadY).toBeGreaterThan(0)
   })
 })
 
