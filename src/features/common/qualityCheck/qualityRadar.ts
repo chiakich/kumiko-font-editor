@@ -49,9 +49,10 @@ export interface RadarReason {
   dimension: RadarDimension
   format: RadarValueFormat
   value: number
+  /** 比較母體（同複雜度層）的中位數與 80% 區間，已換算回此字的原始尺度 */
   median: number
-  /** 依複雜度迴歸後的期望值（僅尺寸特徵有，取代 median 作為比較對象） */
-  expected?: number
+  p10: number
+  p90: number
   zScore: number
 }
 
@@ -80,13 +81,23 @@ export interface RadarSizeTrend {
   slopeByKey: Map<string, number>
 }
 
+/**
+ * 複雜度分層：一/丶這類筆畫極簡的字，邊距與字面天生就跟複雜字不同，
+ * 拿全體統計比會永遠霸佔風險榜。分層後每個字只跟「複雜度相近的字」比。
+ */
+export interface RadarStrata {
+  /** 各層複雜度上界（遞增，最後一層為 Infinity） */
+  binUpperBounds: number[]
+  statsByBin: Array<Map<string, RadarRobustStat>>
+}
+
 export interface RadarAnalysis {
   sampleCount: number
-  featureStats: Map<string, RadarRobustStat>
+  strata: RadarStrata
   sizeTrend: RadarSizeTrend
   dimensionScores: RadarDimensionScore[]
   overallScore: number
-  /** 依風險分數排序的可疑字形（score > 0） */
+  /** 依風險分數排序的可疑字形（score ≥ RADAR_SUSPECT_SCORE） */
   suspects: RadarGlyphEvaluation[]
   evaluationByGlyphId: Map<string, RadarGlyphEvaluation>
 }
@@ -95,7 +106,14 @@ export interface RadarAnalysis {
 export const RADAR_REASON_Z = 2
 /** 特徵 |z| 達此值將該字計入維度離群 */
 export const RADAR_OUTLIER_Z = 2.5
+/** 風險分數達此值才列入可疑字（單特徵 z≥3 或多項中度偏離） */
+export const RADAR_SUSPECT_SCORE = 1
+/** 單一特徵計分時 |z| 封頂，避免極端字以天文數字霸佔排名 */
+const RADAR_Z_CAP = 8
 const MIN_RADAR_SAMPLES = 20
+/** 複雜度分層：每層最少樣本數與層數上限 */
+const MIN_BIN_SIZE = 30
+const MAX_BINS = 6
 const MAD_TO_SIGMA = 1.4826
 const IQR_TO_SIGMA = 1 / 1.349
 
@@ -307,6 +325,98 @@ const detrendValue = (
   return feature.value - slope * (complexity - sizeTrend.medianComplexity)
 }
 
+const binIndexForComplexity = (
+  binUpperBounds: number[],
+  complexity: number
+) => {
+  for (let index = 0; index < binUpperBounds.length; index += 1) {
+    if (complexity <= binUpperBounds[index]) {
+      return index
+    }
+  }
+  return binUpperBounds.length - 1
+}
+
+interface GlyphFeatureEntry {
+  complexity: number
+  features: RadarFeatureValue[]
+}
+
+const buildStrata = (
+  glyphFeatures: GlyphFeatureEntry[],
+  sizeTrend: RadarSizeTrend
+): RadarStrata => {
+  const globalValues = new Map<string, number[]>()
+  for (const entry of glyphFeatures) {
+    for (const feature of entry.features) {
+      const values = globalValues.get(feature.key) ?? []
+      values.push(detrendValue(feature, entry.complexity, sizeTrend))
+      globalValues.set(feature.key, values)
+    }
+  }
+  const globalStats = new Map<string, RadarRobustStat>()
+  for (const [key, values] of globalValues) {
+    if (values.length < MIN_RADAR_SAMPLES) {
+      continue
+    }
+    const stat = buildRobustStat(values)
+    if (stat) {
+      globalStats.set(key, stat)
+    }
+  }
+
+  const binCount = Math.max(
+    1,
+    Math.min(MAX_BINS, Math.floor(glyphFeatures.length / MIN_BIN_SIZE))
+  )
+  if (binCount === 1) {
+    return {
+      binUpperBounds: [Number.POSITIVE_INFINITY],
+      statsByBin: [globalStats],
+    }
+  }
+
+  const sortedComplexities = glyphFeatures
+    .map((entry) => entry.complexity)
+    .sort((left, right) => left - right)
+  const binUpperBounds = Array.from({ length: binCount }, (_, index) =>
+    index === binCount - 1
+      ? Number.POSITIVE_INFINITY
+      : quantileOf(sortedComplexities, (index + 1) / binCount)
+  )
+
+  const valuesByBin = Array.from(
+    { length: binCount },
+    () => new Map<string, number[]>()
+  )
+  for (const entry of glyphFeatures) {
+    const binValues =
+      valuesByBin[binIndexForComplexity(binUpperBounds, entry.complexity)]
+    for (const feature of entry.features) {
+      const values = binValues.get(feature.key) ?? []
+      values.push(detrendValue(feature, entry.complexity, sizeTrend))
+      binValues.set(feature.key, values)
+    }
+  }
+
+  const statsByBin = valuesByBin.map((binValues) => {
+    // 該層樣本不足的特徵退回全體統計
+    const stats = new Map(globalStats)
+    for (const [key, values] of binValues) {
+      if (values.length < MIN_RADAR_SAMPLES) {
+        continue
+      }
+      const stat = buildRobustStat(values)
+      if (stat) {
+        stats.set(key, stat)
+      }
+    }
+    return stats
+  })
+
+  return { binUpperBounds, statsByBin }
+}
+
 const RADAR_DIMENSIONS: RadarDimension[] = [
   'boundary',
   'proportion',
@@ -323,9 +433,11 @@ interface FeatureEvaluation {
 const evaluateFeatures = (
   features: RadarFeatureValue[],
   complexity: number,
-  featureStats: Map<string, RadarRobustStat>,
+  strata: RadarStrata,
   sizeTrend: RadarSizeTrend
 ): FeatureEvaluation => {
+  const featureStats =
+    strata.statsByBin[binIndexForComplexity(strata.binUpperBounds, complexity)]
   const reasons: RadarReason[] = []
   const outlierDimensions = new Set<RadarDimension>()
   let score = 0
@@ -337,21 +449,20 @@ const evaluateFeatures = (
     }
     const adjusted = detrendValue(feature, complexity, sizeTrend)
     const zScore = radarZScore(adjusted, stat)
-    const excess = Math.abs(zScore) - RADAR_REASON_Z
+    const excess = Math.min(Math.abs(zScore), RADAR_Z_CAP) - RADAR_REASON_Z
     if (excess > 0) {
       score += excess * excess
+      // detrend 的位移補回原始尺度，UI 顯示的比較區間才對得上目前值
+      const offset = feature.value - adjusted
       reasons.push({
         key: feature.key,
         label: feature.label,
         dimension: feature.dimension,
         format: feature.format,
         value: feature.value,
-        median: stat.median,
-        // 期望值 = 此字複雜度下的迴歸預測（raw 與 detrend 的差補回中位）
-        expected:
-          adjusted !== feature.value
-            ? stat.median + (feature.value - adjusted)
-            : undefined,
+        median: stat.median + offset,
+        p10: stat.p10 + offset,
+        p90: stat.p90 + offset,
         zScore,
       })
     }
@@ -370,7 +481,7 @@ const evaluateFeatures = (
  */
 export const evaluateSampleAgainstRadar = (
   sample: GlyphGeometrySample,
-  radar: Pick<RadarAnalysis, 'featureStats' | 'sizeTrend'>,
+  radar: Pick<RadarAnalysis, 'strata' | 'sizeTrend'>,
   bodyBox: { top: number; bottom: number; unitsPerEm: number }
 ): RadarGlyphEvaluation => {
   const unitsPerEm = bodyBox.unitsPerEm
@@ -378,7 +489,7 @@ export const evaluateSampleAgainstRadar = (
   const { score, reasons } = evaluateFeatures(
     collectGlyphFeatures(sample, unitsPerEm, bodyCenterY),
     glyphComplexity(sample, unitsPerEm),
-    radar.featureStats,
+    radar.strata,
     radar.sizeTrend
   )
   return {
@@ -412,27 +523,8 @@ export const computeRadarFromSamples = (
   }))
 
   const sizeTrend = buildSizeTrend(glyphFeatures)
-
-  // 統計分布建立在 detrend 後的值上，z-score 才不會懲罰「該小的字小」
-  const valuesByFeature = new Map<string, number[]>()
-  for (const entry of glyphFeatures) {
-    for (const feature of entry.features) {
-      const values = valuesByFeature.get(feature.key) ?? []
-      values.push(detrendValue(feature, entry.complexity, sizeTrend))
-      valuesByFeature.set(feature.key, values)
-    }
-  }
-
-  const featureStats = new Map<string, RadarRobustStat>()
-  for (const [key, values] of valuesByFeature) {
-    if (values.length < MIN_RADAR_SAMPLES) {
-      continue
-    }
-    const stat = buildRobustStat(values)
-    if (stat) {
-      featureStats.set(key, stat)
-    }
-  }
+  // 統計分布建立在 detrend 後的值、並依複雜度分層
+  const strata = buildStrata(glyphFeatures, sizeTrend)
 
   const evaluationByGlyphId = new Map<string, RadarGlyphEvaluation>()
   const dimensionOutliers: Record<RadarDimension, number> = {
@@ -446,7 +538,7 @@ export const computeRadarFromSamples = (
     const { score, reasons, outlierDimensions } = evaluateFeatures(
       entry.features,
       entry.complexity,
-      featureStats,
+      strata,
       sizeTrend
     )
     for (const dimension of outlierDimensions) {
@@ -473,12 +565,12 @@ export const computeRadarFromSamples = (
   )
 
   const suspects = [...evaluationByGlyphId.values()]
-    .filter((evaluation) => evaluation.score > 0)
+    .filter((evaluation) => evaluation.score >= RADAR_SUSPECT_SCORE)
     .sort((left, right) => right.score - left.score)
 
   return {
     sampleCount,
-    featureStats,
+    strata,
     sizeTrend,
     dimensionScores,
     overallScore,
@@ -501,6 +593,4 @@ export const formatRadarValue = (
 }
 
 export const formatRadarReason = (reason: RadarReason) =>
-  reason.expected !== undefined
-    ? `${reason.label} ${formatRadarValue(reason.value, reason.format)}（同複雜度期望 ${formatRadarValue(reason.expected, reason.format)}，z ${reason.zScore.toFixed(1)}）`
-    : `${reason.label} ${formatRadarValue(reason.value, reason.format)}（中位 ${formatRadarValue(reason.median, reason.format)}，z ${reason.zScore.toFixed(1)}）`
+  `${reason.label} ${formatRadarValue(reason.value, reason.format)}（同層中位 ${formatRadarValue(reason.median, reason.format)}，z ${reason.zScore.toFixed(1)}）`

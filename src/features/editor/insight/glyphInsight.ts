@@ -1,9 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
-import type {
-  RadarGlyphEvaluation,
-  RadarRobustStat,
-} from 'src/features/common/qualityCheck/qualityRadar'
+import type { RadarGlyphEvaluation } from 'src/features/common/qualityCheck/qualityRadar'
 import type { StructureBaseline } from 'src/features/common/qualityCheck/structureMetrics'
 
 /**
@@ -19,7 +16,6 @@ export interface GlyphInsightValue {
   sample: GlyphGeometrySample | null
   evaluation: RadarGlyphEvaluation | null
   baseline: StructureBaseline | null
-  featureStats: Map<string, RadarRobustStat> | null
   showBands: boolean
   setShowBands: (visible: boolean) => void
 }
@@ -29,7 +25,6 @@ export const idleGlyphInsight: GlyphInsightValue = {
   sample: null,
   evaluation: null,
   baseline: null,
-  featureStats: null,
   showBands: false,
   setShowBands: () => {},
 }

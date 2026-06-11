@@ -50,11 +50,8 @@ export function GlyphInsightCard() {
   const insight = useGlyphInsight()
 
   const advices = useMemo(
-    () =>
-      insight.evaluation?.reasons.map((reason) =>
-        buildRadarAdvice(reason, insight.featureStats?.get(reason.key))
-      ) ?? [],
-    [insight.evaluation, insight.featureStats]
+    () => insight.evaluation?.reasons.map(buildRadarAdvice) ?? [],
+    [insight.evaluation]
   )
 
   if (insight.status === 'idle') {

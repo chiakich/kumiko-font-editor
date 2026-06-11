@@ -80,7 +80,6 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
       sample,
       evaluation,
       baseline: analysis?.baseline ?? null,
-      featureStats: radar?.featureStats ?? null,
       showBands,
       setShowBands,
     }

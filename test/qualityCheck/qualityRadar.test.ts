@@ -5,9 +5,11 @@ import {
 } from 'src/features/common/qualityCheck/polygonGeometry'
 import {
   buildRobustStat,
+  computeRadarFromSamples,
   radarZScore,
 } from 'src/features/common/qualityCheck/qualityRadar'
 import { analyzeFontPopulation } from 'src/features/common/qualityCheck/useQualityAnalysis'
+import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
 import type { FontData, GlyphData, PathData } from 'src/store'
 
 const squarePolygon = (
@@ -188,6 +190,90 @@ describe('buildRadarAnalysis', () => {
   it('returns null when there are not enough Han samples', () => {
     const glyphs = [makeHanGlyph(0, makeSquarePath(50, -50, 950, 820))]
     expect(analyzeFontPopulation(makeFontData(glyphs)).radar).toBeNull()
+  })
+})
+
+const makeStratumSample = (
+  id: string,
+  faceWidth: number,
+  inkArea: number,
+  jitter: number
+): GlyphGeometrySample => {
+  const advance = 1000
+  const xMin = (advance - faceWidth) / 2 + jitter
+  const xMax = xMin + faceWidth
+  const yMin = 200
+  const yMax = 560
+  const faceArea = faceWidth * (yMax - yMin)
+  return {
+    glyphId: id,
+    glyphName: id,
+    character: id,
+    advance,
+    bounds: { xMin, yMin, xMax, yMax },
+    sides: {
+      left: { type: 'branching', bearing: Math.round(xMin), coverage: 0.3 },
+      right: {
+        type: 'branching',
+        bearing: Math.round(advance - xMax),
+        coverage: 0.3,
+      },
+      top: {
+        type: 'branching',
+        bearing: Math.round(880 - yMax),
+        coverage: 0.3,
+      },
+      bottom: {
+        type: 'branching',
+        bearing: Math.round(yMin - -120),
+        coverage: 0.3,
+      },
+    },
+    ink: {
+      bounds: { xMin, yMin, xMax, yMax },
+      inkArea,
+      faceArea,
+      inkToFaceRatio: Math.min(1, inkArea / faceArea),
+      inkToEmRatio: inkArea / (advance * 1000),
+      centroidX: (xMin + xMax) / 2,
+      centroidY: 380,
+      spreadX: faceWidth / Math.sqrt(12),
+      spreadY: 100,
+    },
+  }
+}
+
+describe('complexity strata', () => {
+  it('compares glyphs against similar-complexity peers, not the whole font', () => {
+    const samples: GlyphGeometrySample[] = []
+    // 35 個簡單字（低墨量、小字面）+ 35 個複雜字（高墨量、大字面）
+    for (let index = 0; index < 35; index += 1) {
+      samples.push(
+        makeStratumSample(`s${index}`, 500, 40000, ((index % 5) - 2) * 4)
+      )
+    }
+    for (let index = 0; index < 35; index += 1) {
+      samples.push(
+        makeStratumSample(`c${index}`, 900, 640000, ((index % 5) - 2) * 4)
+      )
+    }
+    // 錯誤的簡單字：墨量少（複雜度低）卻撐滿字面
+    samples.push(makeStratumSample('wrong', 900, 40000, 0))
+
+    const radar = computeRadarFromSamples(samples, {
+      top: 880,
+      bottom: -120,
+      unitsPerEm: 1000,
+    })!
+    expect(radar.strata.binUpperBounds.length).toBeGreaterThan(1)
+    // 正常的簡單小字不再因為「跟全字體不同」被列為可疑
+    expect(radar.suspects.some((suspect) => suspect.glyphId === 's0')).toBe(
+      false
+    )
+    // 同層內的真離群仍被抓到
+    expect(radar.suspects.some((suspect) => suspect.glyphId === 'wrong')).toBe(
+      true
+    )
   })
 })
 

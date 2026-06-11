@@ -2,7 +2,6 @@ import {
   RADAR_OUTLIER_Z,
   formatRadarValue,
   type RadarReason,
-  type RadarRobustStat,
 } from 'src/features/common/qualityCheck/qualityRadar'
 import {
   sideLabels,
@@ -35,10 +34,8 @@ const BEARING_ACTIONS: Record<StructureSide, [string, string]> = {
   bottom: ['將底部筆畫往下延伸', '將底部筆畫往上收'],
 }
 
-const formatDelta = (reason: RadarReason) => {
-  const target = reason.expected ?? reason.median
-  return formatRadarValue(Math.abs(reason.value - target), reason.format)
-}
+const formatDelta = (reason: RadarReason) =>
+  formatRadarValue(Math.abs(reason.value - reason.median), reason.format)
 
 const describeBody = (
   reason: RadarReason
@@ -49,7 +46,7 @@ const describeBody = (
   if (reason.key.startsWith('bearing:')) {
     const side = reason.key.split(':')[1] as StructureSide
     return {
-      title: `${sideLabels[side]}留白比這套字大多數的字${high ? '多' : '少'}`,
+      title: `${sideLabels[side]}留白比複雜度相近的字${high ? '多' : '少'}`,
       action: `${BEARING_ACTIONS[side][high ? 0 : 1]}約 ${delta}`,
     }
   }
@@ -101,27 +98,16 @@ const describeBody = (
   }
 }
 
-const describeRange = (reason: RadarReason, stat?: RadarRobustStat) => {
-  const value = formatRadarValue(reason.value, reason.format)
-  if (reason.expected !== undefined) {
-    return `目前 ${value}，同複雜度的字約 ${formatRadarValue(reason.expected, reason.format)}`
-  }
-  if (stat) {
-    return `目前 ${value}，這套字常見 ${formatRadarValue(stat.p10, reason.format)}–${formatRadarValue(stat.p90, reason.format)}`
-  }
-  return `目前 ${value}，群體中位 ${formatRadarValue(reason.median, reason.format)}`
-}
+const describeRange = (reason: RadarReason) =>
+  `目前 ${formatRadarValue(reason.value, reason.format)}，複雜度相近的字常見 ${formatRadarValue(reason.p10, reason.format)}–${formatRadarValue(reason.p90, reason.format)}`
 
-export const buildRadarAdvice = (
-  reason: RadarReason,
-  stat?: RadarRobustStat
-): RadarAdvice => {
+export const buildRadarAdvice = (reason: RadarReason): RadarAdvice => {
   const { title, action } = describeBody(reason)
   return {
     key: reason.key,
     severity: Math.abs(reason.zScore) >= RADAR_OUTLIER_Z ? 'warning' : 'notice',
     title,
-    detail: describeRange(reason, stat),
+    detail: describeRange(reason),
     action,
   }
 }
