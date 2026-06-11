@@ -13,19 +13,20 @@ import { useMemo } from 'react'
 import type { FontData, GlyphData } from 'src/store'
 import type { QualityCheckMode } from 'src/features/common/qualityCheck/qualityCheckMode'
 import {
-  analyzeFontStructure,
-  buildStructureGlyphSample,
   sideLabels,
   strokeTypeLabels,
   type SideDistribution,
   type StructureBaseline,
-  type StructureGlyphSample,
   type StructureSide,
 } from 'src/features/common/qualityCheck/structureMetrics'
 import { isHanGlyph } from 'src/features/common/qualityCheck/hanClassification'
 import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
 import {
-  buildRadarAnalysis,
+  buildGlyphGeometrySample,
+  type GlyphGeometrySample,
+} from 'src/features/common/qualityCheck/glyphSampling'
+import { analyzeFontPopulation } from 'src/features/common/qualityCheck/populationAnalysis'
+import {
   formatRadarReason,
   radarDimensionLabels,
   type RadarGlyphEvaluation,
@@ -293,7 +294,7 @@ function SuspectRow({
   )
 }
 
-function GlyphSideTable({ sample }: { sample: StructureGlyphSample }) {
+function GlyphSideTable({ sample }: { sample: GlyphGeometrySample }) {
   return (
     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
       {STRUCTURE_SIDES.map((side) => {
@@ -326,9 +327,11 @@ export function StructurePanel({
   mode,
   onLocateGlyph,
 }: StructurePanelProps) {
-  const analysis = useMemo(() => analyzeFontStructure(fontData), [fontData])
-  const { baseline } = analysis
-  const radar = useMemo(() => buildRadarAnalysis(fontData), [fontData])
+  // 單次取樣：結構基準與離群偵測共用同一組 sample（一次攤平）。
+  const { baseline, radar } = useMemo(
+    () => analyzeFontPopulation(fontData),
+    [fontData]
+  )
 
   const scopedSamples = useMemo(() => {
     if (!fontData || !baseline || mode !== 'selected') {
@@ -338,13 +341,13 @@ export function StructurePanel({
     return scopedGlyphs
       .filter((glyph) => isHanGlyph(glyph))
       .map((glyph) =>
-        buildStructureGlyphSample(
+        buildGlyphGeometrySample(
           resolvedFont.glyphs[glyph.id],
           resolvedFont.glyphs,
           baseline.bodyBox
         )
       )
-      .filter((sample): sample is StructureGlyphSample => sample !== null)
+      .filter((sample): sample is GlyphGeometrySample => sample !== null)
   }, [baseline, fontData, mode, scopedGlyphs])
 
   const visibleEvaluations = useMemo(() => {

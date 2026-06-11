@@ -10,10 +10,8 @@ import {
   isHanGlyph,
 } from 'src/features/common/qualityCheck/hanClassification'
 import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
-import {
-  analyzeFontStructure,
-  buildStructureGlyphSample,
-} from 'src/features/common/qualityCheck/structureMetrics'
+import { buildGlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
+import { analyzeFontPopulation } from 'src/features/common/qualityCheck/populationAnalysis'
 import type { FontData, GlyphData, PathData } from 'src/store/types'
 
 const makePath = (
@@ -177,7 +175,7 @@ describe('structure metrics', () => {
     const resolvedFont = resolveFontGlyphs(makeFontData([frame, diamond]))
     const bodyBox = getStructureBodyBox(makeFontData([frame, diamond]))
 
-    const frameSample = buildStructureGlyphSample(
+    const frameSample = buildGlyphGeometrySample(
       resolvedFont.glyphs.frame,
       resolvedFont.glyphs,
       bodyBox
@@ -192,7 +190,7 @@ describe('structure metrics', () => {
     expect(frameSample?.sides.top.bearing).toBe(60)
     expect(frameSample?.sides.bottom.bearing).toBe(80)
 
-    const diamondSample = buildStructureGlyphSample(
+    const diamondSample = buildGlyphGeometrySample(
       resolvedFont.glyphs.diamond,
       resolvedFont.glyphs,
       bodyBox
@@ -212,7 +210,7 @@ describe('structure metrics', () => {
     )
     const fontData = makeFontData(glyphs)
 
-    const { baseline } = analyzeFontStructure(fontData)
+    const { baseline } = analyzeFontPopulation(fontData)
     expect(baseline).not.toBeNull()
     expect(baseline?.sampleCount).toBe(24)
     expect(baseline?.sides.left.framing?.mode).toBe(80)

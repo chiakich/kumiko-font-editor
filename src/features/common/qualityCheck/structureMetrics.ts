@@ -1,28 +1,14 @@
-import { flattenResolvedGlyph } from 'src/features/common/qualityCheck/glyphInk'
 import {
-  getPolygonsBounds,
   type GeometryBounds,
   type GeometryPoint,
 } from 'src/features/common/qualityCheck/polygonGeometry'
-import {
-  getGlyphCharacter,
-  isHanGlyph,
-  type StructureBodyBox,
-} from 'src/features/common/qualityCheck/hanClassification'
-import {
-  resolveFontGlyphs,
-  type ResolvedFont,
-  type ResolvedGlyph,
-} from 'src/features/common/qualityCheck/resolvedGlyph'
-import type { FontData } from 'src/store'
+import type { StructureBodyBox } from 'src/features/common/qualityCheck/hanClassification'
 
 /**
- * 依 3type「中文字体解密组」研究報告 V1.2 實作：
- * - 每個漢字的「真實字面框」由最外側的「邊界筆畫」定義；
- * - 以「線」定義字面框的是框架筆畫（Framing Stroke），
- *   以「點」定義的是樹枝筆畫（Branching Stroke）；
- * - 對四邊分別統計兩類筆畫的邊距（side bearing）分布，
- *   取得眾數與 80% 集中區間，作為可推導的檢查值。
+ * 依 3type「中文字体解密组」研究報告 V1.2：
+ * 每個漢字的真實字面框由最外側的「邊界筆畫」定義；以「線」定義字面框的是
+ * 框架筆畫（Framing Stroke），以「點」定義的是樹枝筆畫（Branching Stroke）。
+ * 本檔負責：四邊筆畫分類，以及從一組 sample 推導基準分布。
  */
 
 export type StructureSide = 'left' | 'right' | 'top' | 'bottom'
@@ -36,14 +22,7 @@ export interface StructureSideSample {
   coverage: number
 }
 
-export interface StructureGlyphSample {
-  glyphId: string
-  glyphName: string
-  character: string
-  advance: number
-  bounds: GeometryBounds
-  sides: Record<StructureSide, StructureSideSample>
-}
+export type StructureSides = Record<StructureSide, StructureSideSample>
 
 export interface SideDistribution {
   count: number
@@ -65,11 +44,6 @@ export interface StructureBaseline {
   >
   /** 左右皆框架筆畫的字的 lsb-rsb 中位數（對稱性基準） */
   centerOffsetMedian: number | null
-}
-
-export interface StructureAnalysis {
-  baseline: StructureBaseline | null
-  samples: StructureGlyphSample[]
 }
 
 /** 框架/樹枝分類閾值：邊界幾何覆蓋該側 55% 以上視為「以線定義」 */
@@ -140,18 +114,13 @@ const getSideCoverage = (
   return sideLength > 0 ? (spanMax - spanMin) / sideLength : 0
 }
 
-export const buildStructureGlyphSample = (
-  glyph: ResolvedGlyph,
-  glyphs: Record<string, ResolvedGlyph>,
+/** 從已攤平的多邊形分類四邊筆畫並算邊距。 */
+export const buildSidesFromPolygons = (
+  polygons: GeometryPoint[][],
+  bounds: GeometryBounds,
+  advance: number,
   bodyBox: StructureBodyBox
-): StructureGlyphSample | null => {
-  const polygons = flattenResolvedGlyph(glyph, glyphs)
-  const bounds = getPolygonsBounds(polygons)
-  if (!bounds) {
-    return null
-  }
-
-  const advance = glyph.advance
+): StructureSides => {
   const bandWidth = bodyBox.unitsPerEm * EDGE_BAND_RATIO
 
   const buildSide = (
@@ -167,17 +136,10 @@ export const buildStructureGlyphSample = (
   }
 
   return {
-    glyphId: glyph.id,
-    glyphName: glyph.name,
-    character: getGlyphCharacter(glyph),
-    advance,
-    bounds,
-    sides: {
-      left: buildSide('left', bounds.xMin),
-      right: buildSide('right', advance - bounds.xMax),
-      top: buildSide('top', bodyBox.top - bounds.yMax),
-      bottom: buildSide('bottom', bounds.yMin - bodyBox.bottom),
-    },
+    left: buildSide('left', bounds.xMin),
+    right: buildSide('right', advance - bounds.xMax),
+    top: buildSide('top', bodyBox.top - bounds.yMax),
+    bottom: buildSide('bottom', bounds.yMin - bodyBox.bottom),
   }
 }
 
@@ -221,11 +183,13 @@ const buildDistribution = (values: number[]): SideDistribution | null => {
   }
 }
 
-/**
- * 從一組已建好的 sample 推導結構基準分布。
- */
+/** 任何帶有四邊筆畫資訊的 sample 都能推導基準（避免與 glyphSampling 循環依賴）。 */
+export interface StructureSideBearer {
+  sides: StructureSides
+}
+
 export const buildStructureBaseline = (
-  samples: StructureGlyphSample[],
+  samples: StructureSideBearer[],
   bodyBox: StructureBodyBox
 ): StructureBaseline | null => {
   if (samples.length === 0) {
@@ -284,43 +248,5 @@ export const buildStructureBaseline = (
             0.5
           )
         : null,
-  }
-}
-
-/** 對整套字體的漢字建 sample，是母體統計分析的單一來源。 */
-export const buildHanStructureSamples = (
-  resolvedFont: ResolvedFont
-): StructureGlyphSample[] => {
-  const samples: StructureGlyphSample[] = []
-  for (const glyph of Object.values(resolvedFont.glyphs)) {
-    if (!isHanGlyph(glyph)) {
-      continue
-    }
-    const sample = buildStructureGlyphSample(
-      glyph,
-      resolvedFont.glyphs,
-      resolvedFont.bodyBox
-    )
-    if (sample) {
-      samples.push(sample)
-    }
-  }
-  return samples
-}
-
-/**
- * 便利函數：從 FontData 一路推導結構基準（主執行緒用）。
- */
-export const analyzeFontStructure = (
-  fontData: FontData | null | undefined
-): StructureAnalysis => {
-  if (!fontData) {
-    return { baseline: null, samples: [] }
-  }
-  const resolvedFont = resolveFontGlyphs(fontData)
-  const samples = buildHanStructureSamples(resolvedFont)
-  return {
-    baseline: buildStructureBaseline(samples, resolvedFont.bodyBox),
-    samples,
   }
 }

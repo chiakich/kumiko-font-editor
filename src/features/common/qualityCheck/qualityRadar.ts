@@ -1,15 +1,12 @@
 import type { FontData } from 'src/store'
-import { computeGlyphInk } from 'src/features/common/qualityCheck/glyphInk'
-import type { GlyphInkMetrics } from 'src/features/common/qualityCheck/glyphInk'
+import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
 import {
-  resolveFontGlyphs,
-  type ResolvedFont,
-} from 'src/features/common/qualityCheck/resolvedGlyph'
+  buildFontGeometrySamples,
+  type GlyphGeometrySample,
+} from 'src/features/common/qualityCheck/glyphSampling'
 import {
-  buildHanStructureSamples,
   sideLabels,
   strokeTypeLabels,
-  type StructureGlyphSample,
   type StructureSide,
 } from 'src/features/common/qualityCheck/structureMetrics'
 
@@ -98,13 +95,13 @@ const IQR_TO_SIGMA = 1 / 1.349
 const STRUCTURE_SIDES: StructureSide[] = ['left', 'right', 'top', 'bottom']
 
 const collectGlyphFeatures = (
-  sample: StructureGlyphSample,
-  ink: GlyphInkMetrics,
+  sample: GlyphGeometrySample,
   unitsPerEm: number,
   bodyCenterY: number
 ): RadarFeatureValue[] => {
   const features: RadarFeatureValue[] = []
   const advance = Math.max(1, sample.advance)
+  const ink = sample.ink
 
   // 邊界：依邊界筆畫理論，框架/樹枝筆畫分開建立分布
   for (const side of STRUCTURE_SIDES) {
@@ -247,29 +244,24 @@ const RADAR_DIMENSIONS: RadarDimension[] = [
 ]
 
 /**
- * 核心：從已建好的 structure sample 計算離群分析。
- * 不重複攤平、不依賴 store，可在 Worker 執行。
+ * 核心：從統一取樣得到的 sample 計算離群分析。
+ * sample 已含 ink，故不重複攤平、不依賴 store，可在 Worker 執行。
  */
 export const computeRadarFromSamples = (
-  resolvedFont: ResolvedFont,
-  samples: StructureGlyphSample[]
+  samples: GlyphGeometrySample[],
+  bodyBox: { top: number; bottom: number; unitsPerEm: number }
 ): RadarAnalysis | null => {
   if (samples.length < MIN_RADAR_SAMPLES) {
     return null
   }
 
-  const unitsPerEm = resolvedFont.bodyBox.unitsPerEm
-  const bodyCenterY =
-    (resolvedFont.bodyBox.top + resolvedFont.bodyBox.bottom) / 2
+  const unitsPerEm = bodyBox.unitsPerEm
+  const bodyCenterY = (bodyBox.top + bodyBox.bottom) / 2
 
-  const glyphFeatures = samples.map((sample) => {
-    const glyph = resolvedFont.glyphs[sample.glyphId]
-    const ink = computeGlyphInk(glyph, resolvedFont.glyphs, unitsPerEm)
-    return {
-      sample,
-      features: collectGlyphFeatures(sample, ink, unitsPerEm, bodyCenterY),
-    }
-  })
+  const glyphFeatures = samples.map((sample) => ({
+    sample,
+    features: collectGlyphFeatures(sample, unitsPerEm, bodyCenterY),
+  }))
 
   const valuesByFeature = new Map<string, number[]>()
   for (const entry of glyphFeatures) {
@@ -376,8 +368,8 @@ export const buildRadarAnalysis = (
     return null
   }
   const resolvedFont = resolveFontGlyphs(fontData)
-  const samples = buildHanStructureSamples(resolvedFont)
-  return computeRadarFromSamples(resolvedFont, samples)
+  const samples = buildFontGeometrySamples(resolvedFont)
+  return computeRadarFromSamples(samples, resolvedFont.bodyBox)
 }
 
 export const formatRadarValue = (

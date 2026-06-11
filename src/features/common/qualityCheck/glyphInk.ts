@@ -93,11 +93,40 @@ export const flattenResolvedGlyph = (
   return polygons
 }
 
+/** 從已攤平的多邊形算墨水度量。與 flatten 分離，讓統一取樣 pass 共用一次攤平。 */
+export const computeInkFromPolygons = (
+  polygons: GeometryPoint[][],
+  advance: number,
+  unitsPerEm: number
+): GlyphInkMetrics => {
+  const bounds = getPolygonsBounds(polygons)
+  const moments = computeInkMoments(polygons)
+  const inkArea = moments?.area ?? 0
+  const faceArea = bounds
+    ? Math.max(0, bounds.xMax - bounds.xMin) *
+      Math.max(0, bounds.yMax - bounds.yMin)
+    : 0
+  const emArea = Math.max(0, advance) * unitsPerEm
+
+  return {
+    bounds,
+    inkArea,
+    faceArea,
+    inkToFaceRatio: faceArea > 0 ? Math.min(1, inkArea / faceArea) : null,
+    inkToEmRatio: emArea > 0 ? Math.min(1, inkArea / emArea) : null,
+    centroidX: moments?.centroidX ?? null,
+    centroidY: moments?.centroidY ?? null,
+    spreadX: moments?.spreadX ?? null,
+    spreadY: moments?.spreadY ?? null,
+  }
+}
+
 const inkMetricsCache = new WeakMap<
   Record<string, ResolvedGlyph>,
   Map<string, GlyphInkMetrics>
 >()
 
+/** 便利函數（含快取）：給逐字查詢的 proof 用；母體取樣請走 computeInkFromPolygons。 */
 export const computeGlyphInk = (
   glyph: ResolvedGlyph,
   glyphs: Record<string, ResolvedGlyph>,
@@ -113,27 +142,11 @@ export const computeGlyphInk = (
     return cached
   }
 
-  const polygons = flattenResolvedGlyph(glyph, glyphs)
-  const bounds = getPolygonsBounds(polygons)
-  const moments = computeInkMoments(polygons)
-  const inkArea = moments?.area ?? 0
-  const faceArea = bounds
-    ? Math.max(0, bounds.xMax - bounds.xMin) *
-      Math.max(0, bounds.yMax - bounds.yMin)
-    : 0
-  const emArea = Math.max(0, glyph.advance) * unitsPerEm
-
-  const metrics: GlyphInkMetrics = {
-    bounds,
-    inkArea,
-    faceArea,
-    inkToFaceRatio: faceArea > 0 ? Math.min(1, inkArea / faceArea) : null,
-    inkToEmRatio: emArea > 0 ? Math.min(1, inkArea / emArea) : null,
-    centroidX: moments?.centroidX ?? null,
-    centroidY: moments?.centroidY ?? null,
-    spreadX: moments?.spreadX ?? null,
-    spreadY: moments?.spreadY ?? null,
-  }
+  const metrics = computeInkFromPolygons(
+    flattenResolvedGlyph(glyph, glyphs),
+    glyph.advance,
+    unitsPerEm
+  )
   glyphMapCache.set(glyph.id, metrics)
   return metrics
 }
