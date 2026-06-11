@@ -15,16 +15,20 @@ import type { QualityCheckMode } from 'src/features/common/qualityCheck/qualityC
 import {
   analyzeFontStructure,
   buildStructureGlyphSample,
-  checkGlyphStructure,
   isHanGlyph,
   sideLabels,
   strokeTypeLabels,
   type SideDistribution,
   type StructureBaseline,
-  type StructureFinding,
   type StructureGlyphSample,
   type StructureSide,
 } from 'src/features/common/qualityCheck/structureMetrics'
+import {
+  buildRadarAnalysis,
+  formatRadarReason,
+  radarDimensionLabels,
+  type RadarGlyphEvaluation,
+} from 'src/features/common/qualityCheck/qualityRadar'
 
 interface StructurePanelProps {
   fontData: FontData | null
@@ -217,31 +221,70 @@ function DistributionRow({
   )
 }
 
-function FindingRow({
-  finding,
+function SuspectRow({
+  evaluation,
+  rank,
   onLocateGlyph,
 }: {
-  finding: StructureFinding
+  evaluation: RadarGlyphEvaluation
+  rank: number | null
   onLocateGlyph: (glyphId: string) => void
 }) {
   return (
-    <HStack justify="space-between" align="center" px={3} py={2} spacing={3}>
-      <HStack spacing={3} minW={0}>
-        <Badge colorScheme={finding.severity === 'warning' ? 'orange' : 'cyan'}>
-          {finding.severity === 'warning' ? '警告' : '提示'}
-        </Badge>
-        <Text fontFamily="glyph" fontSize="lg" lineHeight={1}>
-          {finding.character}
+    <HStack
+      justify="space-between"
+      align="flex-start"
+      px={3}
+      py={2}
+      spacing={3}
+    >
+      <HStack spacing={3} minW={0} align="flex-start">
+        {rank !== null ? (
+          <Text
+            fontFamily="mono"
+            fontSize="xs"
+            color="field.muted"
+            fontWeight="900"
+            w="28px"
+            pt={1}
+          >
+            #{rank}
+          </Text>
+        ) : null}
+        <Text fontFamily="glyph" fontSize="2xl" lineHeight={1.2}>
+          {evaluation.character}
         </Text>
-        <Text fontSize="sm" color="field.muted" noOfLines={1}>
-          {finding.message}
-        </Text>
+        <Stack spacing={1} minW={0}>
+          <HStack spacing={2}>
+            <Text fontFamily="mono" fontSize="xs" fontWeight="900">
+              {evaluation.glyphName}
+            </Text>
+            <Tag
+              size="sm"
+              colorScheme={evaluation.score > 4 ? 'red' : 'orange'}
+            >
+              風險 {evaluation.score.toFixed(1)}
+            </Tag>
+          </HStack>
+          <HStack spacing={1} flexWrap="wrap">
+            {evaluation.reasons.slice(0, 3).map((reason) => (
+              <Tag key={reason.key} size="sm" variant="subtle">
+                {formatRadarReason(reason)}
+              </Tag>
+            ))}
+            {evaluation.reasons.length > 3 ? (
+              <Tag size="sm" variant="subtle" color="field.muted">
+                +{evaluation.reasons.length - 3}
+              </Tag>
+            ) : null}
+          </HStack>
+        </Stack>
       </HStack>
       <Button
         size="xs"
         variant="outline"
         flexShrink={0}
-        onClick={() => onLocateGlyph(finding.glyphId)}
+        onClick={() => onLocateGlyph(evaluation.glyphId)}
       >
         定位
       </Button>
@@ -284,6 +327,7 @@ export function StructurePanel({
 }: StructurePanelProps) {
   const analysis = useMemo(() => analyzeFontStructure(fontData), [fontData])
   const { baseline } = analysis
+  const radar = useMemo(() => buildRadarAnalysis(fontData), [fontData])
 
   const scopedSamples = useMemo(() => {
     if (!fontData || !baseline || mode !== 'selected') {
@@ -297,21 +341,21 @@ export function StructurePanel({
       .filter((sample): sample is StructureGlyphSample => sample !== null)
   }, [baseline, fontData, mode, scopedGlyphs])
 
-  const findings = useMemo(() => {
-    if (!baseline) {
+  const visibleEvaluations = useMemo(() => {
+    if (!radar) {
       return []
     }
-    const targetSamples = mode === 'selected' ? scopedSamples : analysis.samples
-    return targetSamples
-      .flatMap((sample) => checkGlyphStructure(sample, baseline))
-      .sort((left, right) =>
-        left.severity === right.severity
-          ? 0
-          : left.severity === 'warning'
-            ? -1
-            : 1
-      )
-  }, [analysis.samples, baseline, mode, scopedSamples])
+    if (mode === 'selected') {
+      return scopedGlyphs
+        .map((glyph) => radar.evaluationByGlyphId.get(glyph.id))
+        .filter(
+          (evaluation): evaluation is RadarGlyphEvaluation =>
+            evaluation !== undefined
+        )
+        .sort((left, right) => right.score - left.score)
+    }
+    return radar.suspects.slice(0, 50)
+  }, [mode, radar, scopedGlyphs])
 
   if (!baseline) {
     return (
@@ -323,13 +367,33 @@ export function StructurePanel({
     )
   }
 
-  const warningCount = findings.filter(
-    (finding) => finding.severity === 'warning'
-  ).length
-  const visibleFindings = findings.slice(0, 40)
-
   return (
     <Stack spacing={4}>
+      {radar ? (
+        <SimpleGrid columns={{ base: 2, md: 5 }} spacing={3}>
+          <RadarScoreTile
+            label="整體健康度"
+            score={radar.overallScore}
+            detail={`${radar.sampleCount} 個漢字樣本`}
+            emphasized
+          />
+          {radar.dimensionScores.map((entry) => (
+            <RadarScoreTile
+              key={entry.dimension}
+              label={radarDimensionLabels[entry.dimension]}
+              score={entry.score}
+              detail={`${entry.outlierCount} 個離群字`}
+            />
+          ))}
+        </SimpleGrid>
+      ) : (
+        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
+          <Text fontSize="sm" color="field.muted">
+            漢字樣本不足（需 20 個以上），尚無法建立統計基準。
+          </Text>
+        </Box>
+      )}
+
       <Text fontSize="sm" color="field.muted">
         依
         3type《中文字体解密组报告》：每個漢字的真實字面框由最外側的「邊界筆畫」定義，
@@ -423,41 +487,86 @@ export function StructurePanel({
         </Stack>
       ) : null}
 
-      <Box borderWidth={1} borderColor="field.line" bg="field.panel">
-        <HStack justify="space-between" px={3} py={2} bg="field.panelMuted">
-          <Text fontSize="sm" fontWeight="900">
-            {mode === 'selected' ? '選取字結構檢查' : '全字體結構離群字'}
-          </Text>
-          <HStack spacing={2}>
-            <Tag size="sm" colorScheme={warningCount > 0 ? 'orange' : 'green'}>
-              {warningCount} 警告
-            </Tag>
-            <Tag size="sm">{findings.length} 項</Tag>
-          </HStack>
-        </HStack>
-        {visibleFindings.length === 0 ? (
-          <Box p={4}>
-            <Text fontSize="sm" color="field.muted">
-              沒有偏離結構基準的字。
+      {radar ? (
+        <Box borderWidth={1} borderColor="field.line" bg="field.panel">
+          <HStack justify="space-between" px={3} py={2} bg="field.panelMuted">
+            <Text fontSize="sm" fontWeight="900">
+              {mode === 'selected'
+                ? '選取字的離群分析'
+                : '最值得人工檢查的字（風險排名）'}
             </Text>
-          </Box>
-        ) : (
-          <Stack spacing={0} divider={<Divider />} align="stretch">
-            {visibleFindings.map((finding, index) => (
-              <FindingRow
-                key={`${finding.glyphId}-${finding.side ?? 'center'}-${index}`}
-                finding={finding}
-                onLocateGlyph={onLocateGlyph}
-              />
-            ))}
-            {findings.length > visibleFindings.length ? (
-              <Text fontSize="xs" color="field.muted" px={3} py={2}>
-                其餘 {findings.length - visibleFindings.length} 項已省略。
+            <HStack spacing={2}>
+              <Tag
+                size="sm"
+                colorScheme={radar.suspects.length > 0 ? 'orange' : 'green'}
+              >
+                {mode === 'selected'
+                  ? `${visibleEvaluations.filter((entry) => entry.score > 0).length} 個離群`
+                  : `${radar.suspects.length} 個可疑字`}
+              </Tag>
+            </HStack>
+          </HStack>
+          {visibleEvaluations.length === 0 ? (
+            <Box p={4}>
+              <Text fontSize="sm" color="field.muted">
+                {mode === 'selected'
+                  ? '選取的字中沒有可分析的漢字。'
+                  : '沒有偏離群體統計基準的字。'}
               </Text>
-            ) : null}
-          </Stack>
-        )}
-      </Box>
+            </Box>
+          ) : (
+            <Stack spacing={0} divider={<Divider />} align="stretch">
+              {visibleEvaluations.map((evaluation, index) => (
+                <SuspectRow
+                  key={evaluation.glyphId}
+                  evaluation={evaluation}
+                  rank={mode === 'selected' ? null : index + 1}
+                  onLocateGlyph={onLocateGlyph}
+                />
+              ))}
+              {mode !== 'selected' &&
+              radar.suspects.length > visibleEvaluations.length ? (
+                <Text fontSize="xs" color="field.muted" px={3} py={2}>
+                  其餘 {radar.suspects.length - visibleEvaluations.length}{' '}
+                  個可疑字已省略。
+                </Text>
+              ) : null}
+            </Stack>
+          )}
+        </Box>
+      ) : null}
     </Stack>
+  )
+}
+
+function RadarScoreTile({
+  label,
+  score,
+  detail,
+  emphasized,
+}: {
+  label: string
+  score: number
+  detail: string
+  emphasized?: boolean
+}) {
+  const tone = score >= 95 ? 'green' : score >= 85 ? 'yellow' : 'orange'
+  return (
+    <Box
+      borderWidth={emphasized ? 2 : 1}
+      borderColor={emphasized ? 'field.ink' : 'field.line'}
+      bg={`${tone}.50`}
+      p={3}
+    >
+      <Text fontSize="xs" color="field.muted" fontWeight="800">
+        {label}
+      </Text>
+      <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
+        {score}
+      </Text>
+      <Text fontSize="xs" color="field.muted">
+        {detail}
+      </Text>
+    </Box>
   )
 }

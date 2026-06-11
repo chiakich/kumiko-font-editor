@@ -22,6 +22,12 @@ export interface GlyphInkMetrics {
   inkToFaceRatio: number | null
   /** 墨水面積 /（advance × UPM）：排版時對版面灰度的貢獻 */
   inkToEmRatio: number | null
+  /** 墨水視覺重心（counter 扣除後） */
+  centroidX: number | null
+  centroidY: number | null
+  /** 墨水沿軸向的分布標準差：水平/垂直密度分布的代理值 */
+  spreadX: number | null
+  spreadY: number | null
 }
 
 const CURVE_FLATTEN_STEPS = 8
@@ -258,27 +264,105 @@ const isPointInPolygon = (point: GeometryPoint, polygon: GeometryPoint[]) => {
 }
 
 /**
- * 真實墨水面積：用輪廓包含層級判斷實心/挖空區域，不依賴 winding。
+ * 用輪廓包含層級判斷實心（+1）/挖空（-1），不依賴 winding。
  * 這可避免兩個方向相反的獨立實心輪廓互相抵消。
  */
-export const computeInkArea = (polygons: GeometryPoint[][]) => {
+const classifyInkContours = (polygons: GeometryPoint[][]) => {
   const contours = polygons
     .map((polygon) => ({
       polygon,
       area: Math.abs(getSignedArea(polygon)),
+      sign: 1,
     }))
     .filter((contour) => contour.area > 0)
     .sort((left, right) => right.area - left.area)
 
-  return contours.reduce((total, contour, index) => {
-    const samplePoint = contour.polygon[0]
+  for (let index = 0; index < contours.length; index += 1) {
+    const samplePoint = contours[index].polygon[0]
     const depth = contours
       .slice(0, index)
       .filter((candidate) =>
         isPointInPolygon(samplePoint, candidate.polygon)
       ).length
-    return total + (depth % 2 === 0 ? contour.area : -contour.area)
-  }, 0)
+    contours[index].sign = depth % 2 === 0 ? 1 : -1
+  }
+
+  return contours
+}
+
+export const computeInkArea = (polygons: GeometryPoint[][]) =>
+  classifyInkContours(polygons).reduce(
+    (total, contour) => total + contour.sign * contour.area,
+    0
+  )
+
+export interface InkMoments {
+  area: number
+  centroidX: number
+  centroidY: number
+  /** 墨水分布的軸向標準差 */
+  spreadX: number
+  spreadY: number
+}
+
+/**
+ * 墨水的一階/二階矩（閉式多邊形積分，挖空區帶負號），
+ * 得到視覺重心與軸向分布寬度，免去點陣取樣。
+ */
+export const computeInkMoments = (
+  polygons: GeometryPoint[][]
+): InkMoments | null => {
+  let totalArea = 0
+  let sumX = 0
+  let sumY = 0
+  let sumXX = 0
+  let sumYY = 0
+
+  for (const contour of classifyInkContours(polygons)) {
+    const polygon = contour.polygon
+    let signedArea = 0
+    let momentX = 0
+    let momentY = 0
+    let momentXX = 0
+    let momentYY = 0
+    for (let index = 0; index < polygon.length; index += 1) {
+      const current = polygon[index]
+      const next = polygon[(index + 1) % polygon.length]
+      const cross = current.x * next.y - next.x * current.y
+      signedArea += cross
+      momentX += (current.x + next.x) * cross
+      momentY += (current.y + next.y) * cross
+      momentXX +=
+        (current.x * current.x + current.x * next.x + next.x * next.x) * cross
+      momentYY +=
+        (current.y * current.y + current.y * next.y + next.y * next.y) * cross
+    }
+    signedArea /= 2
+    if (signedArea === 0) {
+      continue
+    }
+    // 除以 signedArea 後與輪廓繞向無關；再乘 |面積| 與挖空正負號。
+    const weight = contour.sign * Math.abs(signedArea)
+    sumX += weight * (momentX / (6 * signedArea))
+    sumY += weight * (momentY / (6 * signedArea))
+    sumXX += weight * (momentXX / (12 * signedArea))
+    sumYY += weight * (momentYY / (12 * signedArea))
+    totalArea += weight
+  }
+
+  if (totalArea <= 0) {
+    return null
+  }
+
+  const centroidX = sumX / totalArea
+  const centroidY = sumY / totalArea
+  return {
+    area: totalArea,
+    centroidX,
+    centroidY,
+    spreadX: Math.sqrt(Math.max(0, sumXX / totalArea - centroidX * centroidX)),
+    spreadY: Math.sqrt(Math.max(0, sumYY / totalArea - centroidY * centroidY)),
+  }
 }
 
 export const getPolygonsBounds = (
@@ -322,7 +406,8 @@ export const getGlyphInkMetrics = (
 
   const polygons = flattenGlyphToPolygons(glyph, glyphMap)
   const bounds = getPolygonsBounds(polygons)
-  const inkArea = computeInkArea(polygons)
+  const moments = computeInkMoments(polygons)
+  const inkArea = moments?.area ?? 0
   const faceArea = bounds
     ? Math.max(0, bounds.xMax - bounds.xMin) *
       Math.max(0, bounds.yMax - bounds.yMin)
@@ -336,6 +421,10 @@ export const getGlyphInkMetrics = (
     faceArea,
     inkToFaceRatio: faceArea > 0 ? Math.min(1, inkArea / faceArea) : null,
     inkToEmRatio: emArea > 0 ? Math.min(1, inkArea / emArea) : null,
+    centroidX: moments?.centroidX ?? null,
+    centroidY: moments?.centroidY ?? null,
+    spreadX: moments?.spreadX ?? null,
+    spreadY: moments?.spreadY ?? null,
   }
   glyphMapCache.set(glyph, metrics)
   return metrics

@@ -319,6 +319,20 @@ const buildGlyphIssues = (
   }
 
   if (
+    activeLayer.metrics.width <= 0 &&
+    (activeLayer.paths.length > 0 || activeLayer.componentRefs.length > 0)
+  ) {
+    issues.push(
+      makeIssue(glyph, {
+        key: 'zero-advance',
+        severity: 'warning',
+        group: '度量',
+        message: `有輪廓但 advance width 為 ${round(activeLayer.metrics.width)}`,
+      })
+    )
+  }
+
+  if (
     isHanGlyph(glyph) &&
     activeLayer.metrics.width > 0 &&
     Math.round(activeLayer.metrics.width) !== Math.round(unitsPerEm)
