@@ -16,6 +16,7 @@ export type {
   GlyphData,
   GuidelineData,
   Point,
+  StructureGuideModel,
   VisualizationLayerDefinition,
 } from 'src/canvas/SceneView'
 

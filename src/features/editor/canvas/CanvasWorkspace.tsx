@@ -9,6 +9,8 @@ import {
   type SceneModel,
 } from 'src/canvas'
 import { SceneController } from 'src/features/editor/tools'
+import { useGlyphInsight } from 'src/features/editor/insight/glyphInsight'
+import { buildStructureGuideModel } from 'src/features/editor/insight/structureGuideModel'
 import { useStore, useTemporalStore } from 'src/store'
 import { CanvasContextMenu } from 'src/features/editor/canvas/workspace/CanvasContextMenu'
 import { CanvasWorkspaceOverlay } from 'src/features/editor/canvas/workspace/CanvasWorkspaceOverlay'
@@ -447,6 +449,28 @@ export function CanvasWorkspace() {
       componentTargetRect ?? undefined
     controller.requestUpdate()
   }, [componentGhostPaths, componentTargetRect])
+
+  const insight = useGlyphInsight()
+  const structureGuide = useMemo(
+    () =>
+      insight.showBands &&
+      insight.sample &&
+      insight.baseline &&
+      insight.sample.glyphId === activeEditorGlyphId
+        ? buildStructureGuideModel(insight.sample, insight.baseline)
+        : undefined,
+    [activeEditorGlyphId, insight.baseline, insight.sample, insight.showBands]
+  )
+
+  useEffect(() => {
+    const sceneController = sceneControllerRef.current
+    const controller = canvasControllerRef.current
+    if (!sceneController || !controller) {
+      return
+    }
+    sceneController.sceneModel.structureGuide = structureGuide
+    controller.requestUpdate()
+  }, [structureGuide])
 
   useEffect(() => {
     const sceneController = sceneControllerRef.current

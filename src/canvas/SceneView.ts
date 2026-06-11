@@ -66,6 +66,21 @@ export interface SceneModel {
   textCursor?: { x: number; yMin: number; yMax: number }
   initialClickedPointIndex?: number
   canEdit?: boolean
+  // Per-side distribution bands of the font population (glyph-local units).
+  structureGuide?: StructureGuideModel
+}
+
+export interface StructureGuideSide {
+  bearing: number
+  isFraming: boolean
+  band: { p10: number; p90: number; mode: number } | null
+}
+
+export interface StructureGuideModel {
+  advance: number
+  bodyTop: number
+  bodyBottom: number
+  sides: Record<'left' | 'right' | 'top' | 'bottom', StructureGuideSide>
 }
 
 export interface PathHitInfo {
