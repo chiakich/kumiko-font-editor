@@ -95,6 +95,8 @@ export const buildGlyphActions = (set: ImmerSet) => ({
         }
 
         const width = glyphInput.width ?? defaultWidth
+        state.fontData.glyphOrder =
+          state.fontData.glyphOrder ?? Object.keys(state.fontData.glyphs)
         state.fontData.glyphs[glyphInput.id] = {
           id: glyphInput.id,
           name: glyphInput.name,
@@ -110,6 +112,9 @@ export const buildGlyphActions = (set: ImmerSet) => ({
             rsb: width,
           },
           activeLayerId: state.selectedLayerId ?? 'public.default',
+        }
+        if (!state.fontData.glyphOrder.includes(glyphInput.id)) {
+          state.fontData.glyphOrder.push(glyphInput.id)
         }
         addedGlyphIds.push(glyphInput.id)
       }

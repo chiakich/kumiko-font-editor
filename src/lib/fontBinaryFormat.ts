@@ -394,11 +394,39 @@ const appendShapeToPath = (path: opentype.Path, shape: PathData) => {
   if (shape.closed) path.close()
 }
 
+export const getBinaryExportGlyphList = (fontData: FontData) => {
+  const glyphIds = new Set<string>()
+  const glyphList: GlyphData[] = []
+
+  const appendGlyph = (glyphId: string) => {
+    const glyph = fontData.glyphs[glyphId]
+    if (!glyph || glyphIds.has(glyph.id)) {
+      return
+    }
+    glyphIds.add(glyph.id)
+    glyphList.push(glyph)
+  }
+
+  if (fontData.glyphs['.notdef']) {
+    appendGlyph('.notdef')
+  }
+
+  for (const glyphId of fontData.glyphOrder ?? []) {
+    appendGlyph(glyphId)
+  }
+
+  for (const glyphId of Object.keys(fontData.glyphs)) {
+    appendGlyph(glyphId)
+  }
+
+  return glyphList
+}
+
 export const exportFontAsBinary = (
   fontData: FontData,
   format: BinaryFontExportFormat
 ) => {
-  const glyphList = Object.values(fontData.glyphs)
+  const glyphList = getBinaryExportGlyphList(fontData)
   const glyphs = glyphList.map((glyph) => {
     const path = new opentype.Path()
     glyph.paths.forEach((shape) => {
