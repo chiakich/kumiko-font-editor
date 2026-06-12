@@ -117,7 +117,9 @@ GITHUB_OAUTH_SCOPE=public_repo read:user user:email
 | `pnpm data:ids`              | BabelStone [IDS.TXT](https://www.babelstone.co.uk/CJK/IDS.TXT)（自動下載）                     | `public/ids/ids_babelstone.txt`                                                    |
 | `pnpm data:glyphwiki <dump>` | GlyphWiki dump（需先自行下載 `dump_newest_only.txt`）                                          | `public/glyphwiki/composition.txt`、`variants.txt`                                 |
 
-`glyphdata.txt` 用來把 jf 等 Glyphs 字集清單的 nice name（如 `leftArrow`）正確對應到 Unicode 與匯出用的 production name（`arrowleft`）；CJK 漢字不在該表內，由 `uniXXXX` 慣例演算法解析。詳見 `docs/glyph-naming.md`（規劃中）。
+`glyphdata.txt` 用來把 jf 等 Glyphs 字集清單的 nice name（如 `leftArrow`）正確對應到 Unicode 與匯出用的 production name（`arrowleft`）；CJK 漢字不在該表內，由 `uniXXXX` 慣例演算法解析。詳見 [docs/glyph-naming.md](docs/glyph-naming.md)。
+
+更多設計決策與架構筆記見 [docs/](docs/README.md)。
 
 ## 下一步
 
