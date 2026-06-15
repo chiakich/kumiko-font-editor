@@ -204,66 +204,32 @@ const contourToPath = (
 ): PathData | null => {
   const nodes: PathNode[] = []
   let closed = false
-  commands.forEach((cmd, index) => {
+  // Use a running counter so node ids stay unique within the contour; deriving
+  // ids from the command index times a per-type multiplier collides when L/C/Q
+  // commands are mixed (e.g. (index 4 as C) -> 12 vs (index 12 as L) -> 12).
+  let nodeIndex = 0
+  const pushNode = (x: number, y: number, type: PathNode['type']) => {
+    nodes.push(createNode(x, y, type, contourIndex * 10000 + nodeIndex))
+    nodeIndex += 1
+  }
+  commands.forEach((cmd) => {
     if (cmd.type === 'Z') {
       closed = true
       return
     }
     if (cmd.type === 'M' || cmd.type === 'L') {
-      nodes.push(
-        createNode(
-          cmd.x ?? 0,
-          cmd.y ?? 0,
-          'corner',
-          contourIndex * 10000 + index
-        )
-      )
+      pushNode(cmd.x ?? 0, cmd.y ?? 0, 'corner')
       return
     }
     if (cmd.type === 'Q') {
-      nodes.push(
-        createNode(
-          cmd.x1 ?? 0,
-          cmd.y1 ?? 0,
-          'offcurve',
-          contourIndex * 10000 + index * 2
-        )
-      )
-      nodes.push(
-        createNode(
-          cmd.x ?? 0,
-          cmd.y ?? 0,
-          'qcurve',
-          contourIndex * 10000 + index * 2 + 1
-        )
-      )
+      pushNode(cmd.x1 ?? 0, cmd.y1 ?? 0, 'offcurve')
+      pushNode(cmd.x ?? 0, cmd.y ?? 0, 'qcurve')
       return
     }
     if (cmd.type === 'C') {
-      nodes.push(
-        createNode(
-          cmd.x1 ?? 0,
-          cmd.y1 ?? 0,
-          'offcurve',
-          contourIndex * 10000 + index * 3
-        )
-      )
-      nodes.push(
-        createNode(
-          cmd.x2 ?? 0,
-          cmd.y2 ?? 0,
-          'offcurve',
-          contourIndex * 10000 + index * 3 + 1
-        )
-      )
-      nodes.push(
-        createNode(
-          cmd.x ?? 0,
-          cmd.y ?? 0,
-          'corner',
-          contourIndex * 10000 + index * 3 + 2
-        )
-      )
+      pushNode(cmd.x1 ?? 0, cmd.y1 ?? 0, 'offcurve')
+      pushNode(cmd.x2 ?? 0, cmd.y2 ?? 0, 'offcurve')
+      pushNode(cmd.x ?? 0, cmd.y ?? 0, 'corner')
     }
   })
 
