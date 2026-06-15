@@ -131,7 +131,10 @@ export function RecentProjectsList({
                     >
                       {t('home.delete')}
                     </Button>
-                    <Button size="sm" onClick={() => void onOpenProject(project)}>
+                    <Button
+                      size="sm"
+                      onClick={() => void onOpenProject(project)}
+                    >
                       {t('home.openProject')}
                     </Button>
                   </HStack>
