@@ -171,16 +171,19 @@ export const applyLayerEdits = (
   targetLayer.guides = serializeLayerGuides(layer)
 }
 
-const getGlyphExportId = (glyph: GlyphData) =>
-  glyph.unicode ? `uni${glyph.unicode}`.toLowerCase() : glyph.id.toLowerCase()
-
-const getRawGlyphExportId = (rawGlyph: Record<string, unknown>) => {
+// Keys a raw .glyphs record can be matched by, most-unique first. glyphname is
+// unique; unicode can be shared by multiple glyphs so it is only a fallback.
+const getRawGlyphMatchKeys = (rawGlyph: Record<string, unknown>) => {
+  const keys: string[] = []
+  const glyphname = rawGlyph.glyphname
+  if (typeof glyphname === 'string' && glyphname.length > 0) {
+    keys.push(glyphname.toLowerCase())
+  }
   const unicode = rawGlyph.unicode
   if (typeof unicode === 'string' && unicode.length > 0) {
-    return `uni${unicode}`.toLowerCase()
+    keys.push(`uni${unicode}`.toLowerCase())
   }
-
-  return String(rawGlyph.glyphname ?? '').toLowerCase()
+  return keys
 }
 
 const buildLayerMap = (layers: Array<Record<string, unknown>>) =>
@@ -319,20 +322,33 @@ const serializeGlyphsArrayToChunks = (
 ) => {
   const indent = '  '.repeat(indentLevel)
   const childIndent = '  '.repeat(indentLevel + 1)
-  const editedGlyphsById = new Map(
-    Object.values(fontData.glyphs).map((glyph) => [
-      getGlyphExportId(glyph),
-      glyph,
-    ])
-  )
+  const glyphValues = Object.values(fontData.glyphs)
+  const glyphsById = new Map(glyphValues.map((glyph) => [glyph.id, glyph]))
+  // Match keys → unique glyph id. id/name are unique; the first glyph to claim
+  // a shared unicode wins, the rest still match by their own id/name.
+  const idByMatchKey = new Map<string, string>()
+  for (const glyph of glyphValues) {
+    const register = (key: string) => {
+      if (key && !idByMatchKey.has(key)) {
+        idByMatchKey.set(key, glyph.id)
+      }
+    }
+    register(glyph.id.toLowerCase())
+    register(glyph.name.toLowerCase())
+    if (glyph.unicode) {
+      register(`uni${glyph.unicode}`.toLowerCase())
+    }
+  }
   const seenGlyphIds = new Set<string>()
 
   chunks.push('(\n')
 
   let wroteAny = false
   for (const rawGlyph of rawGlyphs) {
-    const glyphId = getRawGlyphExportId(rawGlyph)
-    const editedGlyph = editedGlyphsById.get(glyphId)
+    const matchedId = getRawGlyphMatchKeys(rawGlyph)
+      .map((key) => idByMatchKey.get(key))
+      .find((id): id is string => Boolean(id))
+    const editedGlyph = matchedId ? glyphsById.get(matchedId) : undefined
     const valueToWrite = editedGlyph
       ? createPatchedGlyphRecord(rawGlyph, editedGlyph)
       : rawGlyph
@@ -341,12 +357,13 @@ const serializeGlyphsArrayToChunks = (
     serializeOpenStepValueToChunks(valueToWrite, chunks, indentLevel + 1)
     chunks.push(',\n')
     wroteAny = true
-    seenGlyphIds.add(glyphId)
+    if (matchedId) {
+      seenGlyphIds.add(matchedId)
+    }
   }
 
-  for (const glyph of Object.values(fontData.glyphs)) {
-    const glyphId = getGlyphExportId(glyph)
-    if (seenGlyphIds.has(glyphId)) {
+  for (const glyph of glyphValues) {
+    if (seenGlyphIds.has(glyph.id)) {
       continue
     }
 
