@@ -27,25 +27,24 @@ const loadFixtureFile = async () => {
   return new File([buffer], 'PublicSans-Regular.otf', { type: 'font/otf' })
 }
 
-const parsesToZero = (unicode: GlyphData['unicode']) =>
-  unicode != null && Number.parseInt(unicode, 16) === 0
+const codePointOf = (unicode: GlyphData['unicode']) =>
+  unicode != null ? Number.parseInt(unicode, 16) : undefined
 
-// opentype.js reserves U+0000 for .null and rejects any other glyph mapped to
-// it (Public Sans ships a uni0000 glyph), so drop those before export. Also
-// drop openTypeFeatures so export stays a pure opentype.js serialization.
-const prepareForExport = (fontData: FontData): FontData => {
-  const glyphs: Record<string, GlyphData> = {}
-  for (const [id, glyph] of Object.entries(fontData.glyphs)) {
-    if (parsesToZero(glyph.unicode)) continue
-    glyphs[id] = glyph
-  }
-  return {
-    ...fontData,
-    glyphs,
-    glyphOrder: fontData.glyphOrder?.filter((id) => Boolean(glyphs[id])),
-    openTypeFeatures: undefined,
-  }
+// exportFontAsBinary follows OpenType best practice and does not encode C0
+// controls (< U+0020) or U+007F in the cmap; the glyph is kept but unencoded,
+// so its unicode comes back null after the round-trip. (Public Sans ships a
+// uni0000 control glyph.)
+const isControlGlyph = (glyph: GlyphData) => {
+  const codePoint = codePointOf(glyph.unicode)
+  return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f)
 }
+
+// Drop openTypeFeatures so export stays a pure opentype.js serialization;
+// glyph outlines and metrics are unaffected.
+const dropFeatures = (fontData: FontData): FontData => ({
+  ...fontData,
+  openTypeFeatures: undefined,
+})
 
 const reimport = async (blob: Blob, name: string) => {
   const buffer = await blob.arrayBuffer()
@@ -61,7 +60,7 @@ describe('OTF import → export round-trip', () => {
 
   beforeAll(async () => {
     const first = await importBinaryFontFile(await loadFixtureFile())
-    prepared = prepareForExport(first.fontData)
+    prepared = dropFeatures(first.fontData)
     const blob = await exportFontAsBinary(prepared, 'otf')
     result = (await reimport(blob, 'roundtrip.otf')).fontData
   })
@@ -78,15 +77,32 @@ describe('OTF import → export round-trip', () => {
     expect(result.unitsPerEm).toBe(prepared.unitsPerEm)
   })
 
+  it('keeps control-character glyphs but drops their cmap mapping', () => {
+    // Public Sans ships a uni0000 control glyph. Industry practice (SIL FDBP /
+    // fontbakery) is to keep the glyph but not encode it; export must not throw.
+    const controls = Object.values(prepared.glyphs).filter(isControlGlyph)
+    expect(controls.length).toBeGreaterThan(0)
+    for (const before of controls) {
+      const after = result.glyphs[before.id]
+      expect(after, `control glyph ${before.id} dropped`).toBeDefined()
+      expect(after.unicode, `${before.id} should be unencoded`).toBeNull()
+    }
+  })
+
   it('preserves unicode, advance width, and node count for every glyph', () => {
-    for (const [id, before] of Object.entries(prepared.glyphs)) {
-      const after = result.glyphs[id]
-      expect(after, `glyph ${id} missing after round-trip`).toBeDefined()
-      expect(after.unicode, `unicode for ${id}`).toBe(before.unicode)
-      expect(after.metrics.width, `advance width for ${id}`).toBe(
+    for (const before of Object.values(prepared.glyphs)) {
+      const after = result.glyphs[before.id]
+      expect(after, `glyph ${before.id} missing after round-trip`).toBeDefined()
+      // Control glyphs are intentionally unencoded; their mapping is covered above.
+      if (!isControlGlyph(before)) {
+        expect(after.unicode, `unicode for ${before.id}`).toBe(before.unicode)
+      }
+      expect(after.metrics.width, `advance width for ${before.id}`).toBe(
         before.metrics.width
       )
-      expect(nodeCount(after), `node count for ${id}`).toBe(nodeCount(before))
+      expect(nodeCount(after), `node count for ${before.id}`).toBe(
+        nodeCount(before)
+      )
     }
   })
 

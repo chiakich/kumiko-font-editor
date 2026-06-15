@@ -388,6 +388,11 @@ export const getBinaryExportGlyphList = (fontData: FontData) => {
   return glyphList
 }
 
+// C0 control characters (U+0000–U+001F) and DEL (U+007F) should never be
+// encoded in the cmap (SIL FDBP / fontbakery guidance).
+const isControlCodePoint = (codePoint: number) =>
+  codePoint <= 0x1f || codePoint === 0x7f
+
 export const exportFontAsBinary = (
   fontData: FontData,
   format: BinaryFontExportFormat
@@ -398,11 +403,22 @@ export const exportFontAsBinary = (
     glyph.paths.forEach((shape) => {
       appendShapeToPath(path, shape)
     })
+    const codePoint = glyph.unicode
+      ? Number.parseInt(glyph.unicode, 16)
+      : undefined
+    // Per OpenType best practice (SIL FDBP, fontbakery), C0 controls (< U+0020)
+    // and U+007F must not be encoded in the cmap; the glyph may still exist
+    // unencoded. This also avoids polluting OS/2.usFirstCharIndex and sidesteps
+    // the opentype.js U+0000/.null reservation.
+    const unicode =
+      codePoint !== undefined && !isControlCodePoint(codePoint)
+        ? codePoint
+        : undefined
     return new opentype.Glyph({
       // Glyph identity must match the working name the FEA pipeline references;
       // production names reach the post table via UFO public.postscriptNames.
       name: glyph.id,
-      unicode: glyph.unicode ? Number.parseInt(glyph.unicode, 16) : undefined,
+      unicode,
       advanceWidth: glyph.metrics.width,
       path,
     })
