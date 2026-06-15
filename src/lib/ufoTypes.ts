@@ -127,7 +127,3 @@ export interface UfoUiStateRecord {
 }
 
 export type UfoGlyphPrimaryKey = [string, string, string, string]
-
-export interface UfoLocalSaveManifest {
-  files: Record<string, string>
-}

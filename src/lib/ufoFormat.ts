@@ -26,7 +26,6 @@ import { selectUfoFeatureText } from 'src/lib/openTypeFeatures/legacyFeatureText
 import {
   deleteUfoGlyphBatch,
   makeUfoGlyphKey,
-  listDirtyUfoGlyphs,
   loadUfoGlyph,
   loadUfoMetadata,
   saveUfoGlyphBatch,
@@ -36,7 +35,6 @@ import {
   listUfoGlyphsInLayer,
   listUfoMetadataForProject,
   loadUfoProject,
-  updateUfoGlyphExportState,
 } from 'src/lib/ufoPersistence'
 import type {
   UfoGithubSource,
@@ -82,8 +80,6 @@ interface UfoImportSourceOptions {
   sourceType?: 'local' | 'github'
   githubSource?: UfoGithubSource | null
 }
-
-const UFO_CREATOR = 'org.kumiko.fonteditor'
 
 const normalizePath = (value: string) => value.replace(/\\/g, '/')
 
@@ -1422,151 +1418,4 @@ ${outlineChildren ? `  <outline>\n${outlineChildren}\n  </outline>` : ''}
 ${record.lib ? `  <lib>\n${serializePlistValue(record.lib, 2)}\n  </lib>` : ''}
 </glyph>
 `
-}
-
-export const exportUfoProjectToDirectory = async (projectId: string) => {
-  const project = await loadUfoProject(projectId)
-  if (!project) {
-    throw new Error('找不到 UFO 專案')
-  }
-
-  const picker = (
-    window as Window & {
-      showDirectoryPicker?: (options?: {
-        mode?: 'read' | 'readwrite'
-      }) => Promise<FileSystemDirectoryHandle>
-    }
-  ).showDirectoryPicker
-  if (!picker) {
-    throw new Error('目前瀏覽器不支援資料夾輸出，請使用 Chrome 或 Edge')
-  }
-
-  const rootHandle = await picker({ mode: 'readwrite' })
-  const metadataRecords = await listUfoMetadataForProject(projectId)
-  const dirtyGlyphs = await listDirtyUfoGlyphs(projectId)
-  const dirtyKeySet = new Set(
-    dirtyGlyphs.map(
-      (glyph) =>
-        `${glyph.projectId}::${glyph.ufoId}::${glyph.layerId}::${glyph.glyphName}`
-    )
-  )
-  const exportStateUpdates: Array<{
-    key: [string, string, string, string]
-    dirty: boolean
-    sourceHash: string | null
-  }> = []
-
-  const ensureDirectoryPath = async (
-    directoryHandle: FileSystemDirectoryHandle,
-    relativePath: string
-  ) => {
-    const segments = relativePath.split('/').filter(Boolean)
-    let currentHandle = directoryHandle
-    for (const segment of segments) {
-      currentHandle = await currentHandle.getDirectoryHandle(segment, {
-        create: true,
-      })
-    }
-    return currentHandle
-  }
-
-  for (const metadata of metadataRecords) {
-    const ufoHandle = await ensureDirectoryPath(
-      rootHandle,
-      metadata.relativePath
-    )
-    const defaultLayer = pickDefaultLayer(metadata)
-    const glyphRecords = await listUfoGlyphsInLayer(
-      projectId,
-      metadata.ufoId,
-      defaultLayer.layerId
-    )
-
-    const writeTextFile = async (
-      directory: FileSystemDirectoryHandle,
-      name: string,
-      content: string
-    ) => {
-      const fileHandle = await directory.getFileHandle(name, { create: true })
-      const writable = await fileHandle.createWritable()
-      await writable.write(content)
-      await writable.close()
-    }
-
-    await writeTextFile(
-      ufoHandle,
-      'metainfo.plist',
-      serializeXmlPlist({
-        creator: metadata.metainfo?.creator ?? UFO_CREATOR,
-        formatVersion: metadata.metainfo?.formatVersion ?? 3,
-        formatVersionMinor: metadata.metainfo?.formatVersionMinor ?? 0,
-      })
-    )
-    await writeTextFile(
-      ufoHandle,
-      'fontinfo.plist',
-      serializeXmlPlist(metadata.fontinfo ?? {})
-    )
-    await writeTextFile(
-      ufoHandle,
-      'lib.plist',
-      serializeXmlPlist(metadata.lib ?? {})
-    )
-    await writeTextFile(
-      ufoHandle,
-      'groups.plist',
-      serializeXmlPlist(metadata.groups ?? {})
-    )
-    await writeTextFile(
-      ufoHandle,
-      'kerning.plist',
-      serializeXmlPlist(metadata.kerning ?? {})
-    )
-    if (metadata.featuresText !== null) {
-      await writeTextFile(ufoHandle, 'features.fea', metadata.featuresText)
-    }
-    await writeTextFile(
-      ufoHandle,
-      'layercontents.plist',
-      serializeXmlPlist(
-        metadata.layers.map((layer) => [layer.layerId, layer.glyphDir])
-      )
-    )
-
-    for (const layer of metadata.layers) {
-      const layerHandle = await ufoHandle.getDirectoryHandle(layer.glyphDir, {
-        create: true,
-      })
-      const layerGlyphs =
-        layer.layerId === defaultLayer.layerId
-          ? glyphRecords
-          : await listUfoGlyphsInLayer(projectId, metadata.ufoId, layer.layerId)
-      const contents = Object.fromEntries(
-        layerGlyphs.map((glyph) => [glyph.glyphName, glyph.fileName])
-      )
-      await writeTextFile(
-        layerHandle,
-        'contents.plist',
-        serializeXmlPlist(contents)
-      )
-      for (const glyph of layerGlyphs) {
-        const key = `${glyph.projectId}::${glyph.ufoId}::${glyph.layerId}::${glyph.glyphName}`
-        if (dirtyKeySet.size > 0 && !dirtyKeySet.has(key)) {
-          continue
-        }
-        const glifText = serializeGlifRecord(glyph)
-        const nextHash = hashString(glifText)
-        if (glyph.sourceHash !== nextHash) {
-          await writeTextFile(layerHandle, glyph.fileName, glifText)
-        }
-        exportStateUpdates.push({
-          key: [glyph.projectId, glyph.ufoId, glyph.layerId, glyph.glyphName],
-          dirty: false,
-          sourceHash: nextHash,
-        })
-      }
-    }
-  }
-
-  await updateUfoGlyphExportState(exportStateUpdates)
 }
