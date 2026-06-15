@@ -4,7 +4,7 @@ import {
   buildGrayProofText,
   buildGrayStats,
   buildProofRun,
-} from 'src/features/common/qualityCheck/qualityProof'
+} from 'src/features/common/qualityCheck/utils/qualityProof'
 import type { FontData, GlyphData, PathData } from 'src/store/types'
 
 const makePath = (id: string, points: Array<[number, number]>): PathData => ({

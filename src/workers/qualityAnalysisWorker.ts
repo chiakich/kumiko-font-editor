@@ -1,6 +1,6 @@
-import { runPopulationAnalysis } from 'src/features/common/qualityCheck/populationAnalysis'
-import { getEnclosureCharacterSet } from 'src/features/common/qualityCheck/semanticStructure'
-import type { ResolvedFont } from 'src/features/common/qualityCheck/resolvedGlyph'
+import { runPopulationAnalysis } from 'src/features/common/qualityCheck/utils/populationAnalysis'
+import { getEnclosureCharacterSet } from 'src/features/common/qualityCheck/utils/semanticStructure'
+import type { ResolvedFont } from 'src/features/common/qualityCheck/utils/resolvedGlyph'
 
 /**
  * 母體幾何分析 Worker：接收主執行緒已解析好的純資料字形，

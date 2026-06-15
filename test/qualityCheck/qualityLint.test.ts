@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildQualityReport } from 'src/features/common/qualityCheck/qualityLint'
+import { buildQualityReport } from 'src/features/common/qualityCheck/utils/qualityLint'
 import type { FontData, GlyphData, PathData } from 'src/store/types'
 
 const makePath = (

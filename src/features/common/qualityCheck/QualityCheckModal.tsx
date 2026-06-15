@@ -22,18 +22,18 @@ import type { ReactNode } from 'react'
 import { FrameSelect, GraphUp, List, MessageText } from 'iconoir-react'
 import { SlidingTabList } from 'src/features/common/SlidingTabList'
 import { useStore } from 'src/store'
-import { LintPanel } from 'src/features/common/qualityCheck/LintPanel'
-import { MixedProofPanel } from 'src/features/common/qualityCheck/MixedProofPanel'
-import { GrayProofPanel } from 'src/features/common/qualityCheck/GrayProofPanel'
-import { StructurePanel } from 'src/features/common/qualityCheck/StructurePanel'
-import type { QualityCheckMode } from 'src/features/common/qualityCheck/qualityCheckMode'
+import { LintPanel } from 'src/features/common/qualityCheck/components/LintPanel'
+import { MixedProofPanel } from 'src/features/common/qualityCheck/components/MixedProofPanel'
+import { GrayProofPanel } from 'src/features/common/qualityCheck/components/GrayProofPanel'
+import { StructurePanel } from 'src/features/common/qualityCheck/components/StructurePanel'
+import type { QualityCheckMode } from 'src/features/common/qualityCheck/utils/qualityCheckMode'
 import {
   buildQualityReport,
   type QualityIssue,
   type QualityReport,
   type QualityScope,
-} from 'src/features/common/qualityCheck/qualityLint'
-import { mixedProofPresets } from 'src/features/common/qualityCheck/qualityProof'
+} from 'src/features/common/qualityCheck/utils/qualityLint'
+import { mixedProofPresets } from 'src/features/common/qualityCheck/utils/qualityProof'
 import { useTranslation } from 'react-i18next'
 
 interface QualityCheckModalProps {

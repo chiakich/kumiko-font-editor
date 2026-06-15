@@ -14,12 +14,12 @@ import {
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { SlidingTabList } from 'src/features/common/SlidingTabList'
-import { FontBasicsTab } from 'src/features/common/projectControl/fontSettings/FontBasicsTab'
-import { FontExportsTab } from 'src/features/common/projectControl/fontSettings/FontExportsTab'
-import { FontFeaturesTab } from 'src/features/common/projectControl/fontSettings/FontFeaturesTab'
-import { FontOtherTab } from 'src/features/common/projectControl/fontSettings/FontOtherTab'
-import { FontSourcesTab } from 'src/features/common/projectControl/fontSettings/FontSourcesTab'
-import { FontSupplementalTab } from 'src/features/common/projectControl/fontSettings/FontSupplementalTab'
+import { FontBasicsTab } from 'src/features/common/projectControl/fontSettings/components/FontBasicsTab'
+import { FontExportsTab } from 'src/features/common/projectControl/fontSettings/components/FontExportsTab'
+import { FontFeaturesTab } from 'src/features/common/projectControl/fontSettings/components/FontFeaturesTab'
+import { FontOtherTab } from 'src/features/common/projectControl/fontSettings/components/FontOtherTab'
+import { FontSourcesTab } from 'src/features/common/projectControl/fontSettings/components/FontSourcesTab'
+import { FontSupplementalTab } from 'src/features/common/projectControl/fontSettings/components/FontSupplementalTab'
 import {
   buildFontInfoFromDrafts,
   getInitialSettings,
@@ -32,7 +32,7 @@ import {
   toFontInfoDraft,
   toOpenTypeDraft,
   toSourceDrafts,
-} from 'src/features/common/projectControl/fontSettings/model'
+} from 'src/features/common/projectControl/fontSettings/utils/model'
 import { defaultFontAxes } from 'src/lib/fontFormats/fontInfoSettings'
 import {
   createEmptyOpenTypeFeaturesState,

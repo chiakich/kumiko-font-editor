@@ -1,7 +1,7 @@
 import { Box } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useStore } from 'src/store'
-import { LeftPanelContent } from 'src/features/editor/leftPanel/LeftPanelContent'
+import { LeftPanelContent } from 'src/features/editor/leftPanel/components/LeftPanelContent'
 
 export function LeftPanel() {
   const fontData = useStore((state) => state.fontData)

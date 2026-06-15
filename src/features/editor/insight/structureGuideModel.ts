@@ -1,9 +1,9 @@
 import type { StructureGuideModel } from 'src/sceneView'
-import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
+import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/utils/glyphSampling'
 import {
   STRUCTURE_SIDES,
   type StructureBaseline,
-} from 'src/features/common/qualityCheck/structureMetrics'
+} from 'src/features/common/qualityCheck/utils/structureMetrics'
 
 /** 把單字 sample + 母體基準轉成畫布圖層要的分布帶模型（glyph-local 座標）。 */
 export const buildStructureGuideModel = (

@@ -26,8 +26,8 @@ import {
   codeUnitIndexToCharIndex,
 } from 'src/features/editor/canvas/workspace/layout/textInput'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
-import { useCanvasClipboard } from 'src/features/editor/canvas/useCanvasClipboard'
-import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/useCanvasKeyboardShortcuts'
+import { useCanvasClipboard } from 'src/features/editor/canvas/hooks/useCanvasClipboard'
+import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
 import { VarPackedPath } from 'src/font/VarPackedPath'
 import type { PathData } from 'src/store'
 

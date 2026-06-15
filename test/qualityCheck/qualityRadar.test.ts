@@ -3,14 +3,14 @@ import {
   computeInkArea,
   computeInkMoments,
   flattenContour,
-} from 'src/features/common/qualityCheck/polygonGeometry'
+} from 'src/features/common/qualityCheck/utils/polygonGeometry'
 import {
   buildRobustStat,
   computeRadarFromSamples,
   radarZScore,
-} from 'src/features/common/qualityCheck/qualityRadar'
-import { analyzeFontPopulation } from 'src/features/common/qualityCheck/useQualityAnalysis'
-import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
+} from 'src/features/common/qualityCheck/utils/qualityRadar'
+import { analyzeFontPopulation } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
+import type { GlyphGeometrySample } from 'src/features/common/qualityCheck/utils/glyphSampling'
 import type { FontData, GlyphData, PathData } from 'src/store'
 
 const squarePolygon = (

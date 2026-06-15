@@ -3,11 +3,11 @@ import { useStore } from 'src/store'
 import {
   getStructureBodyBox,
   isHanGlyph,
-} from 'src/features/common/qualityCheck/hanClassification'
-import { buildGlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
-import { evaluateSampleAgainstRadar } from 'src/features/common/qualityCheck/qualityRadar'
-import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
-import { useQualityAnalysis } from 'src/features/common/qualityCheck/useQualityAnalysis'
+} from 'src/features/common/qualityCheck/utils/hanClassification'
+import { buildGlyphGeometrySample } from 'src/features/common/qualityCheck/utils/glyphSampling'
+import { evaluateSampleAgainstRadar } from 'src/features/common/qualityCheck/utils/qualityRadar'
+import { resolveFontGlyphs } from 'src/features/common/qualityCheck/utils/resolvedGlyph'
+import { useQualityAnalysis } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
 import {
   GlyphInsightContext,
   idleGlyphInsight,

@@ -1,10 +1,10 @@
 import { Box, Divider, Grid, VStack } from '@chakra-ui/react'
-import { GitHubImportCard } from 'src/features/home/GitHubImportCard'
-import { HomeHeader } from 'src/features/home/HomeHeader'
-import { LocalImportCard } from 'src/features/home/LocalImportCard'
-import { PendingGitHubImportModal } from 'src/features/home/PendingGitHubImportModal'
-import { RecentProjectsList } from 'src/features/home/RecentProjectsList'
-import { useHomeProjects } from 'src/features/home/useHomeProjects'
+import { GitHubImportCard } from 'src/features/home/components/GitHubImportCard'
+import { HomeHeader } from 'src/features/home/components/HomeHeader'
+import { LocalImportCard } from 'src/features/home/components/LocalImportCard'
+import { PendingGitHubImportModal } from 'src/features/home/components/PendingGitHubImportModal'
+import { RecentProjectsList } from 'src/features/home/components/RecentProjectsList'
+import { useHomeProjects } from 'src/features/home/hooks/useHomeProjects'
 
 export function Home() {
   const {

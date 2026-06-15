@@ -2,9 +2,9 @@ import { Box, Stack, Text, useDisclosure } from '@chakra-ui/react'
 import { useState } from 'react'
 import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
 import { useFontExport } from 'src/features/common/fontExport/useFontExport'
-import { GitHubCommitModal } from 'src/features/common/glyphInspector/GitHubCommitModal'
-import { GlyphSummaryCard } from 'src/features/common/glyphInspector/GlyphSummaryCard'
-import { useRightPanelModel } from 'src/features/common/glyphInspector/useRightPanelModel'
+import { GitHubCommitModal } from 'src/features/common/glyphInspector/components/GitHubCommitModal'
+import { GlyphSummaryCard } from 'src/features/common/glyphInspector/components/GlyphSummaryCard'
+import { useRightPanelModel } from 'src/features/common/glyphInspector/hooks/useRightPanelModel'
 import { SelectedGlyphsCard } from 'src/features/fontOverview/components/SelectedGlyphsCard'
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
@@ -12,8 +12,8 @@ import {
   FontQualityCheckModal,
   SelectedGlyphQualityCheckModal,
 } from 'src/features/common/qualityCheck/QualityCheckModal'
-import type { QualityCheckMode } from 'src/features/common/qualityCheck/qualityCheckMode'
-import type { QualityScope } from 'src/features/common/qualityCheck/qualityLint'
+import type { QualityCheckMode } from 'src/features/common/qualityCheck/utils/qualityCheckMode'
+import type { QualityScope } from 'src/features/common/qualityCheck/utils/qualityLint'
 import { useStore } from 'src/store'
 import { useTranslation } from 'react-i18next'
 

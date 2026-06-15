@@ -3,15 +3,15 @@ import {
   computeInkArea,
   flattenContour,
   getPolygonsBounds,
-} from 'src/features/common/qualityCheck/polygonGeometry'
-import { flattenResolvedGlyph } from 'src/features/common/qualityCheck/glyphInk'
+} from 'src/features/common/qualityCheck/utils/polygonGeometry'
+import { flattenResolvedGlyph } from 'src/features/common/qualityCheck/utils/glyphInk'
 import {
   getStructureBodyBox,
   isHanGlyph,
-} from 'src/features/common/qualityCheck/hanClassification'
-import { resolveFontGlyphs } from 'src/features/common/qualityCheck/resolvedGlyph'
-import { buildGlyphGeometrySample } from 'src/features/common/qualityCheck/glyphSampling'
-import { analyzeFontPopulation } from 'src/features/common/qualityCheck/useQualityAnalysis'
+} from 'src/features/common/qualityCheck/utils/hanClassification'
+import { resolveFontGlyphs } from 'src/features/common/qualityCheck/utils/resolvedGlyph'
+import { buildGlyphGeometrySample } from 'src/features/common/qualityCheck/utils/glyphSampling'
+import { analyzeFontPopulation } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
 import type { FontData, GlyphData, PathData } from 'src/store/types'
 
 const makePath = (
