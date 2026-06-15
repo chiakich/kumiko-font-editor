@@ -7,6 +7,7 @@ import type {
 } from 'src/store'
 import type { ProjectSourceFormat } from 'src/lib/projectFormats'
 import { hashString } from 'src/lib/hash'
+import { getComponentMatrix } from 'src/lib/componentTransform'
 import { gitBlobShaFromText } from 'src/lib/githubSync/gitBlobSha'
 import {
   buildUfoLibFromFontData,
@@ -761,8 +762,12 @@ const buildFontDataFromUfoGlyphs = (
           glyphId: component.base,
           x: component.xOffset ?? 0,
           y: component.yOffset ?? 0,
+          // The UFO 2x2 matrix maps directly: rotation stays folded into the
+          // off-diagonal shear terms rather than a separate angle.
           scaleX: component.xScale ?? 1,
           scaleY: component.yScale ?? 1,
+          xyScale: component.xyScale ?? 0,
+          yxScale: component.yxScale ?? 0,
           rotation: 0,
         }))
 
@@ -1215,14 +1220,20 @@ export const syncHotFontDataToUfoRecords = async (input: {
       contours: glyph.paths.map((path) => ({
         ...pathToUfoContour(path),
       })),
-      components: glyph.componentRefs.map((component) => ({
-        base: component.glyphId,
-        identifier: component.id,
-        xScale: component.scaleX,
-        yScale: component.scaleY,
-        xOffset: component.x,
-        yOffset: component.y,
-      })),
+      components: glyph.componentRefs.map((component) => {
+        const matrix = getComponentMatrix(component)
+        return {
+          base: component.glyphId,
+          identifier: component.id,
+          xScale: matrix.a,
+          yScale: matrix.d,
+          // Only emit shear terms when present to keep identity glyphs clean.
+          ...(matrix.b !== 0 ? { xyScale: matrix.b } : {}),
+          ...(matrix.c !== 0 ? { yxScale: matrix.c } : {}),
+          xOffset: matrix.e,
+          yOffset: matrix.f,
+        }
+      }),
       note: existingRecord?.note ?? null,
       image: existingRecord?.image ?? null,
       lib: existingRecord?.lib ?? null,

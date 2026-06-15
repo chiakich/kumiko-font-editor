@@ -6,6 +6,7 @@ import {
   type NodeType,
 } from 'src/store'
 import type { ComponentData, GuidelineData, PositionedGlyph } from 'src/canvas'
+import { getComponentMatrix } from 'src/lib/componentTransform'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import {
   getGlyphInkBounds,
@@ -99,11 +100,18 @@ const buildComponentPath2D = (
     if (!nestedPath) {
       continue
     }
-    const matrix = new DOMMatrix()
-      .translateSelf(componentRef.x, componentRef.y)
-      .rotateSelf(componentRef.rotation)
-      .scaleSelf(componentRef.scaleX, componentRef.scaleY)
-    combinedPath.addPath(nestedPath, matrix)
+    const matrix = getComponentMatrix(componentRef)
+    combinedPath.addPath(
+      nestedPath,
+      new DOMMatrix([
+        matrix.a,
+        matrix.b,
+        matrix.c,
+        matrix.d,
+        matrix.e,
+        matrix.f,
+      ])
+    )
   }
 
   return combinedPath
@@ -170,15 +178,30 @@ export const buildPositionedGlyphs = ({
         varPath = pathDataToVarPackedPath(activeLayer.paths)
         components = []
         for (const componentRef of activeLayer.componentRefs) {
-          const path2d = buildComponentPath2D(
+          const basePath2d = buildComponentPath2D(
             componentRef.glyphId,
             fontData,
             selectedLayerId,
             layerGeometryCache
           )
-          if (!path2d) {
+          if (!basePath2d) {
             continue
           }
+          // Bake the placement transform into the path so shear/rotation/scale
+          // render; the draw layer fills path2d directly.
+          const matrix = getComponentMatrix(componentRef)
+          const path2d = new Path2D()
+          path2d.addPath(
+            basePath2d,
+            new DOMMatrix([
+              matrix.a,
+              matrix.b,
+              matrix.c,
+              matrix.d,
+              matrix.e,
+              matrix.f,
+            ])
+          )
           components.push({
             name: componentRef.glyphId,
             transformation: {

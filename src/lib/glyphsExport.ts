@@ -1,4 +1,8 @@
 import type { GlyphsDocument } from 'src/lib/glyphsDocument'
+import {
+  getComponentMatrix,
+  isIdentityComponentMatrix,
+} from 'src/lib/componentTransform'
 import type {
   FontData,
   GlyphData,
@@ -126,24 +130,18 @@ const serializeLayerPaths = (layer: GlyphLayerData) =>
 const formatPointTuple = (x: number, y: number) =>
   `{${Math.round(x)}, ${Math.round(y)}}`
 
-const isIdentityTransform = (
-  component: GlyphLayerData['componentRefs'][number]
-) =>
-  component.scaleX === 1 &&
-  component.scaleY === 1 &&
-  component.rotation === 0 &&
-  component.x === 0 &&
-  component.y === 0
-
 const serializeLayerComponents = (layer: GlyphLayerData) =>
-  layer.componentRefs.map((component) => ({
-    name: component.glyphId,
-    ...(isIdentityTransform(component)
-      ? {}
-      : {
-          transform: `{${component.scaleX}, 0, 0, ${component.scaleY}, ${Math.round(component.x)}, ${Math.round(component.y)}}`,
-        }),
-  }))
+  layer.componentRefs.map((component) => {
+    const matrix = getComponentMatrix(component)
+    return {
+      name: component.glyphId,
+      ...(isIdentityComponentMatrix(matrix)
+        ? {}
+        : {
+            transform: `{${matrix.a}, ${matrix.b}, ${matrix.c}, ${matrix.d}, ${Math.round(matrix.e)}, ${Math.round(matrix.f)}}`,
+          }),
+    }
+  })
 
 const serializeLayerAnchors = (layer: GlyphLayerData) =>
   layer.anchors.map((anchor) => ({

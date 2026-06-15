@@ -1,5 +1,9 @@
 import type { ResolvedGlyph } from 'src/features/common/qualityCheck/resolvedGlyph'
 import {
+  getComponentMatrix,
+  type ComponentMatrix,
+} from 'src/lib/componentTransform'
+import {
   computeInkMoments,
   flattenContour,
   getPolygonsBounds,
@@ -31,30 +35,14 @@ export interface GlyphInkMetrics {
 
 const MAX_COMPONENT_DEPTH = 8
 
-interface ComponentTransform {
-  x: number
-  y: number
-  scaleX: number
-  scaleY: number
-  rotation: number
-}
-
 const transformPolygon = (
   polygon: GeometryPoint[],
-  transform: ComponentTransform
-): GeometryPoint[] => {
-  const radians = (transform.rotation * Math.PI) / 180
-  const cos = Math.cos(radians)
-  const sin = Math.sin(radians)
-  return polygon.map((point) => {
-    const scaledX = point.x * transform.scaleX
-    const scaledY = point.y * transform.scaleY
-    return {
-      x: scaledX * cos - scaledY * sin + transform.x,
-      y: scaledX * sin + scaledY * cos + transform.y,
-    }
-  })
-}
+  matrix: ComponentMatrix
+): GeometryPoint[] =>
+  polygon.map((point) => ({
+    x: matrix.a * point.x + matrix.c * point.y + matrix.e,
+    y: matrix.b * point.x + matrix.d * point.y + matrix.f,
+  }))
 
 export const flattenResolvedGlyph = (
   glyph: ResolvedGlyph,
@@ -85,8 +73,9 @@ export const flattenResolvedGlyph = (
       nextVisited,
       depth + 1
     )
+    const matrix = getComponentMatrix(componentRef)
     for (const polygon of componentPolygons) {
-      polygons.push(transformPolygon(polygon, componentRef))
+      polygons.push(transformPolygon(polygon, matrix))
     }
   }
 

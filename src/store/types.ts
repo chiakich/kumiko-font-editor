@@ -37,6 +37,10 @@ export interface GlyphComponentRef {
   scaleX: number
   scaleY: number
   rotation: number
+  // Off-diagonal 2x2 matrix terms (shear); absent means 0. Together with
+  // scaleX/scaleY they carry the full UFO/Glyphs component transform.
+  xyScale?: number
+  yxScale?: number
 }
 
 export interface GlyphAnchor {

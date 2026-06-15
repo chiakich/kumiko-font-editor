@@ -11,6 +11,7 @@ import {
   type Rect,
 } from 'src/lib/componentAssembly'
 import { getGlyphCharacter } from 'src/lib/glyphRelations'
+import { getComponentMatrix } from 'src/lib/componentTransform'
 import {
   getGlyphwikiComposition,
   type GlyphwikiPartPlacement,
@@ -195,10 +196,10 @@ const materializeComponentPaths = (
   }))
 
   for (const component of glyph.componentRefs) {
-    const componentMatrix = matrix
-      .translate(component.x, component.y)
-      .rotate(component.rotation)
-      .scale(component.scaleX, component.scaleY)
+    const m = getComponentMatrix(component)
+    const componentMatrix = matrix.multiply(
+      new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f])
+    )
     paths.push(
       ...materializeComponentPaths(
         glyphMap,
@@ -218,13 +219,11 @@ const buildComponentParts = (
   components: GlyphComponentRef[]
 ): PreviewPart[] =>
   components.flatMap((component) => {
+    const m = getComponentMatrix(component)
     const paths = materializeComponentPaths(
       glyphMap,
       component.glyphId,
-      new DOMMatrix()
-        .translate(component.x, component.y)
-        .rotate(component.rotation)
-        .scale(component.scaleX, component.scaleY)
+      new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f])
     )
     if (paths.length === 0) {
       return []
