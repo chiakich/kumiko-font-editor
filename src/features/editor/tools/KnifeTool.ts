@@ -1,3 +1,4 @@
+import { Bezier } from 'bezier-js'
 import {
   BaseTool,
   type EventStream,
@@ -293,33 +294,38 @@ export class KnifeTool extends BaseTool {
       }
     }
 
-    const samples = sampleCurve(segment.nodes, segment.type)
+    // Exact line↔Bézier intersection via bezier-js (roots of the curve
+    // against the knife line), instead of approximating by sampling the
+    // curve into line pieces. lineIntersects() bounds hits to the knife
+    // stroke, matching the finite-line semantics of the line-segment branch.
+    const bezier = new Bezier(...segment.nodes)
+    const roots = bezier.lineIntersects({ p1: lineA, p2: lineB })
+
+    const lineDx = lineB.x - lineA.x
+    const lineDy = lineB.y - lineA.y
+    const lineLengthSq = lineDx * lineDx + lineDy * lineDy
     let bestHit: { point: { x: number; y: number }; tSegment: number } | null =
       null
     let bestLineT = Number.POSITIVE_INFINITY
 
-    for (let index = 0; index < samples.length - 1; index += 1) {
-      const hit = lineIntersection(
-        lineA,
-        lineB,
-        samples[index].point,
-        samples[index + 1].point
-      )
-      if (!hit || hit.tSegment < 0 || hit.tSegment > 1) {
+    for (const t of roots) {
+      // Skip cuts landing on the segment endpoints (matches the line branch).
+      if (t <= 0.02 || t >= 0.98) {
         continue
       }
-      if (hit.tLine < bestLineT) {
-        bestLineT = hit.tLine
-        bestHit = {
-          point: hit.point,
-          tSegment:
-            samples[index].t +
-            (samples[index + 1].t - samples[index].t) * hit.tSegment,
-        }
+      const p = bezier.get(t)
+      // Keep the intersection nearest to the stroke start, as before.
+      const lineT =
+        lineLengthSq === 0
+          ? 0
+          : ((p.x - lineA.x) * lineDx + (p.y - lineA.y) * lineDy) / lineLengthSq
+      if (lineT < bestLineT) {
+        bestLineT = lineT
+        bestHit = { point: { x: p.x, y: p.y }, tSegment: t }
       }
     }
 
-    if (!bestHit || bestHit.tSegment <= 0.02 || bestHit.tSegment >= 0.98) {
+    if (!bestHit) {
       return null
     }
 
@@ -514,22 +520,6 @@ function lineIntersection(
   }
 }
 
-function sampleCurve(nodes: PathNode[], type: 'quad' | 'cubic') {
-  const steps = type === 'quad' ? 32 : 48
-  const samples: Array<{ t: number; point: { x: number; y: number } }> = []
-  for (let index = 0; index <= steps; index += 1) {
-    const t = index / steps
-    samples.push({
-      t,
-      point:
-        type === 'quad'
-          ? quadraticAt(nodes[0], nodes[1], nodes[2], t)
-          : cubicAt(nodes[0], nodes[1], nodes[2], nodes[3], t),
-    })
-  }
-  return samples
-}
-
 function lerpPoint(
   a: { x: number; y: number },
   b: { x: number; y: number },
@@ -539,32 +529,6 @@ function lerpPoint(
     x: a.x + (b.x - a.x) * t,
     y: a.y + (b.y - a.y) * t,
   }
-}
-
-function quadraticAt(
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  t: number
-) {
-  const q0 = lerpPoint(p0, p1, t)
-  const q1 = lerpPoint(p1, p2, t)
-  return lerpPoint(q0, q1, t)
-}
-
-function cubicAt(
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  p3: { x: number; y: number },
-  t: number
-) {
-  const q0 = lerpPoint(p0, p1, t)
-  const q1 = lerpPoint(p1, p2, t)
-  const q2 = lerpPoint(p2, p3, t)
-  const r0 = lerpPoint(q0, q1, t)
-  const r1 = lerpPoint(q1, q2, t)
-  return lerpPoint(r0, r1, t)
 }
 
 async function* asyncEventIterator(

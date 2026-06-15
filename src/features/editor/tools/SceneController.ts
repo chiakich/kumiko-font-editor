@@ -1,5 +1,6 @@
 // 場景控制器 - 管理編輯狀態和互動
 
+import { Bezier } from 'bezier-js'
 import type { CanvasController } from 'src/sceneView/CanvasController'
 import type { PathHitInfo, Point, SceneModel } from 'src/sceneView/SceneView'
 import {
@@ -451,24 +452,14 @@ export class SceneController {
       return this.projectPointToLineSegment(point, points[0], points[1])
     }
 
-    const steps = points.length === 3 ? 24 : 32
-    let bestPoint = points[0]
-    let bestDistance = Number.POSITIVE_INFINITY
-
-    for (let i = 0; i <= steps; i += 1) {
-      const t = i / steps
-      const sample =
-        points.length === 3
-          ? quadraticAt(points[0], points[1], points[2], t)
-          : cubicAt(points[0], points[1], points[2], points[3], t)
-      const sampleDistance = distance(point, sample)
-      if (sampleDistance < bestDistance) {
-        bestDistance = sampleDistance
-        bestPoint = sample
-      }
+    // Quadratic (3 points) or cubic (4 points) Bézier. bezier-js project()
+    // does a coarse LUT scan plus local refinement, which is far more precise
+    // than fixed-step sampling at high magnification.
+    const projected = new Bezier(...points).project(point)
+    return {
+      point: { x: projected.x, y: projected.y },
+      distance: distance(point, projected),
     }
-
-    return { point: bestPoint, distance: bestDistance }
   }
 
   private projectPointToLineSegment(
@@ -512,30 +503,6 @@ export class SceneController {
 
 function distance(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.hypot(a.x - b.x, a.y - b.y)
-}
-
-function quadraticAt(p0: Point, p1: Point, p2: Point, t: number) {
-  const inv = 1 - t
-  return {
-    x: inv * inv * p0.x + 2 * inv * t * p1.x + t * t * p2.x,
-    y: inv * inv * p0.y + 2 * inv * t * p1.y + t * t * p2.y,
-  }
-}
-
-function cubicAt(p0: Point, p1: Point, p2: Point, p3: Point, t: number) {
-  const inv = 1 - t
-  return {
-    x:
-      inv * inv * inv * p0.x +
-      3 * inv * inv * t * p1.x +
-      3 * inv * t * t * p2.x +
-      t * t * t * p3.x,
-    y:
-      inv * inv * inv * p0.y +
-      3 * inv * inv * t * p1.y +
-      3 * inv * t * t * p2.y +
-      t * t * t * p3.y,
-  }
 }
 
 class EventStreamImpl {

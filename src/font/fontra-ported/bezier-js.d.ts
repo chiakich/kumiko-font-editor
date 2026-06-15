@@ -16,5 +16,6 @@ declare module 'bezier-js' {
     project(point: Point): Point & { t?: number; d?: number }
     length(): number
     split(t1: number, t2?: number): Bezier
+    lineIntersects(line: { p1: Point; p2: Point }): number[]
   }
 }
