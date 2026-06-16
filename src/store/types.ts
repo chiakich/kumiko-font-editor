@@ -68,6 +68,9 @@ export interface GlyphMetrics {
 export interface GlyphLayerData {
   id: string
   name: string
+  // 'master' layers map to font masters (one per master); 'backup' layers are
+  // user-kept outline snapshots. Undefined is treated as 'master' for back-compat.
+  type?: 'master' | 'backup'
   associatedMasterId?: string | null
   paths: PathData[]
   components: string[]
@@ -355,6 +358,11 @@ export interface GlobalState {
   setSelectedNodeIds: (ids: string[]) => void
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void
+  createBackupLayer: (glyphId: string) => void
+  duplicateLayer: (glyphId: string, layerId: string) => void
+  deleteBackupLayer: (glyphId: string, layerId: string) => void
+  renameBackupLayer: (glyphId: string, layerId: string, name: string) => void
+  promoteBackupToMaster: (glyphId: string, layerId: string) => void
   setReferenceFontName: (name: string | null) => void
   setReferenceFontVisible: (visible: boolean) => void
   setReferenceFontChar: (char: string | null) => void

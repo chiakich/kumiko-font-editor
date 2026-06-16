@@ -71,10 +71,9 @@ export const ingestProjectData = (
         }
       }
 
-      const { layers, layerOrder, ...hotGlyph } = glyph
-      void layers
-      void layerOrder
-      return [glyphId, hotGlyph]
+      // Keep layers on the hot glyph: GlyphData.layers is the live source of
+      // truth for backup layers (see glyphLayerOps).
+      return [glyphId, glyph]
     })
   )
 
@@ -147,26 +146,23 @@ export const hydrateProjectFontData = (fontData: FontData): FontData => ({
   ...fontData,
   glyphs: Object.fromEntries(
     Object.entries(fontData.glyphs).map(([glyphId, glyph]) => {
-      const glyphArchive = archiveState.glyphLayers[glyphId]
-      if (!glyphArchive) {
+      // Prefer the live layers held on the glyph (store source of truth);
+      // fall back to the archive snapshot for glyphs never touched this session.
+      const baseLayers =
+        glyph.layers ?? archiveState.glyphLayers[glyphId]?.layers
+      const baseOrder =
+        glyph.layerOrder ?? archiveState.glyphLayers[glyphId]?.layerOrder
+      if (!baseLayers || !baseOrder) {
         return [glyphId, glyph]
       }
 
-      const activeLayerId =
-        glyph.activeLayerId ?? glyphArchive.layerOrder[0] ?? null
-      const layers = { ...glyphArchive.layers }
+      const activeLayerId = glyph.activeLayerId ?? baseOrder[0] ?? null
+      const layers = { ...baseLayers }
       if (activeLayerId) {
         layers[activeLayerId] = getGlyphTopLevelLayer(glyph, activeLayerId)
       }
 
-      return [
-        glyphId,
-        {
-          ...glyph,
-          layers,
-          layerOrder: glyphArchive.layerOrder,
-        },
-      ]
+      return [glyphId, { ...glyph, layers, layerOrder: baseOrder }]
     })
   ),
 })

@@ -1,10 +1,8 @@
 import { useToast } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { saveDraftSnapshot } from 'src/lib/project/draftSave'
-import {
-  getArchivedGlyphLayerEntries,
-  getProjectArchiveMetadata,
-} from 'src/lib/project/projectArchive'
+import { getProjectArchiveMetadata } from 'src/lib/project/projectArchive'
+import { listGlyphLayers } from 'src/store/glyphLayerOps'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
@@ -91,7 +89,7 @@ export function useRightPanelModel() {
     glyph && previewGlyphMetrics?.glyphId === glyph.id
       ? previewGlyphMetrics.metrics
       : (glyph?.metrics ?? activeLayer?.metrics)
-  const availableLayers = glyph ? getArchivedGlyphLayerEntries(glyph.id) : []
+  const availableLayers = glyph ? listGlyphLayers(glyph) : []
   const nodeRef = parseSelectedNode(selectedNodeIds[0])
   const selectedPath =
     activeLayer && nodeRef

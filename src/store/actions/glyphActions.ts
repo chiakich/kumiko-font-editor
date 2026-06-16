@@ -2,8 +2,16 @@
  * Glyph-level store actions: add/delete glyphs, update node positions/types,
  * update glyph metrics.
  */
+import { current } from 'immer'
 import type { StateCreator } from 'zustand'
 import type { GlobalState, GlyphMetrics, NodeType } from 'src/store/types'
+import {
+  createBackupLayer,
+  deleteBackupLayer,
+  duplicateLayer,
+  renameBackupLayer,
+  promoteBackupToMaster,
+} from 'src/store/glyphLayerOps'
 import {
   findNode,
   findPath,
@@ -293,6 +301,82 @@ export const buildGlyphActions = (set: ImmerSet) => ({
         glyph.metrics.rsb = nextRsb
       }
 
+      markGlyphDirty(state, glyphId)
+    }),
+
+  createBackupLayer: (glyphId: string) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      if (!glyph) {
+        return
+      }
+      const name = `Backup ${new Date().toLocaleString()}`
+      state.fontData!.glyphs[glyphId] = createBackupLayer(
+        current(glyph),
+        generateId('layer'),
+        name
+      )
+      markGlyphDirty(state, glyphId)
+    }),
+
+  duplicateLayer: (glyphId: string, layerId: string) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      if (!glyph) {
+        return
+      }
+      const sourceName = glyph.layers?.[layerId]?.name ?? 'Master'
+      state.fontData!.glyphs[glyphId] = duplicateLayer(
+        current(glyph),
+        layerId,
+        generateId('layer'),
+        `${sourceName} copy`
+      )
+      markGlyphDirty(state, glyphId)
+    }),
+
+  deleteBackupLayer: (glyphId: string, layerId: string) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      if (!glyph) {
+        return
+      }
+      state.fontData!.glyphs[glyphId] = deleteBackupLayer(
+        current(glyph),
+        layerId
+      )
+      markGlyphDirty(state, glyphId)
+    }),
+
+  renameBackupLayer: (glyphId: string, layerId: string, name: string) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      if (!glyph) {
+        return
+      }
+      state.fontData!.glyphs[glyphId] = renameBackupLayer(
+        current(glyph),
+        layerId,
+        name
+      )
+      markGlyphDirty(state, glyphId)
+    }),
+
+  promoteBackupToMaster: (glyphId: string, layerId: string) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      if (!glyph) {
+        return
+      }
+      const name = `Backup ${new Date().toLocaleString()}`
+      state.fontData!.glyphs[glyphId] = promoteBackupToMaster(
+        current(glyph),
+        layerId,
+        generateId('layer'),
+        name
+      )
+      state.selectedNodeIds = []
+      state.selectedSegment = null
       markGlyphDirty(state, glyphId)
     }),
 })

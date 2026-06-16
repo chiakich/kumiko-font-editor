@@ -106,9 +106,10 @@ export function EditorRightPanel() {
                   />
 
                   <LayerListCard
-                    availableLayers={panel.availableLayers}
+                    glyphId={panel.glyph.id}
+                    layers={panel.availableLayers}
                     activeLayerId={
-                      panel.activeLayer?.id ?? panel.selectedLayerId ?? null
+                      panel.glyph.activeLayerId ?? 'public.default'
                     }
                     onSelectLayer={panel.setSelectedLayerId}
                   />

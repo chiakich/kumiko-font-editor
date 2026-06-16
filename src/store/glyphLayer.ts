@@ -21,6 +21,11 @@ export const getGlyphLayer = (
     return getHotGlyphLayerSnapshot(glyph, glyph.activeLayerId)
   }
 
+  // Live backup layers are the store source of truth (see glyphLayerOps).
+  if (requestedLayerId && glyph.layers?.[requestedLayerId]) {
+    return glyph.layers[requestedLayerId]
+  }
+
   const archivedLayer = getArchivedGlyphLayer(glyph.id, requestedLayerId)
   if (archivedLayer) {
     return archivedLayer
