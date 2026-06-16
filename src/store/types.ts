@@ -284,6 +284,12 @@ export interface GlobalState {
   filteredGlyphList: GlyphData[]
   selectedGlyphId: string | null
   selectedLayerId: string | null
+  // Reference font for tracing (loaded font held in lib/referenceFont; here we
+  // keep only serialisable UI state). referenceFontChar overrides the character
+  // shown; when null the editing glyph's own character is used.
+  referenceFontName: string | null
+  referenceFontVisible: boolean
+  referenceFontChar: string | null
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
   workspaceView: WorkspaceView
@@ -347,6 +353,9 @@ export interface GlobalState {
   setSelectedNodeIds: (ids: string[]) => void
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void
+  setReferenceFontName: (name: string | null) => void
+  setReferenceFontVisible: (visible: boolean) => void
+  setReferenceFontChar: (char: string | null) => void
   updateViewport: (zoom: number, panX: number, panY: number) => void
   updateNodePosition: (
     glyphId: string,

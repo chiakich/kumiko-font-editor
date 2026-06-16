@@ -63,6 +63,9 @@ export interface SceneModel {
       y: number
     }>
   }
+  // Single reference-font character rendered behind the editing glyph
+  // (glyph-local, font units). See lib/referenceFont.
+  referencePath?: Path2D
   textCursor?: { x: number; yMin: number; yMax: number }
   initialClickedPointIndex?: number
   canEdit?: boolean

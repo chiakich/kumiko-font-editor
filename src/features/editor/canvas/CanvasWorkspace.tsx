@@ -29,6 +29,7 @@ import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import { useCanvasClipboard } from 'src/features/editor/canvas/hooks/useCanvasClipboard'
 import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
 import { VarPackedPath } from 'src/font/VarPackedPath'
+import { buildReferenceCharPath } from 'src/lib/referenceFont/referenceFontStore'
 import type { PathData } from 'src/store'
 
 const buildPath2DFromPaths = (paths: PathData[]) =>
@@ -106,6 +107,9 @@ export function CanvasWorkspace() {
   )
   const reversePaths = useStore((state) => state.reversePaths)
   const setStartPoint = useStore((state) => state.setStartPoint)
+  const referenceFontName = useStore((state) => state.referenceFontName)
+  const referenceFontVisible = useStore((state) => state.referenceFontVisible)
+  const referenceFontChar = useStore((state) => state.referenceFontChar)
   const updateNodePositions = useStore((state) => state.updateNodePositions)
   const activeEditorGlyphId =
     editorGlyphIds[editorActiveGlyphIndex] ?? selectedGlyphId ?? null
@@ -476,6 +480,35 @@ export function CanvasWorkspace() {
     sceneController.sceneModel.structureGuide = structureGuide
     controller.requestUpdate()
   }, [structureGuide])
+
+  useEffect(() => {
+    const sceneController = sceneControllerRef.current
+    const controller = canvasControllerRef.current
+    if (!sceneController || !controller) {
+      return
+    }
+
+    const glyph = activeEditorGlyphId
+      ? fontData?.glyphs[activeEditorGlyphId]
+      : null
+    const fallbackChar = glyph?.unicode
+      ? String.fromCodePoint(parseInt(glyph.unicode, 16))
+      : null
+    const char = referenceFontChar || fallbackChar
+    const unitsPerEm = fontData?.unitsPerEm ?? 1000
+
+    sceneController.sceneModel.referencePath =
+      referenceFontVisible && referenceFontName && char
+        ? (buildReferenceCharPath(char, unitsPerEm) ?? undefined)
+        : undefined
+    controller.requestUpdate()
+  }, [
+    activeEditorGlyphId,
+    fontData,
+    referenceFontChar,
+    referenceFontName,
+    referenceFontVisible,
+  ])
 
   useEffect(() => {
     const sceneController = sceneControllerRef.current

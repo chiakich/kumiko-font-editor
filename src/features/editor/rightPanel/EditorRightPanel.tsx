@@ -20,6 +20,7 @@ import { FontQualityCheckModal } from 'src/features/common/qualityCheck/QualityC
 import { GlyphInsightCard } from 'src/features/editor/rightPanel/components/GlyphInsightCard'
 import { MetricsCard } from 'src/features/editor/rightPanel/components/MetricsCard'
 import { NodeInspectorCard } from 'src/features/editor/rightPanel/components/NodeInspectorCard'
+import { ReferenceFontCard } from 'src/features/editor/rightPanel/components/ReferenceFontCard'
 import { TransformCard } from 'src/features/editor/rightPanel/components/TransformCard'
 import { BehaviorsPanel } from 'src/features/editor/rightPanel/behaviors/BehaviorsPanel'
 import { useStore } from 'src/store'
@@ -122,6 +123,8 @@ export function EditorRightPanel() {
                   />
 
                   <GlyphInsightCard />
+
+                  <ReferenceFontCard />
                 </Stack>
               </TabPanel>
               <TabPanel px={0} pb={0}>

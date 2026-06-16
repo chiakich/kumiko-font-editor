@@ -37,6 +37,21 @@ export const buildUiActions = (set: ImmerSet) => ({
       }
     }),
 
+  setReferenceFontName: (name: string | null) =>
+    set((state) => {
+      state.referenceFontName = name
+    }),
+
+  setReferenceFontVisible: (visible: boolean) =>
+    set((state) => {
+      state.referenceFontVisible = visible
+    }),
+
+  setReferenceFontChar: (char: string | null) =>
+    set((state) => {
+      state.referenceFontChar = char
+    }),
+
   addGlyphToEditor: (id: string) =>
     set((state) => {
       if (!state.fontData?.glyphs[id]) {
