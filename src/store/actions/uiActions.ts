@@ -60,6 +60,11 @@ export const buildUiActions = (set: ImmerSet) => ({
         : [...ids, layerId]
     }),
 
+  toggleActiveLayerHidden: () =>
+    set((state) => {
+      state.hideActiveLayer = !state.hideActiveLayer
+    }),
+
   addGlyphToEditor: (id: string) =>
     set((state) => {
       if (!state.fontData?.glyphs[id]) {

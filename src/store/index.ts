@@ -74,6 +74,7 @@ const initialState = {
   referenceFontVisible: false,
   referenceFontChar: null,
   visibleBackdropLayerIds: [],
+  hideActiveLayer: false,
   workspaceView: 'overview' as const,
   overviewGroupBy: 'script' as const,
   overviewSectionId: 'all',

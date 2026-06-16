@@ -68,6 +68,8 @@ export interface SceneModel {
   referencePath?: Path2D
   // Non-active glyph layers shown faintly behind the editing layer.
   backdropPaths?: Path2D[]
+  // When true, the active layer's outline fill is not drawn.
+  hideActiveLayer?: boolean
   textCursor?: { x: number; yMin: number; yMax: number }
   initialClickedPointIndex?: number
   canEdit?: boolean

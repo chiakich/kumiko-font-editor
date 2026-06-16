@@ -79,6 +79,7 @@ registerVisualizationLayerDefinition({
     const context = canvasController.context
     const glyph = positionedGlyph.glyph
     if (!glyph.path) return
+    if (model.hideActiveLayer) return
 
     context.fillStyle = isHandTool(model)
       ? '#080B0D'

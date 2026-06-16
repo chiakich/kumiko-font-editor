@@ -12,9 +12,9 @@ import {
   MenuItem,
   MenuList,
   Stack,
-  Switch,
   Text,
 } from '@chakra-ui/react'
+import { EyeClosed, EyeSolid } from 'iconoir-react'
 import { useTranslation } from 'react-i18next'
 import { useStore, type GlyphLayerData } from 'src/store'
 
@@ -25,9 +25,40 @@ interface LayerListCardProps {
   onSelectLayer: (layerId: string) => void
 }
 
+function EyeToggle({
+  visible,
+  isDisabled = false,
+  onToggle,
+}: {
+  visible: boolean
+  isDisabled?: boolean
+  onToggle: () => void
+}) {
+  return (
+    <Box
+      as="button"
+      type="button"
+      lineHeight={0}
+      flexShrink={0}
+      color={isDisabled ? 'field.muted' : 'field.ink'}
+      opacity={isDisabled ? 0.4 : 1}
+      cursor={isDisabled ? 'default' : 'pointer'}
+      onClick={() => {
+        if (!isDisabled) onToggle()
+      }}
+    >
+      {visible ? (
+        <EyeSolid width={16} height={16} />
+      ) : (
+        <EyeClosed width={16} height={16} />
+      )}
+    </Box>
+  )
+}
+
 // Glyphs-style layer list: the active master (the edit surface, bold) plus
-// backup layers (indented, with eye/visibility and an actions menu), and a
-// bottom non-editable reference row.
+// backup layers (indented, with an actions menu), and a bottom non-editable
+// reference row. The visibility eye sits on the far left of every row.
 export function LayerListCard({
   glyphId,
   layers,
@@ -44,6 +75,10 @@ export function LayerListCard({
     (state) => state.visibleBackdropLayerIds
   )
   const toggleBackdropLayer = useStore((state) => state.toggleBackdropLayer)
+  const hideActiveLayer = useStore((state) => state.hideActiveLayer)
+  const toggleActiveLayerHidden = useStore(
+    (state) => state.toggleActiveLayerHidden
+  )
   const referenceFontName = useStore((state) => state.referenceFontName)
   const referenceFontVisible = useStore((state) => state.referenceFontVisible)
   const setReferenceFontVisible = useStore(
@@ -56,8 +91,12 @@ export function LayerListCard({
         <Heading size="sm" textTransform="uppercase" color="field.ink">
           {t('editor.layers')}
         </Heading>
-        <Button size="xs" onClick={() => createBackupLayer(glyphId)}>
-          {t('editor.addBackupLayer')}
+        <Button
+          size="xs"
+          aria-label={t('editor.addBackupLayer')}
+          onClick={() => createBackupLayer(glyphId)}
+        >
+          +
         </Button>
       </HStack>
 
@@ -65,17 +104,29 @@ export function LayerListCard({
         {layers.map((layer) => {
           const isMaster = layer.type !== 'backup'
           const isActive = layer.id === activeLayerId
+          const visible = isMaster
+            ? !(isActive && hideActiveLayer)
+            : visibleBackdropLayerIds.includes(layer.id)
 
           return (
             <HStack
               key={layer.id}
-              justify="space-between"
+              spacing={2}
               px={2}
               py={1.5}
-              pl={isMaster ? 2 : 5}
               borderRadius="sm"
               bg={isActive ? 'blackAlpha.100' : 'transparent'}
             >
+              <EyeToggle
+                visible={visible}
+                isDisabled={isMaster && !isActive}
+                onToggle={() =>
+                  isMaster
+                    ? toggleActiveLayerHidden()
+                    : toggleBackdropLayer(layer.id)
+                }
+              />
+
               {isMaster ? (
                 <Box
                   as="button"
@@ -115,64 +166,54 @@ export function LayerListCard({
                   </Badge>
                 ) : null
               ) : (
-                <HStack spacing={1}>
-                  <Switch
-                    size="sm"
-                    isChecked={visibleBackdropLayerIds.includes(layer.id)}
-                    onChange={() => toggleBackdropLayer(layer.id)}
-                  />
-                  <Menu>
-                    <MenuButton
-                      as={Button}
-                      size="xs"
-                      variant="ghost"
-                      px={1}
-                      aria-label={t('editor.layerActions')}
+                <Menu>
+                  <MenuButton
+                    as={Button}
+                    size="xs"
+                    variant="ghost"
+                    px={1}
+                    aria-label={t('editor.layerActions')}
+                  >
+                    ⋯
+                  </MenuButton>
+                  <MenuList>
+                    <MenuItem
+                      onClick={() => promoteBackupToMaster(glyphId, layer.id)}
                     >
-                      ⋯
-                    </MenuButton>
-                    <MenuList>
-                      <MenuItem
-                        onClick={() => promoteBackupToMaster(glyphId, layer.id)}
-                      >
-                        {t('editor.layerUseAsMaster')}
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => duplicateLayer(glyphId, layer.id)}
-                      >
-                        {t('editor.layerDuplicate')}
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => deleteBackupLayer(glyphId, layer.id)}
-                      >
-                        {t('editor.layerDelete')}
-                      </MenuItem>
-                    </MenuList>
-                  </Menu>
-                </HStack>
+                      {t('editor.layerUseAsMaster')}
+                    </MenuItem>
+                    <MenuItem onClick={() => duplicateLayer(glyphId, layer.id)}>
+                      {t('editor.layerDuplicate')}
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => deleteBackupLayer(glyphId, layer.id)}
+                    >
+                      {t('editor.layerDelete')}
+                    </MenuItem>
+                  </MenuList>
+                </Menu>
               )}
             </HStack>
           )
         })}
 
-        <HStack
-          justify="space-between"
-          px={2}
-          py={1.5}
-          borderRadius="sm"
-          opacity={referenceFontName ? 1 : 0.6}
-        >
-          <Text fontSize="sm" color="field.muted" noOfLines={1}>
+        <HStack spacing={2} px={2} py={1.5} borderRadius="sm">
+          <EyeToggle
+            visible={referenceFontVisible}
+            isDisabled={!referenceFontName}
+            onToggle={() => setReferenceFontVisible(!referenceFontVisible)}
+          />
+          <Text
+            fontSize="sm"
+            color="field.muted"
+            noOfLines={1}
+            flex="1"
+            minW={0}
+          >
             {referenceFontName
               ? `${t('editor.referenceFont')} · ${referenceFontName}`
               : t('editor.referenceFont')}
           </Text>
-          <Switch
-            size="sm"
-            isDisabled={!referenceFontName}
-            isChecked={referenceFontVisible}
-            onChange={(event) => setReferenceFontVisible(event.target.checked)}
-          />
         </HStack>
       </Stack>
     </Box>

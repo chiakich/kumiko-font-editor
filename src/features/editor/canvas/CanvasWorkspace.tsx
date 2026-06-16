@@ -124,6 +124,7 @@ export function CanvasWorkspace() {
   const visibleBackdropLayerIds = useStore(
     (state) => state.visibleBackdropLayerIds
   )
+  const hideActiveLayer = useStore((state) => state.hideActiveLayer)
   const updateNodePositions = useStore((state) => state.updateNodePositions)
   const activeEditorGlyphId =
     editorGlyphIds[editorActiveGlyphIndex] ?? selectedGlyphId ?? null
@@ -591,8 +592,15 @@ export function CanvasWorkspace() {
       }
     }
     sceneController.sceneModel.backdropPaths = paths.length ? paths : undefined
+    sceneController.sceneModel.hideActiveLayer = hideActiveLayer
     controller.requestUpdate()
-  }, [activeEditorGlyphId, fontData, selectedLayerId, visibleBackdropLayerIds])
+  }, [
+    activeEditorGlyphId,
+    fontData,
+    hideActiveLayer,
+    selectedLayerId,
+    visibleBackdropLayerIds,
+  ])
 
   useEffect(() => {
     const sceneController = sceneControllerRef.current
