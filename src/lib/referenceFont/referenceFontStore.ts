@@ -38,9 +38,15 @@ export function hasReferenceFont(): boolean {
 // Build a fill Path2D for `char`, scaled to `targetUnitsPerEm` and expressed in
 // font units (y-up) to match the editor's per-glyph coordinate space. Returns
 // null when no font is loaded or the character is absent from the font.
+//
+// When `advanceWidth` is given, the glyph is centred horizontally within that
+// width by its ink bounding box (sidebearings differ between fonts, so origin
+// alignment would look off-centre). The vertical position is left on the
+// baseline so it stays aligned for tracing.
 export function buildReferenceCharPath(
   char: string,
-  targetUnitsPerEm: number
+  targetUnitsPerEm: number,
+  advanceWidth?: number
 ): Path2D | null {
   if (!loaded || !char) {
     return null
@@ -55,31 +61,39 @@ export function buildReferenceCharPath(
     return null
   }
   const scale = targetUnitsPerEm / loaded.unitsPerEm
+  let offsetX = 0
+  if (advanceWidth !== undefined) {
+    const bbox = glyph.getBoundingBox()
+    const inkCenterX = ((bbox.x1 + bbox.x2) / 2) * scale
+    offsetX = advanceWidth / 2 - inkCenterX
+  }
+  const x = (value: number) => value * scale + offsetX
+  const y = (value: number) => value * scale
   const path = new Path2D()
   for (const command of commands) {
     switch (command.type) {
       case 'M':
-        path.moveTo(command.x * scale, command.y * scale)
+        path.moveTo(x(command.x), y(command.y))
         break
       case 'L':
-        path.lineTo(command.x * scale, command.y * scale)
+        path.lineTo(x(command.x), y(command.y))
         break
       case 'C':
         path.bezierCurveTo(
-          command.x1 * scale,
-          command.y1 * scale,
-          command.x2 * scale,
-          command.y2 * scale,
-          command.x * scale,
-          command.y * scale
+          x(command.x1),
+          y(command.y1),
+          x(command.x2),
+          y(command.y2),
+          x(command.x),
+          y(command.y)
         )
         break
       case 'Q':
         path.quadraticCurveTo(
-          command.x1 * scale,
-          command.y1 * scale,
-          command.x * scale,
-          command.y * scale
+          x(command.x1),
+          y(command.y1),
+          x(command.x),
+          y(command.y)
         )
         break
       case 'Z':

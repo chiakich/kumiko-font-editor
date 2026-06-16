@@ -496,10 +496,11 @@ export function CanvasWorkspace() {
       : null
     const char = referenceFontChar || fallbackChar
     const unitsPerEm = fontData?.unitsPerEm ?? 1000
+    const advanceWidth = glyph?.metrics?.width ?? unitsPerEm
 
     sceneController.sceneModel.referencePath =
       referenceFontVisible && referenceFontName && char
-        ? (buildReferenceCharPath(char, unitsPerEm) ?? undefined)
+        ? (buildReferenceCharPath(char, unitsPerEm, advanceWidth) ?? undefined)
         : undefined
     controller.requestUpdate()
   }, [
