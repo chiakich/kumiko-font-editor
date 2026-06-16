@@ -26,10 +26,11 @@ const colors = {
     haze: '#B8BDB3',
     muted: '#5F675D',
     yellow: {
-      300: '#FFF56A',
+      200: '#FFFD8F',
+      300: '#FFFB42',
       400: '#F7EB40',
-      500: '#E8D619',
-      600: '#B6A600',
+      500: '#E5E000',
+      600: '#B3AF00',
     },
     cyan: {
       300: '#6FF4FF',
@@ -44,6 +45,61 @@ const colors = {
       400: '#A8FF5C',
       500: '#6DD526',
     },
+    gray: {
+      50: '#F6F7F4',
+      100: '#E5E7E2',
+      200: '#CFD3CB',
+      300: '#B8BDB3',
+      400: '#939A90',
+      500: '#5F675D',
+      600: '#4A5148',
+      700: '#353B33',
+      800: '#232823',
+      900: '#121611',
+    },
+  },
+}
+
+const semanticTokens = {
+  colors: {
+    // surfaces
+    background: 'field.paper',
+    foreground: 'field.ink',
+    card: 'field.panel',
+    cardForeground: 'field.ink',
+    popover: 'field.panel',
+    popoverForeground: 'field.ink',
+    // brand / interactive
+    primary: 'field.yellow.400',
+    primaryForeground: 'field.ink',
+    primaryHover: 'field.yellow.300',
+    primaryActive: 'field.yellow.500',
+    secondary: 'field.panelMuted',
+    secondaryForeground: 'field.ink',
+    // quiet / supporting
+    muted: 'field.panelMuted',
+    mutedForeground: 'field.muted',
+    haze: 'field.haze',
+    // accent = the "inverted" hover state (dark chip, bright text)
+    accent: 'field.ink',
+    accentForeground: 'field.yellow.300',
+    // status
+    destructive: 'field.red.500',
+    destructiveHover: 'field.red.400',
+    destructiveForeground: 'field.panel',
+    success: 'field.green.500',
+    successForeground: 'field.ink',
+    warning: 'field.yellow.500',
+    // lines & focus
+    border: 'field.line',
+    input: 'field.line',
+    ring: 'field.cyan.400',
+    // data visualization
+    'chart.1': 'field.yellow.400',
+    'chart.2': 'field.cyan.400',
+    'chart.3': 'field.red.500',
+    'chart.4': 'field.green.500',
+    'chart.5': 'field.graphite',
   },
 }
 
@@ -57,7 +113,7 @@ const components = {
       transitionProperty: 'background, color, border-color',
       transitionDuration: '120ms',
       _focusVisible: {
-        boxShadow: '0 0 0 2px #25DAF2',
+        boxShadow: '0 0 0 2px var(--chakra-colors-ring)',
       },
       _disabled: {
         opacity: 0.42,
@@ -67,43 +123,43 @@ const components = {
     },
     variants: {
       solid: {
-        bg: 'field.yellow.400',
-        color: 'field.ink',
+        bg: 'primary',
+        color: 'primaryForeground',
         border: '1px solid transparent',
         boxShadow: 'none',
         _hover: {
-          bg: 'field.ink',
-          color: 'field.yellow.300',
+          bg: 'accent',
+          color: 'accentForeground',
           boxShadow: 'none',
           transform: 'none',
           _disabled: {
-            bg: 'field.yellow.400',
-            color: 'field.ink',
+            bg: 'primary',
+            color: 'primaryForeground',
             boxShadow: 'none',
           },
         },
         _active: {
-          bg: 'field.yellow.500',
-          color: 'field.ink',
+          bg: 'primaryActive',
+          color: 'primaryForeground',
           transform: 'none',
           boxShadow: 'none',
         },
       },
       outline: {
-        bg: 'field.panelMuted',
-        color: 'field.ink',
+        bg: 'secondary',
+        color: 'secondaryForeground',
         border: '1px solid transparent',
         _hover: {
-          bg: 'field.yellow.400',
-          color: 'field.ink',
+          bg: 'primary',
+          color: 'primaryForeground',
           borderColor: 'transparent',
         },
       },
       ghost: {
-        color: 'field.ink',
+        color: 'foreground',
         _hover: {
-          bg: 'field.panelMuted',
-          color: 'field.ink',
+          bg: 'secondary',
+          color: 'secondaryForeground',
         },
         _disabled: {
           pointerEvents: 'none',
@@ -130,16 +186,16 @@ const components = {
     variants: {
       outline: {
         field: {
-          bg: 'field.panel',
+          bg: 'card',
           borderRadius: '2px',
-          borderColor: 'field.line',
+          borderColor: 'input',
           fontFamily: monoStack,
           _hover: {
-            borderColor: 'field.ink',
+            borderColor: 'foreground',
           },
           _focusVisible: {
-            borderColor: 'field.cyan.400',
-            boxShadow: '0 0 0 1px #25DAF2',
+            borderColor: 'ring',
+            boxShadow: '0 0 0 1px var(--chakra-colors-ring)',
           },
         },
       },
@@ -152,13 +208,13 @@ const components = {
     variants: {
       outline: {
         field: {
-          bg: 'field.panel',
+          bg: 'card',
           borderRadius: '2px',
-          borderColor: 'field.line',
+          borderColor: 'input',
           fontFamily: monoStack,
           _focusVisible: {
-            borderColor: 'field.cyan.400',
-            boxShadow: '0 0 0 1px #25DAF2',
+            borderColor: 'ring',
+            boxShadow: '0 0 0 1px var(--chakra-colors-ring)',
           },
         },
       },
@@ -169,8 +225,8 @@ const components = {
       container: {
         borderRadius: '2px',
         border: '1px solid transparent',
-        bg: 'field.panelMuted',
-        color: 'field.ink',
+        bg: 'secondary',
+        color: 'secondaryForeground',
         fontFamily: monoStack,
         fontWeight: 800,
       },
@@ -180,7 +236,7 @@ const components = {
     baseStyle: {
       list: {
         borderRadius: '2px',
-        bg: 'field.panel',
+        bg: 'popover',
         p: 1,
         boxShadow: '6px 6px 0 rgba(8, 11, 13, 0.18)',
       },
@@ -188,12 +244,12 @@ const components = {
         borderRadius: '1px',
         fontWeight: 800,
         _hover: {
-          bg: 'field.graphite',
-          color: 'field.yellow.300',
+          bg: 'accent',
+          color: 'accentForeground',
         },
         _focus: {
-          bg: 'field.graphite',
-          color: 'field.yellow.300',
+          bg: 'accent',
+          color: 'accentForeground',
         },
       },
     },
@@ -208,18 +264,18 @@ const components = {
           border: 'none',
           px: 4,
           _hover: {
-            bg: 'field.panel',
-            color: 'field.ink',
+            bg: 'card',
+            color: 'foreground',
           },
           _selected: {
-            color: 'field.yellow.300',
-            bg: 'field.ink',
+            color: 'accentForeground',
+            bg: 'accent',
             borderColor: 'transparent',
           },
         },
         tablist: {
           alignItems: 'center',
-          bg: 'field.panelMuted',
+          bg: 'secondary',
           borderBottom: 'none',
           borderRadius: 'full',
           gap: 1,
@@ -231,7 +287,7 @@ const components = {
   Tooltip: {
     baseStyle: {
       color: 'white',
-      bg: 'field.ink',
+      bg: 'foreground',
       fontSize: '10px',
       fontWeight: 800,
       borderRadius: '2px',
@@ -245,6 +301,7 @@ const components = {
 const theme = extendTheme({
   config,
   colors,
+  semanticTokens,
   fonts: {
     heading: sansStack,
     body: sansStack,
@@ -274,9 +331,9 @@ const theme = extendTheme({
       },
       body: {
         minHeight: '100vh',
-        bg: 'field.paper',
-        color: 'field.ink',
-        backgroundColor: 'field.paper',
+        bg: 'background',
+        color: 'foreground',
+        backgroundColor: 'background',
         backgroundImage: 'var(--field-plus-pattern)',
         backgroundSize: '26px 26px',
         backgroundRepeat: 'repeat',
@@ -289,8 +346,8 @@ const theme = extendTheme({
         touchAction: 'none',
       },
       '::selection': {
-        bg: 'field.yellow.400',
-        color: 'field.ink',
+        bg: 'primary',
+        color: 'primaryForeground',
       },
     },
   },
