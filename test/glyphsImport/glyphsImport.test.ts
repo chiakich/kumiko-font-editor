@@ -96,10 +96,14 @@ describe('buildFontDataFromGlyphsDocument (Glyphs 2)', () => {
     expect(m01?.paths[0].nodes[0]).toMatchObject({
       x: 100,
       y: 0,
-      type: 'corner',
+      kind: 'oncurve',
+      segmentType: 'line',
     })
-    expect(m01?.paths[0].nodes[2].type).toBe('smooth')
-    expect(m01?.paths[0].nodes[3].type).toBe('offcurve')
+    expect(m01?.paths[0].nodes[2]).toMatchObject({
+      kind: 'oncurve',
+      smooth: true,
+    })
+    expect(m01?.paths[0].nodes[3]).toMatchObject({ kind: 'offcurve' })
   })
 
   it('keeps unicode as zero-padded hex', () => {
@@ -148,9 +152,13 @@ describe('buildFontDataFromGlyphsDocument (Glyphs 3)', () => {
     expect(m1?.paths[0].nodes[0]).toMatchObject({
       x: 100,
       y: 0,
-      type: 'corner',
+      kind: 'oncurve',
+      segmentType: 'line',
     })
-    expect(m1?.paths[0].nodes[2].type).toBe('smooth')
+    expect(m1?.paths[0].nodes[2]).toMatchObject({
+      kind: 'oncurve',
+      smooth: true,
+    })
     expect(m1?.metrics.width).toBe(520)
   })
 })
@@ -196,9 +204,13 @@ describe('round-trip import -> serialize -> import', () => {
     expect(m1?.paths[0].nodes[0]).toMatchObject({
       x: 100,
       y: 0,
-      type: 'corner',
+      kind: 'oncurve',
+      segmentType: 'line',
     })
-    expect(m1?.paths[0].nodes[2].type).toBe('smooth')
+    expect(m1?.paths[0].nodes[2]).toMatchObject({
+      kind: 'oncurve',
+      smooth: true,
+    })
     expect(m1?.metrics.width).toBe(520)
   })
 })

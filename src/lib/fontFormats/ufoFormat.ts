@@ -7,6 +7,12 @@ import type {
   PathData,
   PathNode,
 } from 'src/store'
+import {
+  getNodeSegmentType,
+  getNodeType,
+  isOffCurveNode,
+  isOnCurveNode,
+} from 'src/store'
 import { getGlyphLayer } from 'src/store/glyphLayer'
 import {
   designspaceDefaultLocation,
@@ -289,17 +295,11 @@ const inferOffcurveType = (
       cursor += 1
     }
 
-    // A trailing off-curve run in a closed contour wraps to the first
-    // on-curve point, so fall back to it when the forward scan finds none.
-    const nextOnCurve =
-      normalized[cursor] ??
-      normalized.find((point) => point.type && point.type !== 'offcurve')
-    const offcurveType = nextOnCurve?.type === 'qcurve' ? 'qcurve' : 'offcurve'
     while (
       index < normalized.length &&
       (!normalized[index]?.type || normalized[index]?.type === 'offcurve')
     ) {
-      normalized[index]!.type = offcurveType
+      normalized[index]!.type = 'offcurve'
       index += 1
     }
     index -= 1
@@ -515,14 +515,18 @@ const buildPathNodesFromContour = (contour: UfoGlyphContour): PathNode[] =>
     id: `n${index}`,
     x: point.x,
     y: point.y,
-    type:
-      point.type === undefined || point.type === 'offcurve'
-        ? 'offcurve'
-        : point.type === 'qcurve'
-          ? 'qcurve'
-          : point.smooth
-            ? 'smooth'
-            : 'corner',
+    ...(point.type === undefined || point.type === 'offcurve'
+      ? { kind: 'offcurve' as const }
+      : {
+          kind: 'oncurve' as const,
+          segmentType:
+            point.type === 'qcurve'
+              ? ('quadratic' as const)
+              : point.type === 'curve'
+                ? ('cubic' as const)
+                : ('line' as const),
+          smooth: point.smooth,
+        }),
   }))
 
 const isOpenContour = (contour: UfoGlyphContour) =>
@@ -533,9 +537,7 @@ const rotateContourToFirstOnCurve = (nodes: PathNode[]) => {
     return nodes
   }
 
-  const firstOnCurveIndex = nodes.findIndex(
-    (node) => node.type !== 'offcurve' && node.type !== 'qcurve'
-  )
+  const firstOnCurveIndex = nodes.findIndex((node) => isOnCurveNode(node))
 
   if (firstOnCurveIndex <= 0) {
     return nodes
@@ -547,40 +549,6 @@ const rotateContourToFirstOnCurve = (nodes: PathNode[]) => {
   ]
 }
 
-const getPreviousHandleRun = (
-  nodes: PathNode[],
-  index: number,
-  isClosed: boolean
-) => {
-  const handleIndices: number[] = []
-  let cursor = index - 1
-
-  while (cursor >= 0) {
-    const node = nodes[cursor]
-    if (!node || (node.type !== 'offcurve' && node.type !== 'qcurve')) {
-      break
-    }
-    handleIndices.unshift(cursor)
-    cursor -= 1
-  }
-
-  if (!isClosed || index !== 0) {
-    return handleIndices.map((handleIndex) => nodes[handleIndex]!)
-  }
-
-  cursor = nodes.length - 1
-  while (cursor > index) {
-    const node = nodes[cursor]
-    if (!node || (node.type !== 'offcurve' && node.type !== 'qcurve')) {
-      break
-    }
-    handleIndices.unshift(cursor)
-    cursor -= 1
-  }
-
-  return handleIndices.map((handleIndex) => nodes[handleIndex]!)
-}
-
 export const pathToUfoContour = (path: PathData): UfoGlyphContour => {
   const orderedNodes = path.closed
     ? rotateContourToFirstOnCurve(path.nodes)
@@ -588,32 +556,27 @@ export const pathToUfoContour = (path: PathData): UfoGlyphContour => {
 
   return {
     points: orderedNodes.map((node, index) => {
-      if (node.type === 'offcurve' || node.type === 'qcurve') {
+      if (isOffCurveNode(node)) {
         return {
           x: node.x,
           y: node.y,
         }
       }
 
-      const previousHandles = getPreviousHandleRun(
-        orderedNodes,
-        index,
-        path.closed
-      )
       const pointType =
         !path.closed && index === 0
           ? 'move'
-          : previousHandles.length === 0
-            ? 'line'
-            : previousHandles.some((handle) => handle.type === 'qcurve')
-              ? 'qcurve'
-              : 'curve'
+          : getNodeSegmentType(node) === 'quadratic'
+            ? 'qcurve'
+            : getNodeSegmentType(node) === 'cubic'
+              ? 'curve'
+              : 'line'
 
       return {
         x: node.x,
         y: node.y,
         type: pointType,
-        smooth: node.type === 'smooth',
+        smooth: getNodeType(node) === 'smooth',
       }
     }),
   }

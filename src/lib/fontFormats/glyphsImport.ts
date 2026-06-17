@@ -8,9 +8,9 @@ import type {
   GlyphData,
   GlyphLayerData,
   GlyphMetrics,
-  NodeType,
   PathData,
   PathNode,
+  PathSegmentType,
 } from 'src/store'
 
 // Build a multi-master FontData from a parsed .glyphs / .glyphspackage document
@@ -159,8 +159,27 @@ const buildFontAxes = (
 
 // --- node / contour parsing -------------------------------------------------
 
-const onCurveType = (smooth: boolean): NodeType =>
-  smooth ? 'smooth' : 'corner'
+const createOnCurveNode = (
+  index: number,
+  x: number,
+  y: number,
+  segmentType: PathSegmentType,
+  smooth: boolean
+): PathNode => ({
+  id: `n${index}`,
+  x,
+  y,
+  kind: 'oncurve',
+  segmentType,
+  smooth,
+})
+
+const createOffCurveNode = (index: number, x: number, y: number): PathNode => ({
+  id: `n${index}`,
+  x,
+  y,
+  kind: 'offcurve',
+})
 
 // Glyphs 2 node line: "x y TYPE [SMOOTH]".
 const parseG2Node = (raw: string, index: number): PathNode | null => {
@@ -175,13 +194,12 @@ const parseG2Node = (raw: string, index: number): PathNode | null => {
   }
   const keyword = parts[2].toUpperCase()
   const smooth = parts[3]?.toUpperCase() === 'SMOOTH'
-  const type: NodeType =
-    keyword === 'OFFCURVE'
-      ? 'offcurve'
-      : keyword === 'QCURVE'
-        ? 'qcurve'
-        : onCurveType(smooth)
-  return { id: `n${index}`, x, y, type }
+  if (keyword === 'OFFCURVE') {
+    return createOffCurveNode(index, x, y)
+  }
+  const segmentType =
+    keyword === 'QCURVE' ? 'quadratic' : keyword === 'CURVE' ? 'cubic' : 'line'
+  return createOnCurveNode(index, x, y, segmentType, smooth)
 }
 
 // Glyphs 3 node tuple: (x, y, type) where type is l/ls/c/cs/o/q/qs.
@@ -193,12 +211,15 @@ const parseG3Node = (raw: unknown, index: number): PathNode | null => {
   const x = asNumber(tuple[0])
   const y = asNumber(tuple[1])
   const code = (asString(tuple[2]) ?? 'l').toLowerCase()
-  const type: NodeType = code.startsWith('o')
-    ? 'offcurve'
-    : code.startsWith('q')
-      ? 'qcurve'
-      : onCurveType(code.endsWith('s'))
-  return { id: `n${index}`, x, y, type }
+  if (code.startsWith('o')) {
+    return createOffCurveNode(index, x, y)
+  }
+  const segmentType = code.startsWith('q')
+    ? 'quadratic'
+    : code.startsWith('c')
+      ? 'cubic'
+      : 'line'
+  return createOnCurveNode(index, x, y, segmentType, code.endsWith('s'))
 }
 
 const parseTransformString = (value: string): number[] | null => {

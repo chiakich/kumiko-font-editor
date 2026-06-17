@@ -10,7 +10,9 @@ import type {
   GlyphData,
   PathData,
   PathNode,
+  PathSegmentType,
 } from 'src/store'
+import { getNodeSegmentType, isOffCurveNode, isOnCurveNode } from 'src/store'
 import { activeLayer } from 'src/store/glyphLayer'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
 
@@ -49,13 +51,26 @@ const toUnicodeString = (unicode: number | undefined) => {
 const createNode = (
   x: number,
   y: number,
-  type: PathNode['type'],
+  kind: PathNode['kind'],
   idx: number
 ): PathNode => ({
   id: `n${idx.toString(36)}`,
   x,
   y,
-  type,
+  kind,
+})
+
+const createOnCurveNode = (
+  x: number,
+  y: number,
+  segmentType: PathSegmentType,
+  idx: number
+): PathNode => ({
+  id: `n${idx.toString(36)}`,
+  x,
+  y,
+  kind: 'oncurve',
+  segmentType,
 })
 
 const toGlyphId = (glyph: opentype.Glyph, idx: number) => {
@@ -209,8 +224,14 @@ const contourToPath = (
   // ids from the command index times a per-type multiplier collides when L/C/Q
   // commands are mixed (e.g. (index 4 as C) -> 12 vs (index 12 as L) -> 12).
   let nodeIndex = 0
-  const pushNode = (x: number, y: number, type: PathNode['type']) => {
-    nodes.push(createNode(x, y, type, contourIndex * 10000 + nodeIndex))
+  const pushOffCurve = (x: number, y: number) => {
+    nodes.push(createNode(x, y, 'offcurve', contourIndex * 10000 + nodeIndex))
+    nodeIndex += 1
+  }
+  const pushOnCurve = (x: number, y: number, segmentType: PathSegmentType) => {
+    nodes.push(
+      createOnCurveNode(x, y, segmentType, contourIndex * 10000 + nodeIndex)
+    )
     nodeIndex += 1
   }
   commands.forEach((cmd) => {
@@ -219,18 +240,18 @@ const contourToPath = (
       return
     }
     if (cmd.type === 'M' || cmd.type === 'L') {
-      pushNode(cmd.x ?? 0, cmd.y ?? 0, 'corner')
+      pushOnCurve(cmd.x ?? 0, cmd.y ?? 0, 'line')
       return
     }
     if (cmd.type === 'Q') {
-      pushNode(cmd.x1 ?? 0, cmd.y1 ?? 0, 'offcurve')
-      pushNode(cmd.x ?? 0, cmd.y ?? 0, 'qcurve')
+      pushOffCurve(cmd.x1 ?? 0, cmd.y1 ?? 0)
+      pushOnCurve(cmd.x ?? 0, cmd.y ?? 0, 'quadratic')
       return
     }
     if (cmd.type === 'C') {
-      pushNode(cmd.x1 ?? 0, cmd.y1 ?? 0, 'offcurve')
-      pushNode(cmd.x2 ?? 0, cmd.y2 ?? 0, 'offcurve')
-      pushNode(cmd.x ?? 0, cmd.y ?? 0, 'corner')
+      pushOffCurve(cmd.x1 ?? 0, cmd.y1 ?? 0)
+      pushOffCurve(cmd.x2 ?? 0, cmd.y2 ?? 0)
+      pushOnCurve(cmd.x ?? 0, cmd.y ?? 0, 'cubic')
     }
   })
 
@@ -340,33 +361,38 @@ const appendShapeToPath = (path: opentype.Path, shape: PathData) => {
   const first = nodes[0]
   path.moveTo(first.x, first.y)
 
+  const handles: PathNode[] = []
   let i = 1
   while (i < nodes.length) {
     const node = nodes[i]
 
-    if (node.type === 'offcurve') {
-      const next = nodes[i + 1]
-      if (next?.type === 'offcurve') {
-        const end = nodes[i + 2]
-        if (end) {
-          path.curveTo(node.x, node.y, next.x, next.y, end.x, end.y)
-          i += 3
-          continue
-        }
-      }
-
-      if (next) {
-        path.quadraticCurveTo(node.x, node.y, next.x, next.y)
-        i += 2
-        continue
-      }
-
-      path.lineTo(node.x, node.y)
+    if (isOffCurveNode(node)) {
+      handles.push(node)
       i += 1
       continue
     }
 
-    path.lineTo(node.x, node.y)
+    if (isOnCurveNode(node) && getNodeSegmentType(node) === 'cubic') {
+      const [handle1, handle2] = handles
+      if (handle1 && handle2) {
+        path.curveTo(handle1.x, handle1.y, handle2.x, handle2.y, node.x, node.y)
+      } else {
+        path.lineTo(node.x, node.y)
+      }
+    } else if (
+      isOnCurveNode(node) &&
+      getNodeSegmentType(node) === 'quadratic'
+    ) {
+      const [handle] = handles
+      if (handle) {
+        path.quadraticCurveTo(handle.x, handle.y, node.x, node.y)
+      } else {
+        path.lineTo(node.x, node.y)
+      }
+    } else {
+      path.lineTo(node.x, node.y)
+    }
+    handles.length = 0
     i += 1
   }
 

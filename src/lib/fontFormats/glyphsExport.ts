@@ -3,13 +3,8 @@ import {
   getComponentMatrix,
   isIdentityComponentMatrix,
 } from 'src/lib/components/componentTransform'
-import type {
-  FontData,
-  GlyphData,
-  GlyphLayerData,
-  PathData,
-  PathNode,
-} from 'src/store'
+import { getNodeSegmentType, getNodeType, isOffCurveNode } from 'src/store'
+import type { FontData, GlyphData, GlyphLayerData, PathNode } from 'src/store'
 
 // A pre-formatted OpenStep token emitted verbatim (no quoting, no re-indent).
 // Used for Glyphs 3 compact tuples like `(302,128,l)` and `pos = (250,700)`,
@@ -106,40 +101,31 @@ export const serializeOpenStepValue = (value: unknown) => {
   return chunks.join('')
 }
 
-const getOnCurveNodeKeyword = (path: PathData, index: number) => {
-  const previous = path.nodes[index - 1]
-  const previous2 = path.nodes[index - 2]
-  const hasCurveHandleBefore =
-    previous?.type === 'offcurve' ||
-    previous?.type === 'qcurve' ||
-    previous2?.type === 'offcurve' ||
-    previous2?.type === 'qcurve'
-
-  return hasCurveHandleBefore ? 'CURVE' : 'LINE'
+const getG2NodeKeyword = (node: PathNode) => {
+  const segmentType = getNodeSegmentType(node)
+  return segmentType === 'quadratic'
+    ? 'QCURVE'
+    : segmentType === 'cubic'
+      ? 'CURVE'
+      : 'LINE'
 }
 
-const serializeGlyphNode = (path: PathData, node: PathNode, index: number) => {
+const serializeGlyphNode = (node: PathNode) => {
   const coords = `${Math.round(node.x)} ${Math.round(node.y)}`
 
-  if (node.type === 'offcurve') {
+  if (isOffCurveNode(node)) {
     return `${coords} OFFCURVE`
   }
 
-  if (node.type === 'qcurve') {
-    return `${coords} QCURVE`
-  }
-
-  const keyword = getOnCurveNodeKeyword(path, index)
-  const smooth = node.type === 'smooth' ? ' SMOOTH' : ''
+  const keyword = getG2NodeKeyword(node)
+  const smooth = getNodeType(node) === 'smooth' ? ' SMOOTH' : ''
   return `${coords} ${keyword}${smooth}`
 }
 
 const serializeLayerPaths = (layer: GlyphLayerData) =>
   layer.paths.map((path) => ({
     closed: path.closed ? 1 : 0,
-    nodes: path.nodes.map((node, nodeIndex) =>
-      serializeGlyphNode(path, node, nodeIndex)
-    ),
+    nodes: path.nodes.map((node) => serializeGlyphNode(node)),
   }))
 
 const formatPointTuple = (x: number, y: number) =>
@@ -182,35 +168,42 @@ export const detectGlyphsFormatVersion = (
 ): GlyphsFormatVersion =>
   document && Number(document['.formatVersion']) >= 3 ? 3 : 2
 
-const getG3OnCurveCode = (path: PathData, node: PathNode, index: number) => {
-  const base = getOnCurveNodeKeyword(path, index) === 'CURVE' ? 'c' : 'l'
-  return node.type === 'smooth' ? `${base}s` : base
+const getG3OnCurveCode = (node: PathNode) => {
+  const segmentType = getNodeSegmentType(node)
+  const base =
+    segmentType === 'quadratic' ? 'q' : segmentType === 'cubic' ? 'c' : 'l'
+  return getNodeType(node) === 'smooth' ? `${base}s` : base
 }
 
 // Glyphs 3 node: compact tuple `(x,y,type)` with type l/ls/c/cs/o/q.
-const serializeG3Node = (path: PathData, node: PathNode, index: number) => {
+const serializeG3Node = (node: PathNode) => {
   const coords = `${Math.round(node.x)},${Math.round(node.y)}`
-  const code =
-    node.type === 'offcurve'
-      ? 'o'
-      : node.type === 'qcurve'
-        ? 'q'
-        : getG3OnCurveCode(path, node, index)
+  const code = isOffCurveNode(node) ? 'o' : getG3OnCurveCode(node)
   return new RawGlyphsValue(`(${coords},${code})`)
 }
 
 const serializeLayerShapesG3 = (layer: GlyphLayerData) => {
   const contours = layer.paths.map((path) => ({
     closed: path.closed ? 1 : 0,
-    nodes: path.nodes.map((node, nodeIndex) =>
-      serializeG3Node(path, node, nodeIndex)
-    ),
+    nodes: path.nodes.map((node) => serializeG3Node(node)),
   }))
 
   const components = layer.componentRefs.map((component) => {
     // Read pos/scale/angle straight from the ref fields. The folded matrix would
     // mix rotation into the diagonal, so it cannot be reused for `scale` here.
-    // Shear (xyScale/yxScale) has no Glyphs 3 native field and is dropped.
+    // Keep the compact native fields when possible, but fall back to the full
+    // component matrix for sheared refs so Glyphs 3 exports remain lossless.
+    const matrix = getComponentMatrix(component)
+    const hasShear =
+      (component.xyScale ?? 0) !== 0 || (component.yxScale ?? 0) !== 0
+    if (hasShear) {
+      return {
+        ref: component.glyphId,
+        transform: new RawGlyphsValue(
+          `(${matrix.a},${matrix.b},${matrix.c},${matrix.d},${Math.round(matrix.e)},${Math.round(matrix.f)})`
+        ),
+      }
+    }
     const x = Math.round(component.x)
     const y = Math.round(component.y)
     const hasScale = component.scaleX !== 1 || component.scaleY !== 1
