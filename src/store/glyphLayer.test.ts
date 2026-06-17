@@ -20,7 +20,7 @@ const master = (): GlyphLayerData => ({
     {
       id: 'p1',
       closed: true,
-      nodes: [{ id: 'n1', x: 1, y: 2, type: 'corner' }],
+      nodes: [{ id: 'n1', x: 1, y: 2, kind: 'oncurve', segmentType: 'line' }],
     },
   ],
   components: [],
@@ -39,7 +39,7 @@ const backup = (): GlyphLayerData => ({
     {
       id: 'pb',
       closed: true,
-      nodes: [{ id: 'nb', x: 7, y: 8, type: 'corner' }],
+      nodes: [{ id: 'nb', x: 7, y: 8, kind: 'oncurve', segmentType: 'line' }],
     },
   ],
   components: [],
@@ -119,7 +119,9 @@ describe('normalizeGlyphToLayers', () => {
         {
           id: 'p',
           closed: true,
-          nodes: [{ id: 'n', x: 5, y: 6, type: 'corner' }],
+          nodes: [
+            { id: 'n', x: 5, y: 6, kind: 'oncurve', segmentType: 'line' },
+          ],
         },
       ],
       components: [],

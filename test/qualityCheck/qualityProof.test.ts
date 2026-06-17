@@ -15,7 +15,8 @@ const makePath = (id: string, points: Array<[number, number]>): PathData => ({
     id: `${id}_${index}`,
     x,
     y,
-    type: 'corner',
+    kind: 'oncurve',
+    segmentType: 'line',
   })),
 })
 

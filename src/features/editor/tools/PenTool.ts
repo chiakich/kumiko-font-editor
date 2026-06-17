@@ -10,10 +10,11 @@ import {
   activeLayer,
   getGlyphLayer,
   isOffCurveNode,
-  type LegacyNodeType,
   type PathData,
   type PathNode,
 } from 'src/store'
+
+type NodeRole = 'corner' | 'smooth' | 'offcurve'
 
 type AppendTarget = {
   mode: 'append' | 'prepend'
@@ -791,13 +792,13 @@ export class PenTool extends BaseTool {
     }))
   }
 
-  private createNode(x: number, y: number, type: LegacyNodeType): PathNode {
+  private createNode(x: number, y: number, type: NodeRole): PathNode {
     const base = {
       id: this.generateId('node'),
       x: Math.round(x),
       y: Math.round(y),
     }
-    if (type === 'offcurve' || type === 'qcurve') {
+    if (type === 'offcurve') {
       return { ...base, kind: 'offcurve' }
     }
     return {

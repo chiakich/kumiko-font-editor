@@ -35,41 +35,25 @@ export const createOffCurveNode = (
 })
 
 export const isOnCurveNode = (node: PathNode | undefined): node is PathNode =>
-  node?.kind === 'oncurve' ||
-  node?.type === 'corner' ||
-  node?.type === 'smooth'
+  node?.kind === 'oncurve'
 
 export const isOffCurveNode = (node: PathNode | undefined): node is PathNode =>
-  node?.kind === 'offcurve' ||
-  node?.type === 'offcurve' ||
-  node?.type === 'qcurve'
+  node?.kind === 'offcurve'
 
 export const getNodeType = (
   node: PathNode | undefined
 ): OnCurveNodeType | undefined =>
-  isOnCurveNode(node)
-    ? node.smooth || node.type === 'smooth'
-      ? 'smooth'
-      : 'corner'
-    : undefined
+  isOnCurveNode(node) ? (node.smooth ? 'smooth' : 'corner') : undefined
 
 export const setNodeType = (node: PathNode, type: OnCurveNodeType) => {
   node.kind = 'oncurve'
   node.smooth = type === 'smooth'
-  node.type = undefined
 }
 
 export const getNodeSegmentType = (
   node: PathNode | undefined
 ): PathSegmentType | undefined =>
-  isOnCurveNode(node)
-    ? (node.segmentType ??
-      (node.type === 'qcurve'
-        ? 'quadratic'
-        : node.type === 'corner' || node.type === 'smooth'
-          ? 'line'
-          : 'line'))
-    : undefined
+  isOnCurveNode(node) ? (node.segmentType ?? 'line') : undefined
 
 export const setNodeSegmentType = (
   node: PathNode,
@@ -77,7 +61,6 @@ export const setNodeSegmentType = (
 ) => {
   node.kind = 'oncurve'
   node.segmentType = segmentType
-  node.type = undefined
 }
 
 export const isPathEndpointNode = (path: PathData, nodeId: string) => {

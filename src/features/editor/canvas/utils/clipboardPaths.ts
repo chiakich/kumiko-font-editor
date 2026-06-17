@@ -1,11 +1,7 @@
-import type {
-  GlyphData,
-  LegacyNodeType,
-  PathData,
-  PathNode,
-  PathSegmentType,
-} from 'src/store'
-import { activeLayer, isOffCurveNode } from 'src/store'
+import type { GlyphData, PathData, PathNode, PathSegmentType } from 'src/store'
+import { activeLayer } from 'src/store'
+
+type LegacyNodeType = 'corner' | 'smooth' | 'offcurve' | 'qcurve'
 
 interface ClipboardNode {
   x: number

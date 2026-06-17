@@ -14,7 +14,8 @@ const makePath = (
     id: `${id}_${index}`,
     x,
     y,
-    type: 'corner',
+    kind: 'oncurve',
+    segmentType: 'line',
   })),
 })
 

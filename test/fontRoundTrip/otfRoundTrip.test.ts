@@ -135,7 +135,13 @@ describe('OTF import → export round-trip', () => {
             Math.abs(afterNode.y - node.y),
             `${id} y@${nodeIndex}`
           ).toBeLessThanOrEqual(1)
-          expect(afterNode.type, `${id} type@${nodeIndex}`).toBe(node.type)
+          expect(afterNode.kind, `${id} kind@${nodeIndex}`).toBe(node.kind)
+          expect(afterNode.segmentType, `${id} segment@${nodeIndex}`).toBe(
+            node.segmentType
+          )
+          expect(afterNode.smooth ?? false, `${id} smooth@${nodeIndex}`).toBe(
+            node.smooth ?? false
+          )
         })
       })
     }

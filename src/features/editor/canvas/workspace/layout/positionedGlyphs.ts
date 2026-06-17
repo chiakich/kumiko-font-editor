@@ -46,7 +46,6 @@ const pathDataToVarPackedPath = (
       x: number
       y: number
       kind?: PathNode['kind']
-      type?: PathNode['type']
       segmentType?: PathNode['segmentType']
       smooth?: boolean
     }>

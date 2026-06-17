@@ -112,10 +112,10 @@ const makeSquarePath = (
   id: 'p1',
   closed: true,
   nodes: [
-    { id: 'n1', x: xMin, y: yMin, type: 'corner' },
-    { id: 'n2', x: xMax, y: yMin, type: 'corner' },
-    { id: 'n3', x: xMax, y: yMax, type: 'corner' },
-    { id: 'n4', x: xMin, y: yMax, type: 'corner' },
+    { id: 'n1', x: xMin, y: yMin, kind: 'oncurve', segmentType: 'line' },
+    { id: 'n2', x: xMax, y: yMin, kind: 'oncurve', segmentType: 'line' },
+    { id: 'n3', x: xMax, y: yMax, kind: 'oncurve', segmentType: 'line' },
+    { id: 'n4', x: xMin, y: yMax, kind: 'oncurve', segmentType: 'line' },
   ],
 })
 
@@ -467,9 +467,9 @@ describe('complexity strata', () => {
 describe('flattenContour', () => {
   it('keeps straight segments as-is', () => {
     const polygon = flattenContour([
-      { x: 0, y: 0, type: 'corner' },
-      { x: 100, y: 0, type: 'corner' },
-      { x: 100, y: 100, type: 'corner' },
+      { x: 0, y: 0, kind: 'oncurve', segmentType: 'line' },
+      { x: 100, y: 0, kind: 'oncurve', segmentType: 'line' },
+      { x: 100, y: 100, kind: 'oncurve', segmentType: 'line' },
     ])
     expect(polygon.length).toBeGreaterThanOrEqual(3)
   })

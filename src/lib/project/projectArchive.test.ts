@@ -18,7 +18,7 @@ const backupLayer = (): GlyphLayerData => ({
     {
       id: 'pb',
       closed: true,
-      nodes: [{ id: 'nb', x: 7, y: 8, type: 'corner' }],
+      nodes: [{ id: 'nb', x: 7, y: 8, kind: 'oncurve', segmentType: 'line' }],
     },
   ],
   components: [],
@@ -44,7 +44,9 @@ const layerGlyph = (): GlyphData => ({
         {
           id: 'p1',
           closed: true,
-          nodes: [{ id: 'n1', x: 1, y: 2, type: 'corner' }],
+          nodes: [
+            { id: 'n1', x: 1, y: 2, kind: 'oncurve', segmentType: 'line' },
+          ],
         },
       ],
       components: [],
@@ -67,7 +69,7 @@ const legacyGlyph = (): GlyphData =>
       {
         id: 'p',
         closed: true,
-        nodes: [{ id: 'n', x: 9, y: 4, type: 'corner' }],
+        nodes: [{ id: 'n', x: 9, y: 4, kind: 'oncurve', segmentType: 'line' }],
       },
     ],
     components: [],

@@ -7,7 +7,6 @@ import {
 } from 'src/features/editor/tools/BaseTool'
 import {
   useStore,
-  type LegacyNodeType,
   type PathData,
   type PathNode,
   type PathSegmentType,
@@ -16,6 +15,7 @@ import { fitCurve } from 'src/font/fitCurve'
 
 // Squared distance tolerance (font units) for the freehand curve fit.
 const FIT_TOLERANCE = 10
+type NodeRole = 'corner' | 'smooth' | 'offcurve'
 
 export class BrushTool extends BaseTool {
   identifier = 'brush'
@@ -59,7 +59,7 @@ export class BrushTool extends BaseTool {
     const pathId = this.generateId('path')
     const node = (
       point: { x: number; y: number },
-      type: LegacyNodeType,
+      type: NodeRole,
       segmentType: PathSegmentType = 'line'
     ): PathNode => {
       const base = {
@@ -67,7 +67,7 @@ export class BrushTool extends BaseTool {
         x: Math.round(point.x),
         y: Math.round(point.y),
       }
-      if (type === 'offcurve' || type === 'qcurve') {
+      if (type === 'offcurve') {
         return { ...base, kind: 'offcurve' }
       }
       return {

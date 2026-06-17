@@ -3,14 +3,10 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
-import {
-  useStore,
-  type LegacyNodeType,
-  type PathData,
-  type PathNode,
-} from 'src/store'
+import { useStore, type PathData, type PathNode } from 'src/store'
 
 type ShapeKind = 'rect' | 'ellipse'
+type NodeRole = 'corner' | 'smooth' | 'offcurve'
 
 export class ShapeTool extends BaseTool {
   identifier = 'shape'
@@ -180,13 +176,13 @@ export class ShapeTool extends BaseTool {
     }
   }
 
-  private createNode(x: number, y: number, type: LegacyNodeType): PathNode {
+  private createNode(x: number, y: number, type: NodeRole): PathNode {
     const base = {
       id: this.generateId('node'),
       x: Math.round(x),
       y: Math.round(y),
     }
-    if (type === 'offcurve' || type === 'qcurve') {
+    if (type === 'offcurve') {
       return { ...base, kind: 'offcurve' }
     }
     return {

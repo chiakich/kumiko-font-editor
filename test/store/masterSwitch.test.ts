@@ -17,7 +17,9 @@ const twoMasterGlyph = (): GlyphData => ({
         {
           id: 'p',
           closed: true,
-          nodes: [{ id: 'n', x: 10, y: 0, type: 'corner' }],
+          nodes: [
+            { id: 'n', x: 10, y: 0, kind: 'oncurve', segmentType: 'line' },
+          ],
         },
       ],
       components: [],
@@ -35,7 +37,9 @@ const twoMasterGlyph = (): GlyphData => ({
         {
           id: 'p',
           closed: true,
-          nodes: [{ id: 'n', x: 80, y: 0, type: 'corner' }],
+          nodes: [
+            { id: 'n', x: 80, y: 0, kind: 'oncurve', segmentType: 'line' },
+          ],
         },
       ],
       components: [],

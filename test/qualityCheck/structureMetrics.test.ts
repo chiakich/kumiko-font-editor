@@ -26,7 +26,8 @@ const makePath = (
     id: `${id}_${index}`,
     x,
     y,
-    type: 'corner',
+    kind: 'oncurve',
+    segmentType: 'line',
   })),
 })
 
@@ -122,10 +123,10 @@ describe('glyph geometry', () => {
 
   it('flattens cubic curves into sampled polylines', () => {
     const polygon = flattenContour([
-      { x: 0, y: 0, type: 'corner' },
-      { x: 0, y: 100, type: 'offcurve' },
-      { x: 100, y: 100, type: 'offcurve' },
-      { x: 100, y: 0, type: 'corner' },
+      { x: 0, y: 0, kind: 'oncurve', segmentType: 'line' },
+      { x: 0, y: 100, kind: 'offcurve' },
+      { x: 100, y: 100, kind: 'offcurve' },
+      { x: 100, y: 0, kind: 'oncurve', segmentType: 'line' },
     ])
 
     expect(polygon.length).toBeGreaterThan(4)

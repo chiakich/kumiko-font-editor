@@ -557,8 +557,20 @@ function makeGlyph(id: string, width: number): GlyphData {
         id: `${id}_path`,
         closed: true,
         nodes: [
-          { id: `${id}_node_0`, x: 0, y: 0, type: 'corner' },
-          { id: `${id}_node_1`, x: width, y: 0, type: 'corner' },
+          {
+            id: `${id}_node_0`,
+            x: 0,
+            y: 0,
+            kind: 'oncurve',
+            segmentType: 'line',
+          },
+          {
+            id: `${id}_node_1`,
+            x: width,
+            y: 0,
+            kind: 'oncurve',
+            segmentType: 'line',
+          },
         ],
       },
     ],

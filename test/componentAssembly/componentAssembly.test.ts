@@ -20,10 +20,10 @@ const makeRectPath = (
   id: 'p',
   closed: true,
   nodes: [
-    { id: 'n1', x: xMin, y: yMin, type: 'corner' },
-    { id: 'n2', x: xMax, y: yMin, type: 'corner' },
-    { id: 'n3', x: xMax, y: yMax, type: 'corner' },
-    { id: 'n4', x: xMin, y: yMax, type: 'corner' },
+    { id: 'n1', x: xMin, y: yMin, kind: 'oncurve', segmentType: 'line' },
+    { id: 'n2', x: xMax, y: yMin, kind: 'oncurve', segmentType: 'line' },
+    { id: 'n3', x: xMax, y: yMax, kind: 'oncurve', segmentType: 'line' },
+    { id: 'n4', x: xMin, y: yMax, kind: 'oncurve', segmentType: 'line' },
   ],
 })
 
@@ -102,8 +102,8 @@ describe('extractPartPaths', () => {
       id: 'stroke',
       closed: false,
       nodes: [
-        { id: 'a', x: 200, y: 0, type: 'corner' },
-        { id: 'b', x: 200, y: 700, type: 'corner' },
+        { id: 'a', x: 200, y: 0, kind: 'oncurve', segmentType: 'line' },
+        { id: 'b', x: 200, y: 700, kind: 'oncurve', segmentType: 'line' },
       ],
     }
     const selected = extractPartPaths([verticalStroke], {

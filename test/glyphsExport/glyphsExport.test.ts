@@ -37,4 +37,77 @@ describe('serializeGlyphsFileToBlob glyph matching', () => {
     expect(text).toContain('A.alt')
     expect(text).toMatch(/glyphname = A\b/)
   })
+
+  it('emits a Glyphs 3 transform matrix for sheared components', async () => {
+    const fontData = {
+      glyphs: {
+        base: {
+          ...glyph('base', 'base', null),
+          layers: {
+            M1: {
+              id: 'M1',
+              name: 'Regular',
+              associatedMasterId: 'M1',
+              paths: [],
+              components: [],
+              componentRefs: [],
+              anchors: [],
+              guidelines: [],
+              metrics: { width: 500, lsb: 0, rsb: 500 },
+            },
+          },
+          layerOrder: ['M1'],
+          activeLayerId: 'M1',
+        },
+        composite: {
+          ...glyph('composite', 'composite', null),
+          layers: {
+            M1: {
+              id: 'M1',
+              name: 'Regular',
+              associatedMasterId: 'M1',
+              paths: [],
+              components: ['base'],
+              componentRefs: [
+                {
+                  id: 'c1',
+                  glyphId: 'base',
+                  x: 20,
+                  y: 30,
+                  scaleX: 1,
+                  scaleY: 1,
+                  rotation: 0,
+                  xyScale: 0.2,
+                  yxScale: 0,
+                },
+              ],
+              anchors: [],
+              guidelines: [],
+              metrics: { width: 500, lsb: 0, rsb: 500 },
+            },
+          },
+          layerOrder: ['M1'],
+          activeLayerId: 'M1',
+        },
+      },
+    } as unknown as FontData
+    const document = {
+      '.formatVersion': 3,
+      fontMaster: [{ id: 'M1', name: 'Regular' }],
+      glyphs: [
+        { glyphname: 'base', layers: [{ layerId: 'M1', width: 500 }] },
+        { glyphname: 'composite', layers: [{ layerId: 'M1', width: 500 }] },
+      ],
+    } as unknown as GlyphsDocument
+
+    const text = await serializeGlyphsFileToBlob(
+      fontData,
+      null,
+      document
+    ).text()
+
+    expect(text).toContain('ref = base')
+    expect(text).toContain('transform = (1,0.2,0,1,20,30)')
+    expect(text).not.toContain('scale = (1,1)')
+  })
 })

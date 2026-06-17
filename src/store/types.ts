@@ -14,9 +14,8 @@ import type {
   SpacingBehaviorDraft,
 } from 'src/lib/openTypeFeatures'
 
-export type LegacyNodeType = 'corner' | 'smooth' | 'offcurve' | 'qcurve'
-export type NodeType = LegacyNodeType
 export type OnCurveNodeType = 'corner' | 'smooth'
+export type NodeType = OnCurveNodeType
 export type PathNodeKind = 'oncurve' | 'offcurve'
 export type PathSegmentType = 'line' | 'cubic' | 'quadratic'
 
@@ -29,8 +28,6 @@ export interface PathNode {
   // handles and leave this unset.
   segmentType?: PathSegmentType
   smooth?: boolean
-  /** @deprecated Temporary migration bridge; use kind/segmentType/smooth. */
-  type?: LegacyNodeType
 }
 
 export interface PathData {

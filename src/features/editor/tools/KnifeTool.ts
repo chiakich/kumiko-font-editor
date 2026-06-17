@@ -8,10 +8,11 @@ import {
   useStore,
   activeLayer,
   isOnCurveNode,
-  type LegacyNodeType,
   type PathData,
   type PathNode,
 } from 'src/store'
+
+type NodeRole = 'corner' | 'smooth' | 'offcurve'
 
 interface CutCandidate {
   pathId: string
@@ -410,13 +411,13 @@ export class KnifeTool extends BaseTool {
     return [nodes[0], inserted, nodes.at(-1)!]
   }
 
-  private createNode(x: number, y: number, type: LegacyNodeType): PathNode {
+  private createNode(x: number, y: number, type: NodeRole): PathNode {
     const base = {
       id: this.generateId('node'),
       x: Math.round(x),
       y: Math.round(y),
     }
-    if (type === 'offcurve' || type === 'qcurve') {
+    if (type === 'offcurve') {
       return { ...base, kind: 'offcurve' }
     }
     return {

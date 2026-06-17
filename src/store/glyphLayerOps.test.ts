@@ -24,7 +24,9 @@ const makeGlyph = (): GlyphData => ({
         {
           id: 'p1',
           closed: true,
-          nodes: [{ id: 'n1', x: 1, y: 2, type: 'corner' }],
+          nodes: [
+            { id: 'n1', x: 1, y: 2, kind: 'oncurve', segmentType: 'line' },
+          ],
         },
       ],
       components: [],
@@ -57,7 +59,9 @@ describe('glyphLayerOps', () => {
       {
         id: 'p1',
         closed: true,
-        nodes: [{ id: 'n1', x: 99, y: 2, type: 'corner' }],
+        nodes: [
+          { id: 'n1', x: 99, y: 2, kind: 'oncurve', segmentType: 'line' },
+        ],
       },
     ]
     expect(glyph.layers!['Backup 1'].paths[0].nodes[0].x).toBe(1)
@@ -138,7 +142,9 @@ describe('glyphLayerOps', () => {
       {
         id: 'p9',
         closed: true,
-        nodes: [{ id: 'n9', x: 50, y: 60, type: 'corner' }],
+        nodes: [
+          { id: 'n9', x: 50, y: 60, kind: 'oncurve', segmentType: 'line' },
+        ],
       },
     ]
     const result = promoteBackupToMaster(glyph, 'Backup 1', 'Previous')

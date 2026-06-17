@@ -161,6 +161,30 @@ describe('buildFontDataFromGlyphsDocument (Glyphs 3)', () => {
     })
     expect(m1?.metrics.width).toBe(520)
   })
+
+  it('preserves quadratic q/qs node semantics', () => {
+    const quadratic = buildFontDataFromGlyphsDocument(
+      parse(`{
+.formatVersion = 3;
+fontMaster = ( { id = "M1"; name = Regular; } );
+glyphs = (
+{
+glyphname = quad;
+layers = (
+{ layerId = "M1"; width = 500; shapes = ( { closed = 0; nodes = ( (0,0,l), (50,100,o), (100,0,qs) ); } ); }
+);
+}
+);
+}`)
+    )
+    const layer = getGlyphLayer(quadratic.glyphs.quad, 'M1')
+    expect(layer?.paths[0].nodes[1]).toMatchObject({ kind: 'offcurve' })
+    expect(layer?.paths[0].nodes[2]).toMatchObject({
+      kind: 'oncurve',
+      segmentType: 'quadratic',
+      smooth: true,
+    })
+  })
 })
 
 describe('round-trip import -> serialize -> import', () => {
