@@ -45,9 +45,9 @@ fontra（`classes.py`）的 `VariableGlyph` 無 top-level 內容，`layers: dict
 
 ### 缺口
 
-- **glyph 模型未對齊 fontra**：top-level 內容 + layers 快照雙存（見上節），需先遷移成 layers-as-truth（M1）。
-- **`.glyphs` / `.glyphspackage` 多 master 被壓平**：`fontMaster[]` 僅原樣存入 `projectMetadata.fontMasters` 供 round-trip 匯出（`glyphsDocument.ts`、`glyphsExport.ts`），未轉成 `FontData.sources` / `axes`，每字只載第一個 master 的輪廓。
-- **無 `.designspace` 支援**：`src/` 無任何 designspace 解析，多 `.ufo` 無法以多 master 形式載入（目前 `UfoProjectRecord.ufoIds[]` 僅載 `selectedUfoId` 一個）。
+- **glyph 模型未對齊 fontra**：（M1 已解決）已遷移成 layers-as-truth。
+- **`.glyphs` / `.glyphspackage` 根本沒有匯入**：匯入 UI 只接受 `.ufo,.ttf,.otf,.woff,.woff2`，`importLocalProjectFiles` 只有 binary + UFO 兩條路；src 內**無 glyphs 輪廓/節點解析**，`projectGlyphsDocument` 從未被設值。既有 `glyphsExport` / `glyphsPatchExport` 僅是匯出 / patch round-trip 骨架，未觸發。先前以為「glyphs 多 master 被壓平匯入」是誤判——沒有 glyphs 匯入可言。
+- **無 `.designspace` 支援**：`src/` 無任何 designspace 解析，多 `.ufo` 無法以多 master 形式載入（目前 `UfoProjectRecord.ufoIds[]` 僅載 `selectedUfoId` 一個）。這是**唯一務實的多 master 資料來源**（建在已可用的 UFO importer 上）。
 - **渲染只畫單一 layer**：Canvas 取作用中 layer，未依 `activeMasterId` 解析。
 - **無 master 切換 UI**：overview / editor 皆無 master 切換器。
 
@@ -55,9 +55,9 @@ fontra（`classes.py`）的 `VariableGlyph` 無 top-level 內容，`layers: dict
 
 | 來源 | 多 master 載體 | 目前 | 目標 |
 | ---- | -------------- | ---- | ---- |
-| `.glyphs` / `.glyphspackage` | 內建 `fontMaster` + 每字多 layer | 壓平成單 master | 展開為 `sources` + 每字 master layers |
-| `.designspace` + 多 `.ufo` | designspace XML + N 個 ufo | 不支援 | 解析 designspace → `axes`/`sources`/`instances`，逐 source 載入 |
+| `.designspace` + 多 `.ufo` | designspace XML + N 個 ufo | 不支援 | 解析 designspace → `axes`/`sources`/`instances`，逐 source 載入成多 master layers |
 | 單一 `.ufo` | 一個檔＝一個 master | 正常（單一 source） | 維持 |
+| `.glyphs` / `.glyphspackage` | 內建 `fontMaster` + 每字多 layer | **無匯入**（僅匯出骨架） | 之後獨立實作完整 importer（OpenStep 輪廓/節點/master 解析） |
 
 > UFO 格式本身一個 `.ufo` 即一個 master；UFO3 的 layer 是 background/替代字形用途，**不可**作為插值 master。多 master 一律走 `.designspace` + 多 `.ufo`。
 
@@ -130,38 +130,36 @@ master 名稱無固定字串（Glyphs 的 `customName`、designspace 的 source 
 - 新增 `getActiveLayer(glyph, activeMasterId)`；overview GlyphCard 改走之。
 - 單 master 行為不變。
 
-### M1 — glyph 模型遷移到 layers-as-truth（基礎重構）
+### M1 — glyph 模型遷移到 layers-as-truth（基礎重構，已完成）
 
-對齊 fontra，消除 hot/layers desync。單 master、使用者無感的純內部重構，以**單一原子 commit** 一刀切（不可 hot 與 layers 並存）。
+對齊 fontra，消除 hot/layers desync。單 master、使用者無感的純內部重構，以單一原子 commit 一刀切。
 
-- `GlyphData` 移除 top-level 內容欄位（`paths` / `components` / `componentRefs` / `anchors` / `guidelines` / `metrics`）。
-- active-layer accessor：內容只存 `glyph.layers[activeLayerId]`；~18 處寫入導向該 layer 物件，直接讀 top-level 的 ~30 處改走 accessor（compiler 引導）。
-- 刪除 hot↔layers 對帳：`getGlyphTopLevelLayer` / `hydrateProjectFontData` / `overlayHotFontData` / `syncGlyphTopLevelFromLayer`（~150 行）。
-- persistence：`syncHotFontDataToUfoRecords` 改讀 active layer；import 建構（UFO / glyphs / binary / `addGlyphs`）改寫進 `layers[activeLayerId]`。
-- 測試與 UFO round-trip 驗證當安全網。
+- `GlyphData` 移除 top-level 內容欄位；內容只存 `glyph.layers[activeLayerId]`。
+- accessor：`activeLayer` / `ensureActiveLayer` / `getGlyphLayer` / `withActiveLayer` / `setGlyphActiveLayer` / `normalizeGlyphToLayers`。
+- 刪除 hot↔layers 對帳；persistence 改讀/寫 active layer；舊資料於 `ingestProjectData` 自動遷移。
 
-### M2 — `.glyphs` / `.glyphspackage` 多 master 展開
+### M2 — `.designspace` + 多 `.ufo` 匯入（多 master 資料來源）
 
-- `fontMaster[]` → `sources`、`Axes` → `axes`、每字 layers → master layers（`type:'master'` + `associatedMasterId`）。
-- 遷移後此步只是多塞 layers / sources / axes，無 top-level 包袱。
+> 修正：原規劃的「`.glyphs` 多 master 展開」前提不成立（glyphs 無匯入）。改以 designspace 為多 master 的第一個資料來源，建在已可用的 UFO importer 上。
+
+- 解析 `.designspace` XML → `axes`（`FontAxes`）、`sources`（每個指向一個 `.ufo`，帶 `location` / `name`）、`instances`（→ `exportInstances`）。
+- 逐 source 載入其 `.ufo` 字形，合併成「一個 `GlyphData`、每 source 一個 master layer」（`type:'master'`、`associatedMasterId`=source id）；`activeLayerId`=default source。
+- persistence：`ufoIds[]` 對映成多 source；匯入 UI 接受 `.designspace`。
+- 測試：designspace 解析 + 多 master 合併的 characterization。
 
 ### M3 — Master 切換 UI
 
 - 共用切換器元件（pills / dropdown 自動切換、sparse 標示）。
 - overview 標題右側、editor canvas 上方各掛一份，接 `setActiveMasterId`。
 
-### M4 — `.designspace` + 多 `.ufo`
+### M4 — 匯出與 Master / sparse layer 管理
 
-- designspace XML 讀寫；ufoPersistence 的 `ufoIds[]` 對映成 sources。
 - UFO 多 master 匯出 designspace + 多 ufo。
-
-### M5 — Master 與 sparse layer 管理
-
-- sparse layer 建立（空白 / 自預設複製）。
-- master 新增 / 刪除 / 改名管理 UI（對應 fontra designspace navigation 子集）。
+- sparse layer 建立（空白 / 自預設複製）；master 新增 / 刪除 / 改名管理 UI。
 
 ### 之後
 
+- `.glyphs` / `.glyphspackage` 完整 importer（OpenStep 輪廓/節點/master 解析 → FontData）——獨立功能。
 - 接 variable-fonts.md 的插值預覽 Phase 1→4（在離散 master 之間於任意 location 插值）。
 
 ## 待決策
@@ -169,7 +167,8 @@ master 名稱無固定字串（Glyphs 的 `customName`、designspace 的 source 
 - **`activeMasterId` 與 `selectedLayerId` 的收斂**：是否將 backup 覆寫完全併入 `selectedLayerId`，或另設獨立旗標。
 - **sparse layer 預設內容**：空白或自 default master 複製輪廓。
 - **離散軸**：italic 等離散軸於 `FontAxis` 是否加 `values`（與 variable-fonts.md 共用此決策）。
-- **`.glyphs` 舊版相容**：無 `Axes` 區塊的舊檔，是否自 master 的 `weightValue` / `widthValue` / `customParameters` 推回 axes。
+- **designspace 解析範圍**：avar（`<map>`）、`<instance>`、discrete axis（`values`）初期支援到哪。
+- **`.glyphs` importer（之後）**：無 `Axes` 區塊的舊檔，自 master 的 `weightValue` / `widthValue` / `customParameters` 推回 axes。
 - **editLocation 的表示**：用原始設計空間座標或正規化座標儲存；以及 `activeMasterId` 反查 master 時 location 比對的容差（floating point 相等）。
 
 ## fontra 對應檔案（參考來源）
