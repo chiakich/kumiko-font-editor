@@ -4,7 +4,7 @@ import {
   buildGlyphPreviewData,
   getGlyphDisplayCharacter,
 } from 'src/lib/glyph/glyphOverview'
-import { useStore, type GlyphData } from 'src/store'
+import { useStore, getActiveLayer, type GlyphData } from 'src/store'
 
 const GlyphPreview = memo(function GlyphPreview({
   glyph,
@@ -14,9 +14,27 @@ const GlyphPreview = memo(function GlyphPreview({
   glyphMap: Record<string, GlyphData>
 }) {
   const unitsPerEm = useStore((state) => state.fontData?.unitsPerEm)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  // Render the active master's layer. null master → glyph's own active layer (no
+  // change); a selected master with no layer here → sparse, render empty.
+  const renderGlyph = useMemo(() => {
+    if (!activeMasterId) {
+      return glyph
+    }
+    const layer = getActiveLayer(glyph, activeMasterId)
+    if (!layer) {
+      return { ...glyph, paths: [], componentRefs: [], components: [] }
+    }
+    return {
+      ...glyph,
+      paths: layer.paths,
+      componentRefs: layer.componentRefs,
+      components: layer.components,
+    }
+  }, [glyph, activeMasterId])
   const preview = useMemo(
-    () => buildGlyphPreviewData(glyph, glyphMap, unitsPerEm),
-    [glyph, glyphMap, unitsPerEm]
+    () => buildGlyphPreviewData(renderGlyph, glyphMap, unitsPerEm),
+    [renderGlyph, glyphMap, unitsPerEm]
   )
   const displayCharacter =
     getGlyphDisplayCharacter(glyph) ?? glyph.name ?? glyph

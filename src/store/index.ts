@@ -10,7 +10,7 @@ import { buildPathActions } from 'src/store/actions/pathActions'
 import { buildProjectActions } from 'src/store/actions/projectActions'
 import { buildBehaviorActions } from 'src/store/actions/behaviorActions'
 
-export { getGlyphLayer } from 'src/store/glyphLayer'
+export { getGlyphLayer, getActiveLayer } from 'src/store/glyphLayer'
 export {
   getEffectiveNodeType,
   isPathEndpointNode,
@@ -68,6 +68,8 @@ const initialState = {
   filteredGlyphList: [],
   selectedGlyphId: null,
   selectedLayerId: 'default',
+  activeMasterId: null,
+  editLocation: {},
   selectedNodeIds: [],
   selectedSegment: null,
   referenceFontName: null,

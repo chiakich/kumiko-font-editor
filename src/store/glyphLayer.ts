@@ -3,6 +3,7 @@ import {
   getHotGlyphLayerSnapshot,
   getGlyphLayerSnapshot,
 } from 'src/lib/project/projectArchive'
+import { listGlyphLayers } from 'src/store/glyphLayerOps'
 import type { GlyphData } from 'src/store/types'
 
 export const getGlyphLayer = (
@@ -32,6 +33,28 @@ export const getGlyphLayer = (
   }
 
   return getGlyphLayerSnapshot(glyph, requestedLayerId)
+}
+
+// Resolve the glyph's layer for the font-wide active master. null activeMasterId
+// means "no master selected" → the glyph's own active (hot) master layer. A
+// non-null id with no matching master layer returns null (sparse: this glyph has
+// no layer for that master). Multi-master storage lands in M1; today every glyph
+// has a single master so a match falls back through to the hot content.
+export const getActiveLayer = (
+  glyph: GlyphData | undefined,
+  activeMasterId: string | null | undefined
+) => {
+  if (!glyph) {
+    return null
+  }
+  if (!activeMasterId) {
+    return getGlyphLayer(glyph, null)
+  }
+  const master = listGlyphLayers(glyph).find(
+    (layer) =>
+      layer.type === 'master' && layer.associatedMasterId === activeMasterId
+  )
+  return master ?? null
 }
 
 export const syncGlyphTopLevelFromLayer = (

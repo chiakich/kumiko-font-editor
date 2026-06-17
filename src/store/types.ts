@@ -287,6 +287,11 @@ export interface GlobalState {
   filteredGlyphList: GlyphData[]
   selectedGlyphId: string | null
   selectedLayerId: string | null
+  // Font-wide active master (a FontSource.id); null means none selected.
+  activeMasterId: string | null
+  // Current position in design space. master switch snaps it to source.location;
+  // variable font (Phase 1) generalises it to any continuous location.
+  editLocation: Record<string, number>
   // Reference font for tracing (loaded font held in lib/referenceFont; here we
   // keep only serialisable UI state). referenceFontChar overrides the character
   // shown; when null the editing glyph's own character is used.
@@ -361,6 +366,7 @@ export interface GlobalState {
   setSelectedNodeIds: (ids: string[]) => void
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void
+  setActiveMasterId: (id: string | null) => void
   createBackupLayer: (glyphId: string) => void
   duplicateLayer: (glyphId: string, layerId: string) => void
   deleteBackupLayer: (glyphId: string, layerId: string) => void

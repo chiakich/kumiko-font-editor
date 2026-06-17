@@ -45,6 +45,15 @@ export const buildUiActions = (set: ImmerSet) => ({
       }
     }),
 
+  // Master switch is the discrete special case of setting editLocation: snap the
+  // current design-space position to the source's location.
+  setActiveMasterId: (id: string | null) =>
+    set((state) => {
+      state.activeMasterId = id
+      const source = id ? state.fontData?.sources?.[id] : null
+      state.editLocation = source ? { ...source.location } : {}
+    }),
+
   setReferenceFontName: (name: string | null) =>
     set((state) => {
       state.referenceFontName = name
