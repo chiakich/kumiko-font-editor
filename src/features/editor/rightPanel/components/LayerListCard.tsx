@@ -114,8 +114,8 @@ export function LayerListCard({
         {layers.map((layer) => {
           const isMaster = layer.type !== 'backup'
           const isActive = layer.id === activeLayerId
-          const visible = isMaster
-            ? !(isActive && hideActiveLayer)
+          const visible = isActive
+            ? !hideActiveLayer
             : visibleBackdropLayerIds.includes(layer.id)
           const rowBg = isActive ? 'blackAlpha.100' : 'transparent'
           const rowBorderColor = isActive ? 'field.yellow.400' : 'transparent'
@@ -135,9 +135,8 @@ export function LayerListCard({
             >
               <EyeToggle
                 visible={visible}
-                isDisabled={isMaster && !isActive}
                 onToggle={() =>
-                  isMaster
+                  isActive
                     ? toggleActiveLayerHidden()
                     : toggleBackdropLayer(layer.id)
                 }

@@ -36,8 +36,8 @@ registerVisualizationLayerDefinition({
   name: 'Layer Backdrop',
   selectionFunc: glyphSelector('editing'),
   zIndex: 120,
-  colors: { strokeColor: '#80808066' },
-  colorsDarkMode: { strokeColor: '#b0b0b066' },
+  colors: { fillColor: '#7cc7ff26', strokeColor: '#0b4f8a' },
+  colorsDarkMode: { fillColor: '#58a6ff2e', strokeColor: '#79c0ff' },
   screenParameters: { strokeWidth: 1 },
   draw: (
     canvasController: CanvasController,
@@ -47,10 +47,12 @@ registerVisualizationLayerDefinition({
   ) => {
     if (!model.backdropPaths?.length) return
     const context = canvasController.context
+    context.fillStyle = parameters.fillColor as string
     context.strokeStyle = parameters.strokeColor as string
     context.lineWidth =
       (parameters.strokeWidth as number) / canvasController.magnification
     for (const path of model.backdropPaths) {
+      context.fill(path)
       context.stroke(path)
     }
   },

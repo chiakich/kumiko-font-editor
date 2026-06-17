@@ -307,8 +307,9 @@ export interface GlobalState {
   referenceFontVisible: boolean
   referenceFontChar: string | null
   // Non-active glyph layers shown as a faint backdrop behind the editing layer.
+  // This can include master layers when a backup layer is selected.
   visibleBackdropLayerIds: string[]
-  // Hide the active (master) layer's outline, e.g. to trace from a backdrop.
+  // Hide the active editing layer's outline, e.g. to trace from a backdrop.
   hideActiveLayer: boolean
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
