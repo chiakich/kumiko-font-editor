@@ -23,16 +23,27 @@ Use three format-independent stores:
 | ----------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
 | `kumiko_projects` | `projectId`            | Project metadata, font-level data, source hints, and timestamps.                         |
 | `kumiko_glyphs`   | `[projectId, glyphId]` | One canonical glyph record containing all layers for that glyph.                         |
-| `kumiko_ui_state` | `[projectId, key]`     | Editor UI state, persistence queue state, selected glyph/layer, and non-font user state. |
+| `kumiko_ui_state` | `[projectId, key]`     | Editor UI state, selected glyph/layer, and non-font user state. The persistence queue is runtime-only and is not stored here. |
 
 Recommended `kumiko_glyphs` indexes:
 
 - `byProject`: `projectId`
-- `byProjectExportDirty`: `[projectId, exportDirtyIndex]`
-- `byProjectSyncDirty`: `[projectId, syncDirtyIndex]`
-- `byProjectDeleted`: `[projectId, deletedIndex]`
+- `byProjectExportDirty`: `[projectId, exportDirty]`
+- `byProjectSyncDirty`: `[projectId, syncDirty]`
+- `byProjectDeleted`: `[projectId, deleted]`
 - `byUnicode`: `unicodes`, `multiEntry: true`
 - `byDisplayName`: `[projectId, displayName]`
+
+Dirty and deletion flags are stored as a single `0 | 1` numeric field
+(`exportDirty`, `syncDirty`, `deleted`) rather than a boolean plus a mirrored
+index field. IndexedDB cannot index booleans, so the numeric value is both the
+stored flag and the index key; helpers derive a boolean at read time. `deleted`
+also doubles as the discriminated-union tag separating live records (`0`) from
+tombstones (`1`).
+
+`byDisplayName` only indexes records whose `displayName` is set; glyphs without
+one are absent from that index. Lookup by canonical name uses the
+`[projectId, glyphId]` primary key instead.
 
 ## Project Record
 
@@ -72,10 +83,8 @@ interface KumikoProjectRecord {
   settings?: FontProjectSettings
   lineMetricsHorizontalLayout?: FontData['lineMetricsHorizontalLayout']
   glyphOrder: string[]
-  exportDirty: boolean
-  exportDirtyIndex: 0 | 1
-  syncDirty: boolean
-  syncDirtyIndex: 0 | 1
+  exportDirty: 0 | 1
+  syncDirty: 0 | 1
 
   sourceData?: KumikoProjectSourceData
 }
@@ -86,6 +95,12 @@ field yet. It may contain original names, ids, ordering, custom parameters, UFO
 layer directory names, Glyphs package names, or Git sync hashes. It must not
 contain raw `.glyphs`, `.glif`, `paths`, `shapes`, `contours`, or components as
 a second copy of geometry.
+
+`glyphOrder` lives in the project record and is rewritten whenever glyphs are
+added, renamed, deleted, or reordered. At CJK scale this is the one remaining
+large array write in an otherwise per-glyph store. It is acceptable (a few
+hundred KB) but is the first thing to revisit if project-record writes become
+hot in profiling.
 
 ```ts
 interface KumikoProjectSourceData {
@@ -125,8 +140,10 @@ shape. It stores one glyph and all of its master/backup/background layers.
 
 `glyphId` is the stable canonical glyph name. It is the key used by
 `glyphOrder`, components, UFO `contents.plist`, and Glyphs `glyphname` export.
-It must not be replaced by a CJK character label or any UI-only nice name.
-`displayName` is optional presentation text for the editor UI.
+It must not be replaced by a CJK character label or any UI-only display string.
+`displayName` is an optional user override only: it is `null` after import, and
+the UI derives the display character from `unicodes`. No exporter reads it. See
+[Canonical Model Ownership](#canonical-model-ownership).
 
 ```ts
 interface KumikoGlyphRecord {
@@ -149,18 +166,18 @@ interface KumikoGlyphRecord {
   layers: Record<string, KumikoGlyphLayerRecord>
   customData?: Record<string, unknown>
   sourceData?: KumikoGlyphSourceData
-  deleted: false
-  deletedIndex: 0
-  exportDirty: boolean
-  exportDirtyIndex: 0 | 1
-  syncDirty: boolean
-  syncDirtyIndex: 0 | 1
+  deleted: 0
+  exportDirty: 0 | 1
+  syncDirty: 0 | 1
   updatedAt: number
 }
 ```
 
-`unicodes` is an array even though the current editor often uses one codepoint;
-UFO and Glyphs can both carry multiple unicode values.
+`unicodes` is an array even though the editor UI often shows one codepoint; UFO
+and Glyphs can both carry multiple unicode values. Each entry is normalized to
+uppercase hex, zero-padded to at least four digits, with no `U+` prefix
+(`0041`, `4E00`, `1F600`). All importers share one normalization helper so the
+`byUnicode` index and cross-format lookups stay consistent.
 
 Deleted glyphs should remain as tombstones until export/sync has reconciled the
 deletion. Otherwise autosave would remove the record and later code would not
@@ -175,16 +192,21 @@ interface KumikoGlyphTombstoneRecord {
   displayName?: string | null
   unicodes: string[]
   sourceData?: KumikoGlyphSourceData
-  deleted: true
-  deletedIndex: 1
+  deleted: 1
   deletedAt: number
-  exportDirty: boolean
-  exportDirtyIndex: 0 | 1
-  syncDirty: boolean
-  syncDirtyIndex: 0 | 1
+  exportDirty: 0 | 1
+  syncDirty: 0 | 1
   updatedAt: number
 }
 ```
+
+Tombstone retention depends on whether the project has an external target:
+
+- If the project has no export target and no Git/source sync target, glyph
+  deletion is a hard delete with no tombstone — there is nothing to reconcile.
+- If the project has an export or sync target, deletion writes a tombstone that
+  survives until that target is reconciled (the external `.glif` / Glyphs glyph
+  file / remote blob has been removed), after which the tombstone is purged.
 
 ## Layer Record
 
@@ -211,10 +233,16 @@ interface KumikoGlyphLayerRecord {
   visible?: boolean
   locked?: boolean
   background?: KumikoGlyphLayerContent | null
+  image?: KumikoGlyphImage | null
   customData?: Record<string, unknown>
   sourceData?: KumikoLayerSourceData
 }
 ```
+
+Background layers and layer images are canonical fields, not source blobs.
+Glyphs background layers map onto the `background` content (or a layer whose
+`type` is `background`), and both Glyphs and UFO images map onto `image`. They
+must not be stored as opaque entries under `sourceData`.
 
 The existing path/node/component/anchor/guideline records should also allow
 `name`, `identifier`, `color`, and `customData` where the source format supports
@@ -252,6 +280,69 @@ If a source format has a vector-like feature that Kumiko does not model yet,
 add it to the canonical model first. For example, Glyphs background layers and
 UFO images should become canonical layer/background/image fields rather than an
 opaque raw source blob.
+
+## Canonical Model Ownership
+
+Kumiko uses option B: `FontData` is the canonical glyph model, not a lossy
+runtime projection of it. The editor's runtime types carry every field needed
+for lossless import/export. `KumikoGlyphRecord` is a per-glyph slice of that
+same data plus storage metadata (dirty/sync/deleted flags, timestamps).
+
+Consequences:
+
+- The element types in `src/store/types.ts` are extended to hold all lossless
+  fields. `GlyphData` gains `unicodes: string[]`, `note`, the metrics keys,
+  `color`, `customData`, and `sourceData`. `GlyphLayerData` gains
+  `verticalMetrics`, `background`, `image`, `color`, `visible`, `locked`, and
+  `sourceData`. Path, component, anchor, and guideline records gain
+  `identifier`, `color`, `customData`, and `sourceData`.
+- `kumikoFontDataAdapter` is a lossless structural transform: slice a glyph out
+  of `FontData`, or merge records back into `FontData`. Because both shapes hold
+  the same field set, a `FontData → record → FontData` round trip never drops
+  data, and there is no read-modify-write merge of "fields FontData cannot
+  model" — it models all of them.
+- Runtime types are larger than canvas code strictly needs. That is the accepted
+  cost of option B: canvas/editor code ignores fields it does not use, rather
+  than the model losing them.
+
+### Glyph Identity and the Three Names
+
+A glyph carries three distinct names; they must not be collapsed:
+
+| Name                  | Field         | Role                                                                                       | Persisted        |
+| --------------------- | ------------- | ------------------------------------------------------------------------------------------ | ---------------- |
+| glyphname (nice name) | `glyphId`     | Portable identity. Keys `glyphOrder`, component refs, UFO `contents.plist`, Glyphs glyphname. | Yes (record key) |
+| production name       | `production`  | PostScript name for the binary `post` table only.                                          | Yes, optional    |
+| display character     | —             | UI label such as `←`, derived from `unicodes` at render time.                              | No               |
+
+Rules:
+
+- `glyphId` is the glyphname and the canonical identity. Kumiko does not use a
+  separate internal surrogate id. Font formats and GitHub sync already treat the
+  glyphname as the shared identity (component refs and `.glif` filenames use it),
+  so a local surrogate would only add an indirection layer that breaks down
+  across collaborators.
+- Exporters always write `glyphId` as the target glyphname and never write
+  `displayName`. The previous bug was Glyphs export writing the computed display
+  character as the glyphname, producing invalid names like `←` on a UFO→Glyphs
+  round trip.
+- `displayName` is a pure optional user override. It is `null` after import; the
+  UI derives the display character from `unicodes`. Because no exporter reads it,
+  display-name divergence can never corrupt export output.
+
+### Rename
+
+Renaming a glyph changes its glyphname, which is the record key, so it reuses the
+tombstone machinery instead of being a special case:
+
+1. Write a tombstone for the old `glyphId` so the old `.glif` / Glyphs glyph
+   file / remote blob is removed on the next export or sync.
+2. Write a new record under the new `glyphId`.
+3. Update every reference to the old name: `componentRefs.glyphId`,
+   `glyphOrder`, kerning pairs/groups, and metric keys.
+
+Rename is rare and bounded. Git detects the delete+add as a rename by content
+similarity, so source-format history stays clean.
 
 ## Import Pipeline
 
@@ -293,14 +384,17 @@ view assembled from that source of truth.
 | Size strategy | No duplicated vectors; glyph records are independently writable. | May hold loaded glyphs for the active session, but should not be persisted wholesale. |
 | Undo/redo     | Not stored as font data history.                                 | Zundo tracks runtime `fontData` changes for the session.                              |
 
-This difference is intentional. `FontData` is ergonomically shaped for the
-editor: canvas tools, overview filtering, component lookup, feature validation,
-and export code can read it without IndexedDB round trips. `KumikoProjectRecord`
-and `KumikoGlyphRecord` are shaped for storage: compact project metadata,
-independent glyph writes, per-glyph dirty/sync indexes, and lazy loading for CJK
-scale.
+The two are the same canonical data at different granularities, not two
+different models. `FontData` is one object graph shaped for the editor: canvas
+tools, overview filtering, component lookup, feature validation, and export code
+read it without IndexedDB round trips. `KumikoProjectRecord` and
+`KumikoGlyphRecord` are the same fields sliced for storage: compact project
+metadata, independent per-glyph writes, per-glyph dirty/sync flags, and lazy
+loading for CJK scale.
 
-The bridge between the two shapes is `kumikoFontDataAdapter`:
+The bridge between the two granularities is `kumikoFontDataAdapter`. Because both
+hold the same field set (option B), these are lossless structural transforms,
+not lossy projections:
 
 - `fontDataToKumikoProjectRecord(...)`
 - `fontDataToKumikoGlyphRecords(...)`
@@ -340,6 +434,20 @@ In the target model, split those meanings:
 | `exportDirty`        | Persisted/indexed          | Canonical local project/glyph differs from the last exported target state. |
 | `syncDirty`          | Persisted/indexed          | Canonical local project/glyph differs from the last Git/source sync point. |
 | `deleted`            | Persisted until reconciled | Canonical tombstones needed for export/sync deletion.                      |
+
+Initial flag state after import depends on the source:
+
+| Import source                        | `exportDirty` | `syncDirty`              |
+| ------------------------------------ | ------------- | ----------------------- |
+| Local file (`.glyphs`, UFO, binary)  | `0`           | `0` (no sync target)    |
+| GitHub                               | `0`           | `0` (matches the commit) |
+
+A freshly imported project equals the source it came from, so nothing is dirty
+until the user edits. `exportDirty` is `0` after import because the records match
+their source; the first export is a full export regardless of flags, and
+`exportDirty` only gates incremental exports afterward. Local-file projects have
+no sync target, so `syncDirty` stays `0` and becomes meaningful only once a sync
+target is attached.
 
 The important distinction: "saved locally" and "synced/exported externally" are
 not the same state. After autosave succeeds, a glyph should no longer be
