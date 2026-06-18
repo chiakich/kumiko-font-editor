@@ -784,12 +784,33 @@ const buildFontDataFromUfoGlyphs = (
                 name: layerId,
                 type: 'master',
                 associatedMasterId: layerId,
+                sourceData: {
+                  ufo: {
+                    ufoId: record.ufoId,
+                    layerId: record.layerId,
+                    glyphDir: pickDefaultLayer(metadata).glyphDir,
+                    fileName: record.fileName,
+                    sourceHash: record.sourceHash,
+                    remoteBlobSha: record.remoteBlobSha ?? null,
+                    note: record.note,
+                    image: record.image,
+                    lib: record.lib,
+                  },
+                },
                 ...glyphRecordToLayerContent(record, resolveBounds),
               },
             },
             unicode: record.unicodes[0] ?? null,
+            unicodes: record.unicodes,
             production: postscriptNames[glyphId] ?? null,
             export: true,
+            sourceData: {
+              ufo: {
+                fileName: record.fileName,
+                sourceHash: record.sourceHash,
+                remoteBlobSha: record.remoteBlobSha ?? null,
+              },
+            },
           } satisfies GlyphData,
         ]
       })
@@ -987,6 +1008,19 @@ export const buildMultiMasterFontData = (
         name: master.name,
         type: 'master',
         associatedMasterId: master.sourceId,
+        sourceData: {
+          ufo: {
+            ufoId: record.ufoId,
+            layerId: record.layerId,
+            glyphDir: pickDefaultLayer(master.metadata).glyphDir,
+            fileName: record.fileName,
+            sourceHash: record.sourceHash,
+            remoteBlobSha: record.remoteBlobSha ?? null,
+            note: record.note,
+            image: record.image,
+            lib: record.lib,
+          },
+        },
         ...glyphRecordToLayerContent(record, master.resolveBounds),
       }
       layerOrder.push(master.sourceId)
@@ -1013,8 +1047,16 @@ export const buildMultiMasterFontData = (
       layerOrder,
       layers,
       unicode: representative.unicodes[0] ?? null,
+      unicodes: representative.unicodes,
       production: postscriptNames[glyphId] ?? null,
       export: true,
+      sourceData: {
+        ufo: {
+          fileName: representative.fileName,
+          sourceHash: representative.sourceHash,
+          remoteBlobSha: representative.remoteBlobSha ?? null,
+        },
+      },
     }
   }
 
@@ -1253,6 +1295,7 @@ export const importUfoWorkspaceEntries = async (
       ? buildFontDataFromUfoGlyphs(activeGlyphs, activeMetadata)
       : { glyphs: {} }
   const projectMetadata = {
+    activeUfoId,
     ufoIds: project.ufoIds,
     sourceType: project.sourceType ?? 'local',
     githubSource: project.githubSource ?? null,

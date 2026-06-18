@@ -22,8 +22,9 @@ import {
   markGitHubCommitSynced,
   prepareGitHubCommit,
 } from 'src/lib/github/githubPr'
-import { syncHotFontDataToUfoRecords } from 'src/lib/fontFormats/adapters/ufo'
+import { saveDraftSnapshot } from 'src/lib/project/draftSave'
 import type { FontData } from 'src/store'
+import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
   buildSuggestedGitHubBranchName,
   getActiveUfoIdFromArchive,
@@ -47,6 +48,7 @@ interface UseGitHubCommitFlowInput {
   hasBlockingQualityIssues: boolean
   localDirtyGlyphIds: string[]
   localDeletedGlyphIds: string[]
+  glyphEditTimes: GlyphEditTimes
   markDraftSaved: () => void
 }
 
@@ -82,6 +84,7 @@ export const useGitHubCommitFlow = ({
   hasBlockingQualityIssues,
   localDirtyGlyphIds,
   localDeletedGlyphIds,
+  glyphEditTimes,
   markDraftSaved,
 }: UseGitHubCommitFlowInput) => {
   const toast = useToast()
@@ -422,20 +425,20 @@ export const useGitHubCommitFlow = ({
     }
 
     try {
-      const syncResult = await syncHotFontDataToUfoRecords({
+      await saveDraftSnapshot({
         projectId,
-        activeUfoId,
-        activeLayerId,
+        projectTitle,
         fontData,
         dirtyGlyphIds: localDirtyGlyphIds,
         deletedGlyphIds: localDeletedGlyphIds,
+        glyphEditTimes,
+        selectedLayerId: activeLayerId,
       })
 
       const preparedCommit = await prepareGitHubCommit({
         projectId,
         projectTitle,
         activeUfoId,
-        deletedFilePaths: syncResult.deletedFilePaths,
       })
 
       const result = await createCommitMutation.mutateAsync({

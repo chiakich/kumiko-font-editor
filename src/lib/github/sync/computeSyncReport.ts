@@ -1,10 +1,16 @@
-import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
 import type {
   GlyphSyncEntry,
   GlyphSyncStatus,
   ProjectSyncReport,
   RemoteTreeSnapshot,
 } from 'src/lib/github/sync/types'
+
+export interface SyncGlyphRecord {
+  glyphName: string
+  fileName: string
+  dirty: boolean
+  remoteBlobSha?: string | null
+}
 
 export const joinRepoPath = (...parts: Array<string | null | undefined>) =>
   parts
@@ -37,7 +43,7 @@ const resolveStatus = (input: {
 }
 
 export const computeGlyphSyncEntries = (input: {
-  glyphs: UfoGlyphRecord[]
+  glyphs: SyncGlyphRecord[]
   // Glyphs deleted locally but not yet committed, as glyphName → fileName.
   locallyDeletedFiles: Record<string, string>
   glyphDirPath: string

@@ -122,6 +122,7 @@ export function useRightPanelModel() {
     hasBlockingQualityIssues: commitQualityReport.summary.hasBlockingIssues,
     localDirtyGlyphIds,
     localDeletedGlyphIds,
+    glyphEditTimes,
     markDraftSaved,
   })
 
