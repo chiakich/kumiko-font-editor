@@ -105,3 +105,4 @@ specific decisions and the "why" that code and git history don't show:
 - [Fontra parity & tracking strategy](fontra-parity.md) — UFO interop, the ported algorithm layer, baseline SHA, and re-sync process.
 - [Variable font support](variable-fonts.md) — interpolation data flow, current status, phased plan, and corresponding Fontra files.
 - [Multi-master](multi-master.md) — multi-master design notes.
+- [Kumiko project persistence](kumiko-project-persistence.md) — format-independent project/glyph IndexedDB records and the no-duplicated-vectors storage rule.
