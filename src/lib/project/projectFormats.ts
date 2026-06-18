@@ -2,6 +2,7 @@ export type ProjectSourceFormat =
   | 'glyphs'
   | 'glyphspackage'
   | 'ufo'
+  | 'designspace'
   | 'ttf'
   | 'otf'
   | 'woff'

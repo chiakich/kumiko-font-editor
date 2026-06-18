@@ -29,7 +29,6 @@ const makeGlyph = (): GlyphData => ({
           ],
         },
       ],
-      components: [],
       componentRefs: [],
       anchors: [],
       guidelines: [],

@@ -10,7 +10,6 @@ import {
   listDirtyUfoGlyphs,
   loadUfoUiValue,
 } from 'src/lib/fontFormats/ufoPersistence'
-import { UFO_LOCAL_DELETED_GLYPHS_KEY } from 'src/lib/project/draftSave'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
@@ -67,17 +66,12 @@ export const useGitHubSyncStatus = (input: {
       'ufo'
     )
     const dirtyGlyphs = await listDirtyUfoGlyphs(projectId)
-    const deletedGlyphIds =
-      (await loadUfoUiValue<string[]>(
-        projectId,
-        UFO_LOCAL_DELETED_GLYPHS_KEY
-      )) ?? []
     const glyphEditTimes = sanitizeGlyphEditTimes(
       await loadUfoUiValue(projectId, UFO_GLYPH_EDIT_TIMES_KEY)
     )
     hydratePersistedLocalChanges(
       dirtyGlyphs.map((glyph) => glyph.glyphName),
-      deletedGlyphIds,
+      [],
       glyphEditTimes
     )
   }

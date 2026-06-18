@@ -6,7 +6,6 @@ import type { GlyphData, GlyphLayerData } from 'src/store/types'
 
 interface LayerContent {
   paths: GlyphLayerData['paths']
-  components: GlyphLayerData['components']
   componentRefs: GlyphLayerData['componentRefs']
   anchors: GlyphLayerData['anchors']
   guidelines: GlyphLayerData['guidelines']
@@ -31,7 +30,6 @@ const clone = <T>(value: T): T => structuredClone(value)
 
 const contentOf = (layer: GlyphLayerData): LayerContent => ({
   paths: clone(layer.paths),
-  components: clone(layer.components),
   componentRefs: clone(layer.componentRefs),
   anchors: clone(layer.anchors),
   guidelines: clone(layer.guidelines),
@@ -40,7 +38,6 @@ const contentOf = (layer: GlyphLayerData): LayerContent => ({
 
 const emptyContent = (): LayerContent => ({
   paths: [],
-  components: [],
   componentRefs: [],
   anchors: [],
   guidelines: [],

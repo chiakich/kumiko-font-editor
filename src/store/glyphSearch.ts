@@ -37,8 +37,8 @@ const filterGlyphs = (
     return (
       glyph.name.toLowerCase().includes(normalizedQuery) ||
       glyph.id.toLowerCase().includes(normalizedQuery) ||
-      activeLayer(glyph).components.some((component) =>
-        component.toLowerCase().includes(normalizedQuery)
+      activeLayer(glyph).componentRefs.some((componentRef) =>
+        componentRef.glyphId.toLowerCase().includes(normalizedQuery)
       ) ||
       matchesIdsSearch(glyph, normalizedQuery, idsDictionary)
     )

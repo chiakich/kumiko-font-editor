@@ -1340,7 +1340,6 @@ export function makeCompositeGlyphFromComponents(
         type: 'master',
         associatedMasterId: layerId,
         paths,
-        components: paths.length === 0 ? componentGlyphIds : [],
         componentRefs: paths.length === 0 ? componentRefs : [],
         anchors: [],
         guidelines: [],
@@ -1382,7 +1381,6 @@ export function makeEditableGlyphCopy(
             id: `${glyphId}_${node.id}`,
           })),
         })),
-        components: [...source.components],
         componentRefs: source.componentRefs.map((componentRef) => ({
           ...componentRef,
           id: `${glyphId}_${componentRef.id}`,

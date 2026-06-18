@@ -113,7 +113,6 @@ describe('OpenType behavior facade', () => {
 
     expect(glyph).toMatchObject({ id: 'f_t' })
     expect(layer).toMatchObject({
-      components: [],
       componentRefs: [],
       metrics: { width: 900, lsb: 0, rsb: 900 },
     })

@@ -64,7 +64,6 @@ const EMPTY_LAYER: GlyphLayerData = {
   id: '',
   name: '',
   paths: [],
-  components: [],
   componentRefs: [],
   anchors: [],
   guidelines: [],

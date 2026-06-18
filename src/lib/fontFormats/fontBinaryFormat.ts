@@ -309,7 +309,6 @@ export const importBinaryFontFile = async (file: File) => {
           type: 'master',
           associatedMasterId: 'public.default',
           paths,
-          components: [],
           componentRefs: [],
           anchors: [],
           guidelines: [],

@@ -5,7 +5,13 @@ import type {
   KumikoProjectRecord,
   KumikoProjectSourceFormat,
 } from 'src/lib/project/kumikoProjectTypes'
-import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
+import type {
+  FontData,
+  GlyphData,
+  GlyphLayerData,
+  GlyphSourceData,
+  PathSegmentType,
+} from 'src/store'
 
 export const normalizeUnicodeHex = (
   value: string | number | null | undefined
@@ -35,27 +41,116 @@ const getGlyphUnicodes = (glyph: GlyphData) => {
   return [...new Set(normalized)]
 }
 
-const toKumikoLayerRecord = (
-  layer: GlyphLayerData
-): KumikoGlyphLayerRecord => ({
-  id: layer.id,
-  name: layer.name,
-  type: layer.type ?? 'master',
-  associatedMasterId: layer.associatedMasterId,
-  paths: layer.paths,
-  componentRefs: layer.componentRefs,
-  anchors: layer.anchors,
-  guidelines: layer.guidelines,
-  metrics: layer.metrics,
-  verticalMetrics: layer.verticalMetrics,
-  color: layer.color,
-  visible: layer.visible,
-  locked: layer.locked,
-  background: layer.background,
-  image: layer.image,
-  customData: layer.customData,
-  sourceData: layer.sourceData,
-})
+const storageIndexKey = (projectId: string, value: string) =>
+  `${projectId}\0${value}`
+
+const GEOMETRY_SOURCE_DATA_KEYS = new Set([
+  'paths',
+  'nodes',
+  'points',
+  'contours',
+  'segments',
+  'components',
+  'shapes',
+])
+
+export const findGeometryBearingSourceDataKey = (
+  value: unknown,
+  path = 'sourceData'
+): string | null => {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      const found = findGeometryBearingSourceDataKey(
+        value[index],
+        `${path}[${index}]`
+      )
+      if (found) {
+        return found
+      }
+    }
+    return null
+  }
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = `${path}.${key}`
+    if (GEOMETRY_SOURCE_DATA_KEYS.has(key)) {
+      return childPath
+    }
+    const found = findGeometryBearingSourceDataKey(child, childPath)
+    if (found) {
+      return found
+    }
+  }
+  return null
+}
+
+const assertSourceDataHasNoGeometry = (value: unknown, path: string) => {
+  const found = findGeometryBearingSourceDataKey(value, path)
+  if (found) {
+    throw new Error(`Kumiko sourceData cannot contain geometry key: ${found}`)
+  }
+}
+
+const deriveLayerOutlineKind = (
+  layer: Pick<GlyphLayerData, 'paths'>
+): 'cubic' | 'quadratic' => {
+  const segmentTypes = new Set<PathSegmentType>()
+  for (const path of layer.paths) {
+    for (const node of path.nodes) {
+      if (node.kind === 'oncurve' && node.segmentType) {
+        segmentTypes.add(node.segmentType)
+      }
+    }
+  }
+  return segmentTypes.has('quadratic') && !segmentTypes.has('cubic')
+    ? 'quadratic'
+    : 'cubic'
+}
+
+const deriveComponentGlyphIds = (
+  layers: Record<string, KumikoGlyphLayerRecord>
+) => {
+  const ids = new Set<string>()
+  for (const layer of Object.values(layers)) {
+    for (const componentRef of layer.componentRefs ?? []) {
+      ids.add(componentRef.glyphId)
+    }
+    for (const backgroundComponentRef of layer.background?.componentRefs ??
+      []) {
+      ids.add(backgroundComponentRef.glyphId)
+    }
+  }
+  return [...ids].sort((left, right) => left.localeCompare(right))
+}
+
+const toKumikoLayerRecord = (layer: GlyphLayerData): KumikoGlyphLayerRecord => {
+  assertSourceDataHasNoGeometry(
+    layer.sourceData,
+    `layer(${layer.id}).sourceData`
+  )
+  return {
+    id: layer.id,
+    name: layer.name,
+    type: layer.type ?? 'master',
+    associatedMasterId: layer.associatedMasterId,
+    outlineKind: deriveLayerOutlineKind(layer),
+    paths: layer.paths,
+    componentRefs: layer.componentRefs,
+    anchors: layer.anchors,
+    guidelines: layer.guidelines,
+    metrics: layer.metrics,
+    verticalMetrics: layer.verticalMetrics,
+    color: layer.color,
+    visible: layer.visible,
+    locked: layer.locked,
+    background: layer.background,
+    image: layer.image,
+    customData: layer.customData,
+    sourceData: layer.sourceData as GlyphSourceData | undefined,
+  }
+}
 
 export const fontDataToKumikoProjectRecord = (input: {
   projectId: string
@@ -70,33 +165,38 @@ export const fontDataToKumikoProjectRecord = (input: {
   sourceData?: KumikoProjectRecord['sourceData']
   exportDirty?: boolean
   syncDirty?: boolean
-}): KumikoProjectRecord => ({
-  schemaVersion: 1,
-  projectId: input.projectId,
-  title: input.title,
-  createdAt: input.createdAt,
-  updatedAt: input.updatedAt,
-  sourceName: input.sourceName ?? null,
-  sourceType: input.sourceType ?? 'local',
-  sourceFormat: input.sourceFormat ?? null,
-  githubSource: input.githubSource ?? null,
-  fontInfo: input.fontData.fontInfo,
-  unitsPerEm: input.fontData.unitsPerEm,
-  axes: input.fontData.axes,
-  sources: input.fontData.sources,
-  exportInstances: input.fontData.exportInstances,
-  features: input.fontData.features,
-  openTypeFeatures: input.fontData.openTypeFeatures,
-  kerningGroups: input.fontData.kerningGroups,
-  kerningPairs: input.fontData.kerningPairs,
-  statusDefinitions: input.fontData.statusDefinitions,
-  settings: input.fontData.settings,
-  lineMetricsHorizontalLayout: input.fontData.lineMetricsHorizontalLayout,
-  glyphOrder: input.fontData.glyphOrder ?? Object.keys(input.fontData.glyphs),
-  exportDirty: input.exportDirty ? 1 : 0,
-  syncDirty: input.syncDirty ? 1 : 0,
-  sourceData: input.sourceData,
-})
+}): KumikoProjectRecord => {
+  assertSourceDataHasNoGeometry(input.sourceData, 'project.sourceData')
+  return {
+    schemaVersion: 1,
+    projectId: input.projectId,
+    title: input.title,
+    createdAt: input.createdAt,
+    updatedAt: input.updatedAt,
+    sourceName: input.sourceName ?? null,
+    sourceType: input.sourceType ?? 'local',
+    sourceFormat: input.sourceFormat ?? null,
+    githubSource: input.githubSource ?? null,
+    fontInfo: input.fontData.fontInfo,
+    unitsPerEm: input.fontData.unitsPerEm,
+    axes: input.fontData.axes,
+    sources: input.fontData.sources,
+    exportInstances: input.fontData.exportInstances,
+    features: input.fontData.features,
+    openTypeFeatures: input.fontData.openTypeFeatures,
+    kerningGroups: input.fontData.kerningGroups,
+    kerningPairs: input.fontData.kerningPairs,
+    statusDefinitions: input.fontData.statusDefinitions,
+    settings: input.fontData.settings,
+    lineMetricsHorizontalLayout: input.fontData.lineMetricsHorizontalLayout,
+    glyphOrder: input.fontData.glyphOrder ?? Object.keys(input.fontData.glyphs),
+    exportDirty: input.exportDirty ? 1 : 0,
+    syncDirty: input.syncDirty ? 1 : 0,
+    exportedDigest: null,
+    syncedDigest: null,
+    sourceData: input.sourceData,
+  }
+}
 
 export const glyphDataToKumikoGlyphRecord = (input: {
   projectId: string
@@ -114,6 +214,11 @@ export const glyphDataToKumikoGlyphRecord = (input: {
   const exportDirty = input.exportDirty ?? false
   const syncDirty = input.syncDirty ?? false
   const unicodes = getGlyphUnicodes(input.glyph)
+  const componentGlyphIds = deriveComponentGlyphIds(layers)
+  assertSourceDataHasNoGeometry(
+    input.glyph.sourceData,
+    `glyph(${input.glyph.id}).sourceData`
+  )
 
   return {
     schemaVersion: 1,
@@ -125,19 +230,27 @@ export const glyphDataToKumikoGlyphRecord = (input: {
     export: input.glyph.export,
     category: input.glyph.category,
     subCategory: input.glyph.subCategory,
+    status: input.glyph.status,
     color: input.glyph.color,
     note: input.glyph.note,
     leftMetricsKey: input.glyph.leftMetricsKey,
     rightMetricsKey: input.glyph.rightMetricsKey,
     widthMetricsKey: input.glyph.widthMetricsKey,
-    activeLayerId: input.glyph.activeLayerId,
     layerOrder: input.glyph.layerOrder ?? Object.keys(layers),
     layers,
+    componentGlyphIds,
+    unicodeKeys: unicodes.map((unicode) =>
+      storageIndexKey(input.projectId, unicode)
+    ),
+    componentRefKeys: componentGlyphIds.map((glyphId) =>
+      storageIndexKey(input.projectId, glyphId)
+    ),
     customData: input.glyph.customData,
     sourceData: input.glyph.sourceData,
-    deleted: 0,
     exportDirty: exportDirty ? 1 : 0,
     syncDirty: syncDirty ? 1 : 0,
+    exportedDigest: null,
+    syncedDigest: null,
     updatedAt: input.updatedAt,
   }
 }
@@ -168,7 +281,6 @@ const toGlyphLayerData = (layer: KumikoGlyphLayerRecord): GlyphLayerData => ({
   type: layer.type,
   associatedMasterId: layer.associatedMasterId,
   paths: layer.paths,
-  components: layer.componentRefs.map((ref) => ref.glyphId),
   componentRefs: layer.componentRefs,
   anchors: layer.anchors,
   guidelines: layer.guidelines,
@@ -180,7 +292,7 @@ const toGlyphLayerData = (layer: KumikoGlyphLayerRecord): GlyphLayerData => ({
   background: layer.background,
   image: layer.image,
   customData: layer.customData,
-  sourceData: layer.sourceData,
+  sourceData: layer.sourceData as GlyphSourceData | undefined,
 })
 
 export const kumikoGlyphRecordToGlyphData = (
@@ -197,7 +309,7 @@ export const kumikoGlyphRecordToGlyphData = (
     id: record.glyphId,
     name: record.displayName ?? record.glyphId,
     displayName: record.displayName,
-    activeLayerId: record.activeLayerId,
+    activeLayerId: record.layerOrder[0] ?? null,
     layerOrder: record.layerOrder,
     layers,
     unicodes: record.unicodes,
@@ -206,13 +318,14 @@ export const kumikoGlyphRecordToGlyphData = (
     export: record.export,
     category: record.category,
     subCategory: record.subCategory,
+    status: record.status,
     color: record.color,
     note: record.note,
     leftMetricsKey: record.leftMetricsKey,
     rightMetricsKey: record.rightMetricsKey,
     widthMetricsKey: record.widthMetricsKey,
     customData: record.customData,
-    sourceData: record.sourceData,
+    sourceData: record.sourceData as GlyphSourceData | undefined,
   }
 }
 
@@ -221,9 +334,10 @@ export const kumikoRecordsToFontData = (
   glyphRecords: KumikoGlyphStoreRecord[]
 ): FontData => ({
   glyphs: Object.fromEntries(
-    glyphRecords
-      .filter((record): record is KumikoGlyphRecord => !record.deleted)
-      .map((record) => [record.glyphId, kumikoGlyphRecordToGlyphData(record)])
+    glyphRecords.map((record) => [
+      record.glyphId,
+      kumikoGlyphRecordToGlyphData(record),
+    ])
   ),
   glyphOrder: project.glyphOrder,
   fontInfo: project.fontInfo,

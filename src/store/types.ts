@@ -13,11 +13,14 @@ import type {
   OpenTypeFeaturesState,
   SpacingBehaviorDraft,
 } from 'src/lib/openTypeFeatures'
+export type { ProjectRoundTripFormat, ProjectSourceFormat }
+export type { OpenTypeFeaturesState }
 
 export type OnCurveNodeType = 'corner' | 'smooth'
 export type NodeType = OnCurveNodeType
 export type PathNodeKind = 'oncurve' | 'offcurve'
 export type PathSegmentType = 'line' | 'cubic' | 'quadratic'
+export type KumikoColor = [number, number, number, number]
 
 export type GlyphCustomData = Record<string, unknown>
 export type GlyphSourceData = Record<string, unknown>
@@ -130,16 +133,15 @@ export interface GlyphLayerData {
   name: string
   // 'master' layers map to font masters (one per master); 'backup' layers are
   // user-kept outline snapshots. Undefined is treated as 'master' for back-compat.
-  type?: 'master' | 'backup'
+  type?: 'master' | 'backup' | 'brace' | 'bracket'
   associatedMasterId?: string | null
   paths: PathData[]
-  components: string[]
   componentRefs: GlyphComponentRef[]
   anchors: GlyphAnchor[]
   guidelines: GlyphGuideline[]
   metrics: GlyphMetrics
   verticalMetrics?: GlyphVerticalMetrics
-  color?: string | number | null
+  color?: KumikoColor | string | number | null
   visible?: boolean
   locked?: boolean
   background?: GlyphLayerContent | null
@@ -152,12 +154,7 @@ export interface GlyphLayerData {
 // glyph content lives in a layer, never on GlyphData directly.
 export type GlyphLayerContent = Pick<
   GlyphLayerData,
-  | 'paths'
-  | 'components'
-  | 'componentRefs'
-  | 'anchors'
-  | 'guidelines'
-  | 'metrics'
+  'paths' | 'componentRefs' | 'anchors' | 'guidelines' | 'metrics'
 >
 
 export interface GlyphData {
@@ -174,9 +171,10 @@ export interface GlyphData {
   export?: boolean
   category?: string | null
   subCategory?: string | null
+  status?: number | null
   production?: string | null
   note?: string | null
-  color?: string | number | null
+  color?: KumikoColor | string | number | null
   leftMetricsKey?: string | null
   rightMetricsKey?: string | null
   widthMetricsKey?: string | null

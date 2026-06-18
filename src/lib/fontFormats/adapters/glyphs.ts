@@ -9,6 +9,7 @@ import {
 } from 'src/lib/fontFormats/glyphsPackage'
 import { parseOpenStep } from 'src/lib/fontFormats/openstepParser'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
+import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
 import type { FontData } from 'src/store'
 
 export interface ImportedGlyphsProject {
@@ -16,6 +17,7 @@ export interface ImportedGlyphsProject {
   title: string
   fontData: FontData
   projectMetadata: Record<string, unknown>
+  projectSourceData: KumikoProjectSourceData
   projectSourceFormat: ProjectSourceFormat
   projectGlyphsPackage: GlyphsPackageData | null
 }
@@ -44,6 +46,14 @@ export const importGlyphsFile = async (
     title: familyTitle(document, stripExtension(file.name)),
     fontData: buildFontDataFromGlyphsDocument(document),
     projectMetadata: extractGlyphsMetadata(document) ?? {},
+    projectSourceData: {
+      glyphs: {
+        formatVersion: document.formatVersion === 3 ? 3 : 2,
+        packageName: null,
+        repoPath: null,
+        documentFields: extractGlyphsMetadata(document) ?? {},
+      },
+    },
     projectSourceFormat: 'glyphs',
     projectGlyphsPackage: null,
   }
@@ -63,6 +73,14 @@ export const importGlyphsPackage = async (
     title: familyTitle(document, stripExtension(packageData.packageName)),
     fontData: buildFontDataFromGlyphsDocument(document),
     projectMetadata,
+    projectSourceData: {
+      glyphs: {
+        formatVersion: document.formatVersion === 3 ? 3 : 2,
+        packageName: packageData.packageName,
+        repoPath: null,
+        documentFields: projectMetadata,
+      },
+    },
     projectSourceFormat: 'glyphspackage',
     projectGlyphsPackage: packageData,
   }

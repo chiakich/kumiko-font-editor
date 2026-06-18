@@ -1,5 +1,6 @@
 import type { FontData } from 'src/store'
 import type { GlyphsPackageData } from 'src/lib/fontFormats/glyphsPackage'
+import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
@@ -29,9 +30,14 @@ export interface KumikoProjectDraft {
   githubSource?: GitHubProjectSource | null
   fontData?: FontData
   projectMetadata?: Record<string, unknown> | null
+  projectSourceData?: KumikoProjectSourceData | null
   projectSourceFormat?: ProjectSourceFormat | null
   projectRoundTripFormat?: ProjectRoundTripFormat | null
   projectGlyphsPackage?: GlyphsPackageData | null
+  projectExportDirty?: boolean
+  projectSyncDirty?: boolean
+  exportDirtyGlyphIds?: Iterable<string>
+  syncDirtyGlyphIds?: Iterable<string>
 }
 
 export interface KumikoProjectSummary {

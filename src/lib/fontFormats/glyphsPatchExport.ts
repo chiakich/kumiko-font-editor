@@ -283,7 +283,6 @@ export const patchGlyphText = (
               | null
               | undefined) ?? layerId,
           paths: activeLayer(glyph).paths,
-          components: activeLayer(glyph).components,
           componentRefs: activeLayer(glyph).componentRefs,
           anchors: activeLayer(glyph).anchors ?? [],
           guidelines: activeLayer(glyph).guidelines ?? [],

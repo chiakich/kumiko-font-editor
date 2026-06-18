@@ -11,6 +11,7 @@ import type {
   FontSource,
   GlyphImage,
   GlyphLayerData,
+  KumikoColor,
   KerningGroup,
   KerningPair,
   OpenTypeFeatures,
@@ -31,11 +32,13 @@ export interface KumikoProjectSourceData {
   glyphs?: {
     formatVersion?: 2 | 3
     packageName?: string | null
+    repoPath?: string | null
     documentFields?: Record<string, unknown>
     fontMasterFields?: Record<string, Record<string, unknown>>
   }
   ufo?: {
     designspace?: Designspace | null
+    designspacePath?: string | null
     ufos?: Array<{
       ufoId: string
       relativePath: string
@@ -53,6 +56,7 @@ export interface KumikoProjectSourceData {
   }
   binary?: {
     format: 'ttf' | 'otf' | 'woff' | 'woff2'
+    repoPath?: string | null
   }
 }
 
@@ -81,6 +85,8 @@ export interface KumikoProjectRecord {
   glyphOrder: string[]
   exportDirty: 0 | 1
   syncDirty: 0 | 1
+  exportedDigest?: string | null
+  syncedDigest?: string | null
   sourceData?: KumikoProjectSourceData
 }
 
@@ -105,7 +111,8 @@ export interface KumikoGlyphLayerRecord extends Omit<
   GlyphLayerData,
   'components' | 'type' | 'sourceData'
 > {
-  type: 'master' | 'backup' | 'background'
+  type: 'master' | 'backup' | 'brace' | 'bracket'
+  outlineKind: 'cubic' | 'quadratic'
   sourceData?: KumikoLayerSourceData
 }
 
@@ -132,39 +139,27 @@ export interface KumikoGlyphRecord {
   export?: boolean
   category?: string | null
   subCategory?: string | null
-  color?: string | number | null
+  status?: number | null
+  color?: KumikoColor | string | number | null
   note?: string | null
   leftMetricsKey?: string | null
   rightMetricsKey?: string | null
   widthMetricsKey?: string | null
-  activeLayerId?: string | null
   layerOrder: string[]
   layers: Record<string, KumikoGlyphLayerRecord>
+  componentGlyphIds: string[]
+  unicodeKeys: string[]
+  componentRefKeys: string[]
   customData?: Record<string, unknown>
   sourceData?: KumikoGlyphSourceData
-  deleted: 0
   exportDirty: 0 | 1
   syncDirty: 0 | 1
+  exportedDigest?: string | null
+  syncedDigest?: string | null
   updatedAt: number
 }
 
-export interface KumikoGlyphTombstoneRecord {
-  schemaVersion: 1
-  projectId: string
-  glyphId: string
-  displayName?: string | null
-  unicodes: string[]
-  sourceData?: KumikoGlyphSourceData
-  deleted: 1
-  deletedAt: number
-  exportDirty: 0 | 1
-  syncDirty: 0 | 1
-  updatedAt: number
-}
-
-export type KumikoGlyphStoreRecord =
-  | KumikoGlyphRecord
-  | KumikoGlyphTombstoneRecord
+export type KumikoGlyphStoreRecord = KumikoGlyphRecord
 
 export interface KumikoUiStateRecord {
   projectId: string

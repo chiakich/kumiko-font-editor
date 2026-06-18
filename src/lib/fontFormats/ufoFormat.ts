@@ -21,6 +21,7 @@ import {
   type Designspace,
 } from 'src/lib/fontFormats/designspace'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
+import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
 import { hashString } from 'src/lib/hash'
 import { userNameToFileName } from 'src/lib/fontFormats/ufoFileNames'
 import { getComponentMatrix } from 'src/lib/components/componentTransform'
@@ -46,9 +47,6 @@ import {
   loadUfoMetadata,
   saveUfoGlyphBatch,
   saveUfoMetadata,
-  saveUfoMetadataBatch,
-  saveUfoProject,
-  saveUfoUiValue,
   loadUfoUiValue,
   listUfoGlyphsInLayer,
   listUfoMetadataForProject,
@@ -89,6 +87,7 @@ export interface ImportedUfoWorkspace {
   glyphRecords: UfoGlyphRecord[]
   fontData: FontData
   projectMetadata: Record<string, unknown>
+  projectSourceData: KumikoProjectSourceData
   projectSourceFormat: ProjectSourceFormat
 }
 
@@ -1254,7 +1253,6 @@ export const importUfoWorkspaceEntries = async (
       ? buildFontDataFromUfoGlyphs(activeGlyphs, activeMetadata)
       : { glyphs: {} }
   const projectMetadata = {
-    activeUfoId,
     ufoIds: project.ufoIds,
     sourceType: project.sourceType ?? 'local',
     githubSource: project.githubSource ?? null,
@@ -1269,11 +1267,28 @@ export const importUfoWorkspaceEntries = async (
     metainfo: activeMetadata?.metainfo ?? {},
   }
 
-  await saveUfoProject(project)
-  await saveUfoMetadataBatch(metadataRecords)
-  await saveUfoGlyphBatch(glyphRecords)
-  if (designspace) {
-    await saveUfoUiValue(projectId, UFO_DESIGNSPACE_KEY, designspace)
+  const projectSourceData: KumikoProjectSourceData = {
+    ufo: {
+      designspace,
+      designspacePath: designspaceEntry?.relativePath ?? null,
+      ufos: metadataRecords.map((record) => ({
+        ufoId: record.ufoId,
+        relativePath: record.relativePath,
+        defaultLayerId: pickDefaultLayer(record).layerId,
+        layers: record.layers.map((layer) => ({
+          layerId: layer.layerId,
+          glyphDir: layer.glyphDir,
+        })),
+        contents: record.contents,
+        glyphOrder: record.glyphOrder,
+        metainfo: record.metainfo,
+        fontinfoExtra: record.fontinfo,
+        libExtra: record.lib,
+        groupsExtra: record.groups,
+        kerningExtra: record.kerning,
+      })),
+      lastSync: project.lastSync,
+    },
   }
 
   return {
@@ -1282,7 +1297,8 @@ export const importUfoWorkspaceEntries = async (
     glyphRecords,
     fontData,
     projectMetadata,
-    projectSourceFormat: 'ufo',
+    projectSourceData,
+    projectSourceFormat: designspace ? 'designspace' : 'ufo',
   }
 }
 

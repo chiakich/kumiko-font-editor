@@ -711,7 +711,6 @@ export const buildFontDataFromGlyphsDocument = (
         type: layer.type,
         associatedMasterId: layer.associatedMasterId,
         paths: layer.content.paths,
-        components: layer.content.componentRefs.map((ref) => ref.glyphId),
         componentRefs: layer.content.componentRefs,
         anchors: layer.content.anchors,
         guidelines: layer.content.guidelines,

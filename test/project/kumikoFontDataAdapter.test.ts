@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  findGeometryBearingSourceDataKey,
   fontDataToKumikoGlyphRecords,
   fontDataToKumikoProjectRecord,
   kumikoRecordsToFontData,
@@ -118,14 +119,17 @@ describe('kumikoFontDataAdapter', () => {
       glyphId: 'A',
       unicodes: ['0041'],
       displayName: null,
-      deleted: 0,
       exportDirty: 1,
       syncDirty: 1,
+      componentGlyphIds: ['base'],
+      unicodeKeys: [`project-1${'\0'}0041`],
+      componentRefKeys: [`project-1${'\0'}base`],
       layerOrder: ['M1', 'backup-1'],
       note: 'keep me',
       leftMetricsKey: 'H',
       customData: { glyphFlag: true },
     })
+    expect(glyphs[0].layers.M1.outlineKind).toBe('cubic')
     expect(glyphs[0].layers.M1.image?.fileName).toBe('sketch.png')
     expect(glyphs[0].layers.M1.customData).toEqual({ layerFlag: true })
     expect(glyphs[0].layers['backup-1'].componentRefs[0]).toMatchObject({
@@ -169,5 +173,35 @@ describe('kumikoFontDataAdapter', () => {
     expect(rebuilt.glyphs.A.layers?.M1.customData).toEqual({
       layerFlag: true,
     })
+  })
+
+  it('detects geometry-bearing keys inside sourceData', () => {
+    expect(
+      findGeometryBearingSourceDataKey({
+        glyphs: { documentFields: { customParameters: [] } },
+      })
+    ).toBeNull()
+    expect(
+      findGeometryBearingSourceDataKey({
+        glyphs: { documentFields: { shapes: [] } },
+      })
+    ).toBe('sourceData.glyphs.documentFields.shapes')
+  })
+
+  it('rejects sourceData that duplicates glyph geometry', () => {
+    expect(() =>
+      fontDataToKumikoProjectRecord({
+        projectId: 'project-1',
+        title: 'Bad Source Data',
+        fontData,
+        createdAt: 10,
+        updatedAt: 20,
+        sourceData: {
+          glyphs: {
+            documentFields: { paths: [] },
+          },
+        },
+      })
+    ).toThrow(/geometry key/)
   })
 })

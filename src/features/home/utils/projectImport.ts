@@ -11,12 +11,14 @@ import {
   type ImportedGlyphsProject,
 } from 'src/lib/fontFormats/adapters/glyphs'
 import type { FontData } from 'src/store'
+import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
 
 export interface ImportedKumikoProject {
   id: string
   title: string
   fontData: FontData
   projectMetadata: Record<string, unknown> | null
+  projectSourceData: KumikoProjectSourceData | null
   projectSourceFormat: KumikoProjectSummary['projectSourceFormat']
   projectRoundTripFormat: KumikoProjectSummary['projectRoundTripFormat']
   summary: KumikoProjectSummary
@@ -63,6 +65,7 @@ const saveImportedGlyphsProject = async (
     githubSource: null,
     fontData: imported.fontData,
     projectMetadata: imported.projectMetadata,
+    projectSourceData: imported.projectSourceData,
     projectSourceFormat: imported.projectSourceFormat,
     // Glyphs projects reload straight from the draft fontData (no per-source
     // rebuild like UFO), so there is no separate round-trip format.
@@ -75,6 +78,7 @@ const saveImportedGlyphsProject = async (
     title: summary.title,
     fontData: imported.fontData,
     projectMetadata: imported.projectMetadata,
+    projectSourceData: imported.projectSourceData,
     projectSourceFormat: imported.projectSourceFormat,
     projectRoundTripFormat: null,
     summary,
@@ -97,6 +101,7 @@ export const saveImportedUfoWorkspaceAsProject = async (
     githubSource: project.githubSource ?? null,
     fontData: importedProject.fontData,
     projectMetadata: importedProject.projectMetadata,
+    projectSourceData: importedProject.projectSourceData,
     projectSourceFormat: importedProject.projectSourceFormat,
     projectRoundTripFormat: 'ufo',
     projectGlyphsPackage: null,
@@ -107,6 +112,7 @@ export const saveImportedUfoWorkspaceAsProject = async (
     title: summary.title,
     fontData: importedProject.fontData,
     projectMetadata: importedProject.projectMetadata,
+    projectSourceData: importedProject.projectSourceData,
     projectSourceFormat: importedProject.projectSourceFormat,
     projectRoundTripFormat: 'ufo',
     summary,
@@ -140,6 +146,12 @@ export const importLocalProjectFiles = async (
       githubSource: null,
       fontData: importedBinary.fontData,
       projectMetadata: { importedFrom: extension },
+      projectSourceData: {
+        binary: {
+          format: importedBinary.sourceFormat,
+          repoPath: null,
+        },
+      },
       projectSourceFormat: importedBinary.sourceFormat,
       projectRoundTripFormat: null,
       projectGlyphsPackage: null,
@@ -150,6 +162,12 @@ export const importLocalProjectFiles = async (
       title: importedBinary.projectTitle,
       fontData: importedBinary.fontData,
       projectMetadata: { importedFrom: extension },
+      projectSourceData: {
+        binary: {
+          format: importedBinary.sourceFormat,
+          repoPath: null,
+        },
+      },
       projectSourceFormat: importedBinary.sourceFormat,
       projectRoundTripFormat: null,
       summary,

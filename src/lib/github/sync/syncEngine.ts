@@ -8,7 +8,6 @@ import {
   loadUfoMetadata,
   loadUfoProject,
   loadUfoGlyph,
-  loadUfoUiValue,
   listUfoGlyphsInLayer,
   makeUfoGlyphKey,
   saveUfoGlyphBatch,
@@ -16,7 +15,6 @@ import {
   saveUfoProject,
   deleteUfoGlyphBatch,
 } from 'src/lib/fontFormats/ufoPersistence'
-import { UFO_LOCAL_DELETED_GLYPHS_KEY } from 'src/lib/project/draftSave'
 import type {
   UfoGlyphRecord,
   UfoProjectRecord,
@@ -52,21 +50,7 @@ export const resolveSyncTarget = (
   }
 }
 
-const loadLocallyDeletedFiles = async (
-  projectId: string,
-  contents: Record<string, string>
-) => {
-  const deletedGlyphNames =
-    (await loadUfoUiValue<string[]>(projectId, UFO_LOCAL_DELETED_GLYPHS_KEY)) ??
-    []
-  const files: Record<string, string> = {}
-  for (const glyphName of deletedGlyphNames) {
-    // Best effort: contents may already be pruned after a draft save, in
-    // which case the deleted file falls back to the default naming rule.
-    files[glyphName] = contents[glyphName] ?? `${glyphName}.glif`
-  }
-  return files
-}
+const loadLocallyDeletedFiles = async () => ({})
 
 export const buildProjectSyncReport = async (input: {
   projectId: string
@@ -93,7 +77,7 @@ export const buildProjectSyncReport = async (input: {
       input.activeUfoId,
       defaultLayer.layerId
     ),
-    loadLocallyDeletedFiles(input.projectId, metadata.contents),
+    loadLocallyDeletedFiles(),
     fetchRemoteTree({
       repo: `${target.owner}/${target.repo}`,
       ref: target.ref,

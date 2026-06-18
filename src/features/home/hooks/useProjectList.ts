@@ -6,7 +6,6 @@ import {
   renameKumikoProject,
 } from 'src/lib/project/projectRepository'
 import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
-import { loadUfoProjectIntoFontData } from 'src/lib/fontFormats/adapters/ufo'
 import type { FontData } from 'src/store'
 
 export interface LoadedKumikoProject {
@@ -36,20 +35,6 @@ export const useProjectList = () => {
     async (
       project: KumikoProjectSummary
     ): Promise<LoadedKumikoProject | null> => {
-      if (project.projectRoundTripFormat === 'ufo') {
-        const loadedProject = await loadUfoProjectIntoFontData(project.id)
-        if (loadedProject) {
-          return {
-            id: loadedProject.project.projectId,
-            title: loadedProject.project.title,
-            fontData: loadedProject.fontData,
-            projectMetadata: loadedProject.projectMetadata,
-            projectSourceFormat: 'ufo',
-            projectRoundTripFormat: 'ufo',
-          }
-        }
-      }
-
       const draft = await loadProjectDraft(project.id)
       if (!draft?.fontData) {
         return null

@@ -7,7 +7,6 @@ import {
 import type {
   KumikoGlyphPrimaryKey,
   KumikoGlyphRecord,
-  KumikoGlyphStoreRecord,
   KumikoProjectRecord,
   KumikoUiStateRecord,
 } from 'src/lib/project/kumikoProjectTypes'
@@ -45,6 +44,37 @@ export const loadKumikoProjectRecord = async (projectId: string) => {
   ) as Promise<KumikoProjectRecord | undefined>
 }
 
+export const listKumikoProjectRecords = async () => {
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_PROJECTS_STORE, 'readonly')
+  return requestToPromise(
+    transaction.objectStore(KUMIKO_PROJECTS_STORE).getAll()
+  ) as Promise<KumikoProjectRecord[]>
+}
+
+export const replaceKumikoProjectData = async (
+  project: KumikoProjectRecord,
+  glyphs: KumikoGlyphRecord[]
+) => {
+  const database = await openDatabase()
+  const transaction = database.transaction(
+    [KUMIKO_PROJECTS_STORE, KUMIKO_GLYPHS_STORE],
+    'readwrite'
+  )
+  const projectStore = transaction.objectStore(KUMIKO_PROJECTS_STORE)
+  const glyphStore = transaction.objectStore(KUMIKO_GLYPHS_STORE)
+
+  projectStore.put(project)
+  glyphStore.delete(
+    IDBKeyRange.bound([project.projectId, ''], [project.projectId, '\uffff'])
+  )
+  for (const glyph of glyphs) {
+    glyphStore.put(glyph)
+  }
+
+  await transactionDone(transaction)
+}
+
 export const renameKumikoProjectRecord = async (
   projectId: string,
   title: string
@@ -77,7 +107,7 @@ export const deleteKumikoProjectRecord = async (projectId: string) => {
   await transactionDone(transaction)
 }
 
-export const saveKumikoGlyphRecord = async (record: KumikoGlyphStoreRecord) => {
+export const saveKumikoGlyphRecord = async (record: KumikoGlyphRecord) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readwrite')
   transaction.objectStore(KUMIKO_GLYPHS_STORE).put(record)
@@ -85,7 +115,7 @@ export const saveKumikoGlyphRecord = async (record: KumikoGlyphStoreRecord) => {
 }
 
 export const saveKumikoGlyphRecordBatch = async (
-  records: KumikoGlyphStoreRecord[]
+  records: KumikoGlyphRecord[]
 ) => {
   if (records.length === 0) {
     return
@@ -105,7 +135,7 @@ export const loadKumikoGlyphRecord = async (key: KumikoGlyphPrimaryKey) => {
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
   return requestToPromise(
     transaction.objectStore(KUMIKO_GLYPHS_STORE).get(key)
-  ) as Promise<KumikoGlyphStoreRecord | undefined>
+  ) as Promise<KumikoGlyphRecord | undefined>
 }
 
 export const listKumikoGlyphRecordsForProject = async (projectId: string) => {
@@ -113,25 +143,55 @@ export const listKumikoGlyphRecordsForProject = async (projectId: string) => {
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
   const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
   return requestToPromise(index.getAll(projectId)) as Promise<
-    KumikoGlyphStoreRecord[]
+    KumikoGlyphRecord[]
   >
 }
 
 export const listLiveKumikoGlyphRecordsForProject = async (
   projectId: string
 ) => {
-  const records = await listKumikoGlyphRecordsForProject(projectId)
-  return records.filter(
-    (record): record is KumikoGlyphRecord => !record.deleted
-  )
+  return listKumikoGlyphRecordsForProject(projectId)
 }
 
-export const findKumikoGlyphRecordsByUnicode = async (unicodeHex: string) => {
+export const findKumikoGlyphRecordsByUnicode = async (
+  projectId: string,
+  unicodeHex: string
+) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
-  const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byUnicode')
-  return requestToPromise(index.getAll(unicodeHex.toUpperCase())) as Promise<
-    KumikoGlyphStoreRecord[]
+  const index = transaction
+    .objectStore(KUMIKO_GLYPHS_STORE)
+    .index('byUnicodeKey')
+  return requestToPromise(
+    index.getAll(`${projectId}\0${unicodeHex.toUpperCase()}`)
+  ) as Promise<KumikoGlyphRecord[]>
+}
+
+export const findKumikoGlyphRecordsByComponentRef = async (
+  projectId: string,
+  componentGlyphId: string
+) => {
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
+  const index = transaction
+    .objectStore(KUMIKO_GLYPHS_STORE)
+    .index('byComponentRefKey')
+  return requestToPromise(
+    index.getAll(`${projectId}\0${componentGlyphId}`)
+  ) as Promise<KumikoGlyphRecord[]>
+}
+
+export const findKumikoGlyphRecordsByDisplayName = async (
+  projectId: string,
+  displayName: string
+) => {
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
+  const index = transaction
+    .objectStore(KUMIKO_GLYPHS_STORE)
+    .index('byDisplayName')
+  return requestToPromise(index.getAll([projectId, displayName])) as Promise<
+    KumikoGlyphRecord[]
   >
 }
 
@@ -142,7 +202,7 @@ export const listExportDirtyKumikoGlyphRecords = async (projectId: string) => {
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byProjectExportDirty')
   return requestToPromise(index.getAll([projectId, 1])) as Promise<
-    KumikoGlyphStoreRecord[]
+    KumikoGlyphRecord[]
   >
 }
 
@@ -153,18 +213,7 @@ export const listSyncDirtyKumikoGlyphRecords = async (projectId: string) => {
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byProjectSyncDirty')
   return requestToPromise(index.getAll([projectId, 1])) as Promise<
-    KumikoGlyphStoreRecord[]
-  >
-}
-
-export const listDeletedKumikoGlyphRecords = async (projectId: string) => {
-  const database = await openDatabase()
-  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
-  const index = transaction
-    .objectStore(KUMIKO_GLYPHS_STORE)
-    .index('byProjectDeleted')
-  return requestToPromise(index.getAll([projectId, 1])) as Promise<
-    KumikoGlyphStoreRecord[]
+    KumikoGlyphRecord[]
   >
 }
 
@@ -184,7 +233,7 @@ export const updateKumikoGlyphExportDirtyState = async (
 
   for (const key of keys) {
     const record = (await requestToPromise(store.get(key))) as
-      | KumikoGlyphStoreRecord
+      | KumikoGlyphRecord
       | undefined
     if (!record) {
       continue
@@ -215,7 +264,7 @@ export const updateKumikoGlyphSyncDirtyState = async (
 
   for (const key of keys) {
     const record = (await requestToPromise(store.get(key))) as
-      | KumikoGlyphStoreRecord
+      | KumikoGlyphRecord
       | undefined
     if (!record) {
       continue

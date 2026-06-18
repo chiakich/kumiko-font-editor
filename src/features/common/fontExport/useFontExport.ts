@@ -18,8 +18,6 @@ import {
   getProjectArchiveMetadata,
   getProjectArchiveSourceFormat,
 } from 'src/lib/project/projectArchive'
-import { syncHotFontDataToUfoRecords } from 'src/lib/fontFormats/adapters/ufo'
-import { exportUfoAsZipBlob } from 'src/lib/fontFormats/ufoZipExportClient'
 import { serializeGlyphsFileToBlob } from 'src/lib/fontFormats/glyphsExport'
 import { createGlyphsPackageDataFromFontData } from 'src/lib/fontFormats/glyphsPackage'
 import { loadProjectDraft } from 'src/lib/project/projectRepository'
@@ -64,8 +62,6 @@ export function useFontExport() {
   const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
   const selectedLayerId = useStore((state) => state.selectedLayerId)
-  const localDirtyGlyphIds = useStore((state) => state.localDirtyGlyphIds)
-  const localDeletedGlyphIds = useStore((state) => state.localDeletedGlyphIds)
   const markLocalSaved = useStore((state) => state.markLocalSaved)
   const compilerRuntimeStatus = createCompilerRuntimeStatus()
   const openTypeExportWarnings = fontData?.openTypeFeatures
@@ -128,12 +124,6 @@ export function useFontExport() {
       }
 
       const baseFileName = projectTitle || projectId
-      const projectMetadata = getProjectArchiveMetadata() as {
-        activeUfoId?: string | null
-      } | null
-      const activeUfoId = projectMetadata?.activeUfoId
-      const activeLayerId = selectedLayerId ?? 'public.default'
-
       const buildExportAsset = async (
         format: FontExportFormat
       ): Promise<ExportAsset> => {
@@ -200,44 +190,18 @@ export function useFontExport() {
           }
         }
 
-        if (!activeUfoId) {
-          return {
-            blob: exportFontDataAsUfoZip({
-              fontData,
-              projectId,
-              projectTitle: baseFileName,
-              selectedLayerId,
-            }),
-            fileName: `${baseFileName}.ufo.zip`,
-            label: 'UFO ZIP',
-            totalGlyphs: null,
-          }
-        }
-
-        await syncHotFontDataToUfoRecords({
-          projectId,
-          activeUfoId,
-          activeLayerId,
+        const blob = exportFontDataAsUfoZip({
           fontData,
-          dirtyGlyphIds: localDirtyGlyphIds,
-          deletedGlyphIds: localDeletedGlyphIds,
-        })
-
-        setUfoExportProgress({ completed: 0, total: 0, phase: 'write' })
-
-        const result = await exportUfoAsZipBlob({
           projectId,
-          markClean: true,
-          fixedConcurrency: 8,
-          onProgress: (progress) => setUfoExportProgress(progress),
+          projectTitle: baseFileName,
+          selectedLayerId,
         })
-
         markLocalSaved()
         return {
-          blob: result.blob,
+          blob,
           fileName: `${baseFileName}.ufo.zip`,
           label: 'UFO ZIP',
-          totalGlyphs: result.totalGlyphs,
+          totalGlyphs: Object.keys(fontData.glyphs).length,
         }
       }
 

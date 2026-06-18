@@ -1,13 +1,12 @@
 import { useCallback, useMemo } from 'react'
-import { UFO_LOCAL_DELETED_GLYPHS_KEY } from 'src/lib/project/draftSave'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
 } from 'src/lib/glyph/glyphEditTimes'
 import {
-  listDirtyUfoGlyphs,
-  loadUfoUiValue,
-} from 'src/lib/fontFormats/ufoPersistence'
+  listExportDirtyKumikoGlyphRecords,
+  loadKumikoUiValue,
+} from 'src/lib/project/kumikoProjectPersistence'
 import { useStore } from 'src/store'
 import { useGitHubImport } from 'src/features/home/hooks/useGitHubImport'
 import { useLocalImport } from 'src/features/home/hooks/useLocalImport'
@@ -31,18 +30,13 @@ export function useHomeProjects() {
 
   const restorePersistedUfoChanges = useCallback(
     async (projectId: string) => {
-      const dirtyGlyphs = await listDirtyUfoGlyphs(projectId)
-      const deletedGlyphIds =
-        (await loadUfoUiValue<string[]>(
-          projectId,
-          UFO_LOCAL_DELETED_GLYPHS_KEY
-        )) ?? []
+      const dirtyGlyphs = await listExportDirtyKumikoGlyphRecords(projectId)
       const glyphEditTimes = sanitizeGlyphEditTimes(
-        await loadUfoUiValue(projectId, UFO_GLYPH_EDIT_TIMES_KEY)
+        await loadKumikoUiValue(projectId, UFO_GLYPH_EDIT_TIMES_KEY)
       )
       hydratePersistedLocalChanges(
-        dirtyGlyphs.map((glyph) => glyph.glyphName),
-        deletedGlyphIds,
+        dirtyGlyphs.map((glyph) => glyph.glyphId),
+        [],
         glyphEditTimes
       )
     },
@@ -60,9 +54,7 @@ export function useHomeProjects() {
         project.projectRoundTripFormat
       )
 
-      if (project.projectRoundTripFormat === 'ufo') {
-        await restorePersistedUfoChanges(project.id)
-      }
+      await restorePersistedUfoChanges(project.id)
     },
     [loadProjectState, restorePersistedUfoChanges]
   )
