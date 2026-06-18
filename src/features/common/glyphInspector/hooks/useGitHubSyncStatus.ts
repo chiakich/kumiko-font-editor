@@ -5,11 +5,11 @@ import {
   buildProjectSyncReport,
   type SyncConflictResolution,
 } from 'src/lib/github/sync'
-import { loadUfoProjectIntoFontData } from 'src/lib/fontFormats/adapters/ufo'
 import {
-  listDirtyUfoGlyphs,
-  loadUfoUiValue,
-} from 'src/lib/fontFormats/ufoPersistence'
+  listSyncDirtyKumikoGlyphRecords,
+  loadKumikoUiValue,
+} from 'src/lib/project/kumikoProjectPersistence'
+import { loadProjectDraft } from 'src/lib/project/projectRepository'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
@@ -53,24 +53,26 @@ export const useGitHubSyncStatus = (input: {
   })
 
   const reloadProjectFromPersistence = async (projectId: string) => {
-    const loadedProject = await loadUfoProjectIntoFontData(projectId)
+    const loadedProject = await loadProjectDraft(projectId)
     if (!loadedProject) {
       return
     }
+    const sourceFormat = loadedProject.projectSourceFormat ?? null
+    const roundTripFormat = loadedProject.projectRoundTripFormat ?? null
     loadProjectState(
-      loadedProject.project.projectId,
-      loadedProject.project.title,
-      loadedProject.fontData,
+      loadedProject.id,
+      loadedProject.title,
+      loadedProject.fontData!,
       loadedProject.projectMetadata,
-      'ufo',
-      'ufo'
+      sourceFormat,
+      roundTripFormat
     )
-    const dirtyGlyphs = await listDirtyUfoGlyphs(projectId)
+    const dirtyGlyphs = await listSyncDirtyKumikoGlyphRecords(projectId)
     const glyphEditTimes = sanitizeGlyphEditTimes(
-      await loadUfoUiValue(projectId, UFO_GLYPH_EDIT_TIMES_KEY)
+      await loadKumikoUiValue(projectId, UFO_GLYPH_EDIT_TIMES_KEY)
     )
     hydratePersistedLocalChanges(
-      dirtyGlyphs.map((glyph) => glyph.glyphName),
+      dirtyGlyphs.map((glyph) => glyph.glyphId),
       [],
       glyphEditTimes
     )
