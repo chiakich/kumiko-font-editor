@@ -24,7 +24,8 @@ import { useTranslation } from 'react-i18next'
 
 export type FontExportFormat =
   | 'zip'
-  | 'glyphs'
+  | 'glyphs2'
+  | 'glyphs3'
   | 'glyphspackage'
   | 'ttf'
   | 'otf'
@@ -37,7 +38,7 @@ interface ExportFontModalProps {
   isExporting: boolean
   loadingText: string
   openTypeWarnings?: OpenTypeExportWarning[]
-  // Source format of the open project; gates the .glyphs / .glyphspackage option.
+  // Source format of the open project; gates the .glyphspackage round-trip option.
   sourceFormat?: ProjectSourceFormat | null
   onClose: () => void
   onExport: (formats: FontExportFormat[]) => void
@@ -56,10 +57,14 @@ const exportOptions: Array<{
     description: '可再匯入或交給其他字型工具編輯。',
   },
   {
-    format: 'glyphs',
-    label: 'Glyphs (.glyphs)',
-    description: '回存到 Glyphs 來源檔，保留未編輯的內容。',
-    sourceFormat: 'glyphs',
+    format: 'glyphs2',
+    label: 'Glyphs 2 (.glyphs)',
+    description: '匯出 Glyphs 2 相容檔案，使用 paths/components 結構。',
+  },
+  {
+    format: 'glyphs3',
+    label: 'Glyphs 3 (.glyphs)',
+    description: '匯出 Glyphs 3 相容檔案，使用 shapes 與 tuple nodes。',
   },
   {
     format: 'glyphspackage',

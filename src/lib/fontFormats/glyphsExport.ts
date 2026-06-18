@@ -487,14 +487,22 @@ const serializeGlyphsArrayToChunks = (
 export const serializeGlyphsFileToBlob = (
   fontData: FontData,
   projectMetadata: Record<string, unknown> | null,
-  glyphsDocument?: GlyphsDocument | null
+  glyphsDocument?: GlyphsDocument | null,
+  formatVersionOverride?: GlyphsFormatVersion
 ) => {
-  const baseDocument =
+  const sourceDocument =
     glyphsDocument && typeof glyphsDocument === 'object'
       ? glyphsDocument
       : createBaseGlyphsDocument(fontData, projectMetadata)
+  const baseDocument = { ...(sourceDocument as Record<string, unknown>) }
+  if (formatVersionOverride === 3) {
+    baseDocument['.formatVersion'] = 3
+  } else if (formatVersionOverride === 2) {
+    delete baseDocument['.formatVersion']
+  }
 
-  const formatVersion = detectGlyphsFormatVersion(baseDocument)
+  const formatVersion =
+    formatVersionOverride ?? detectGlyphsFormatVersion(baseDocument)
   const chunks: string[] = []
 
   const entries = Object.entries(

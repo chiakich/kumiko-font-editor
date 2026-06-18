@@ -106,7 +106,10 @@ export function useFontExport() {
       setIsExporting(true)
       const selectedBinaryFormats = selectedFormats.filter(
         (format) =>
-          format !== 'zip' && format !== 'glyphs' && format !== 'glyphspackage'
+          format !== 'zip' &&
+          format !== 'glyphs2' &&
+          format !== 'glyphs3' &&
+          format !== 'glyphspackage'
       )
       if (
         fontData.openTypeFeatures &&
@@ -134,18 +137,20 @@ export function useFontExport() {
       const buildExportAsset = async (
         format: FontExportFormat
       ): Promise<ExportAsset> => {
-        // Glyphs round-trip: re-serialize the stored source from current fontData.
-        if (format === 'glyphs') {
+        // Glyphs export: re-serialize stored source metadata when present, but
+        // force the target file format so any project can export Glyphs 2 or 3.
+        if (format === 'glyphs2' || format === 'glyphs3') {
           const draft = await loadProjectDraft(projectId)
           const blob = serializeGlyphsFileToBlob(
             fontData,
             getProjectArchiveMetadata(),
-            draft?.projectGlyphsDocument ?? null
+            draft?.projectGlyphsDocument ?? null,
+            format === 'glyphs3' ? 3 : 2
           )
           return {
             blob,
-            fileName: `${baseFileName}.glyphs`,
-            label: 'Glyphs',
+            fileName: `${baseFileName}-glyphs${format === 'glyphs3' ? '3' : '2'}.glyphs`,
+            label: format === 'glyphs3' ? 'Glyphs 3' : 'Glyphs 2',
             totalGlyphs: Object.keys(fontData.glyphs).length,
           }
         }

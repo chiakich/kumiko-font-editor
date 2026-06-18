@@ -38,6 +38,72 @@ describe('serializeGlyphsFileToBlob glyph matching', () => {
     expect(text).toMatch(/glyphname = A\b/)
   })
 
+  it('can force Glyphs 2 or Glyphs 3 geometry output', async () => {
+    const fontData = {
+      glyphs: {
+        A: {
+          ...glyph('A', 'A', '0041'),
+          layers: {
+            M1: {
+              id: 'M1',
+              name: 'Regular',
+              associatedMasterId: 'M1',
+              paths: [
+                {
+                  id: 'p1',
+                  closed: true,
+                  nodes: [
+                    {
+                      id: 'n1',
+                      x: 0,
+                      y: 0,
+                      kind: 'oncurve',
+                      segmentType: 'line',
+                    },
+                    {
+                      id: 'n2',
+                      x: 100,
+                      y: 0,
+                      kind: 'oncurve',
+                      segmentType: 'line',
+                    },
+                  ],
+                },
+              ],
+              components: [],
+              componentRefs: [],
+              anchors: [],
+              guidelines: [],
+              metrics: { width: 500, lsb: 0, rsb: 400 },
+            },
+          },
+          layerOrder: ['M1'],
+          activeLayerId: 'M1',
+        },
+      },
+    } as unknown as FontData
+
+    const glyphs2 = await serializeGlyphsFileToBlob(
+      fontData,
+      null,
+      null,
+      2
+    ).text()
+    const glyphs3 = await serializeGlyphsFileToBlob(
+      fontData,
+      null,
+      null,
+      3
+    ).text()
+
+    expect(glyphs2).toContain('paths')
+    expect(glyphs2).toContain('0 0 LINE')
+    expect(glyphs2).not.toContain('.formatVersion')
+    expect(glyphs3).toContain('.formatVersion = 3')
+    expect(glyphs3).toContain('shapes')
+    expect(glyphs3).toContain('(0,0,l)')
+  })
+
   it('emits a Glyphs 3 transform matrix for sheared components', async () => {
     const fontData = {
       glyphs: {
