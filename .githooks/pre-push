@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+echo "Running pnpm lint before push..."
+pnpm lint

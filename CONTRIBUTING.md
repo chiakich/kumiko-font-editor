@@ -66,6 +66,15 @@ pnpm build   # pnpm lint && tsc -b && vite build
 pnpm test    # vitest run
 ```
 
+Git hooks run `lint-staged` before `git commit` to format staged files and
+apply ESLint fixes where possible. They also run `pnpm lint` before `git push`
+as a full quality gate. Hooks are installed by `pnpm install` through the
+`prepare` script. To install them manually, run:
+
+```bash
+pnpm prepare
+```
+
 ### Code style
 
 Formatting is enforced by Prettier (see `.prettierrc`): no semicolons, single
