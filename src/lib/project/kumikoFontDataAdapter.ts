@@ -12,6 +12,8 @@ import type {
   GlyphSourceData,
   PathSegmentType,
 } from 'src/store'
+import { hashString } from 'src/lib/hash'
+import { deterministicStringify } from 'src/store/deterministicStringify'
 
 export const normalizeUnicodeHex = (
   value: string | number | null | undefined
@@ -93,6 +95,32 @@ const assertSourceDataHasNoGeometry = (value: unknown, path: string) => {
   }
 }
 
+export const createKumikoProjectDigest = (record: KumikoProjectRecord) => {
+  const {
+    exportDirty: _exportDirty,
+    syncDirty: _syncDirty,
+    exportedDigest: _exportedDigest,
+    syncedDigest: _syncedDigest,
+    updatedAt: _updatedAt,
+    ...content
+  } = record
+  return hashString(deterministicStringify(content))
+}
+
+export const createKumikoGlyphDigest = (record: KumikoGlyphRecord) => {
+  const {
+    exportDirty: _exportDirty,
+    syncDirty: _syncDirty,
+    exportedDigest: _exportedDigest,
+    syncedDigest: _syncedDigest,
+    updatedAt: _updatedAt,
+    unicodeKeys: _unicodeKeys,
+    componentRefKeys: _componentRefKeys,
+    ...content
+  } = record
+  return hashString(deterministicStringify(content))
+}
+
 const deriveLayerOutlineKind = (
   layer: Pick<GlyphLayerData, 'paths'>
 ): 'cubic' | 'quadratic' => {
@@ -167,7 +195,7 @@ export const fontDataToKumikoProjectRecord = (input: {
   syncDirty?: boolean
 }): KumikoProjectRecord => {
   assertSourceDataHasNoGeometry(input.sourceData, 'project.sourceData')
-  return {
+  const record: KumikoProjectRecord = {
     schemaVersion: 1,
     projectId: input.projectId,
     title: input.title,
@@ -196,6 +224,12 @@ export const fontDataToKumikoProjectRecord = (input: {
     syncedDigest: null,
     sourceData: input.sourceData,
   }
+  const digest = createKumikoProjectDigest(record)
+  return {
+    ...record,
+    exportedDigest: record.exportDirty ? null : digest,
+    syncedDigest: record.syncDirty ? null : digest,
+  }
 }
 
 export const glyphDataToKumikoGlyphRecord = (input: {
@@ -220,7 +254,7 @@ export const glyphDataToKumikoGlyphRecord = (input: {
     `glyph(${input.glyph.id}).sourceData`
   )
 
-  return {
+  const record: KumikoGlyphRecord = {
     schemaVersion: 1,
     projectId: input.projectId,
     glyphId: input.glyph.id,
@@ -252,6 +286,12 @@ export const glyphDataToKumikoGlyphRecord = (input: {
     exportedDigest: null,
     syncedDigest: null,
     updatedAt: input.updatedAt,
+  }
+  const digest = createKumikoGlyphDigest(record)
+  return {
+    ...record,
+    exportedDigest: record.exportDirty ? null : digest,
+    syncedDigest: record.syncDirty ? null : digest,
   }
 }
 
