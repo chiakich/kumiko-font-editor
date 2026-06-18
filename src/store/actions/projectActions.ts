@@ -21,6 +21,7 @@ import {
   getActiveLayerId,
   setGlyphActiveLayer,
 } from 'src/store/glyphLayer'
+import { markProjectDirty } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>
@@ -49,6 +50,8 @@ export const buildProjectActions = (
       state.projectTitle = title
       state.fontData = hotFontData
       state.isDirty = false
+      state.persistenceStatus = 'idle'
+      state.persistenceError = null
       state.dirtyGlyphIds = []
       state.deletedGlyphIds = []
       state.hasLocalChanges = false
@@ -121,6 +124,8 @@ export const buildProjectActions = (
       state.projectId = null
       state.projectTitle = ''
       state.isDirty = false
+      state.persistenceStatus = 'idle'
+      state.persistenceError = null
       state.dirtyGlyphIds = []
       state.deletedGlyphIds = []
       state.hasLocalChanges = false
@@ -167,6 +172,15 @@ export const buildProjectActions = (
         state.dirtyGlyphIds.length > 0 || state.deletedGlyphIds.length > 0
     }),
 
+  setPersistenceStatus: (
+    status: GlobalState['persistenceStatus'],
+    error: string | null = null
+  ) =>
+    set((state) => {
+      state.persistenceStatus = status
+      state.persistenceError = error
+    }),
+
   markLocalSaved: () =>
     set((state) => {
       state.hasLocalChanges = false
@@ -187,8 +201,7 @@ export const buildProjectActions = (
       if (update.unitsPerEm !== undefined) {
         state.fontData.unitsPerEm = update.unitsPerEm
       }
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   updateFontSettings: (fontDataUpdate: Partial<FontData>) =>
@@ -246,7 +259,6 @@ export const buildProjectActions = (
         }
       }
 
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 })

@@ -32,6 +32,7 @@ import {
 } from 'src/lib/openTypeFeatures'
 import { syncFilteredGlyphList } from 'src/store/glyphSearch'
 import type { GlobalState } from 'src/store/types'
+import { markProjectDirty } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>
@@ -73,8 +74,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         syncFilteredGlyphList(state)
       }
 
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   upsertAlternateBehavior: (draft: AlternateBehaviorDraft) =>
@@ -112,8 +112,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         syncFilteredGlyphList(state)
       }
 
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   deleteCombinationBehavior: (lookupId: string, ruleId: string) =>
@@ -124,8 +123,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         state.fontData.openTypeFeatures,
         { lookupId, ruleId }
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   deleteAlternateBehavior: (
@@ -140,8 +138,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         state.fontData.openTypeFeatures,
         { lookupId, ruleId, alternate }
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   upsertSpacingBehavior: (draft: SpacingBehaviorDraft) =>
@@ -155,8 +152,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         currentFeatures,
         draft
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   deleteSpacingBehavior: (lookupId: string, ruleId: string) =>
@@ -167,8 +163,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         state.fontData.openTypeFeatures,
         { lookupId, ruleId }
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   splitSpacingClassMember: (input: {
@@ -186,8 +181,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         state.fontData.openTypeFeatures,
         input
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   upsertContextualBehavior: (draft: ContextualBehaviorDraft) =>
@@ -201,8 +195,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         currentFeatures,
         draft
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   deleteContextualBehavior: (lookupId: string, ruleId: string) =>
@@ -213,8 +206,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
         state.fontData.openTypeFeatures,
         { lookupId, ruleId }
       )
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   upsertAnchorBehavior: (draft: AnchorBehaviorDraft) =>
@@ -224,8 +216,7 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
 
       state.fontData = upsertAnchorBehavior(state.fontData, draft)
       markGlyphDirty(state, draft.glyphId)
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 
   deleteAnchorBehavior: (glyphId: string, anchorId: string) =>
@@ -234,12 +225,12 @@ export const buildBehaviorActions = (set: ImmerSet) => ({
 
       state.fontData = deleteAnchorBehavior(state.fontData, glyphId, anchorId)
       markGlyphDirty(state, glyphId)
-      state.isDirty = true
-      state.hasLocalChanges = true
+      markProjectDirty(state)
     }),
 })
 
 function markGlyphDirty(state: GlobalState, glyphId: string) {
+  markProjectDirty(state)
   const editedAt = Date.now()
   state.glyphEditTimes[glyphId] = editedAt
   if (!state.dirtyGlyphIds.includes(glyphId)) {

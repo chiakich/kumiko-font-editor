@@ -70,4 +70,20 @@ describe('markDraftSaved', () => {
     expect(useStore.getState().dirtyGlyphIds).toEqual([])
     expect(useStore.getState().isDirty).toBe(false)
   })
+
+  it('tracks local persistence status separately from dirty ids', () => {
+    loadFont()
+
+    useStore.getState().updateFontInfo({
+      fontInfo: { familyName: 'Project A', customData: {} },
+    })
+
+    expect(useStore.getState().persistenceStatus).toBe('queued')
+    expect(useStore.getState().persistenceError).toBeNull()
+
+    useStore.getState().setPersistenceStatus('error', 'boom')
+
+    expect(useStore.getState().persistenceStatus).toBe('error')
+    expect(useStore.getState().persistenceError).toBe('boom')
+  })
 })

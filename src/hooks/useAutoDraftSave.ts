@@ -4,6 +4,9 @@ import { useStore } from 'src/store'
 
 const AUTO_DRAFT_SAVE_DELAY_MS = 60_000
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Auto draft save failed.'
+
 export function useAutoDraftSave() {
   const fontData = useStore((state) => state.fontData)
   const projectId = useStore((state) => state.projectId)
@@ -14,6 +17,7 @@ export function useAutoDraftSave() {
   const selectedLayerId = useStore((state) => state.selectedLayerId)
   const isDirty = useStore((state) => state.isDirty)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
+  const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const autosaveTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -30,6 +34,7 @@ export function useAutoDraftSave() {
     }
 
     autosaveTimerRef.current = window.setTimeout(() => {
+      setPersistenceStatus('saving')
       void saveDraftSnapshot({
         projectId,
         projectTitle,
@@ -41,8 +46,10 @@ export function useAutoDraftSave() {
       })
         .then(() => {
           markDraftSaved(dirtyGlyphIds, deletedGlyphIds)
+          setPersistenceStatus('saved')
         })
         .catch((error) => {
+          setPersistenceStatus('error', getErrorMessage(error))
           console.warn('Auto draft save failed.', error)
         })
     }, AUTO_DRAFT_SAVE_DELAY_MS)
@@ -63,5 +70,6 @@ export function useAutoDraftSave() {
     projectId,
     projectTitle,
     selectedLayerId,
+    setPersistenceStatus,
   ])
 }

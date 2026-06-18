@@ -9,6 +9,7 @@ export function useCloseProjectWithDraftSave() {
   const toast = useToast()
   const closeProjectState = useStore((state) => state.closeProjectState)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
+  const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const isDirty = useStore((state) => state.isDirty)
   const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
@@ -36,6 +37,7 @@ export function useCloseProjectWithDraftSave() {
 
     setIsClosingProject(true)
     try {
+      setPersistenceStatus('saving')
       await saveDraftSnapshot({
         projectId,
         projectTitle,
@@ -46,8 +48,13 @@ export function useCloseProjectWithDraftSave() {
         selectedLayerId,
       })
       markDraftSaved(dirtyGlyphIds, deletedGlyphIds)
+      setPersistenceStatus('saved')
       closeProjectState()
     } catch (error) {
+      setPersistenceStatus(
+        'error',
+        error instanceof Error ? error.message : 'Save before close failed.'
+      )
       console.warn('Save before closing project failed.', error)
       toast({
         title: t('fontOverview.closeProjectSaveFailed'),
@@ -71,6 +78,7 @@ export function useCloseProjectWithDraftSave() {
     projectId,
     projectTitle,
     selectedLayerId,
+    setPersistenceStatus,
     t,
     toast,
   ])

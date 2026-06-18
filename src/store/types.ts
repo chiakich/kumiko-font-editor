@@ -339,12 +339,15 @@ export interface ViewportState {
 
 export type WorkspaceView = 'overview' | 'editor'
 export type OverviewGroupByState = 'none' | 'script' | 'block'
+export type PersistenceStatus = 'idle' | 'queued' | 'saving' | 'saved' | 'error'
 
 export interface GlobalState {
   fontData: FontData | null
   projectId: string | null
   projectTitle: string
   isDirty: boolean
+  persistenceStatus: PersistenceStatus
+  persistenceError: string | null
   dirtyGlyphIds: string[]
   deletedGlyphIds: string[]
   hasLocalChanges: boolean
@@ -554,6 +557,10 @@ export interface GlobalState {
   ) => void
   closeProjectState: () => void
   markDraftSaved: (savedDirtyIds?: string[], savedDeletedIds?: string[]) => void
+  setPersistenceStatus: (
+    status: PersistenceStatus,
+    error?: string | null
+  ) => void
   markLocalSaved: () => void
   updateFontInfo: (update: { fontInfo: FontInfo; unitsPerEm?: number }) => void
   updateFontSettings: (fontDataUpdate: Partial<FontData>) => void

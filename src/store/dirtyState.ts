@@ -1,8 +1,14 @@
 import type { GlobalState } from 'src/store/types'
 
-export const markGlyphDirty = (state: GlobalState, glyphId: string) => {
+export const markProjectDirty = (state: GlobalState) => {
   state.isDirty = true
   state.hasLocalChanges = true
+  state.persistenceStatus = 'queued'
+  state.persistenceError = null
+}
+
+export const markGlyphDirty = (state: GlobalState, glyphId: string) => {
+  markProjectDirty(state)
   state.glyphEditTimes[glyphId] = Date.now()
   if (!state.dirtyGlyphIds.includes(glyphId)) {
     state.dirtyGlyphIds.push(glyphId)
@@ -23,8 +29,7 @@ export const markGlyphAdded = (state: GlobalState, glyphId: string) => {
 
 // A deleted glyph drops its dirty/edit-time tracking and is queued for removal.
 export const markGlyphDeleted = (state: GlobalState, glyphId: string) => {
-  state.isDirty = true
-  state.hasLocalChanges = true
+  markProjectDirty(state)
   delete state.glyphEditTimes[glyphId]
   state.dirtyGlyphIds = state.dirtyGlyphIds.filter((id) => id !== glyphId)
   state.localDirtyGlyphIds = state.localDirtyGlyphIds.filter(

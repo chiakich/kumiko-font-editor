@@ -23,7 +23,7 @@ import {
   prepareGitHubCommit,
 } from 'src/lib/github/githubPr'
 import { saveDraftSnapshot } from 'src/lib/project/draftSave'
-import type { FontData } from 'src/store'
+import { useStore, type FontData } from 'src/store'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
   buildSuggestedGitHubBranchName,
@@ -89,6 +89,7 @@ export const useGitHubCommitFlow = ({
 }: UseGitHubCommitFlowInput) => {
   const toast = useToast()
   const { t } = useTranslation()
+  const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const gitHubModal = useDisclosure()
   const [isPreparingGitHubCommit, setIsPreparingGitHubCommit] = useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
@@ -424,7 +425,9 @@ export const useGitHubCommitFlow = ({
       return
     }
 
+    let localDraftSaved = false
     try {
+      setPersistenceStatus('saving')
       await saveDraftSnapshot({
         projectId,
         projectTitle,
@@ -434,6 +437,8 @@ export const useGitHubCommitFlow = ({
         glyphEditTimes,
         selectedLayerId: activeLayerId,
       })
+      localDraftSaved = true
+      setPersistenceStatus('saved')
 
       const preparedCommit = await prepareGitHubCommit({
         projectId,
@@ -479,6 +484,12 @@ export const useGitHubCommitFlow = ({
         isClosable: true,
       })
     } catch (error) {
+      if (!localDraftSaved) {
+        setPersistenceStatus(
+          'error',
+          error instanceof Error ? error.message : 'GitHub commit save failed.'
+        )
+      }
       const message = getErrorMessage(error, '目前無法建立 GitHub commit。')
 
       if (isMissingGitHubTokenError(message)) {

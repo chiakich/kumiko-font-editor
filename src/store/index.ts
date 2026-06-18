@@ -78,6 +78,8 @@ const initialState = {
   projectId: null,
   projectTitle: '',
   isDirty: false,
+  persistenceStatus: 'idle' as const,
+  persistenceError: null,
   dirtyGlyphIds: [],
   deletedGlyphIds: [],
   hasLocalChanges: false,
