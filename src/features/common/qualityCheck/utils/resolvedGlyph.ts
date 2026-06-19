@@ -8,6 +8,7 @@ import {
   getStructureBodyBox,
   type StructureBodyBox,
 } from 'src/features/common/qualityCheck/utils/hanClassification'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 /**
  * 把 store 的 GlyphData（含 layer/archive 等主執行緒狀態）解析成
@@ -19,6 +20,7 @@ export interface ResolvedGlyph {
   id: string
   name: string
   unicode: string | null
+  unicodes: string[]
   advance: number
   paths: PathData[]
   componentRefs: GlyphComponentRef[]
@@ -33,7 +35,7 @@ export const resolveGlyph = (
   glyph: Parameters<typeof getGlyphLayer>[0] & {
     id: string
     name: string
-    unicode?: string | null
+    unicodes?: string[]
     activeLayerId?: string | null
   }
 ): ResolvedGlyph => {
@@ -41,7 +43,8 @@ export const resolveGlyph = (
   return {
     id: glyph.id,
     name: glyph.name,
-    unicode: glyph.unicode ?? null,
+    unicode: getPrimaryGlyphUnicode(glyph),
+    unicodes: glyph.unicodes ?? [],
     advance: layer?.metrics.width ?? 0,
     paths: layer?.paths ?? [],
     componentRefs: layer?.componentRefs ?? [],

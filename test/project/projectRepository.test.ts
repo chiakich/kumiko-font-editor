@@ -22,7 +22,7 @@ const fontData: FontData = {
     A: {
       id: 'A',
       name: 'A',
-      unicode: '0041',
+      unicodes: ['0041'],
       activeLayerId: 'public.default',
       layerOrder: ['public.default'],
       layers: {
@@ -107,7 +107,6 @@ describe('projectRepository canonical storage', () => {
           ...fontData.glyphs.A,
           id: 'B',
           name: 'B',
-          unicode: '0042',
           unicodes: ['0042'],
         },
       },

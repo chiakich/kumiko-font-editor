@@ -7,6 +7,7 @@ import {
 } from 'src/store'
 import { activeLayer, getGlyphLayer } from 'src/store/glyphLayer'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 export type OverviewGroupBy = 'none' | 'script' | 'block'
 
@@ -71,17 +72,20 @@ const BLOCK_RANGES: Array<{ from: number; to: number; label: string }> = [
 ]
 
 const getCodePoint = (glyph: GlyphData) => {
-  if (!glyph.unicode) {
+  const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+  if (!primaryUnicode) {
     return null
   }
 
-  const parsed = Number.parseInt(glyph.unicode, 16)
+  const parsed = Number.parseInt(primaryUnicode, 16)
   return Number.isFinite(parsed) ? parsed : null
 }
 
 const getGlyphSortKey = (glyph: GlyphData) =>
-  glyph.unicode
-    ? Number.parseInt(glyph.unicode, 16).toString().padStart(8, '0')
+  getPrimaryGlyphUnicode(glyph)
+    ? Number.parseInt(getPrimaryGlyphUnicode(glyph)!, 16)
+        .toString()
+        .padStart(8, '0')
     : glyph.id
 
 const sortGlyphsByCodePoint = (glyphs: GlyphData[]) =>
@@ -187,7 +191,9 @@ const UNENCODED_GLYPH_TYPE = {
 const getGlyphTypeDefinition = (glyph: GlyphData) => {
   const character = getGlyphDisplayCharacter(glyph)
   if (!character) {
-    return glyph.unicode ? OTHER_GLYPH_TYPE : UNENCODED_GLYPH_TYPE
+    return getPrimaryGlyphUnicode(glyph)
+      ? OTHER_GLYPH_TYPE
+      : UNENCODED_GLYPH_TYPE
   }
 
   return (

@@ -1,10 +1,12 @@
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+
 /**
  * 漢字判定與字身框（body box）推導。這些是品質檢查各模組共用的
  * 基礎判定，與「邊界筆畫」「離群偵測」等具體分析無關，故獨立成檔。
  */
 
 export interface UnicodeBearer {
-  unicode?: string | null
+  unicodes?: string[]
 }
 
 export interface BodyBoxSource {
@@ -36,10 +38,11 @@ export const isHanCodePoint = (codePoint: number) =>
   HAN_RANGES.some(([start, end]) => codePoint >= start && codePoint <= end)
 
 export const getGlyphCodePoint = (glyph: UnicodeBearer) => {
-  if (!glyph.unicode) {
+  const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+  if (!primaryUnicode) {
     return null
   }
-  const parsed = Number.parseInt(glyph.unicode, 16)
+  const parsed = Number.parseInt(primaryUnicode, 16)
   return Number.isFinite(parsed) ? parsed : null
 }
 

@@ -146,7 +146,7 @@ export const buildGlyphActions = (set: ImmerSet) => ({
         state.fontData.glyphs[glyphInput.id] = {
           id: glyphInput.id,
           name: glyphInput.name,
-          unicode: glyphInput.unicode,
+          unicodes: glyphInput.unicode ? [glyphInput.unicode] : [],
           production: glyphInput.production ?? null,
           activeLayerId: layerId,
           layerOrder: [layerId],

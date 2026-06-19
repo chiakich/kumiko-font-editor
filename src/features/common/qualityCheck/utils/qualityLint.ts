@@ -8,6 +8,7 @@ import {
   isOffCurveNode,
 } from 'src/store'
 import { isHanGlyph } from 'src/features/common/qualityCheck/utils/hanClassification'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 export type QualityScope = 'changed' | 'current' | 'selected' | 'font'
 export type QualityIssueSeverity = 'blocking' | 'warning' | 'info'
@@ -428,7 +429,7 @@ const buildGlyphIssues = (
     glyph.export !== false &&
     activeLayer.paths.length === 0 &&
     activeLayer.componentRefs.length === 0 &&
-    !glyph.unicode
+    !getPrimaryGlyphUnicode(glyph)
   ) {
     issues.push(
       makeIssue(glyph, {

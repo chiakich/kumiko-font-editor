@@ -5,6 +5,7 @@ import {
 } from 'src/lib/components/componentTransform'
 import { getNodeSegmentType, getNodeType, isOffCurveNode } from 'src/store'
 import type { FontData, GlyphData, GlyphLayerData, PathNode } from 'src/store'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 // A pre-formatted OpenStep token emitted verbatim (no quoting, no re-indent).
 // Used for Glyphs 3 compact tuples like `(302,128,l)` and `pos = (250,700)`,
@@ -346,7 +347,7 @@ export const createGlyphsRecordFromFontDataGlyph = (
   const patchedGlyph: Record<string, unknown> = {
     ...(rawGlyph ?? {}),
     glyphname: glyph.id,
-    unicode: glyph.unicode ?? undefined,
+    unicode: getPrimaryGlyphUnicode(glyph) ?? undefined,
     export: glyph.export === false ? 0 : 1,
     category: glyph.category ?? undefined,
     subCategory: glyph.subCategory ?? undefined,
@@ -448,8 +449,9 @@ const serializeGlyphsArrayToChunks = (
       }
     }
     register(glyph.id.toLowerCase())
-    if (glyph.unicode) {
-      register(`uni${glyph.unicode}`.toLowerCase())
+    const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+    if (primaryUnicode) {
+      register(`uni${primaryUnicode}`.toLowerCase())
     }
   }
   const seenGlyphIds = new Set<string>()

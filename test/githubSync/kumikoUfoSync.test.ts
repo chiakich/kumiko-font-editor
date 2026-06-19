@@ -93,7 +93,6 @@ const makeFontData = (width = 500): FontData => ({
     A: {
       id: 'A',
       name: 'A',
-      unicode: '0041',
       unicodes: ['0041'],
       activeLayerId: 'public.default',
       layerOrder: ['public.default'],

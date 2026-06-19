@@ -731,7 +731,7 @@ export const buildFontDataFromGlyphsDocument = (
       activeLayerId,
       layerOrder,
       layers,
-      unicode: parsed.unicode,
+      unicodes: parsed.unicode ? [parsed.unicode] : [],
       production: parsed.production,
       category: parsed.category,
       subCategory: parsed.subCategory,

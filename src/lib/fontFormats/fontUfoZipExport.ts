@@ -91,7 +91,7 @@ const toGlyphRecord = (
     glyphName: glyph.id,
     fileName,
     sourceHash: null,
-    unicodes: glyph.unicode ? [glyph.unicode] : [],
+    unicodes: glyph.unicodes ?? [],
     advance: {
       width: metrics.width,
       height: null,

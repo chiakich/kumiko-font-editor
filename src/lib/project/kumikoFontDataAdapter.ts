@@ -17,7 +17,7 @@ import { deterministicStringify } from 'src/store/deterministicStringify'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 
 const getGlyphUnicodes = (glyph: GlyphData) => {
-  const values = glyph.unicodes ?? (glyph.unicode ? [glyph.unicode] : [])
+  const values = glyph.unicodes ?? []
   const normalized = values
     .map((unicode) => normalizeUnicodeHex(unicode))
     .filter((unicode): unicode is string => Boolean(unicode))
@@ -339,7 +339,6 @@ export const kumikoGlyphRecordToGlyphData = (
     layerOrder: record.layerOrder,
     layers,
     unicodes: record.unicodes,
-    unicode: record.unicodes[0] ?? null,
     production: record.production,
     export: record.export,
     category: record.category,

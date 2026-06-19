@@ -107,8 +107,8 @@ describe('buildFontDataFromGlyphsDocument (Glyphs 2)', () => {
   })
 
   it('keeps unicode as zero-padded hex', () => {
-    expect(fontData.glyphs.A.unicode).toBe('0041')
-    expect(fontData.glyphs.Aacute.unicode).toBe('00C1')
+    expect(fontData.glyphs.A.unicodes).toEqual(['0041'])
+    expect(fontData.glyphs.Aacute.unicodes).toEqual(['00C1'])
   })
 
   it('computes metrics from outline bounds', () => {

@@ -1,6 +1,7 @@
 import { Grid, GridItem } from '@chakra-ui/react'
 import { useCallback, useMemo, useState } from 'react'
 import { useStore } from 'src/store'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
 import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
 import { OverviewRightPanel } from 'src/features/fontOverview/components/OverviewRightPanel'
@@ -85,15 +86,7 @@ export function FontOverviewScreen() {
     (glyphIds: string[]) =>
       glyphIds
         .map((glyphId) => {
-          const unicode = glyphMap[glyphId]?.unicode
-          if (!unicode) {
-            return ''
-          }
-
-          const codePoint = Number.parseInt(unicode, 16)
-          return Number.isFinite(codePoint)
-            ? String.fromCodePoint(codePoint)
-            : ''
+          return getGlyphUnicodeChar(glyphMap[glyphId]) ?? ''
         })
         .join(''),
     [glyphMap]

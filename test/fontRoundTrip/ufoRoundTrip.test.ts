@@ -90,7 +90,9 @@ describe('UFO import → export → reimport round-trip', () => {
     for (const [id, beforeGlyph] of Object.entries(before.glyphs)) {
       const afterGlyph = after.glyphs[id]
       expect(afterGlyph, `glyph ${id} missing after round-trip`).toBeDefined()
-      expect(afterGlyph.unicode, `unicode for ${id}`).toBe(beforeGlyph.unicode)
+      expect(afterGlyph.unicodes, `unicodes for ${id}`).toEqual(
+        beforeGlyph.unicodes
+      )
       expect(layerOf(afterGlyph).metrics.width, `advance for ${id}`).toBe(
         layerOf(beforeGlyph).metrics.width
       )

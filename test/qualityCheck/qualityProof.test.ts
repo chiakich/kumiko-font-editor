@@ -29,7 +29,7 @@ const makeGlyph = (
   normalizeGlyphToLayers({
     id,
     name: id,
-    unicode,
+    unicodes: unicode ? [unicode] : [],
     paths,
     components: [],
     componentRefs: [],

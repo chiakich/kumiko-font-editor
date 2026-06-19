@@ -18,7 +18,6 @@ const fontData = {
       id: 'A',
       name: 'A',
       unicodes: ['u+0041', '41'],
-      unicode: '0041',
       production: 'A',
       export: true,
       note: 'keep me',
@@ -158,7 +157,6 @@ describe('kumikoFontDataAdapter', () => {
 
     expect(rebuilt.glyphOrder).toEqual(['A'])
     expect(rebuilt.sources?.M1.location).toEqual({ Weight: 400 })
-    expect(rebuilt.glyphs.A.unicode).toBe('0041')
     expect(rebuilt.glyphs.A.unicodes).toEqual(['0041'])
     expect(rebuilt.glyphs.A.note).toBe('keep me')
     expect(rebuilt.glyphs.A.leftMetricsKey).toBe('H')

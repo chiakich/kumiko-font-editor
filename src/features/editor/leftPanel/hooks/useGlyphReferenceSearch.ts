@@ -5,6 +5,7 @@ import {
   getRelatedGlyphs,
   isCjkCharacter,
 } from 'src/lib/glyph/glyphRelations'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 import {
   getGlyphwikiCompositionDeep,
   type GlyphwikiPartBox,
@@ -62,7 +63,7 @@ export function useGlyphReferenceSearch({
       glyphs.map((glyph) => ({
         id: glyph.id,
         name: glyph.name,
-        unicode: glyph.unicode ?? null,
+        unicode: getPrimaryGlyphUnicode(glyph),
       })),
     [glyphs]
   )

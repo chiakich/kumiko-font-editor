@@ -167,7 +167,6 @@ export interface GlyphData {
   layers?: Record<string, GlyphLayerData>
   layerOrder?: string[]
   unicodes?: string[]
-  unicode?: string | null
   export?: boolean
   category?: string | null
   subCategory?: string | null

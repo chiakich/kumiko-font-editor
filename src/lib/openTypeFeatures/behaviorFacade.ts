@@ -1329,7 +1329,7 @@ export function makeCompositeGlyphFromComponents(
   return {
     id: glyphId,
     name: glyphId,
-    unicode: null,
+    unicodes: [],
     export: true,
     activeLayerId: layerId,
     layerOrder: [layerId],
@@ -1364,7 +1364,7 @@ export function makeEditableGlyphCopy(
     ...sourceGlyph,
     id: glyphId,
     name: glyphId,
-    unicode: null,
+    unicodes: [],
     activeLayerId: layerId,
     layerOrder: [layerId],
     layers: {

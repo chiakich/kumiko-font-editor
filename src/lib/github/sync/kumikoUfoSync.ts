@@ -326,7 +326,6 @@ const ufoGlyphToGlyphData = (input: {
       [source.defaultLayerId]: layer,
     },
     unicodes: input.record.unicodes,
-    unicode: input.record.unicodes[0] ?? null,
     production: existingGlyph?.production,
     export: existingGlyph?.export ?? true,
     sourceData: {

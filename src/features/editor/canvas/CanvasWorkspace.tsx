@@ -11,6 +11,7 @@ import {
 import { SceneController } from 'src/features/editor/tools'
 import { useGlyphInsight } from 'src/features/editor/insight/glyphInsight'
 import { buildStructureGuideModel } from 'src/features/editor/insight/structureGuideModel'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 import {
   getNodeSegmentType,
   isOffCurveNode,
@@ -563,9 +564,7 @@ export function CanvasWorkspace() {
     const glyph = activeEditorGlyphId
       ? fontData?.glyphs[activeEditorGlyphId]
       : null
-    const fallbackChar = glyph?.unicode
-      ? String.fromCodePoint(parseInt(glyph.unicode, 16))
-      : null
+    const fallbackChar = getGlyphUnicodeChar(glyph ?? undefined)
     const char = referenceFontChar || fallbackChar
     const unitsPerEm = fontData?.unitsPerEm ?? 1000
     const advanceWidth =

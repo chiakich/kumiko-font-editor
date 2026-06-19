@@ -1,4 +1,5 @@
 import { activeLayer, type GlyphData } from 'src/store'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 const knownBlankGlyphNames = new Set([
   'cr',
@@ -40,9 +41,8 @@ export const isKnownBlankGlyph = (glyph: GlyphData) => {
     return true
   }
 
-  return glyph.unicode
-    ? knownBlankUnicodes.has(glyph.unicode.trim().toUpperCase())
-    : false
+  const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+  return primaryUnicode ? knownBlankUnicodes.has(primaryUnicode) : false
 }
 
 export const hasDrawableGlyphContent = (glyph: GlyphData) => {

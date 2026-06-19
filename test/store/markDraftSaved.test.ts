@@ -6,7 +6,7 @@ const makeGlyph = (id: string): GlyphData =>
   ({
     id,
     name: id,
-    unicode: null,
+    unicodes: [],
     metrics: { width: 1000, lsb: 0, rsb: 0 },
     paths: [],
     components: [],

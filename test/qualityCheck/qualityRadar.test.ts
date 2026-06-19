@@ -123,7 +123,7 @@ const makeHanGlyph = (index: number, path: PathData): GlyphData =>
   normalizeGlyphToLayers({
     id: `g${index}`,
     name: `g${index}`,
-    unicode: (0x4e00 + index).toString(16).toUpperCase(),
+    unicodes: [(0x4e00 + index).toString(16).toUpperCase()],
     paths: [path],
     components: [],
     componentRefs: [],

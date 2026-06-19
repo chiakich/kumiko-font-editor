@@ -135,7 +135,7 @@ describe('OpenType behavior facade', () => {
     const glyph = makeEditableGlyphCopy(fontData, 'f.alt', 'f')
     const layer = getGlyphLayer(glyph ?? undefined, null)
 
-    expect(glyph).toMatchObject({ id: 'f.alt', name: 'f.alt', unicode: null })
+    expect(glyph).toMatchObject({ id: 'f.alt', name: 'f.alt', unicodes: [] })
     expect(layer?.metrics).toMatchObject({ width: 500, lsb: 0, rsb: 500 })
     expect(layer?.paths[0]?.id).toBe('f.alt_f_path')
     expect(layer?.paths[0]?.nodes[0]?.id).toBe('f.alt_f_node_0')
@@ -550,7 +550,7 @@ function makeGlyph(id: string, width: number): GlyphData {
   return normalizeGlyphToLayers({
     id,
     name: id,
-    unicode: null,
+    unicodes: [],
     paths: [
       {
         id: `${id}_path`,

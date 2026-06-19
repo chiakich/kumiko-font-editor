@@ -14,7 +14,7 @@ const makeGlyph = (input: {
   normalizeGlyphToLayers({
     id: input.id,
     name: input.id,
-    unicode: input.unicode ?? null,
+    unicodes: input.unicode ? [input.unicode] : [],
     metrics: { width: 1000, lsb: 0, rsb: 0 },
     paths: input.drawn ? [{ id: 'p1', nodes: [], closed: true }] : [],
     components: [],

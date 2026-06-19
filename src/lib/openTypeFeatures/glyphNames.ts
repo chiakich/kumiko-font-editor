@@ -1,4 +1,5 @@
 import type { GlyphData } from 'src/store/types'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 
 const COMMON_LIGATURES = new Set([
   'f_i',
@@ -38,13 +39,13 @@ export const getLocalizedLanguage = (glyphName: string) => {
 }
 
 export const isLowercaseGlyph = (glyph: GlyphData) => {
-  if (!glyph.unicode) return false
-  const char = String.fromCodePoint(Number.parseInt(glyph.unicode, 16))
+  const char = getGlyphUnicodeChar(glyph)
+  if (!char) return false
   return char.toLocaleLowerCase() === char && char.toLocaleUpperCase() !== char
 }
 
 export const isUppercaseGlyph = (glyph: GlyphData) => {
-  if (!glyph.unicode) return false
-  const char = String.fromCodePoint(Number.parseInt(glyph.unicode, 16))
+  const char = getGlyphUnicodeChar(glyph)
+  if (!char) return false
   return char.toLocaleUpperCase() === char && char.toLocaleLowerCase() !== char
 }

@@ -3,6 +3,7 @@ import {
   hasDrawableGlyphContent,
   isKnownBlankGlyph,
 } from 'src/lib/glyph/glyphBlankness'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 export interface CharsetCoverageInput {
   id: string
@@ -49,8 +50,9 @@ export const buildGlyphLookupMap = (glyphMap: Record<string, GlyphData>) => {
     const keys: string[] = []
     addLookupKeys(keys, glyph.id)
     addLookupKeys(keys, glyph.name)
-    if (glyph.unicode) {
-      const unicode = glyph.unicode.toUpperCase()
+    const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+    if (primaryUnicode) {
+      const unicode = primaryUnicode.toUpperCase()
       keys.push(unicode)
       keys.push(`uni${unicode}`.toLowerCase())
     }

@@ -6,6 +6,7 @@ import type {
   OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures/types'
 import type { FontData } from 'src/store/types'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 export const OPEN_TYPE_FEATURES_IR_VERSION = '1'
 
@@ -110,7 +111,7 @@ export const createFontFingerprint = (fontData: FontData): FontFingerprint => {
   const cmapEntries = glyphOrder
     .map((glyphId) => {
       const glyph = fontData.glyphs[glyphId]
-      return `${glyphId}:${glyph?.unicode ?? ''}:${glyph?.name ?? ''}`
+      return `${glyphId}:${getPrimaryGlyphUnicode(glyph) ?? ''}:${glyph?.name ?? ''}`
     })
     .join('|')
 

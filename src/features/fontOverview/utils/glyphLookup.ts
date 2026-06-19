@@ -1,4 +1,5 @@
 import type { GlyphData } from 'src/store'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 export const addGlyphLookupKeys = (keys: Set<string>, glyphName: string) => {
   keys.add(glyphName.toLowerCase())
@@ -37,8 +38,9 @@ export const getExistingGlyphLookupKeys = (
   for (const glyph of Object.values(glyphMap)) {
     addGlyphLookupKeys(keys, glyph.id)
     addGlyphLookupKeys(keys, glyph.name)
-    if (glyph.unicode) {
-      const unicode = glyph.unicode.toUpperCase()
+    const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+    if (primaryUnicode) {
+      const unicode = primaryUnicode.toUpperCase()
       keys.add(unicode)
       keys.add(`uni${unicode}`.toLowerCase())
     }

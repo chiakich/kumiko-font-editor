@@ -1,16 +1,11 @@
 import type { FontData, GlobalState } from 'src/store/types'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 
 const getGlyphCharacterById = (
   fontData: FontData | null | undefined,
   glyphId: string
 ) => {
-  const unicode = fontData?.glyphs[glyphId]?.unicode
-  if (!unicode) {
-    return ''
-  }
-
-  const codePoint = Number.parseInt(unicode, 16)
-  return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : ''
+  return getGlyphUnicodeChar(fontData?.glyphs[glyphId]) ?? ''
 }
 
 export const syncEditorTextFromGlyphIds = (state: GlobalState) => {

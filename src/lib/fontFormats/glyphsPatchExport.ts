@@ -7,6 +7,7 @@ import {
 import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
 import type { GlyphData } from 'src/store'
 import { activeLayer } from 'src/store/glyphLayer'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 interface GlyphBlockRange {
   start: number
@@ -124,8 +125,9 @@ const getGlyphLookupKeys = (glyph: GlyphData) => {
   const keys = new Set<string>()
   keys.add(glyph.id.toLowerCase())
   keys.add(glyph.name.toLowerCase())
-  if (glyph.unicode) {
-    keys.add(`uni${glyph.unicode}`.toLowerCase())
+  const primaryUnicode = getPrimaryGlyphUnicode(glyph)
+  if (primaryUnicode) {
+    keys.add(`uni${primaryUnicode}`.toLowerCase())
   }
   return [...keys]
 }
@@ -214,7 +216,7 @@ export const patchGlyphText = (
     ? (parseOpenStep(rawGlyphText) as Record<string, unknown>)
     : {
         glyphname: glyph.name,
-        unicode: glyph.unicode ?? undefined,
+        unicode: getPrimaryGlyphUnicode(glyph) ?? undefined,
         export: glyph.export === false ? 0 : 1,
         category: glyph.category ?? undefined,
         subCategory: glyph.subCategory ?? undefined,
@@ -229,7 +231,7 @@ export const patchGlyphText = (
   const glyphRecord = (doc.glyphs?.[0] ?? rawGlyph) as Record<string, unknown>
   glyphRecord.glyphname = glyph.name
   if (!rawGlyphText) {
-    glyphRecord.unicode = glyph.unicode ?? undefined
+    glyphRecord.unicode = getPrimaryGlyphUnicode(glyph) ?? undefined
   }
   glyphRecord.export = glyph.export === false ? 0 : 1
   glyphRecord.category = glyph.category ?? undefined

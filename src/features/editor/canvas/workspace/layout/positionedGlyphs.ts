@@ -13,6 +13,7 @@ import type {
   PositionedGlyph,
 } from 'src/sceneView'
 import { getComponentMatrix } from 'src/lib/components/componentTransform'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import {
   getGlyphInkBounds,
@@ -244,15 +245,7 @@ export const buildPositionedGlyphs = ({
           closedContoursPath2d: undefined,
         },
         glyphId: glyph.id,
-        displayCharacter: (() => {
-          if (!glyph.unicode) {
-            return glyph.name || glyph.id
-          }
-          const codePoint = Number.parseInt(glyph.unicode, 16)
-          return Number.isFinite(codePoint)
-            ? String.fromCodePoint(codePoint)
-            : glyph.name || glyph.id
-        })(),
+        displayCharacter: getGlyphUnicodeChar(glyph) ?? glyph.name ?? glyph.id,
         x: cursorX,
         y: 0,
         pointRefs,

@@ -16,6 +16,7 @@ import { getNodeSegmentType, isOffCurveNode, isOnCurveNode } from 'src/store'
 import { activeLayer } from 'src/store/glyphLayer'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 const WOFF2_WASM_URL = new URL(
   '../../node_modules/fonteditor-core/woff2/woff2.wasm',
@@ -296,11 +297,12 @@ export const importBinaryFontFile = async (file: File) => {
     const width = glyph.advanceWidth ?? font.unitsPerEm
     const metrics = buildGlyphMetrics(glyph, width)
     const glyphId = toGlyphId(glyph, idx)
+    const unicode = toUnicodeString(glyph.unicode)
     glyphOrder.push(glyphId)
     glyphs[glyphId] = {
       id: glyphId,
       name: glyph.name ?? glyphId,
-      unicode: toUnicodeString(glyph.unicode),
+      unicodes: unicode ? [unicode] : [],
       activeLayerId: 'public.default',
       layerOrder: ['public.default'],
       layers: {
@@ -442,7 +444,7 @@ export const exportFontAsBinary = (
     activeLayer(glyph).paths.forEach((shape) => {
       appendShapeToPath(path, shape)
     })
-    const normalizedUnicode = normalizeUnicodeHex(glyph.unicode)
+    const normalizedUnicode = getPrimaryGlyphUnicode(glyph)
     const codePoint = normalizedUnicode
       ? Number.parseInt(normalizedUnicode, 16)
       : undefined

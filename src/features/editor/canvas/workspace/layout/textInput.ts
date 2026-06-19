@@ -1,4 +1,5 @@
 import type { FontData } from 'src/store'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 
 export const charIndexToCodeUnitIndex = (text: string, charIndex: number) =>
   Array.from(text).slice(0, charIndex).join('').length
@@ -26,14 +27,8 @@ export const buildGlyphIdByCharacter = (fontData: FontData | null) => {
   }
 
   for (const glyph of Object.values(fontData.glyphs)) {
-    if (!glyph.unicode) {
-      continue
-    }
-    const codePoint = Number.parseInt(glyph.unicode, 16)
-    if (!Number.isFinite(codePoint)) {
-      continue
-    }
-    const character = String.fromCodePoint(codePoint)
+    const character = getGlyphUnicodeChar(glyph)
+    if (!character) continue
     if (!entries.has(character)) {
       entries.set(character, glyph.id)
     }

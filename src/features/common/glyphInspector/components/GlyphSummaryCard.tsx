@@ -14,6 +14,7 @@ import {
   getGlyphOverviewStats,
   getGlyphScriptLabel,
 } from 'src/lib/glyph/glyphOverview'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 import type { GlyphData, GlyphLayerData, WorkspaceView } from 'src/store'
 import { useTranslation } from 'react-i18next'
 import { PageSearch } from 'iconoir-react'
@@ -129,7 +130,7 @@ export function GlyphSummaryCard({
                   {t('glyphInspector.unicode')}
                 </Text>
                 <Text fontSize="sm" color="field.ink" fontFamily="mono">
-                  {glyph.unicode ?? '未編碼'}
+                  {getPrimaryGlyphUnicode(glyph) ?? '未編碼'}
                 </Text>
               </GridItem>
               <GridItem>

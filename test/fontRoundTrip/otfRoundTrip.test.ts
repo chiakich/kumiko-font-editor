@@ -9,6 +9,7 @@ import {
 } from 'src/lib/fontFormats/fontBinaryFormat'
 import type { FontData, GlyphData } from 'src/store'
 import { getGlyphLayer } from 'src/store/glyphLayer'
+import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 const layerOf = (g: GlyphData) => getGlyphLayer(g, null)!
 
 // Public Sans Regular (CFF/OTF, OFL) — see test/fixtures/otf/OFL.txt.
@@ -29,15 +30,17 @@ const loadFixtureFile = async () => {
   return new File([buffer], 'PublicSans-Regular.otf', { type: 'font/otf' })
 }
 
-const codePointOf = (unicode: GlyphData['unicode']) =>
-  unicode != null ? Number.parseInt(unicode, 16) : undefined
+const codePointOf = (glyph: GlyphData) => {
+  const unicode = getPrimaryGlyphUnicode(glyph)
+  return unicode != null ? Number.parseInt(unicode, 16) : undefined
+}
 
 // exportFontAsBinary follows OpenType best practice and does not encode C0
 // controls (< U+0020) or U+007F in the cmap; the glyph is kept but unencoded,
 // so its unicode comes back null after the round-trip. (Public Sans ships a
 // uni0000 control glyph.)
 const isControlGlyph = (glyph: GlyphData) => {
-  const codePoint = codePointOf(glyph.unicode)
+  const codePoint = codePointOf(glyph)
   return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f)
 }
 
@@ -87,7 +90,7 @@ describe('OTF import → export round-trip', () => {
     for (const before of controls) {
       const after = result.glyphs[before.id]
       expect(after, `control glyph ${before.id} dropped`).toBeDefined()
-      expect(after.unicode, `${before.id} should be unencoded`).toBeNull()
+      expect(after.unicodes, `${before.id} should be unencoded`).toEqual([])
     }
   })
 
@@ -97,7 +100,9 @@ describe('OTF import → export round-trip', () => {
       expect(after, `glyph ${before.id} missing after round-trip`).toBeDefined()
       // Control glyphs are intentionally unencoded; their mapping is covered above.
       if (!isControlGlyph(before)) {
-        expect(after.unicode, `unicode for ${before.id}`).toBe(before.unicode)
+        expect(after.unicodes, `unicodes for ${before.id}`).toEqual(
+          before.unicodes ?? []
+        )
       }
       expect(
         layerOf(after).metrics.width,

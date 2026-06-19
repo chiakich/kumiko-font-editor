@@ -1,4 +1,5 @@
 import type { GlyphData } from 'src/store'
+import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 
 const IDS_OPERATOR_MIN = 0x2ff0
 const IDS_OPERATOR_MAX = 0x2ffb
@@ -16,12 +17,8 @@ export const getGlyphCharacter = (glyph: GlyphData | null | undefined) => {
     return null
   }
 
-  if (glyph.unicode) {
-    const codePoint = Number.parseInt(glyph.unicode, 16)
-    if (Number.isFinite(codePoint)) {
-      return String.fromCodePoint(codePoint)
-    }
-  }
+  const unicodeCharacter = getGlyphUnicodeChar(glyph)
+  if (unicodeCharacter) return unicodeCharacter
 
   return Array.from(glyph.name ?? '').length === 1 ? glyph.name : null
 }

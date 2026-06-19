@@ -8,7 +8,7 @@ const glyph = (id: string, name: string, unicode: string | null): GlyphData =>
   ({
     id,
     name,
-    unicode,
+    unicodes: unicode ? [unicode] : [],
     metrics: { width: 1000, lsb: 0, rsb: 0 },
     paths: [],
     components: [],

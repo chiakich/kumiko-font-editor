@@ -40,7 +40,7 @@ const makeGlyph = (name: string, unicode?: string): GlyphData => ({
   anchors: [],
   guidelines: [],
   metrics: { lsb: 0, rsb: 0, width: 500 },
-  unicode,
+  unicodes: unicode ? [unicode] : [],
 })
 
 const makeFontData = (
