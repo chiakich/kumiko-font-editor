@@ -118,6 +118,43 @@ export const buildProjectActions = (
         dirtyGlyphIds.length > 0 || deletedGlyphIds.length > 0
     }),
 
+  hydrateGlyphGeometry: (glyphs: FontData['glyphs'][string][]) =>
+    set((state) => {
+      if (!state.fontData || glyphs.length === 0) {
+        return
+      }
+
+      for (const glyph of glyphs) {
+        const existing = state.fontData.glyphs[glyph.id]
+        if (!existing) {
+          continue
+        }
+        const activeLayerId =
+          existing.activeLayerId && glyph.layers?.[existing.activeLayerId]
+            ? existing.activeLayerId
+            : glyph.activeLayerId
+        state.fontData.glyphs[glyph.id] = {
+          ...existing,
+          ...glyph,
+          activeLayerId,
+        }
+      }
+
+      if (
+        state.selectedGlyphId &&
+        state.selectedLayerId &&
+        state.fontData.glyphs[state.selectedGlyphId]?.layers?.[
+          state.selectedLayerId
+        ]
+      ) {
+        setGlyphActiveLayer(
+          state.fontData.glyphs[state.selectedGlyphId],
+          state.selectedLayerId
+        )
+      }
+      syncFilteredGlyphList(state)
+    }),
+
   closeProjectState: () =>
     set((state) => {
       state.fontData = null

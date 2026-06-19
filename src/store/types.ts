@@ -166,6 +166,7 @@ export interface GlyphData {
   activeLayerId?: string | null
   layers?: Record<string, GlyphLayerData>
   layerOrder?: string[]
+  componentGlyphIds?: string[]
   unicodes?: string[]
   export?: boolean
   category?: string | null
@@ -550,6 +551,7 @@ export interface GlobalState {
     projectSourceFormat?: ProjectSourceFormat | null,
     projectRoundTripFormat?: ProjectRoundTripFormat | null
   ) => void
+  hydrateGlyphGeometry: (glyphs: GlyphData[]) => void
   hydratePersistedLocalChanges: (
     dirtyGlyphIds: string[],
     deletedGlyphIds: string[],

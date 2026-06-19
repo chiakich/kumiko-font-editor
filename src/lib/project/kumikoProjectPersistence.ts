@@ -204,6 +204,29 @@ export const loadKumikoGlyphRecord = async (key: KumikoGlyphPrimaryKey) => {
   ) as Promise<KumikoGlyphRecord | undefined>
 }
 
+export const loadKumikoGlyphRecords = async (keys: KumikoGlyphPrimaryKey[]) => {
+  if (keys.length === 0) {
+    return []
+  }
+
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
+  const store = transaction.objectStore(KUMIKO_GLYPHS_STORE)
+  const done = transactionDone(transaction)
+  const records = await Promise.all(
+    keys.map(
+      (key) =>
+        requestToPromise(store.get(key)) as Promise<
+          KumikoGlyphRecord | undefined
+        >
+    )
+  )
+  await done
+  return records.filter((record): record is KumikoGlyphRecord =>
+    Boolean(record)
+  )
+}
+
 export const patchKumikoGlyphMetadata = async (input: {
   projectId: string
   glyphId: string

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   deleteKumikoProject,
   listProjectSummaries,
-  loadProjectDraft,
+  loadProjectDraftMetadata,
   renameKumikoProject,
 } from 'src/lib/project/projectRepository'
 import {
@@ -45,7 +45,7 @@ export const useProjectList = () => {
       }
 
       try {
-        const draft = await loadProjectDraft(project.id)
+        const draft = await loadProjectDraftMetadata(project.id)
         if (!draft?.fontData) {
           await releaseProjectWriteLock(project.id)
           return null

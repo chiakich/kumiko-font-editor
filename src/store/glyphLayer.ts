@@ -4,6 +4,7 @@ import type {
   GlyphLayerData,
   GlyphLayerContent,
 } from 'src/store/types'
+import { hasLegacyGlyphGeometry } from 'src/lib/glyph/glyphGeometryState'
 
 export const ACTIVE_LAYER_FALLBACK = 'public.default'
 
@@ -115,6 +116,10 @@ export const withActiveLayer = (
 // active layer, and strip the top-level fields. Idempotent: glyphs already in the
 // new shape pass through with only layerOrder/activeLayerId normalised.
 export const normalizeGlyphToLayers = (glyph: GlyphData): GlyphData => {
+  if (!glyph.layers && !hasLegacyGlyphGeometry(glyph)) {
+    return glyph
+  }
+
   const id = getActiveLayerId(glyph)
   const layers = { ...(glyph.layers ?? {}) }
   const legacy = glyph as unknown as Partial<GlyphLayerContent>

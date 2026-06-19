@@ -1,9 +1,12 @@
 import {
   deleteKumikoProjectRecord,
+  loadKumikoGlyphRecord,
+  loadKumikoGlyphRecords,
   listKumikoGlyphRecordsForProject,
   listKumikoProjectRecords,
   loadKumikoProjectRecord,
   loadKumikoUiValue,
+  makeKumikoGlyphKey,
   replaceKumikoProjectData,
   saveKumikoUiValue,
   renameKumikoProjectRecord,
@@ -11,6 +14,7 @@ import {
 import {
   fontDataToKumikoGlyphRecords,
   fontDataToKumikoProjectRecord,
+  kumikoGlyphRecordToGlyphData,
   kumikoRecordsToFontData,
 } from 'src/lib/project/kumikoFontDataAdapter'
 import { toProjectSummary } from 'src/lib/project/projectTypes'
@@ -31,10 +35,11 @@ const getRoundTripFormat = (
 ) => (sourceFormat === 'ufo' || sourceFormat === 'designspace' ? 'ufo' : null)
 
 const projectRecordToDraft = async (
-  record: NonNullable<Awaited<ReturnType<typeof loadKumikoProjectRecord>>>
+  record: NonNullable<Awaited<ReturnType<typeof loadKumikoProjectRecord>>>,
+  options: { metadataOnly?: boolean } = {}
 ): Promise<ProjectDraft> => {
   const glyphRecords = await listKumikoGlyphRecordsForProject(record.projectId)
-  const fontData = kumikoRecordsToFontData(record, glyphRecords)
+  const fontData = kumikoRecordsToFontData(record, glyphRecords, options)
   return {
     id: record.projectId,
     title: record.title,
@@ -82,6 +87,64 @@ export const listProjectSummaries = async () => {
 export const loadProjectDraft = async (projectId: string) => {
   const record = await loadKumikoProjectRecord(projectId)
   return record ? projectRecordToDraft(record) : null
+}
+
+export const loadProjectDraftMetadata = async (projectId: string) => {
+  const record = await loadKumikoProjectRecord(projectId)
+  return record ? projectRecordToDraft(record, { metadataOnly: true }) : null
+}
+
+export const loadProjectGlyphGeometry = async (
+  projectId: string,
+  glyphId: string
+) => {
+  const record = await loadKumikoGlyphRecord(
+    makeKumikoGlyphKey(projectId, glyphId)
+  )
+  return record ? kumikoGlyphRecordToGlyphData(record) : null
+}
+
+export const loadProjectGlyphGeometryClosure = async (
+  projectId: string,
+  glyphIds: string[],
+  options: { loadedGlyphIds?: Iterable<string> } = {}
+) => {
+  const loadedGlyphIds = new Set(options.loadedGlyphIds ?? [])
+  const queuedGlyphIds = new Set<string>()
+  const result: ReturnType<typeof kumikoGlyphRecordToGlyphData>[] = []
+  let batchGlyphIds = [...new Set(glyphIds)].filter(
+    (glyphId) => !loadedGlyphIds.has(glyphId)
+  )
+
+  while (batchGlyphIds.length > 0) {
+    batchGlyphIds.forEach((glyphId) => queuedGlyphIds.add(glyphId))
+    const records = await loadKumikoGlyphRecords(
+      batchGlyphIds.map((glyphId) => makeKumikoGlyphKey(projectId, glyphId))
+    )
+    const nextBatchGlyphIds = new Set<string>()
+
+    for (const record of records) {
+      queuedGlyphIds.delete(record.glyphId)
+      if (loadedGlyphIds.has(record.glyphId)) {
+        continue
+      }
+
+      loadedGlyphIds.add(record.glyphId)
+      result.push(kumikoGlyphRecordToGlyphData(record))
+      for (const componentGlyphId of record.componentGlyphIds) {
+        if (
+          !loadedGlyphIds.has(componentGlyphId) &&
+          !queuedGlyphIds.has(componentGlyphId)
+        ) {
+          nextBatchGlyphIds.add(componentGlyphId)
+        }
+      }
+    }
+
+    batchGlyphIds = [...nextBatchGlyphIds]
+  }
+
+  return result
 }
 
 export const loadProjectDraftSummary = async (projectId: string) => {

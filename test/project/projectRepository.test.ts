@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest'
 import {
   saveProjectDraft,
   loadProjectDraft,
+  loadProjectDraftMetadata,
+  loadProjectGlyphGeometryClosure,
+  loadProjectGlyphGeometry,
 } from 'src/lib/project/projectRepository'
 import {
   findKumikoGlyphRecordsByUnicode,
@@ -311,6 +314,195 @@ describe('projectRepository canonical storage', () => {
     expect(project?.syncDirty).toBe(0)
     expect(glyphA?.exportDirty).toBe(1)
     expect(glyphA?.syncDirty).toBe(1)
+  })
+
+  it('loads project drafts as glyph metadata without resident geometry', async () => {
+    const componentFontData: FontData = {
+      glyphOrder: ['A', 'B'],
+      glyphs: {
+        A: fontData.glyphs.A,
+        B: {
+          ...fontData.glyphs.A,
+          id: 'B',
+          name: 'B',
+          unicodes: ['0042'],
+          layers: {
+            'public.default': {
+              ...fontData.glyphs.A.layers!['public.default']!,
+              componentRefs: [
+                {
+                  id: 'component-1',
+                  glyphId: 'A',
+                  x: 10,
+                  y: 20,
+                  scaleX: 1,
+                  scaleY: 1,
+                  rotation: 0,
+                },
+              ],
+            },
+          },
+        },
+      },
+    }
+    await saveProjectDraft({
+      id: 'project-metadata-draft',
+      title: 'Metadata Draft',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      sourceName: 'MetadataDraft.ufo',
+      sourceType: 'local',
+      fontData: componentFontData,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'ufo',
+    })
+
+    const metadataDraft = await loadProjectDraftMetadata(
+      'project-metadata-draft'
+    )
+    const fullGlyph = await loadProjectGlyphGeometry(
+      'project-metadata-draft',
+      'B'
+    )
+
+    expect(metadataDraft?.fontData?.glyphs.B.layers).toBeUndefined()
+    expect(metadataDraft?.fontData?.glyphs.B.componentGlyphIds).toEqual(['A'])
+    expect(metadataDraft?.fontData?.glyphs.B.unicodes).toEqual(['0042'])
+    expect(
+      fullGlyph?.layers?.['public.default']?.componentRefs[0].glyphId
+    ).toBe('A')
+    expect(fullGlyph?.layers?.['public.default']?.componentRefs[0].x).toBe(10)
+  })
+
+  it('loads component referent geometry with a glyph geometry closure', async () => {
+    const componentFontData: FontData = {
+      glyphOrder: ['A', 'B'],
+      glyphs: {
+        A: {
+          ...fontData.glyphs.A,
+          layers: {
+            'public.default': {
+              ...fontData.glyphs.A.layers!['public.default']!,
+              paths: [
+                {
+                  id: 'path-1',
+                  closed: true,
+                  nodes: [
+                    {
+                      id: 'node-1',
+                      kind: 'oncurve',
+                      segmentType: 'line',
+                      x: 1,
+                      y: 2,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        B: {
+          ...fontData.glyphs.A,
+          id: 'B',
+          name: 'B',
+          unicodes: ['0042'],
+          layers: {
+            'public.default': {
+              ...fontData.glyphs.A.layers!['public.default']!,
+              componentRefs: [
+                {
+                  id: 'component-1',
+                  glyphId: 'A',
+                  x: 10,
+                  y: 20,
+                  scaleX: 1,
+                  scaleY: 1,
+                  rotation: 0,
+                },
+              ],
+            },
+          },
+        },
+      },
+    }
+    await saveProjectDraft({
+      id: 'project-geometry-closure',
+      title: 'Geometry Closure',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      sourceName: 'GeometryClosure.ufo',
+      sourceType: 'local',
+      fontData: componentFontData,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'ufo',
+    })
+
+    const glyphs = await loadProjectGlyphGeometryClosure(
+      'project-geometry-closure',
+      ['B']
+    )
+
+    expect(glyphs.map((glyph) => glyph.id).sort()).toEqual(['A', 'B'])
+    expect(
+      glyphs.find((glyph) => glyph.id === 'A')?.layers?.['public.default']
+        ?.paths[0].nodes[0].x
+    ).toBe(1)
+    expect(glyphs.find((glyph) => glyph.id === 'B')?.componentGlyphIds).toEqual(
+      ['A']
+    )
+  })
+
+  it('autosaves metadata-only glyph edits without replacing geometry', async () => {
+    await saveProjectDraft({
+      id: 'project-metadata-autosave',
+      title: 'Metadata Autosave',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      sourceName: 'MetadataAutosave.ufo',
+      sourceType: 'local',
+      fontData,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'ufo',
+    })
+
+    const metadataDraft = await loadProjectDraftMetadata(
+      'project-metadata-autosave'
+    )
+    const nextFontData: FontData = {
+      ...metadataDraft!.fontData!,
+      glyphs: {
+        A: {
+          ...metadataDraft!.fontData!.glyphs.A,
+          unicodes: ['0061'],
+          note: 'metadata autosave',
+        },
+      },
+    }
+
+    await saveDraftSnapshot({
+      projectId: 'project-metadata-autosave',
+      projectTitle: 'Metadata Autosave',
+      fontData: nextFontData,
+      dirtyGlyphIds: ['A'],
+      deletedGlyphIds: [],
+      glyphEditTimes: { A: 50 },
+      selectedLayerId: 'public.default',
+    })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('project-metadata-autosave', 'A')
+    )
+    expect(glyph?.unicodes).toEqual(['0061'])
+    expect(glyph?.note).toBe('metadata autosave')
+    expect(glyph?.layers['public.default']?.metrics.width).toBe(500)
+    expect(glyph?.exportDirty).toBe(1)
+    expect(glyph?.syncDirty).toBe(1)
   })
 
   it('patches glyph metadata without replacing canonical geometry', async () => {

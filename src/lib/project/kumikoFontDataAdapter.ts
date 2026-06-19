@@ -408,19 +408,47 @@ export const kumikoGlyphRecordToGlyphData = (
     leftMetricsKey: record.leftMetricsKey,
     rightMetricsKey: record.rightMetricsKey,
     widthMetricsKey: record.widthMetricsKey,
+    componentGlyphIds: record.componentGlyphIds,
     customData: record.customData,
     sourceData: record.sourceData as GlyphSourceData | undefined,
   }
 }
 
+export const kumikoGlyphRecordToGlyphMetadata = (
+  record: KumikoGlyphRecord
+): GlyphData => ({
+  id: record.glyphId,
+  name: record.displayName ?? record.glyphId,
+  displayName: record.displayName,
+  activeLayerId: null,
+  layerOrder: record.layerOrder,
+  componentGlyphIds: record.componentGlyphIds,
+  unicodes: record.unicodes,
+  production: record.production,
+  export: record.export,
+  category: record.category,
+  subCategory: record.subCategory,
+  status: record.status,
+  color: record.color,
+  note: record.note,
+  leftMetricsKey: record.leftMetricsKey,
+  rightMetricsKey: record.rightMetricsKey,
+  widthMetricsKey: record.widthMetricsKey,
+  customData: record.customData,
+  sourceData: record.sourceData as GlyphSourceData | undefined,
+})
+
 export const kumikoRecordsToFontData = (
   project: KumikoProjectRecord,
-  glyphRecords: KumikoGlyphStoreRecord[]
+  glyphRecords: KumikoGlyphStoreRecord[],
+  options: { metadataOnly?: boolean } = {}
 ): FontData => ({
   glyphs: Object.fromEntries(
     glyphRecords.map((record) => [
       record.glyphId,
-      kumikoGlyphRecordToGlyphData(record),
+      options.metadataOnly
+        ? kumikoGlyphRecordToGlyphMetadata(record)
+        : kumikoGlyphRecordToGlyphData(record),
     ])
   ),
   glyphOrder: project.glyphOrder,

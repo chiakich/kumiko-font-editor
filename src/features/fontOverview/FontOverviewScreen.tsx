@@ -1,7 +1,10 @@
 import { Grid, GridItem } from '@chakra-ui/react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { ListRange } from 'react-virtuoso'
 import { useStore } from 'src/store'
 import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
+import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
 import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
 import { OverviewRightPanel } from 'src/features/fontOverview/components/OverviewRightPanel'
@@ -24,10 +27,15 @@ export function FontOverviewScreen() {
   const setEditorTextState = useStore((state) => state.setEditorTextState)
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
   const projectTitle = useStore((state) => state.projectTitle)
+  const projectId = useStore((state) => state.projectId)
   const fontData = useStore((state) => state.fontData)
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
   const selectedSectionId = useStore((state) => state.overviewSectionId)
   const setOverviewSectionId = useStore((state) => state.setOverviewSectionId)
+  const hydrateGlyphGeometry = useStore((state) => state.hydrateGlyphGeometry)
+  const loadingGlyphGeometryPromisesRef = useRef(
+    new Map<string, Promise<void>>()
+  )
 
   const { closeProject, isClosingProject } = useCloseProjectWithDraftSave()
   const {
@@ -92,6 +100,66 @@ export function FontOverviewScreen() {
     [glyphMap]
   )
 
+  const ensureGlyphGeometryLoaded = useCallback(
+    async (glyphIds: string[]) => {
+      if (!projectId) {
+        return
+      }
+      const pendingLoads: Promise<void>[] = []
+      const missingGlyphIds = [...new Set(glyphIds)].filter((glyphId) => {
+        const glyph = glyphMap[glyphId]
+        const pendingLoad = loadingGlyphGeometryPromisesRef.current.get(glyphId)
+        if (pendingLoad) {
+          pendingLoads.push(pendingLoad)
+          return false
+        }
+        return glyph && !isGlyphGeometryLoaded(glyph)
+      })
+
+      if (missingGlyphIds.length === 0) {
+        await Promise.all(pendingLoads)
+        return
+      }
+
+      const loadPromise = (async () => {
+        const loadedGlyphIds = Object.values(glyphMap)
+          .filter(isGlyphGeometryLoaded)
+          .map((glyph) => glyph.id)
+        const glyphs = await loadProjectGlyphGeometryClosure(
+          projectId,
+          missingGlyphIds,
+          { loadedGlyphIds }
+        )
+        hydrateGlyphGeometry(glyphs)
+      })().finally(() => {
+        for (const glyphId of missingGlyphIds) {
+          loadingGlyphGeometryPromisesRef.current.delete(glyphId)
+        }
+      })
+      for (const glyphId of missingGlyphIds) {
+        loadingGlyphGeometryPromisesRef.current.set(glyphId, loadPromise)
+      }
+      await Promise.all([...pendingLoads, loadPromise])
+    },
+    [glyphMap, hydrateGlyphGeometry, projectId]
+  )
+
+  const handleRangeChange = useCallback(
+    (range: ListRange) => {
+      handleGridRangeChange(range)
+      const startIndex = Math.max(0, range.startIndex - 12)
+      const endIndex = Math.min(
+        activeSection.glyphs.length - 1,
+        range.endIndex + 12
+      )
+      const glyphIds = activeSection.glyphs
+        .slice(startIndex, endIndex + 1)
+        .map((glyph) => glyph.id)
+      void ensureGlyphGeometryLoaded(glyphIds)
+    },
+    [activeSection.glyphs, ensureGlyphGeometryLoaded, handleGridRangeChange]
+  )
+
   const handleSectionSelect = (sectionId: string) => {
     if (sectionId === selectedSectionId) {
       return
@@ -121,7 +189,7 @@ export function FontOverviewScreen() {
   }
 
   const handleEnterEditor = useCallback(
-    (glyphId: string) => {
+    async (glyphId: string) => {
       savePendingGridState()
       const selectedGlyphIds = new Set(overviewSelectedGlyphIds)
       if (selectedGlyphId) {
@@ -136,6 +204,7 @@ export function FontOverviewScreen() {
         : [glyphId]
       const activeGlyphIndex = Math.max(0, nextEditorGlyphIds.indexOf(glyphId))
 
+      await ensureGlyphGeometryLoaded(nextEditorGlyphIds)
       setEditorTextState(
         getEditorTextForGlyphIds(nextEditorGlyphIds),
         nextEditorGlyphIds,
@@ -150,6 +219,7 @@ export function FontOverviewScreen() {
       overviewSelectedGlyphIds,
       savePendingGridState,
       selectedGlyphId,
+      ensureGlyphGeometryLoaded,
       setEditorTextState,
       setWorkspaceView,
     ]
@@ -193,7 +263,7 @@ export function FontOverviewScreen() {
             onEnterEditor={handleEnterEditor}
             onOpenAddGlyphModal={openAddGlyphModal}
             onGridStateChange={handleGridStateChange}
-            onRangeChange={handleGridRangeChange}
+            onRangeChange={handleRangeChange}
             onSelectGlyph={handleGlyphSelect}
           />
         </GridItem>

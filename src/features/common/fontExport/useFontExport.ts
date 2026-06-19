@@ -118,6 +118,10 @@ export function useFontExport() {
         markDraftSaved,
       })
 
+      const fullDraft = await loadProjectDraft(projectId)
+      const exportFontData = fullDraft?.fontData ?? fontData
+      const exportProjectMetadata =
+        fullDraft?.projectMetadata ?? getProjectArchiveMetadata()
       const selectedBinaryFormats = selectedFormats.filter(
         (format) =>
           format !== 'zip' &&
@@ -126,13 +130,13 @@ export function useFontExport() {
           format !== 'glyphspackage'
       )
       if (
-        fontData.openTypeFeatures &&
+        exportFontData.openTypeFeatures &&
         selectedBinaryFormats.length > 0 &&
         needsOpenTypeFeatureCompilationForBinaryExport(
-          fontData.openTypeFeatures,
+          exportFontData.openTypeFeatures,
           {
             hasGeneratedFeatureEdits: hasManagedFeatureEdits(
-              fontData.openTypeFeatures
+              exportFontData.openTypeFeatures
             ),
           }
         ) &&
@@ -148,8 +152,8 @@ export function useFontExport() {
         // Glyphs export always emits from Kumiko's canonical in-memory model.
         if (format === 'glyphs2' || format === 'glyphs3') {
           const blob = serializeGlyphsFileToBlob(
-            fontData,
-            getProjectArchiveMetadata(),
+            exportFontData,
+            exportProjectMetadata,
             null,
             format === 'glyphs3' ? 3 : 2
           )
@@ -157,17 +161,16 @@ export function useFontExport() {
             blob,
             fileName: `${baseFileName}-glyphs${format === 'glyphs3' ? '3' : '2'}.glyphs`,
             label: format === 'glyphs3' ? 'Glyphs 3' : 'Glyphs 2',
-            totalGlyphs: Object.keys(fontData.glyphs).length,
+            totalGlyphs: Object.keys(exportFontData.glyphs).length,
           }
         }
 
         if (format === 'glyphspackage') {
-          const draft = await loadProjectDraft(projectId)
           const packageData = createGlyphsPackageDataFromFontData({
-            fontData,
-            projectMetadata: getProjectArchiveMetadata(),
+            fontData: exportFontData,
+            projectMetadata: exportProjectMetadata,
             packageName:
-              draft?.projectGlyphsPackage?.packageName ??
+              fullDraft?.projectGlyphsPackage?.packageName ??
               `${baseFileName}.glyphspackage`,
           })
           const files: Record<string, Uint8Array> = {}
@@ -180,13 +183,13 @@ export function useFontExport() {
             blob: makeZipBlob(files),
             fileName: `${baseFileName}.glyphspackage.zip`,
             label: 'Glyphs Package',
-            totalGlyphs: Object.keys(fontData.glyphs).length,
+            totalGlyphs: Object.keys(exportFontData.glyphs).length,
           }
         }
 
         if (format !== 'zip') {
           return {
-            blob: await exportFontAsBinary(fontData, format),
+            blob: await exportFontAsBinary(exportFontData, format),
             fileName: `${baseFileName}.${format}`,
             label: format.toUpperCase(),
             totalGlyphs: null,
@@ -195,21 +198,21 @@ export function useFontExport() {
 
         // Multi-master: export a .designspace + one .ufo per source, straight
         // from fontData (which holds every master layer).
-        if (Object.keys(fontData.sources ?? {}).length > 1) {
+        if (Object.keys(exportFontData.sources ?? {}).length > 1) {
           return {
             blob: exportMultiMasterUfoZip({
-              fontData,
+              fontData: exportFontData,
               projectId,
               projectTitle: baseFileName,
             }),
             fileName: `${baseFileName}.designspace.zip`,
             label: 'Designspace + UFO',
-            totalGlyphs: Object.keys(fontData.glyphs).length,
+            totalGlyphs: Object.keys(exportFontData.glyphs).length,
           }
         }
 
         const blob = exportFontDataAsUfoZip({
-          fontData,
+          fontData: exportFontData,
           projectId,
           projectTitle: baseFileName,
           selectedLayerId,
@@ -219,7 +222,7 @@ export function useFontExport() {
           blob,
           fileName: `${baseFileName}.ufo.zip`,
           label: 'UFO ZIP',
-          totalGlyphs: Object.keys(fontData.glyphs).length,
+          totalGlyphs: Object.keys(exportFontData.glyphs).length,
         }
       }
 

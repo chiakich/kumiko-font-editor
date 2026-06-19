@@ -1,5 +1,5 @@
 import type { FontData, GlyphData, GlobalState } from 'src/store/types'
-import { activeLayer } from 'src/store/glyphLayer'
+import { getGlyphComponentGlyphIds } from 'src/lib/glyph/glyphGeometryState'
 
 export const IDS_DICTIONARY: Record<string, string[]> = {
   林: ['木', '木'],
@@ -37,8 +37,8 @@ const filterGlyphs = (
     return (
       glyph.name.toLowerCase().includes(normalizedQuery) ||
       glyph.id.toLowerCase().includes(normalizedQuery) ||
-      activeLayer(glyph).componentRefs.some((componentRef) =>
-        componentRef.glyphId.toLowerCase().includes(normalizedQuery)
+      getGlyphComponentGlyphIds(glyph).some((glyphId) =>
+        glyphId.toLowerCase().includes(normalizedQuery)
       ) ||
       matchesIdsSearch(glyph, normalizedQuery, idsDictionary)
     )

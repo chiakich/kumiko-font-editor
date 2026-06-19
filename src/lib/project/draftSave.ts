@@ -11,9 +11,11 @@ import {
   loadKumikoProjectRecord,
   loadKumikoUiValue,
   makeKumikoGlyphKey,
+  patchKumikoGlyphMetadata,
   patchKumikoProjectData,
 } from 'src/lib/project/kumikoProjectPersistence'
-import type { FontData } from 'src/store'
+import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+import type { FontData, GlyphData } from 'src/store'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
   UFO_GLYPH_EDIT_TIMES_KEY,
@@ -26,6 +28,23 @@ const getGlyphOrder = (fontData: FontData) =>
 const hasSameGlyphOrder = (left: readonly string[], right: readonly string[]) =>
   left.length === right.length &&
   left.every((glyphId, index) => glyphId === right[index])
+
+const toGlyphMetadataPatch = (glyph: GlyphData) => ({
+  displayName: glyph.displayName ?? null,
+  unicodes: glyph.unicodes ?? [],
+  production: glyph.production,
+  export: glyph.export,
+  category: glyph.category,
+  subCategory: glyph.subCategory,
+  status: glyph.status,
+  color: glyph.color,
+  note: glyph.note,
+  leftMetricsKey: glyph.leftMetricsKey,
+  rightMetricsKey: glyph.rightMetricsKey,
+  widthMetricsKey: glyph.widthMetricsKey,
+  customData: glyph.customData,
+  sourceData: glyph.sourceData,
+})
 
 export const saveDraftSnapshot = async (input: {
   projectId: string
@@ -69,27 +88,32 @@ export const saveDraftSnapshot = async (input: {
   project.exportedDigest = persistedProject?.exportedDigest ?? null
   project.syncedDigest = persistedProject?.syncedDigest ?? null
 
+  const dirtyGlyphs = [...new Set(input.dirtyGlyphIds)]
+    .map((glyphId) => input.fontData.glyphs[glyphId])
+    .filter((glyph): glyph is NonNullable<typeof glyph> => Boolean(glyph))
+  const glyphsWithGeometry = dirtyGlyphs.filter(isGlyphGeometryLoaded)
+  const metadataOnlyGlyphs = dirtyGlyphs.filter(
+    (glyph) => !isGlyphGeometryLoaded(glyph)
+  )
+
   const glyphsToSave = await Promise.all(
-    [...new Set(input.dirtyGlyphIds)]
-      .map((glyphId) => input.fontData.glyphs[glyphId])
-      .filter((glyph): glyph is NonNullable<typeof glyph> => Boolean(glyph))
-      .map(async (glyph) => {
-        const existing = await loadKumikoGlyphRecord(
-          makeKumikoGlyphKey(input.projectId, glyph.id)
-        )
-        const record = glyphDataToKumikoGlyphRecord({
-          projectId: input.projectId,
-          glyph,
-          updatedAt: now,
-          exportDirty: true,
-          syncDirty: true,
-        })
-        return {
-          ...record,
-          exportedDigest: existing?.exportedDigest ?? null,
-          syncedDigest: existing?.syncedDigest ?? null,
-        }
+    glyphsWithGeometry.map(async (glyph) => {
+      const existing = await loadKumikoGlyphRecord(
+        makeKumikoGlyphKey(input.projectId, glyph.id)
+      )
+      const record = glyphDataToKumikoGlyphRecord({
+        projectId: input.projectId,
+        glyph,
+        updatedAt: now,
+        exportDirty: true,
+        syncDirty: true,
       })
+      return {
+        ...record,
+        exportedDigest: existing?.exportedDigest ?? null,
+        syncedDigest: existing?.syncedDigest ?? null,
+      }
+    })
   )
 
   await patchKumikoProjectData({
@@ -111,4 +135,17 @@ export const saveDraftSnapshot = async (input: {
       },
     ],
   })
+
+  await Promise.all(
+    metadataOnlyGlyphs.map((glyph) =>
+      patchKumikoGlyphMetadata({
+        projectId: input.projectId,
+        glyphId: glyph.id,
+        patch: toGlyphMetadataPatch(glyph),
+        updatedAt: now,
+        exportDirty: true,
+        syncDirty: true,
+      })
+    )
+  )
 }
