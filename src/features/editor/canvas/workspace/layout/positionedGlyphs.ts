@@ -22,6 +22,8 @@ import {
 import { shapeGlyphRuns } from 'src/features/editor/canvas/workspace/layout/textShaping'
 
 export interface LayerGeometryCacheEntry {
+  glyphId: string
+  layerId: string
   layerRef: object
   pointRefs: Array<{ pathId: string; nodeId: string }>
   varPath: InstanceType<typeof VarPackedPath>
@@ -36,6 +38,19 @@ interface BuildPositionedGlyphsOptions {
   fontData: FontData | null
   selectedLayerId: string | null
   layerGeometryCache: Map<string, LayerGeometryCacheEntry>
+}
+
+const pruneStaleLayerGeometryCache = (
+  fontData: FontData,
+  layerGeometryCache: Map<string, LayerGeometryCacheEntry>
+) => {
+  for (const [cacheKey, entry] of layerGeometryCache) {
+    if (
+      fontData.glyphs[entry.glyphId]?.layers?.[entry.layerId] !== entry.layerRef
+    ) {
+      layerGeometryCache.delete(cacheKey)
+    }
+  }
 }
 
 const pathDataToVarPackedPath = (paths: PathData[]) => {
@@ -127,8 +142,10 @@ export const buildPositionedGlyphs = ({
   layerGeometryCache,
 }: BuildPositionedGlyphsOptions): PositionedGlyph[] => {
   if (!fontData) {
+    layerGeometryCache.clear()
     return []
   }
+  pruneStaleLayerGeometryCache(fontData, layerGeometryCache)
 
   const glyphRuns =
     activeToolId === 'text'
@@ -223,6 +240,8 @@ export const buildPositionedGlyphs = ({
         }))
 
         layerGeometryCache.set(cacheKey, {
+          glyphId: glyph.id,
+          layerId: activeLayer.id,
           layerRef: activeLayer,
           pointRefs,
           varPath,

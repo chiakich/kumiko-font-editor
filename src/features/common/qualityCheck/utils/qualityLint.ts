@@ -74,6 +74,9 @@ const EMPTY_LAYER: GlyphLayerData = {
 const getActiveLayer = (glyph: GlyphData): GlyphLayerData =>
   getGlyphLayer(glyph, glyph.activeLayerId) ?? EMPTY_LAYER
 
+const hasLoadedQualityLayer = (glyph: GlyphData) =>
+  Boolean(getGlyphLayer(glyph, glyph.activeLayerId))
+
 export const getQualityScopeGlyphs = ({
   fontData,
   scope,
@@ -88,11 +91,16 @@ export const getQualityScopeGlyphs = ({
   if (scope === 'selected') {
     return selectedGlyphIds
       .map((glyphId) => fontData.glyphs[glyphId])
-      .filter((glyph): glyph is GlyphData => Boolean(glyph))
+      .filter(
+        (glyph): glyph is GlyphData =>
+          Boolean(glyph) && hasLoadedQualityLayer(glyph)
+      )
   }
 
   if (scope === 'current') {
-    return selectedGlyphId && fontData.glyphs[selectedGlyphId]
+    return selectedGlyphId &&
+      fontData.glyphs[selectedGlyphId] &&
+      hasLoadedQualityLayer(fontData.glyphs[selectedGlyphId])
       ? [fontData.glyphs[selectedGlyphId]]
       : []
   }
@@ -100,10 +108,13 @@ export const getQualityScopeGlyphs = ({
   if (scope === 'changed') {
     return dirtyGlyphIds
       .map((glyphId) => fontData.glyphs[glyphId])
-      .filter((glyph): glyph is GlyphData => Boolean(glyph))
+      .filter(
+        (glyph): glyph is GlyphData =>
+          Boolean(glyph) && hasLoadedQualityLayer(glyph)
+      )
   }
 
-  return Object.values(fontData.glyphs)
+  return Object.values(fontData.glyphs).filter(hasLoadedQualityLayer)
 }
 
 const makeIssue = (

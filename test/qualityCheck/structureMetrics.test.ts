@@ -84,6 +84,20 @@ const makeDiamondGlyph = (id: string, unicode: string) =>
   ])
 
 describe('glyph geometry', () => {
+  it('excludes metadata-only glyphs from resolved geometry snapshots', () => {
+    const loaded = makeGlyph('loaded', '56DE', [])
+    const metadataOnly: GlyphData = {
+      id: 'metadata',
+      name: 'metadata',
+      unicodes: ['4E00'],
+      layerOrder: ['public.default'],
+    }
+
+    const resolvedFont = resolveFontGlyphs(makeFontData([loaded, metadataOnly]))
+
+    expect(Object.keys(resolvedFont.glyphs)).toEqual(['loaded'])
+  })
+
   it('computes real ink area with counters subtracted', () => {
     const resolvedFont = resolveFontGlyphs(
       makeFontData([makeFrameGlyph('frame', '56DE')])

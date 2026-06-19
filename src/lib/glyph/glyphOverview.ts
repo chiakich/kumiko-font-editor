@@ -422,7 +422,10 @@ const buildGlyphPreviewShapes = (
   const nextVisited = new Set(visited)
   nextVisited.add(glyph.id)
 
-  const layer = getGlyphLayer(glyph, layerId) ?? activeLayer(glyph)
+  const layer = getGlyphLayer(glyph, layerId)
+  if (!layer) {
+    return []
+  }
   const shapes: GlyphPreviewShape[] = []
   if (layer.paths.length > 0) {
     shapes.push({ d: buildPathSvg(layer) })
@@ -474,13 +477,6 @@ export const buildGlyphPreviewData = (
     glyphPreviewCache.set(glyphMap, glyphMapCache)
   }
 
-  // Only the glyph's own active layer is cached (keyed by glyph identity); an
-  // explicitly requested layer bypasses the cache.
-  const cachedPreview = layerId ? undefined : glyphMapCache.get(glyph)
-  if (cachedPreview) {
-    return cachedPreview
-  }
-
   // Scale the design-space frame so glyphs from any UPM fit the viewBox.
   const scale = (unitsPerEm || PREVIEW_UNITS_PER_EM) / PREVIEW_UNITS_PER_EM
   const paddingX = PREVIEW_PADDING_X * scale
@@ -488,9 +484,21 @@ export const buildGlyphPreviewData = (
   const descender = PREVIEW_DESCENDER * scale
   const headroom = 100 * scale
 
-  const layer = getGlyphLayer(glyph, layerId) ?? activeLayer(glyph)
-  const width = Math.max(layer.metrics.width || 0, 240 * scale)
-  const shapes = buildGlyphPreviewShapes(glyph, glyphMap, layerId)
+  const layer = getGlyphLayer(glyph, layerId)
+  if (!layer) {
+    glyphMapCache.delete(glyph)
+  }
+
+  // Only the glyph's own active layer is cached (keyed by glyph identity); an
+  // explicitly requested layer bypasses the cache. The cache is valid only while
+  // the glyph still has loaded geometry; eviction deletes layers in place.
+  const cachedPreview = layer && !layerId ? glyphMapCache.get(glyph) : undefined
+  if (cachedPreview) {
+    return cachedPreview
+  }
+
+  const width = Math.max(layer?.metrics.width ?? 0, 240 * scale)
+  const shapes = layer ? buildGlyphPreviewShapes(glyph, glyphMap, layerId) : []
   const viewBox = `${-paddingX} ${descender} ${width + paddingX * 2} ${ascender - descender + headroom}`
 
   const preview = {

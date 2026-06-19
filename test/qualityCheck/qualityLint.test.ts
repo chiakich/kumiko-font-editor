@@ -163,4 +163,34 @@ describe('quality lint report', () => {
     expect(report.summary.deletedCount).toBe(1)
     expect(report.issues.map((issue) => issue.glyphId)).toEqual(['dirty'])
   })
+
+  it('skips metadata-only glyphs instead of reporting them as empty outlines', () => {
+    const metadataOnly: GlyphData = {
+      id: 'metadata',
+      name: 'metadata',
+      unicodes: [],
+      layerOrder: ['public.default'],
+    }
+    const loaded = makeGlyph('loaded')
+    const fontData = makeFontData([metadataOnly, loaded])
+
+    const fontReport = buildQualityReport({
+      fontData,
+      scope: 'font',
+      dirtyGlyphIds: [],
+      deletedGlyphIds: [],
+    })
+    const changedReport = buildQualityReport({
+      fontData,
+      scope: 'changed',
+      dirtyGlyphIds: ['metadata', 'loaded'],
+      deletedGlyphIds: [],
+    })
+
+    expect(fontReport.glyphs.map((glyph) => glyph.id)).toEqual(['loaded'])
+    expect(changedReport.glyphs.map((glyph) => glyph.id)).toEqual(['loaded'])
+    expect(fontReport.issues.map((issue) => issue.glyphId)).not.toContain(
+      'metadata'
+    )
+  })
 })

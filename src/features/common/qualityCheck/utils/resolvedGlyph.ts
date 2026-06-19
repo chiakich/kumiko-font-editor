@@ -57,6 +57,9 @@ export const resolveFontGlyphs = (
   const glyphs: Record<string, ResolvedGlyph> = {}
   if (fontData) {
     for (const glyph of Object.values(fontData.glyphs)) {
+      if (!getGlyphLayer(glyph, glyph.activeLayerId)) {
+        continue
+      }
       glyphs[glyph.id] = resolveGlyph(glyph)
     }
   }
