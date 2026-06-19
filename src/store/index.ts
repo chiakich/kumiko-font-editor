@@ -84,10 +84,12 @@ const initialState = {
   persistenceError: null,
   persistenceQueue: {
     projectQueued: false,
+    uiStateQueued: false,
     glyphIds: [],
     deletedGlyphIds: [],
     revision: 0,
     projectRevision: null,
+    uiStateRevision: null,
     glyphRevisions: {},
     deletedGlyphRevisions: {},
     status: 'idle' as const,

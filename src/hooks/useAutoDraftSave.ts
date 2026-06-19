@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { saveDraftSnapshot } from 'src/lib/project/draftSave'
+import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { useStore } from 'src/store'
 
 const AUTO_DRAFT_SAVE_DELAY_MS = 60_000
@@ -16,6 +17,11 @@ export function useAutoDraftSave() {
   const persistenceQueue = useStore((state) => state.persistenceQueue)
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
   const selectedLayerId = useStore((state) => state.selectedLayerId)
+  const selectedGlyphId = useStore((state) => state.selectedGlyphId)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewSectionId = useStore((state) => state.overviewSectionId)
+  const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
+  const overviewGridState = useStore((state) => state.overviewGridState)
   const isDirty = useStore((state) => state.isDirty)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
@@ -41,6 +47,14 @@ export function useAutoDraftSave() {
         projectTitle,
         fontData,
         projectQueued: persistenceQueue.projectQueued,
+        projectUiState: createProjectUiStateSnapshot({
+          selectedGlyphId,
+          selectedLayerId,
+          activeMasterId,
+          overviewSectionId,
+          overviewTopGlyphId,
+          overviewGridState,
+        }),
         dirtyGlyphIds,
         deletedGlyphIds,
         glyphEditTimes,
@@ -73,10 +87,15 @@ export function useAutoDraftSave() {
     glyphEditTimes,
     isDirty,
     markDraftSaved,
+    activeMasterId,
+    overviewGridState,
+    overviewSectionId,
+    overviewTopGlyphId,
     persistenceQueue.projectQueued,
     persistenceQueue.revision,
     projectId,
     projectTitle,
+    selectedGlyphId,
     selectedLayerId,
     setPersistenceStatus,
   ])

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '@chakra-ui/react'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { releaseProjectWriteLock } from 'src/lib/project/projectWriteLock'
 import { useStore } from 'src/store'
 
@@ -20,6 +21,11 @@ export function useCloseProjectWithDraftSave() {
   const persistenceQueue = useStore((state) => state.persistenceQueue)
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
   const selectedLayerId = useStore((state) => state.selectedLayerId)
+  const selectedGlyphId = useStore((state) => state.selectedGlyphId)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewSectionId = useStore((state) => state.overviewSectionId)
+  const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
+  const overviewGridState = useStore((state) => state.overviewGridState)
   const [isClosingProject, setIsClosingProject] = useState(false)
 
   const closeProject = useCallback(async () => {
@@ -50,6 +56,15 @@ export function useCloseProjectWithDraftSave() {
         projectTitle,
         fontData,
         projectQueued: persistenceQueue.projectQueued,
+        uiStateQueued: persistenceQueue.uiStateQueued,
+        projectUiState: createProjectUiStateSnapshot({
+          selectedGlyphId,
+          selectedLayerId,
+          activeMasterId,
+          overviewSectionId,
+          overviewTopGlyphId,
+          overviewGridState,
+        }),
         dirtyGlyphIds,
         deletedGlyphIds,
         persistenceRevision: persistenceQueue.revision,
@@ -81,10 +96,16 @@ export function useCloseProjectWithDraftSave() {
     isClosingProject,
     isDirty,
     markDraftSaved,
+    activeMasterId,
+    overviewGridState,
+    overviewSectionId,
+    overviewTopGlyphId,
     persistenceQueue.projectQueued,
     persistenceQueue.revision,
+    persistenceQueue.uiStateQueued,
     projectId,
     projectTitle,
+    selectedGlyphId,
     selectedLayerId,
     setPersistenceStatus,
     t,

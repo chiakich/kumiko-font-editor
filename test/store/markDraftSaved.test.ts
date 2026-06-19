@@ -109,6 +109,17 @@ describe('markDraftSaved', () => {
     expect(useStore.getState().isDirty).toBe(true)
   })
 
+  it('queues UI state changes without marking local font changes', () => {
+    loadFont()
+
+    useStore.getState().setSelectedGlyphId('B')
+
+    expect(useStore.getState().persistenceQueue.uiStateQueued).toBe(true)
+    expect(useStore.getState().dirtyGlyphIds).toEqual([])
+    expect(useStore.getState().hasLocalChanges).toBe(false)
+    expect(useStore.getState().isDirty).toBe(true)
+  })
+
   it('does not report saved while newer queued edits remain', () => {
     loadFont()
     useStore

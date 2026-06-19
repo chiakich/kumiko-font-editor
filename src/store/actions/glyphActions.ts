@@ -45,6 +45,7 @@ import {
   markGlyphAdded,
   markGlyphDeleted,
   markGlyphDirty,
+  markUiStateDirty,
 } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
@@ -341,6 +342,7 @@ export const buildGlyphActions = (set: ImmerSet) => ({
           state.selectedLayerId
         )
       }
+      markUiStateDirty(state)
       clearTemporal()
     }),
 
@@ -360,6 +362,7 @@ export const buildGlyphActions = (set: ImmerSet) => ({
           setGlyphActiveLayer(state.fontData?.glyphs[state.selectedGlyphId], id)
         }
       }
+      markUiStateDirty(state)
       clearTemporal()
     }),
 

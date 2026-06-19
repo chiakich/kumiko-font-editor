@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { useStore } from 'src/store'
 
 export const useFlushCurrentDraft = () => {
@@ -16,6 +17,11 @@ export const useFlushCurrentDraft = () => {
       deletedGlyphIds,
       glyphEditTimes,
       selectedLayerId,
+      selectedGlyphId,
+      activeMasterId,
+      overviewSectionId,
+      overviewTopGlyphId,
+      overviewGridState,
     } = useStore.getState()
 
     if (!projectId || !projectTitle || !fontData) {
@@ -27,6 +33,15 @@ export const useFlushCurrentDraft = () => {
       projectTitle,
       fontData,
       projectQueued: persistenceQueue.projectQueued,
+      uiStateQueued: persistenceQueue.uiStateQueued,
+      projectUiState: createProjectUiStateSnapshot({
+        selectedGlyphId,
+        selectedLayerId,
+        activeMasterId,
+        overviewSectionId,
+        overviewTopGlyphId,
+        overviewGridState,
+      }),
       dirtyGlyphIds,
       deletedGlyphIds,
       persistenceRevision: persistenceQueue.revision,

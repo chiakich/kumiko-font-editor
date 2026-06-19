@@ -2,6 +2,7 @@ import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
 } from 'src/lib/project/projectFormats'
+import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import type {
@@ -343,10 +344,12 @@ export type PersistenceStatus = 'idle' | 'queued' | 'saving' | 'saved' | 'error'
 
 export interface PersistenceQueueState {
   projectQueued: boolean
+  uiStateQueued: boolean
   glyphIds: string[]
   deletedGlyphIds: string[]
   revision: number
   projectRevision: number | null
+  uiStateRevision: number | null
   glyphRevisions: Record<string, number>
   deletedGlyphRevisions: Record<string, number>
   status: PersistenceStatus
@@ -562,7 +565,8 @@ export interface GlobalState {
     fontData: FontData,
     projectMetadata?: Record<string, unknown> | null,
     projectSourceFormat?: ProjectSourceFormat | null,
-    projectRoundTripFormat?: ProjectRoundTripFormat | null
+    projectRoundTripFormat?: ProjectRoundTripFormat | null,
+    projectUiState?: KumikoProjectUiState | null
   ) => void
   hydrateGlyphGeometry: (glyphs: GlyphData[]) => void
   hydratePersistedLocalChanges: (

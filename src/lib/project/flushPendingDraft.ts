@@ -1,12 +1,15 @@
 import { saveDraftSnapshot } from 'src/lib/project/draftSave'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import type { FontData, PersistenceStatus } from 'src/store'
+import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 
 interface FlushPendingDraftInput {
   projectId: string
   projectTitle: string
   fontData: FontData
   projectQueued?: boolean
+  uiStateQueued?: boolean
+  projectUiState?: KumikoProjectUiState | null
   dirtyGlyphIds: string[]
   deletedGlyphIds: string[]
   persistenceRevision?: number
@@ -28,13 +31,15 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 
 export const hasPendingDraftChanges = ({
   projectQueued,
+  uiStateQueued,
   dirtyGlyphIds,
   deletedGlyphIds,
 }: Pick<
   FlushPendingDraftInput,
-  'projectQueued' | 'dirtyGlyphIds' | 'deletedGlyphIds'
+  'projectQueued' | 'uiStateQueued' | 'dirtyGlyphIds' | 'deletedGlyphIds'
 >) =>
   Boolean(projectQueued) ||
+  Boolean(uiStateQueued) ||
   dirtyGlyphIds.length > 0 ||
   deletedGlyphIds.length > 0
 
@@ -43,6 +48,8 @@ export const flushPendingDraft = async ({
   projectTitle,
   fontData,
   projectQueued = false,
+  uiStateQueued = false,
+  projectUiState = null,
   dirtyGlyphIds,
   deletedGlyphIds,
   persistenceRevision,
@@ -52,7 +59,12 @@ export const flushPendingDraft = async ({
   markDraftSaved,
 }: FlushPendingDraftInput) => {
   if (
-    !hasPendingDraftChanges({ projectQueued, dirtyGlyphIds, deletedGlyphIds })
+    !hasPendingDraftChanges({
+      projectQueued,
+      uiStateQueued,
+      dirtyGlyphIds,
+      deletedGlyphIds,
+    })
   ) {
     return false
   }
@@ -66,6 +78,7 @@ export const flushPendingDraft = async ({
       dirtyGlyphIds,
       deletedGlyphIds,
       projectQueued,
+      projectUiState,
       glyphEditTimes,
       selectedLayerId,
     })

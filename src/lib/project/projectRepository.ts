@@ -25,6 +25,7 @@ import type {
 
 const PROJECT_METADATA_UI_KEY = 'projectMetadata'
 const GLYPHS_PACKAGE_UI_KEY = 'glyphsPackage'
+export const PROJECT_UI_STATE_KEY = 'projectUiState'
 
 export type ProjectDraft = KumikoProjectDraft
 
@@ -60,6 +61,10 @@ const projectRecordToDraft = async (
     projectGlyphsPackage: await loadKumikoUiValue(
       record.projectId,
       GLYPHS_PACKAGE_UI_KEY
+    ),
+    projectUiState: await loadKumikoUiValue(
+      record.projectId,
+      PROJECT_UI_STATE_KEY
     ),
   }
 }
@@ -204,6 +209,11 @@ export const saveProjectDraft = async (draft: ProjectDraft) => {
     draft.id,
     GLYPHS_PACKAGE_UI_KEY,
     draft.projectGlyphsPackage ?? null
+  )
+  await saveKumikoUiValue(
+    draft.id,
+    PROJECT_UI_STATE_KEY,
+    draft.projectUiState ?? null
   )
   return toProjectSummary(draft)
 }

@@ -8,6 +8,15 @@ import type {
 
 export type ProjectSourceType = 'local' | 'github'
 
+export interface KumikoProjectUiState {
+  selectedGlyphId?: string | null
+  selectedLayerId?: string | null
+  activeMasterId?: string | null
+  overviewSectionId?: string | null
+  overviewTopGlyphId?: string | null
+  overviewGridState?: unknown | null
+}
+
 export interface GitHubProjectSource {
   owner: string
   repo: string
@@ -34,6 +43,7 @@ export interface KumikoProjectDraft {
   projectSourceFormat?: ProjectSourceFormat | null
   projectRoundTripFormat?: ProjectRoundTripFormat | null
   projectGlyphsPackage?: GlyphsPackageData | null
+  projectUiState?: KumikoProjectUiState | null
   projectExportDirty?: boolean
   projectSyncDirty?: boolean
   exportDirtyGlyphIds?: Iterable<string>

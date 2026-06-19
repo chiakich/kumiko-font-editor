@@ -12,6 +12,7 @@ import {
 } from 'src/store/editorLine'
 import { syncFilteredGlyphList } from 'src/store/glyphSearch'
 import { setGlyphActiveLayer } from 'src/store/glyphLayer'
+import { markUiStateDirty } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>
@@ -40,6 +41,7 @@ export const buildUiActions = (set: ImmerSet) => ({
       if (id) {
         setGlyphActiveLayer(state.fontData?.glyphs[id], state.selectedLayerId)
       }
+      markUiStateDirty(state)
     }),
 
   // Master switch is the discrete special case of setting editLocation: snap the
@@ -88,6 +90,7 @@ export const buildUiActions = (set: ImmerSet) => ({
       state.selectedNodeIds = []
       state.selectedSegment = null
       setGlyphActiveLayer(state.fontData?.glyphs[id], state.selectedLayerId)
+      markUiStateDirty(state)
     }),
 
   insertGlyphIntoEditor: (id: string, afterGlyphId: string | null = null) =>
@@ -119,6 +122,7 @@ export const buildUiActions = (set: ImmerSet) => ({
           state.selectedLayerId
         )
       }
+      markUiStateDirty(state)
     }),
 
   removeGlyphFromEditor: (id: string) =>
@@ -146,6 +150,7 @@ export const buildUiActions = (set: ImmerSet) => ({
           )
         }
       }
+      markUiStateDirty(state)
     }),
 
   setEditorTextCursorIndex: (index: number) =>
@@ -165,6 +170,7 @@ export const buildUiActions = (set: ImmerSet) => ({
           state.selectedLayerId
         )
       }
+      markUiStateDirty(state)
     }),
 
   setEditorTextState: (
@@ -190,6 +196,7 @@ export const buildUiActions = (set: ImmerSet) => ({
           state.selectedLayerId
         )
       }
+      markUiStateDirty(state)
     }),
 
   setWorkspaceView: (view: GlobalState['workspaceView']) =>
@@ -197,26 +204,31 @@ export const buildUiActions = (set: ImmerSet) => ({
       state.workspaceView = view
       state.selectedNodeIds = []
       state.selectedSegment = null
+      markUiStateDirty(state)
     }),
 
   setOverviewGrouping: (groupBy: GlobalState['overviewGroupBy']) =>
     set((state) => {
       state.overviewGroupBy = groupBy
+      markUiStateDirty(state)
     }),
 
   setOverviewSectionId: (sectionId: string) =>
     set((state) => {
       state.overviewSectionId = sectionId
+      markUiStateDirty(state)
     }),
 
   setOverviewGridState: (gridState: GlobalState['overviewGridState']) =>
     set((state) => {
       state.overviewGridState = gridState
+      markUiStateDirty(state)
     }),
 
   setOverviewTopGlyphId: (glyphId: string | null) =>
     set((state) => {
       state.overviewTopGlyphId = glyphId
+      markUiStateDirty(state)
     }),
 
   setSelectedNodeIds: (ids: string[]) =>

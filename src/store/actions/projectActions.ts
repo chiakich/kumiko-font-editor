@@ -12,6 +12,7 @@ import type {
   ProjectSourceFormat,
   ProjectRoundTripFormat,
 } from 'src/lib/project/projectFormats'
+import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import { getProjectGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import { syncEditorTextFromGlyphIds } from 'src/store/editorLine'
@@ -29,10 +30,12 @@ type ImmerSet = Parameters<
 
 const createEmptyPersistenceQueue = (): GlobalState['persistenceQueue'] => ({
   projectQueued: false,
+  uiStateQueued: false,
   glyphIds: [],
   deletedGlyphIds: [],
   revision: 0,
   projectRevision: null,
+  uiStateRevision: null,
   glyphRevisions: {},
   deletedGlyphRevisions: {},
   status: 'idle',
@@ -41,6 +44,7 @@ const createEmptyPersistenceQueue = (): GlobalState['persistenceQueue'] => ({
 
 const hasQueuedPersistence = (state: GlobalState) =>
   state.persistenceQueue.projectQueued ||
+  state.persistenceQueue.uiStateQueued ||
   state.persistenceQueue.glyphIds.length > 0 ||
   state.persistenceQueue.deletedGlyphIds.length > 0
 
@@ -60,7 +64,8 @@ export const buildProjectActions = (
     fontData: FontData,
     projectMetadata: Record<string, unknown> | null = null,
     projectSourceFormat: ProjectSourceFormat | null = null,
-    projectRoundTripFormat: ProjectRoundTripFormat | null = null
+    projectRoundTripFormat: ProjectRoundTripFormat | null = null,
+    projectUiState: KumikoProjectUiState | null = null
   ) =>
     set((state) => {
       const hotFontData = ingestProjectData(
@@ -88,26 +93,40 @@ export const buildProjectActions = (
       state.editorActiveGlyphIndex = 0
       state.workspaceView = 'overview'
       state.overviewGroupBy = 'script'
-      state.overviewSectionId = 'all'
-      state.overviewGridState = null
-      state.overviewTopGlyphId = null
+      state.overviewSectionId = projectUiState?.overviewSectionId ?? 'all'
+      state.overviewGridState = projectUiState?.overviewGridState ?? null
+      state.overviewTopGlyphId = projectUiState?.overviewTopGlyphId ?? null
       const firstGlyph = Object.values(hotFontData.glyphs)[0]
       const firstMasterId = getProjectArchiveFirstMasterId()
-      state.selectedLayerId =
-        (firstMasterId && firstGlyph && getGlyphLayer(firstGlyph, firstMasterId)
+      const firstMasterLayerId =
+        firstMasterId && firstGlyph && getGlyphLayer(firstGlyph, firstMasterId)
           ? firstMasterId
-          : null) ||
-        (firstGlyph ? getActiveLayerId(firstGlyph) : null) ||
-        null
+          : null
+      state.selectedLayerId =
+        projectUiState?.selectedLayerId ??
+        (firstMasterLayerId ||
+          (firstGlyph ? getActiveLayerId(firstGlyph) : null) ||
+          null)
       // Multi-master: when the selected layer is a font source, treat it as the
       // active master so the switcher highlights it.
       state.activeMasterId =
+        projectUiState?.activeMasterId &&
+        hotFontData.sources?.[projectUiState.activeMasterId]
+          ? projectUiState.activeMasterId
+          : null
+      state.activeMasterId =
         state.selectedLayerId && hotFontData.sources?.[state.selectedLayerId]
           ? state.selectedLayerId
-          : null
+          : state.activeMasterId
       syncFilteredGlyphList(state)
 
-      if (state.selectedGlyphId && !hotFontData.glyphs[state.selectedGlyphId]) {
+      const storedSelectedGlyphId = projectUiState?.selectedGlyphId ?? null
+      if (storedSelectedGlyphId && hotFontData.glyphs[storedSelectedGlyphId]) {
+        state.selectedGlyphId = storedSelectedGlyphId
+      } else if (
+        state.selectedGlyphId &&
+        !hotFontData.glyphs[state.selectedGlyphId]
+      ) {
         state.selectedGlyphId = Object.keys(hotFontData.glyphs)[0] ?? null
         state.selectedNodeIds = []
         state.selectedSegment = null
@@ -276,6 +295,13 @@ export const buildProjectActions = (
       ) {
         state.persistenceQueue.projectQueued = false
         state.persistenceQueue.projectRevision = null
+      }
+      if (
+        state.persistenceQueue.uiStateQueued &&
+        canClearRevision(state.persistenceQueue.uiStateRevision ?? undefined)
+      ) {
+        state.persistenceQueue.uiStateQueued = false
+        state.persistenceQueue.uiStateRevision = null
       }
       syncDirtyListsFromQueue(state)
       if (!state.isDirty && state.persistenceQueue.status === 'saving') {

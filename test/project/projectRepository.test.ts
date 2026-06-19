@@ -355,6 +355,50 @@ describe('projectRepository canonical storage', () => {
     expect(project?.syncDirty).toBe(1)
   })
 
+  it('persists editor UI state outside canonical glyph records', async () => {
+    await saveProjectDraft({
+      id: 'project-ui-state',
+      title: 'Project UI State',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      sourceName: 'ProjectUiState.ufo',
+      sourceType: 'local',
+      fontData,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'ufo',
+    })
+
+    await saveDraftSnapshot({
+      projectId: 'project-ui-state',
+      projectTitle: 'Project UI State',
+      fontData,
+      dirtyGlyphIds: [],
+      deletedGlyphIds: [],
+      projectUiState: {
+        selectedGlyphId: 'A',
+        selectedLayerId: 'public.default',
+        activeMasterId: 'public.default',
+        overviewSectionId: 'all',
+        overviewTopGlyphId: 'A',
+        overviewGridState: { scrollTop: 120 },
+      },
+      glyphEditTimes: {},
+      selectedLayerId: 'public.default',
+    })
+
+    const loaded = await loadProjectDraftMetadata('project-ui-state')
+    expect(loaded?.projectUiState).toEqual({
+      selectedGlyphId: 'A',
+      selectedLayerId: 'public.default',
+      activeMasterId: 'public.default',
+      overviewSectionId: 'all',
+      overviewTopGlyphId: 'A',
+      overviewGridState: { scrollTop: 120 },
+    })
+  })
+
   it('loads project drafts as glyph metadata without resident geometry', async () => {
     const componentFontData: FontData = {
       glyphOrder: ['A', 'B'],

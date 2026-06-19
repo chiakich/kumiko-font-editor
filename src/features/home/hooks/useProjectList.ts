@@ -10,6 +10,7 @@ import {
   releaseProjectWriteLock,
 } from 'src/lib/project/projectWriteLock'
 import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
+import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { FontData } from 'src/store'
 
 export interface LoadedKumikoProject {
@@ -17,6 +18,7 @@ export interface LoadedKumikoProject {
   title: string
   fontData: FontData
   projectMetadata: Record<string, unknown> | null
+  projectUiState?: KumikoProjectUiState | null
   projectSourceFormat: KumikoProjectSummary['projectSourceFormat']
   projectRoundTripFormat: KumikoProjectSummary['projectRoundTripFormat']
 }
@@ -56,6 +58,7 @@ export const useProjectList = () => {
           title: draft.title,
           fontData: draft.fontData,
           projectMetadata: draft.projectMetadata ?? null,
+          projectUiState: draft.projectUiState ?? null,
           projectSourceFormat: draft.projectSourceFormat ?? null,
           projectRoundTripFormat: draft.projectRoundTripFormat ?? null,
         }

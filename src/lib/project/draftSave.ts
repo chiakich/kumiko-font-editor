@@ -2,6 +2,7 @@ import {
   getProjectArchiveMetadata,
   getProjectArchiveSourceFormat,
 } from 'src/lib/project/projectArchive'
+import { PROJECT_UI_STATE_KEY } from 'src/lib/project/projectRepository'
 import {
   fontDataToKumikoProjectRecord,
   glyphDataToKumikoGlyphRecord,
@@ -16,6 +17,7 @@ import {
 } from 'src/lib/project/kumikoProjectPersistence'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
 import type { FontData, GlyphData } from 'src/store'
+import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
   UFO_GLYPH_EDIT_TIMES_KEY,
@@ -53,6 +55,7 @@ export const saveDraftSnapshot = async (input: {
   dirtyGlyphIds: string[]
   deletedGlyphIds: string[]
   projectQueued?: boolean
+  projectUiState?: KumikoProjectUiState | null
   glyphEditTimes: GlyphEditTimes
   selectedLayerId: string | null
 }) => {
@@ -134,6 +137,11 @@ export const saveDraftSnapshot = async (input: {
         projectId: input.projectId,
         key: 'projectMetadata',
         value: withProjectGlyphEditTimes(projectMetadata, input.glyphEditTimes),
+      },
+      {
+        projectId: input.projectId,
+        key: PROJECT_UI_STATE_KEY,
+        value: input.projectUiState ?? null,
       },
     ],
   })

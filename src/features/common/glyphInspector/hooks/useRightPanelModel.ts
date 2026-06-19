@@ -1,6 +1,7 @@
 import { useToast } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { getProjectArchiveMetadata } from 'src/lib/project/projectArchive'
 import { listGlyphLayers } from 'src/store/glyphLayerOps'
 import {
@@ -25,6 +26,10 @@ export function useRightPanelModel() {
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const selectedLayerId = useStore((state) => state.selectedLayerId)
   const workspaceView = useStore((state) => state.workspaceView)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewSectionId = useStore((state) => state.overviewSectionId)
+  const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
+  const overviewGridState = useStore((state) => state.overviewGridState)
   const selectedNodeIds = useStore((state) => state.selectedNodeIds)
   const selectedSegment = useStore((state) => state.selectedSegment)
   const fontData = useStore((state) => state.fontData)
@@ -247,6 +252,15 @@ export function useRightPanelModel() {
         projectTitle,
         fontData,
         projectQueued: persistenceQueue.projectQueued,
+        uiStateQueued: persistenceQueue.uiStateQueued,
+        projectUiState: createProjectUiStateSnapshot({
+          selectedGlyphId,
+          selectedLayerId,
+          activeMasterId,
+          overviewSectionId,
+          overviewTopGlyphId,
+          overviewGridState,
+        }),
         dirtyGlyphIds,
         deletedGlyphIds,
         persistenceRevision: persistenceQueue.revision,

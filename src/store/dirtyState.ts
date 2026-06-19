@@ -30,6 +30,13 @@ export const markProjectDirty = (state: GlobalState) => {
   state.persistenceQueue.projectRevision = revision
 }
 
+export const markUiStateDirty = (state: GlobalState) => {
+  const revision = nextPersistenceRevision(state)
+  markPersistenceQueued(state)
+  state.persistenceQueue.uiStateQueued = true
+  state.persistenceQueue.uiStateRevision = revision
+}
+
 export const markGlyphDirty = (state: GlobalState, glyphId: string) => {
   const revision = nextPersistenceRevision(state)
   markPersistenceQueued(state)

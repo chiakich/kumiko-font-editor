@@ -21,6 +21,7 @@ import {
 import { serializeGlyphsFileToBlob } from 'src/lib/fontFormats/glyphsExport'
 import { createGlyphsPackageDataFromFontData } from 'src/lib/fontFormats/glyphsPackage'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { loadProjectDraft } from 'src/lib/project/projectRepository'
 import { useStore } from 'src/store'
 import type { FontExportFormat } from 'src/features/common/fontExport/ExportFontModal'
@@ -63,6 +64,11 @@ export function useFontExport() {
   const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
   const selectedLayerId = useStore((state) => state.selectedLayerId)
+  const selectedGlyphId = useStore((state) => state.selectedGlyphId)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewSectionId = useStore((state) => state.overviewSectionId)
+  const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
+  const overviewGridState = useStore((state) => state.overviewGridState)
   const dirtyGlyphIds = useStore((state) => state.dirtyGlyphIds)
   const deletedGlyphIds = useStore((state) => state.deletedGlyphIds)
   const persistenceQueue = useStore((state) => state.persistenceQueue)
@@ -112,6 +118,15 @@ export function useFontExport() {
         projectTitle: projectTitle || projectId,
         fontData,
         projectQueued: persistenceQueue.projectQueued,
+        uiStateQueued: persistenceQueue.uiStateQueued,
+        projectUiState: createProjectUiStateSnapshot({
+          selectedGlyphId,
+          selectedLayerId,
+          activeMasterId,
+          overviewSectionId,
+          overviewTopGlyphId,
+          overviewGridState,
+        }),
         dirtyGlyphIds,
         deletedGlyphIds,
         persistenceRevision: persistenceQueue.revision,

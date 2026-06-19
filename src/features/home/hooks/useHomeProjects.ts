@@ -51,7 +51,8 @@ export function useHomeProjects() {
         project.fontData,
         project.projectMetadata,
         project.projectSourceFormat,
-        project.projectRoundTripFormat
+        project.projectRoundTripFormat,
+        project.projectUiState
       )
 
       await restorePersistedUfoChanges(project.id)

@@ -23,6 +23,7 @@ import {
   prepareGitHubCommit,
 } from 'src/lib/github/githubPr'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { useStore, type FontData } from 'src/store'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
@@ -96,6 +97,11 @@ export const useGitHubCommitFlow = ({
   const { t } = useTranslation()
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const persistenceQueue = useStore((state) => state.persistenceQueue)
+  const selectedGlyphId = useStore((state) => state.selectedGlyphId)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewSectionId = useStore((state) => state.overviewSectionId)
+  const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
+  const overviewGridState = useStore((state) => state.overviewGridState)
   const gitHubModal = useDisclosure()
   const [isPreparingGitHubCommit, setIsPreparingGitHubCommit] = useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
@@ -312,6 +318,15 @@ export const useGitHubCommitFlow = ({
         projectTitle,
         fontData,
         projectQueued: persistenceQueue.projectQueued,
+        uiStateQueued: persistenceQueue.uiStateQueued,
+        projectUiState: createProjectUiStateSnapshot({
+          selectedGlyphId,
+          selectedLayerId,
+          activeMasterId,
+          overviewSectionId,
+          overviewTopGlyphId,
+          overviewGridState,
+        }),
         dirtyGlyphIds: localDirtyGlyphIds,
         deletedGlyphIds: localDeletedGlyphIds,
         persistenceRevision: persistenceQueue.revision,
@@ -450,6 +465,15 @@ export const useGitHubCommitFlow = ({
         projectTitle,
         fontData,
         projectQueued: persistenceQueue.projectQueued,
+        uiStateQueued: persistenceQueue.uiStateQueued,
+        projectUiState: createProjectUiStateSnapshot({
+          selectedGlyphId,
+          selectedLayerId: activeLayerId,
+          activeMasterId,
+          overviewSectionId,
+          overviewTopGlyphId,
+          overviewGridState,
+        }),
         dirtyGlyphIds: localDirtyGlyphIds,
         deletedGlyphIds: localDeletedGlyphIds,
         persistenceRevision: persistenceQueue.revision,
