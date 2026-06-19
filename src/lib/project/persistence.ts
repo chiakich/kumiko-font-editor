@@ -5,14 +5,6 @@ export const KUMIKO_PROJECTS_STORE = 'kumiko_projects'
 export const KUMIKO_GLYPHS_STORE = 'kumiko_glyphs'
 export const KUMIKO_UI_STATE_STORE = 'kumiko_ui_state'
 
-// Kept as string constants for legacy modules that are being retired from the
-// write path. The database no longer creates these stores.
-export const UFO_PROJECTS_STORE = 'ufo_projects'
-export const UFO_METADATA_STORE = 'ufo_metadata'
-export const UFO_GLYPHS_STORE = 'ufo_glyphs'
-export const UFO_UI_STATE_STORE = 'ufo_ui_state'
-export const UFO_REFERENCE_FONTS_STORE = 'ufo_reference_fonts'
-
 const createKumikoStores = (database: IDBDatabase) => {
   database.createObjectStore(KUMIKO_PROJECTS_STORE, {
     keyPath: 'projectId',
