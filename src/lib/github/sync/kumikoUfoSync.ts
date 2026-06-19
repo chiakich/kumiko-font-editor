@@ -43,6 +43,7 @@ import type {
   UfoMetadataRecord,
 } from 'src/lib/fontFormats/ufoTypes'
 import { getComponentMatrix } from 'src/lib/components/componentTransform'
+import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
 import {
   glyphDataToKumikoGlyphRecord,
   kumikoGlyphRecordToGlyphData,
@@ -202,7 +203,7 @@ const toUfoGlyphRecord = (input: {
       x: anchor.x,
       y: anchor.y,
       name: anchor.name,
-      color: anchor.color,
+      color: serializeUfoColor(anchor.color),
       identifier: anchor.identifier ?? anchor.id,
     })),
     guidelines: layer.guidelines.map((guide) => ({
@@ -210,7 +211,7 @@ const toUfoGlyphRecord = (input: {
       y: guide.y,
       angle: guide.angle,
       name: guide.name ?? null,
-      color: guide.color,
+      color: serializeUfoColor(guide.color),
       identifier: guide.identifier ?? guide.id,
     })),
     contours: layer.paths.map((path) => pathToUfoContour(path)),
@@ -228,7 +229,12 @@ const toUfoGlyphRecord = (input: {
       }
     }),
     note: layerSource.note ?? input.glyph.note ?? null,
-    image: layerSource.image ?? null,
+    image: layer.image
+      ? {
+          ...layer.image,
+          color: serializeUfoColor(layer.image.color),
+        }
+      : null,
     lib: layerSource.lib ?? null,
     dirty: input.glyph.syncDirty === 1,
     dirtyIndex: input.glyph.syncDirty,
@@ -303,10 +309,15 @@ const ufoGlyphToGlyphData = (input: {
         sourceHash,
         remoteBlobSha: input.remoteBlobSha,
         note: input.record.note,
-        image: input.record.image,
         lib: input.record.lib,
       },
     },
+    image: input.record.image
+      ? {
+          ...input.record.image,
+          color: parseUfoColor(input.record.image.color),
+        }
+      : null,
   }
 
   return {

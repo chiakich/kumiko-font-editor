@@ -12,6 +12,7 @@ import {
 import { selectUfoFeatureText } from 'src/lib/openTypeFeatures/legacyFeatureText'
 import { serializeDesignspace } from 'src/lib/fontFormats/designspace'
 import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
+import { serializeUfoColor } from 'src/lib/color/kumikoColor'
 
 const DEFAULT_LAYER_ID = 'public.default'
 const DEFAULT_GLYPH_DIR = 'glyphs'
@@ -76,6 +77,9 @@ const getGlyphAnchors = (glyph: GlyphData, selectedLayerId: string | null) =>
 const getGlyphGuidelines = (glyph: GlyphData, selectedLayerId: string | null) =>
   getExportLayer(glyph, selectedLayerId)?.guidelines ?? []
 
+const getGlyphImage = (glyph: GlyphData, selectedLayerId: string | null) =>
+  getExportLayer(glyph, selectedLayerId)?.image ?? null
+
 const toGlyphRecord = (
   glyph: GlyphData,
   projectId: string,
@@ -83,6 +87,7 @@ const toGlyphRecord = (
   fileName: string
 ): UfoGlyphRecord => {
   const metrics = getGlyphMetrics(glyph, selectedLayerId)
+  const image = getGlyphImage(glyph, selectedLayerId)
 
   return {
     projectId,
@@ -100,6 +105,7 @@ const toGlyphRecord = (
       x: anchor.x,
       y: anchor.y,
       name: anchor.name,
+      color: serializeUfoColor(anchor.color),
       identifier: anchor.id,
     })),
     guidelines: getGlyphGuidelines(glyph, selectedLayerId).map((guide) => ({
@@ -107,6 +113,7 @@ const toGlyphRecord = (
       y: guide.y,
       angle: guide.angle,
       name: guide.name ?? null,
+      color: serializeUfoColor(guide.color),
       identifier: guide.id,
     })),
     contours: getGlyphPaths(glyph, selectedLayerId).map(pathToUfoContour),
@@ -119,7 +126,12 @@ const toGlyphRecord = (
       yOffset: component.y,
     })),
     note: null,
-    image: null,
+    image: image
+      ? {
+          ...image,
+          color: serializeUfoColor(image.color),
+        }
+      : null,
     lib: null,
     dirty: false,
     dirtyIndex: 0,

@@ -124,6 +124,43 @@ describe('UFO import → export → reimport round-trip', () => {
       true
     )
   })
+
+  it('imports GLIF images as canonical layer data', async () => {
+    let injected = false
+    const entries = (await readUfoEntries()).map((entry) => {
+      if (injected || !entry.relativePath.endsWith('.glif')) {
+        return entry
+      }
+      injected = true
+      return {
+        ...entry,
+        text: entry.text.replace(
+          '<outline>',
+          '<image fileName="sketch.png" xScale="1.2" yScale="0.8" xOffset="12" yOffset="34" color="0.1,0.2,0.3,0.4"/>\n  <anchor x="1" y="2" name="colorAnchor" color="0.2,0.3,0.4,0.5"/>\n  <outline>'
+        ),
+      }
+    })
+    const imported = await importWorkspace(entries, UFO_NAME)
+    const glyphWithImage = Object.values(imported.fontData.glyphs).find(
+      (glyph) => layerOf(glyph).image
+    )
+
+    expect(glyphWithImage).toBeDefined()
+    expect(layerOf(glyphWithImage!).image).toMatchObject({
+      fileName: 'sketch.png',
+      xScale: 1.2,
+      yScale: 0.8,
+      xOffset: 12,
+      yOffset: 34,
+      color: [0.1, 0.2, 0.3, 0.4],
+    })
+    expect(
+      layerOf(glyphWithImage!).anchors.find(
+        (anchor) => anchor.name === 'colorAnchor'
+      )?.color
+    ).toEqual([0.2, 0.3, 0.4, 0.5])
+    expect(layerOf(glyphWithImage!).sourceData?.ufo).not.toHaveProperty('image')
+  })
 })
 
 // GLIF parse ↔ serialize symmetry for outline shapes the all-straight-line
@@ -134,6 +171,7 @@ describe('GLIF parse ↔ serialize round-trip', () => {
 <glyph name="sample" format="2">
   <advance width="650"/>
   <unicode hex="0041"/>
+  <image fileName="sketch.png" xScale="1.2" yScale="0.8" xOffset="12" yOffset="34" color="0.1,0.2,0.3,0.4"/>
   <outline>
     <contour>
       <point x="100" y="0" type="line"/>
@@ -148,7 +186,7 @@ describe('GLIF parse ↔ serialize round-trip', () => {
     </contour>
     <component base="acute" xScale="1.0" xyScale="0.2" yxScale="0" yScale="1.0" xOffset="120" yOffset="40"/>
   </outline>
-  <anchor x="250" y="700" name="top"/>
+  <anchor x="250" y="700" name="top" color="0.2,0.3,0.4,0.5"/>
 </glyph>`
 
   const augment = (
@@ -173,6 +211,7 @@ describe('GLIF parse ↔ serialize round-trip', () => {
     expect(second.contours).toEqual(first.contours)
     expect(second.components).toEqual(first.components)
     expect(second.anchors).toEqual(first.anchors)
+    expect(second.image).toEqual(first.image)
 
     // Spot-check the parse itself captured the interesting shapes.
     const [closed, open] = first.contours
@@ -191,6 +230,19 @@ describe('GLIF parse ↔ serialize round-trip', () => {
       xOffset: 120,
       yOffset: 40,
     })
-    expect(first.anchors[0]).toMatchObject({ x: 250, y: 700, name: 'top' })
+    expect(first.anchors[0]).toMatchObject({
+      x: 250,
+      y: 700,
+      name: 'top',
+      color: '0.2,0.3,0.4,0.5',
+    })
+    expect(first.image).toMatchObject({
+      fileName: 'sketch.png',
+      xScale: 1.2,
+      yScale: 0.8,
+      xOffset: 12,
+      yOffset: 34,
+      color: '0.1,0.2,0.3,0.4',
+    })
   })
 })

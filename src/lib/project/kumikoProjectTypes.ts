@@ -9,7 +9,6 @@ import type {
   FontInfo,
   FontProjectSettings,
   FontSource,
-  GlyphImage,
   GlyphLayerData,
   KumikoColor,
   KerningGroup,
@@ -102,7 +101,6 @@ export interface KumikoLayerSourceData {
     sourceHash?: string | null
     remoteBlobSha?: string | null
     note?: string | null
-    image?: GlyphImage | null
     lib?: Record<string, unknown> | null
   }
 }

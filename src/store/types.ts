@@ -31,7 +31,7 @@ interface BasePathNode {
   y: number
   identifier?: string | null
   name?: string | null
-  color?: string | null
+  color?: KumikoColor | null
   customData?: GlyphCustomData
   sourceData?: GlyphSourceData
 }
@@ -56,7 +56,7 @@ export interface PathData {
   closed: boolean
   identifier?: string | null
   name?: string | null
-  color?: string | null
+  color?: KumikoColor | null
   customData?: GlyphCustomData
   sourceData?: GlyphSourceData
 }
@@ -75,7 +75,7 @@ export interface GlyphComponentRef {
   // scaleX/scaleY they carry the full UFO/Glyphs component transform.
   xyScale?: number
   yxScale?: number
-  color?: string | null
+  color?: KumikoColor | null
   customData?: GlyphCustomData
   sourceData?: GlyphSourceData
 }
@@ -86,7 +86,7 @@ export interface GlyphAnchor {
   name: string
   x: number
   y: number
-  color?: string | null
+  color?: KumikoColor | null
   customData?: GlyphCustomData
   sourceData?: GlyphSourceData
 }
@@ -99,7 +99,7 @@ export interface GlyphGuideline {
   angle: number
   locked?: boolean
   name?: string
-  color?: string | null
+  color?: KumikoColor | null
   customData?: GlyphCustomData
   sourceData?: GlyphSourceData
 }
@@ -124,7 +124,7 @@ export interface GlyphImage {
   yScale?: number
   xOffset?: number
   yOffset?: number
-  color?: string | null
+  color?: KumikoColor | null
   customData?: GlyphCustomData
 }
 

@@ -23,6 +23,7 @@ import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
 import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
 import { hashString } from 'src/lib/hash'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
+import { parseUfoColor } from 'src/lib/color/kumikoColor'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import {
   defaultFontSource,
@@ -702,6 +703,7 @@ export const glyphRecordToLayerContent = (
       name: anchor.name,
       x: anchor.x,
       y: anchor.y,
+      color: parseUfoColor(anchor.color),
     })),
     guidelines: record.guidelines.map((guide, index) => ({
       id: guide.identifier ?? `g${index}`,
@@ -710,6 +712,7 @@ export const glyphRecordToLayerContent = (
       angle: guide.angle ?? 0,
       locked: false,
       name: guide.name ?? undefined,
+      color: parseUfoColor(guide.color),
     })),
     metrics,
   }
@@ -776,10 +779,15 @@ const buildFontDataFromUfoGlyphs = (
                     sourceHash: record.sourceHash,
                     remoteBlobSha: record.remoteBlobSha ?? null,
                     note: record.note,
-                    image: record.image,
                     lib: record.lib,
                   },
                 },
+                image: record.image
+                  ? {
+                      ...record.image,
+                      color: parseUfoColor(record.image.color),
+                    }
+                  : null,
                 ...glyphRecordToLayerContent(record, resolveBounds),
               },
             },
@@ -999,10 +1007,15 @@ export const buildMultiMasterFontData = (
             sourceHash: record.sourceHash,
             remoteBlobSha: record.remoteBlobSha ?? null,
             note: record.note,
-            image: record.image,
             lib: record.lib,
           },
         },
+        image: record.image
+          ? {
+              ...record.image,
+              color: parseUfoColor(record.image.color),
+            }
+          : null,
         ...glyphRecordToLayerContent(record, master.resolveBounds),
       }
       layerOrder.push(master.sourceId)
