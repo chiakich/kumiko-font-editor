@@ -12,6 +12,7 @@ import type {
   PathNode,
   PathSegmentType,
 } from 'src/store'
+import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 
 // Build a multi-master FontData from a parsed .glyphs / .glyphspackage document
 // (the OpenStep structure produced by parseOpenStep / readGlyphsPackageFromFiles).
@@ -524,7 +525,7 @@ const firstUnicode = (value: unknown): string | null => {
   // number, dropping leading zeros; reconstruct the 4+ digit hex string. Codes
   // containing A–F stay strings, so only the numeric case needs padding.
   if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value).padStart(4, '0')
+    return normalizeUnicodeHex(String(value))
   }
   const raw = asString(value)
   if (!raw) {
@@ -532,7 +533,7 @@ const firstUnicode = (value: unknown): string | null => {
   }
   // Glyphs 3 may store a comma-separated list; keep the first code point.
   const first = raw.split(',')[0]?.trim()
-  return first ? first.toUpperCase() : null
+  return normalizeUnicodeHex(first)
 }
 
 const displayName = (unicode: string | null, glyphName: string): string => {

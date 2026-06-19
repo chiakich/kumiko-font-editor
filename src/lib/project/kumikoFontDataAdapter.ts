@@ -14,26 +14,7 @@ import type {
 } from 'src/store'
 import { hashString } from 'src/lib/hash'
 import { deterministicStringify } from 'src/store/deterministicStringify'
-
-export const normalizeUnicodeHex = (
-  value: string | number | null | undefined
-) => {
-  if (value === null || value === undefined || value === '') {
-    return null
-  }
-  const raw =
-    typeof value === 'number'
-      ? value.toString(16)
-      : value.trim().replace(/^U\+/i, '')
-  if (!raw) {
-    return null
-  }
-  const parsed = Number.parseInt(raw, 16)
-  if (!Number.isFinite(parsed)) {
-    return null
-  }
-  return parsed.toString(16).toUpperCase().padStart(4, '0')
-}
+import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 
 const getGlyphUnicodes = (glyph: GlyphData) => {
   const values = glyph.unicodes ?? (glyph.unicode ? [glyph.unicode] : [])
@@ -95,29 +76,34 @@ const assertSourceDataHasNoGeometry = (value: unknown, path: string) => {
   }
 }
 
+const omitRecordKeys = (record: object, keys: Set<string>) =>
+  Object.fromEntries(Object.entries(record).filter(([key]) => !keys.has(key)))
+
+const PROJECT_DIGEST_OMIT_KEYS = new Set([
+  'exportDirty',
+  'syncDirty',
+  'exportedDigest',
+  'syncedDigest',
+  'updatedAt',
+])
+
+const GLYPH_DIGEST_OMIT_KEYS = new Set([
+  'exportDirty',
+  'syncDirty',
+  'exportedDigest',
+  'syncedDigest',
+  'updatedAt',
+  'unicodeKeys',
+  'componentRefKeys',
+])
+
 export const createKumikoProjectDigest = (record: KumikoProjectRecord) => {
-  const {
-    exportDirty: _exportDirty,
-    syncDirty: _syncDirty,
-    exportedDigest: _exportedDigest,
-    syncedDigest: _syncedDigest,
-    updatedAt: _updatedAt,
-    ...content
-  } = record
+  const content = omitRecordKeys(record, PROJECT_DIGEST_OMIT_KEYS)
   return hashString(deterministicStringify(content))
 }
 
 export const createKumikoGlyphDigest = (record: KumikoGlyphRecord) => {
-  const {
-    exportDirty: _exportDirty,
-    syncDirty: _syncDirty,
-    exportedDigest: _exportedDigest,
-    syncedDigest: _syncedDigest,
-    updatedAt: _updatedAt,
-    unicodeKeys: _unicodeKeys,
-    componentRefKeys: _componentRefKeys,
-    ...content
-  } = record
+  const content = omitRecordKeys(record, GLYPH_DIGEST_OMIT_KEYS)
   return hashString(deterministicStringify(content))
 }
 

@@ -22,6 +22,7 @@ import {
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
 import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
 import { hashString } from 'src/lib/hash'
+import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import {
   defaultFontSource,
@@ -303,7 +304,7 @@ export const parseGlifText = (
   }
 
   const unicodes = Array.from(glyphElement.querySelectorAll(':scope > unicode'))
-    .map((node) => node.getAttribute('hex')?.toUpperCase() ?? null)
+    .map((node) => normalizeUnicodeHex(node.getAttribute('hex')))
     .filter((value): value is string => Boolean(value))
 
   const advanceElement = glyphElement.querySelector(':scope > advance')

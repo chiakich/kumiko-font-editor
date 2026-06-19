@@ -252,6 +252,22 @@ const deriveLayerOutlineKind = (
     : 'cubic'
 }
 
+type UfoLayerContent = ReturnType<typeof glyphRecordToLayerContent>
+type KumikoLayerContent = Omit<UfoLayerContent, 'components'>
+
+const asPlainRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+
+const omitLegacyLayerComponents = (content: UfoLayerContent) => {
+  const layerContent = { ...content } as KumikoLayerContent & {
+    components?: unknown
+  }
+  delete layerContent.components
+  return layerContent
+}
+
 const ufoGlyphToGlyphData = (input: {
   project: KumikoProjectRecord
   activeUfoId: string
@@ -266,7 +282,7 @@ const ufoGlyphToGlyphData = (input: {
   )
   const resolveBounds = buildBoundsResolver([input.record])
   const layerContent = glyphRecordToLayerContent(input.record, resolveBounds)
-  const { components: _components, ...content } = layerContent
+  const content = omitLegacyLayerComponents(layerContent)
   const existingGlyph = input.existing
     ? kumikoGlyphRecordToGlyphData(input.existing)
     : null
@@ -316,7 +332,7 @@ const ufoGlyphToGlyphData = (input: {
     sourceData: {
       ...existingGlyph?.sourceData,
       ufo: {
-        ...existingGlyph?.sourceData?.ufo,
+        ...asPlainRecord(existingGlyph?.sourceData?.ufo),
         fileName: input.record.fileName,
         sourceHash,
         remoteBlobSha: input.remoteBlobSha,

@@ -6,6 +6,7 @@ import {
   loadProjectDraft,
 } from 'src/lib/project/projectRepository'
 import {
+  findKumikoGlyphRecordsByUnicode,
   listExportDirtyKumikoGlyphRecords,
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
@@ -67,12 +68,22 @@ describe('projectRepository canonical storage', () => {
 
     const projectRecord = await loadKumikoProjectRecord('project-1')
     const dirtyGlyphs = await listExportDirtyKumikoGlyphRecords('project-1')
+    const unicodeGlyphs = await findKumikoGlyphRecordsByUnicode(
+      'project-1',
+      'U+41'
+    )
+    const shortUnicodeGlyphs = await findKumikoGlyphRecordsByUnicode(
+      'project-1',
+      '41'
+    )
     const loaded = await loadProjectDraft('project-1')
 
     expect(projectRecord?.sourceData?.glyphs?.formatVersion).toBe(3)
     expect(projectRecord?.exportedDigest).toMatch(/^[0-9a-f]{8}$/)
     expect(projectRecord?.syncedDigest).toMatch(/^[0-9a-f]{8}$/)
     expect(dirtyGlyphs.map((glyph) => glyph.glyphId)).toEqual(['A'])
+    expect(unicodeGlyphs.map((glyph) => glyph.glyphId)).toEqual(['A'])
+    expect(shortUnicodeGlyphs.map((glyph) => glyph.glyphId)).toEqual(['A'])
     expect(dirtyGlyphs[0]?.exportedDigest).toBeNull()
     expect(loaded?.fontData?.glyphs.A.unicodes).toEqual(['0041'])
     expect(loaded?.projectMetadata).toEqual({ familyName: 'Repository Test' })

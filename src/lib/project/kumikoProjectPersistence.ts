@@ -4,6 +4,7 @@ import {
   KUMIKO_UI_STATE_STORE,
   openDatabase,
 } from 'src/lib/project/persistence'
+import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import type {
   KumikoGlyphPrimaryKey,
   KumikoGlyphRecord,
@@ -186,13 +187,18 @@ export const findKumikoGlyphRecordsByUnicode = async (
   projectId: string,
   unicodeHex: string
 ) => {
+  const normalizedUnicode = normalizeUnicodeHex(unicodeHex)
+  if (!normalizedUnicode) {
+    return []
+  }
+
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
   const index = transaction
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byUnicodeKey')
   return requestToPromise(
-    index.getAll(`${projectId}\0${unicodeHex.toUpperCase()}`)
+    index.getAll(`${projectId}\0${normalizedUnicode}`)
   ) as Promise<KumikoGlyphRecord[]>
 }
 

@@ -15,6 +15,7 @@ import type {
 import { getNodeSegmentType, isOffCurveNode, isOnCurveNode } from 'src/store'
 import { activeLayer } from 'src/store/glyphLayer'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
+import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 
 const WOFF2_WASM_URL = new URL(
   '../../node_modules/fonteditor-core/woff2/woff2.wasm',
@@ -45,7 +46,7 @@ const ensureWoff2Ready = async () => {
 
 const toUnicodeString = (unicode: number | undefined) => {
   if (unicode === undefined) return null
-  return unicode.toString(16).toUpperCase().padStart(4, '0')
+  return normalizeUnicodeHex(unicode)
 }
 
 const createNode = (
@@ -441,8 +442,9 @@ export const exportFontAsBinary = (
     activeLayer(glyph).paths.forEach((shape) => {
       appendShapeToPath(path, shape)
     })
-    const codePoint = glyph.unicode
-      ? Number.parseInt(glyph.unicode, 16)
+    const normalizedUnicode = normalizeUnicodeHex(glyph.unicode)
+    const codePoint = normalizedUnicode
+      ? Number.parseInt(normalizedUnicode, 16)
       : undefined
     // Per OpenType best practice (SIL FDBP, fontbakery), C0 controls (< U+0020)
     // and U+007F must not be encoded in the cmap; the glyph may still exist
