@@ -21,7 +21,7 @@ import type {
   SingleSubstitutionRule,
 } from 'src/lib/openTypeFeatures/types'
 import type { FontData, GlyphData, GlyphLayerData } from 'src/store/types'
-import { activeLayer, withActiveLayer } from 'src/store/glyphLayer'
+import { getGlyphLayer, withActiveLayer } from 'src/store/glyphLayer'
 
 export type CombinationBehaviorType =
   | 'standardLigature'
@@ -583,10 +583,12 @@ export function deriveGlyphAnchorBehaviors(
   glyphId: string
 ): AnchorBehaviorRow[] {
   const glyph = fontData.glyphs[glyphId]
-  if (!glyph) return []
+  const layer = getGlyphLayer(glyph, null)
+  if (!layer) return []
 
-  const duplicateNames = countAnchorNames(activeLayer(glyph).anchors ?? [])
-  return (activeLayer(glyph).anchors ?? []).map((anchor) => ({
+  const anchors = layer.anchors ?? []
+  const duplicateNames = countAnchorNames(anchors)
+  return anchors.map((anchor) => ({
     id: anchor.id,
     glyphId,
     name: anchor.name,
@@ -1236,7 +1238,8 @@ export function upsertAnchorBehavior(
 ): FontData {
   if (!canCommitAnchorBehavior(draft)) return fontData
   const glyph = fontData.glyphs[draft.glyphId]
-  if (!glyph) return fontData
+  const layer = getGlyphLayer(glyph, null)
+  if (!glyph || !layer) return fontData
 
   const anchor = {
     id: draft.id ?? makeAnchorId(draft.glyphId, draft.name),
@@ -1244,7 +1247,7 @@ export function upsertAnchorBehavior(
     x: Math.round(draft.x),
     y: Math.round(draft.y),
   }
-  const anchors = activeLayer(glyph).anchors ?? []
+  const anchors = layer.anchors ?? []
   const nextAnchors = anchors.some((item) => item.id === anchor.id)
     ? anchors.map((item) => (item.id === anchor.id ? anchor : item))
     : [...anchors, anchor]
@@ -1266,14 +1269,15 @@ export function deleteAnchorBehavior(
   anchorId: string
 ): FontData {
   const glyph = fontData.glyphs[glyphId]
-  if (!glyph) return fontData
+  const layer = getGlyphLayer(glyph, null)
+  if (!glyph || !layer) return fontData
 
   const nextFontData = {
     ...fontData,
     glyphs: {
       ...fontData.glyphs,
       [glyphId]: withActiveLayer(glyph, {
-        anchors: (activeLayer(glyph).anchors ?? []).filter(
+        anchors: (layer.anchors ?? []).filter(
           (anchor) => anchor.id !== anchorId
         ),
       }),
@@ -1297,6 +1301,7 @@ export function makeCompositeGlyphFromComponents(
   const paths: GlyphLayerData['paths'] = []
   const componentRefs = componentGlyphIds.map((componentId, index) => {
     const sourceGlyph = fontData.glyphs[componentId]
+    const sourceLayer = getGlyphLayer(sourceGlyph, null)
     const ref = {
       id: `component_${index}_${componentId.replace(/[^A-Za-z0-9_.-]+/g, '_')}`,
       glyphId: componentId,
@@ -1306,7 +1311,7 @@ export function makeCompositeGlyphFromComponents(
       scaleY: 1,
       rotation: 0,
     }
-    for (const path of sourceGlyph ? activeLayer(sourceGlyph).paths : []) {
+    for (const path of sourceLayer?.paths ?? []) {
       paths.push({
         id: `${componentId}_${index}_${path.id}`,
         closed: path.closed,
@@ -1317,14 +1322,16 @@ export function makeCompositeGlyphFromComponents(
         })),
       })
     }
-    cursorX += sourceGlyph ? activeLayer(sourceGlyph).metrics.width : 0
+    cursorX += sourceLayer?.metrics.width ?? 0
     return ref
   })
 
-  const firstGlyph = Object.values(fontData.glyphs)[0]
+  const firstLayer = Object.values(fontData.glyphs)
+    .map((glyph) => getGlyphLayer(glyph, null))
+    .find(Boolean)
   const width =
-    cursorX || (firstGlyph ? activeLayer(firstGlyph).metrics.width : 0) || 1000
-  const layerId = firstGlyph?.activeLayerId ?? 'public.default'
+    cursorX || firstLayer?.metrics.width || fontData.unitsPerEm || 1000
+  const layerId = firstLayer?.id ?? 'public.default'
 
   return {
     id: glyphId,
@@ -1356,10 +1363,10 @@ export function makeEditableGlyphCopy(
 ): GlyphData | null {
   if (!isValidGlyphName(glyphId) || fontData.glyphs[glyphId]) return null
   const sourceGlyph = fontData.glyphs[sourceGlyphId]
-  if (!sourceGlyph) return null
+  const source = getGlyphLayer(sourceGlyph, null)
+  if (!sourceGlyph || !source) return null
 
-  const source = activeLayer(sourceGlyph)
-  const layerId = sourceGlyph.activeLayerId ?? 'public.default'
+  const layerId = source.id
   return {
     ...sourceGlyph,
     id: glyphId,
@@ -2153,6 +2160,7 @@ function syncOpenTypeAnchorDefinitions(fontData: FontData, glyphId: string) {
   if (!openTypeFeatures) return fontData
 
   const glyph = fontData.glyphs[glyphId]
+  const layer = getGlyphLayer(glyph, null)
   return {
     ...fontData,
     openTypeFeatures: {
@@ -2161,7 +2169,7 @@ function syncOpenTypeAnchorDefinitions(fontData: FontData, glyphId: string) {
         ...openTypeFeatures.anchors.filter(
           (anchor) => anchor.glyph !== glyphId
         ),
-        ...((glyph ? (activeLayer(glyph).anchors ?? []) : []).map((anchor) => ({
+        ...((layer?.anchors ?? []).map((anchor) => ({
           id: anchor.id,
           glyph: glyphId,
           name: anchor.name,

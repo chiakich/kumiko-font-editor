@@ -201,4 +201,30 @@ describe('glyph actions', () => {
     expect(useStore.getState().dirtyGlyphIds).toEqual([])
     expect(useStore.getState().persistenceQueue.glyphIds).toEqual([])
   })
+
+  it('uses unitsPerEm for new glyph width when existing glyphs are metadata-only', () => {
+    const fontData: FontData = {
+      glyphOrder: ['A'],
+      unitsPerEm: 2048,
+      glyphs: {
+        A: makeMetadataGlyph('A'),
+      },
+    }
+    useStore.getState().loadProjectState('project-a', 'Project A', fontData)
+
+    expect(
+      useStore.getState().addGlyphs([
+        {
+          id: 'B',
+          name: 'B',
+          unicode: '0042',
+        },
+      ])
+    ).toEqual(['B'])
+
+    expect(
+      useStore.getState().fontData?.glyphs.B.layers?.['public.default']?.metrics
+        .width
+    ).toBe(2048)
+  })
 })

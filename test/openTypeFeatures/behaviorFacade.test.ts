@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   createEmptyOpenTypeFeaturesState,
+  deleteAnchorBehavior,
   deriveGlyphContextualBehaviors,
   deriveGlyphAlternateBehaviors,
   deriveGlyphAnchorBehaviors,
@@ -406,6 +407,32 @@ describe('OpenType behavior facade', () => {
       },
     ])
   })
+
+  it('does not synthesize layers when editing metadata-only glyph anchors', () => {
+    const fontData = makeFontData(createEmptyOpenTypeFeaturesState())
+    fontData.glyphs.A = makeMetadataGlyph('A')
+
+    const nextFontData = upsertAnchorBehavior(fontData, {
+      glyphId: 'A',
+      name: 'top',
+      x: 250,
+      y: 700,
+    })
+
+    expect(nextFontData).toBe(fontData)
+    expect(nextFontData.glyphs.A.layers).toBeUndefined()
+    expect(deriveGlyphAnchorBehaviors(nextFontData, 'A')).toEqual([])
+    expect(deleteAnchorBehavior(nextFontData, 'A', 'anchor_A_top')).toBe(
+      nextFontData
+    )
+  })
+
+  it('does not copy metadata-only glyphs as empty editable outlines', () => {
+    const fontData = makeFontData(createEmptyOpenTypeFeaturesState())
+    fontData.glyphs.A = makeMetadataGlyph('A')
+
+    expect(makeEditableGlyphCopy(fontData, 'A.alt', 'A')).toBeNull()
+  })
 })
 
 function makeFeatureState(): OpenTypeFeaturesState {
@@ -583,4 +610,13 @@ function makeGlyph(id: string, width: number): GlyphData {
       rsb: width,
     },
   } as unknown as GlyphData)
+}
+
+function makeMetadataGlyph(id: string): GlyphData {
+  return {
+    id,
+    name: id,
+    unicodes: [],
+    layerOrder: ['public.default'],
+  }
 }

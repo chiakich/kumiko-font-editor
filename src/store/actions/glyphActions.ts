@@ -39,6 +39,7 @@ import { syncFilteredGlyphList } from 'src/store/glyphSearch'
 import {
   activeLayer,
   ensureLoadedActiveLayer,
+  getGlyphLayer,
   setGlyphActiveLayer,
 } from 'src/store/glyphLayer'
 import {
@@ -244,10 +245,11 @@ export const buildGlyphActions = (set: ImmerSet) => ({
         return
       }
 
-      const firstExistingGlyph = Object.values(state.fontData.glyphs)[0]
-      const defaultWidth = firstExistingGlyph
-        ? activeLayer(firstExistingGlyph).metrics.width
-        : 1000
+      const firstLoadedLayer = Object.values(state.fontData.glyphs)
+        .map((glyph) => getGlyphLayer(glyph, null))
+        .find(Boolean)
+      const defaultWidth =
+        firstLoadedLayer?.metrics.width ?? state.fontData.unitsPerEm ?? 1000
 
       for (const glyphInput of glyphs) {
         if (state.fontData.glyphs[glyphInput.id]) {

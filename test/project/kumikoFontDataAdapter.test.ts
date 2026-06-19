@@ -226,6 +226,28 @@ describe('kumikoFontDataAdapter', () => {
     expect(rebuilt.glyphs.A.unicodes).toEqual(['0041'])
   })
 
+  it('rejects metadata-only glyphs when serializing complete glyph records', () => {
+    const metadataOnlyFontData: FontData = {
+      glyphOrder: ['A'],
+      glyphs: {
+        A: {
+          id: 'A',
+          name: 'A',
+          unicodes: ['0041'],
+          layerOrder: ['M1'],
+        },
+      },
+    }
+
+    expect(() =>
+      fontDataToKumikoGlyphRecords({
+        projectId: 'project-1',
+        fontData: metadataOnlyFontData,
+        updatedAt: 20,
+      })
+    ).toThrow(/metadata-only glyph A/)
+  })
+
   it('detects geometry-bearing keys inside sourceData', () => {
     expect(
       findGeometryBearingSourceDataKey({

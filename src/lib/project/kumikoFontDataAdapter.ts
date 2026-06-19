@@ -345,6 +345,12 @@ export const glyphDataToKumikoGlyphRecord = (input: {
   exportDirty?: boolean
   syncDirty?: boolean
 }): KumikoGlyphRecord => {
+  if (!input.glyph.layers || Object.keys(input.glyph.layers).length === 0) {
+    throw new Error(
+      `Cannot serialize metadata-only glyph ${input.glyph.id} as a complete Kumiko glyph record`
+    )
+  }
+
   const layers = Object.fromEntries(
     Object.entries(input.glyph.layers ?? {}).map(([layerId, layer]) => [
       layerId,
