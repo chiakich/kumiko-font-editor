@@ -358,6 +358,125 @@ describe('serializeGlyphsFileToBlob glyph matching', () => {
     expect(text).toContain('90 10 LINE')
   })
 
+  it('emits element identifiers, custom data, and preserved source fields', async () => {
+    const fontData = {
+      glyphs: {
+        base: {
+          ...glyph('base', 'base', null),
+          layers: {
+            M1: {
+              id: 'M1',
+              name: 'Regular',
+              associatedMasterId: 'M1',
+              paths: [
+                {
+                  id: 'path-A',
+                  identifier: 'path-A',
+                  name: 'outline',
+                  customData: { pathFlag: 1 },
+                  sourceData: { glyphs: { fields: { pathRole: 'primary' } } },
+                  closed: true,
+                  nodes: [
+                    {
+                      id: 'n1',
+                      x: 0,
+                      y: 0,
+                      kind: 'oncurve',
+                      segmentType: 'line',
+                    },
+                    {
+                      id: 'n2',
+                      x: 100,
+                      y: 0,
+                      kind: 'oncurve',
+                      segmentType: 'line',
+                    },
+                  ],
+                },
+              ],
+              componentRefs: [],
+              anchors: [
+                {
+                  id: 'anchor-top',
+                  identifier: 'anchor-top',
+                  name: 'top',
+                  x: 50,
+                  y: 700,
+                  customData: { anchorFlag: 1 },
+                  sourceData: { glyphs: { fields: { anchorRole: 'mark' } } },
+                },
+              ],
+              guidelines: [
+                {
+                  id: 'guide-left',
+                  identifier: 'guide-left',
+                  name: 'left',
+                  x: 20,
+                  y: 0,
+                  angle: 90,
+                  locked: true,
+                  customData: { guideFlag: 1 },
+                  sourceData: { glyphs: { fields: { guideRole: 'stem' } } },
+                },
+              ],
+              metrics: { width: 500, lsb: 0, rsb: 400 },
+            },
+          },
+          layerOrder: ['M1'],
+          activeLayerId: 'M1',
+        },
+        composite: {
+          ...glyph('composite', 'composite', null),
+          layers: {
+            M1: {
+              id: 'M1',
+              name: 'Regular',
+              associatedMasterId: 'M1',
+              paths: [],
+              componentRefs: [
+                {
+                  id: 'comp-A',
+                  identifier: 'comp-A',
+                  glyphId: 'base',
+                  x: 10,
+                  y: 20,
+                  scaleX: 1,
+                  scaleY: 1,
+                  rotation: 0,
+                  customData: { componentFlag: 1 },
+                  sourceData: {
+                    glyphs: { fields: { componentRole: 'base' } },
+                  },
+                },
+              ],
+              anchors: [],
+              guidelines: [],
+              metrics: { width: 500, lsb: 0, rsb: 500 },
+            },
+          },
+          layerOrder: ['M1'],
+          activeLayerId: 'M1',
+        },
+      },
+    } as unknown as FontData
+
+    const text = await serializeGlyphsFileToBlob(fontData, null, null, 2).text()
+
+    expect(text).toContain('identifier = path-A')
+    expect(text).toContain('name = outline')
+    expect(text).toContain('pathRole = primary')
+    expect(text).toContain('pathFlag = 1')
+    expect(text).toContain('identifier = anchor-top')
+    expect(text).toContain('anchorRole = mark')
+    expect(text).toContain('anchorFlag = 1')
+    expect(text).toContain('identifier = guide-left')
+    expect(text).toContain('guideRole = stem')
+    expect(text).toContain('guideFlag = 1')
+    expect(text).toContain('identifier = comp-A')
+    expect(text).toContain('componentRole = base')
+    expect(text).toContain('componentFlag = 1')
+  })
+
   it('generates a Glyphs package from canonical fontData', () => {
     const fontData = {
       unitsPerEm: 1000,

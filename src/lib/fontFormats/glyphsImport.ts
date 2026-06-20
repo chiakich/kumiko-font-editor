@@ -342,6 +342,49 @@ const GLYPHS_LAYER_CANONICAL_KEYS = new Set([
   'userData',
 ])
 
+const GLYPHS_PATH_CANONICAL_KEYS = new Set([
+  'closed',
+  'nodes',
+  'id',
+  'identifier',
+  'name',
+  'userData',
+])
+
+const GLYPHS_COMPONENT_CANONICAL_KEYS = new Set([
+  'name',
+  'ref',
+  'transform',
+  'pos',
+  'position',
+  'scale',
+  'angle',
+  'automaticAlignment',
+  'id',
+  'identifier',
+  'userData',
+])
+
+const GLYPHS_ANCHOR_CANONICAL_KEYS = new Set([
+  'name',
+  'pos',
+  'position',
+  'id',
+  'identifier',
+  'userData',
+])
+
+const GLYPHS_GUIDE_CANONICAL_KEYS = new Set([
+  'pos',
+  'position',
+  'angle',
+  'locked',
+  'name',
+  'id',
+  'identifier',
+  'userData',
+])
+
 const extractGlyphsSourceFields = (
   record: Raw,
   canonicalKeys: Set<string>
@@ -358,6 +401,9 @@ const glyphsSourceData = (
   fields: Record<string, unknown> | undefined
 ): GlyphSourceData | undefined =>
   fields ? ({ glyphs: { fields } } as GlyphSourceData) : undefined
+
+const parseIdentifier = (record: Raw): string | null =>
+  asString(record.identifier) ?? asString(record.id)
 
 const parseGlyphsImage = (layer: Raw): GlyphImage | null => {
   const image = asRecord(layer.backgroundImage ?? layer.image)
@@ -458,10 +504,15 @@ const parseAnchors = (layer: Raw): GlyphLayerData['anchors'] =>
     const anchor = asRecord(entry)
     const point = parsePoint(anchor.pos ?? anchor.position)
     return {
-      id: `a${index}`,
+      id: parseIdentifier(anchor) ?? `a${index}`,
+      identifier: parseIdentifier(anchor),
       name: asString(anchor.name) ?? `anchor${index}`,
       x: point?.x ?? 0,
       y: point?.y ?? 0,
+      customData: parseCustomData(anchor.userData),
+      sourceData: glyphsSourceData(
+        extractGlyphsSourceFields(anchor, GLYPHS_ANCHOR_CANONICAL_KEYS)
+      ),
     }
   })
 
@@ -472,12 +523,17 @@ const parseGuidelines = (layer: Raw): GlyphLayerData['guidelines'] =>
     const x = point?.x ?? 0
     const y = point?.y ?? 0
     return {
-      id: `g${index}`,
+      id: parseIdentifier(guide) ?? `g${index}`,
+      identifier: parseIdentifier(guide),
       x,
       y,
       angle: asNumber(guide.angle),
       locked: guide.locked === 1 || guide.locked === true,
       ...(asString(guide.name) ? { name: asString(guide.name)! } : {}),
+      customData: parseCustomData(guide.userData),
+      sourceData: glyphsSourceData(
+        extractGlyphsSourceFields(guide, GLYPHS_GUIDE_CANONICAL_KEYS)
+      ),
     }
   })
 
@@ -495,10 +551,16 @@ const parseLayerContent = (layer: Raw): ParsedLayerContent => {
       )
       .filter((node): node is PathNode => Boolean(node))
     paths.push({
-      id: `p${pathIndex}`,
+      id: parseIdentifier(path) ?? `p${pathIndex}`,
+      identifier: parseIdentifier(path),
+      name: asString(path.name),
       closed:
         path.closed === 1 || path.closed === true || path.closed === undefined,
       nodes,
+      customData: parseCustomData(path.userData),
+      sourceData: glyphsSourceData(
+        extractGlyphsSourceFields(path, GLYPHS_PATH_CANONICAL_KEYS)
+      ),
     })
   }
 
@@ -533,6 +595,12 @@ const parseLayerContent = (layer: Raw): ParsedLayerContent => {
                   component.automaticAlignment === true
           )
     )
+    const ref = componentRefs[componentRefs.length - 1]
+    ref.identifier = parseIdentifier(component)
+    ref.customData = parseCustomData(component.userData)
+    ref.sourceData = glyphsSourceData(
+      extractGlyphsSourceFields(component, GLYPHS_COMPONENT_CANONICAL_KEYS)
+    )
   }
 
   // Glyphs 3: geometry lives in `shapes` (a contour has `nodes`, a component has `ref`).
@@ -560,6 +628,12 @@ const parseLayerContent = (layer: Raw): ParsedLayerContent => {
                     shape.automaticAlignment === true
             )
           )
+          const component = componentRefs[componentRefs.length - 1]
+          component.identifier = parseIdentifier(shape)
+          component.customData = parseCustomData(shape.userData)
+          component.sourceData = glyphsSourceData(
+            extractGlyphsSourceFields(shape, GLYPHS_COMPONENT_CANONICAL_KEYS)
+          )
           return
         }
         const pos = asArray(shape.pos)
@@ -579,6 +653,11 @@ const parseLayerContent = (layer: Raw): ParsedLayerContent => {
               ? null
               : shape.automaticAlignment === 1 ||
                 shape.automaticAlignment === true,
+          identifier: parseIdentifier(shape),
+          customData: parseCustomData(shape.userData),
+          sourceData: glyphsSourceData(
+            extractGlyphsSourceFields(shape, GLYPHS_COMPONENT_CANONICAL_KEYS)
+          ),
         })
         return
       }
@@ -590,12 +669,18 @@ const parseLayerContent = (layer: Raw): ParsedLayerContent => {
         )
         .filter((node): node is PathNode => Boolean(node))
       paths.push({
-        id: `p${index}`,
+        id: parseIdentifier(shape) ?? `p${index}`,
+        identifier: parseIdentifier(shape),
+        name: asString(shape.name),
         closed:
           shape.closed === 1 ||
           shape.closed === true ||
           shape.closed === undefined,
         nodes,
+        customData: parseCustomData(shape.userData),
+        sourceData: glyphsSourceData(
+          extractGlyphsSourceFields(shape, GLYPHS_PATH_CANONICAL_KEYS)
+        ),
       })
     })
   } else {

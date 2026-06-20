@@ -37,9 +37,10 @@ color = 3;
 backgroundImage = { path = "Images/A.png"; transform = "{1, 0.1, 0.2, 1, 30, 40}"; alpha = 60; };
 background = { width = 500; paths = ( { closed = 0; nodes = ( "10 10 LINE", "90 10 LINE" ); } ); };
 paths = (
-{ closed = 1; nodes = ( "100 0 LINE", "400 0 LINE", "400 700 CURVE SMOOTH", "250 750 OFFCURVE", "100 700 LINE" ); }
+{ identifier = "path-A"; name = outline; userData = { pathFlag = 1; }; pathRole = primary; closed = 1; nodes = ( "100 0 LINE", "400 0 LINE", "400 700 CURVE SMOOTH", "250 750 OFFCURVE", "100 700 LINE" ); }
 );
-anchors = ( { name = top; position = "{250, 700}"; } );
+anchors = ( { identifier = "anchor-top"; name = top; position = "{250, 700}"; userData = { anchorFlag = 1; }; anchorRole = mark; } );
+guides = ( { identifier = "guide-left"; position = "{20, 0}"; angle = 90; name = left; locked = 1; userData = { guideFlag = 1; }; guideRole = stem; } );
 },
 {
 layerId = "m02";
@@ -54,7 +55,7 @@ paths = (
 glyphname = Aacute;
 unicode = 193;
 layers = (
-{ layerId = "m01"; width = 500; components = ( { name = A; transform = "{1, 0, 0, 1, 50, 0}"; automaticAlignment = 0; } ); },
+{ layerId = "m01"; width = 500; components = ( { identifier = "comp-A"; name = A; transform = "{1, 0, 0, 1, 50, 0}"; automaticAlignment = 0; userData = { componentFlag = 1; }; componentRole = base; } ); },
 { layerId = "m02"; width = 600; components = ( { name = A; } ); },
 { layerId = "brace.500"; associatedMasterId = "m01"; width = 540; attributes = { coordinates = { Weight = 150; }; }; paths = ( { closed = 0; nodes = ( "0 0 LINE", "100 0 LINE" ); } ); },
 { layerId = "bracket.150-200"; associatedMasterId = "m01"; width = 550; attributes = { axisRules = { Weight = { min = 150; max = 200; }; }; }; paths = ( { closed = 0; nodes = ( "0 10 LINE", "100 10 LINE" ); } ); }
@@ -136,6 +137,38 @@ describe('buildFontDataFromGlyphsDocument (Glyphs 2)', () => {
   it('parses anchors', () => {
     const m01 = getGlyphLayer(fontData.glyphs.A, 'm01')
     expect(m01?.anchors[0]).toMatchObject({ name: 'top', x: 250, y: 700 })
+  })
+
+  it('keeps element identifiers, custom data, and source fields', () => {
+    const aLayer = getGlyphLayer(fontData.glyphs.A, 'm01')
+    const compositeLayer = getGlyphLayer(fontData.glyphs.Aacute, 'm01')
+
+    expect(aLayer?.paths[0]).toMatchObject({
+      id: 'path-A',
+      identifier: 'path-A',
+      name: 'outline',
+      customData: { pathFlag: 1 },
+      sourceData: { glyphs: { fields: { pathRole: 'primary' } } },
+    })
+    expect(aLayer?.anchors[0]).toMatchObject({
+      id: 'anchor-top',
+      identifier: 'anchor-top',
+      customData: { anchorFlag: 1 },
+      sourceData: { glyphs: { fields: { anchorRole: 'mark' } } },
+    })
+    expect(aLayer?.guidelines[0]).toMatchObject({
+      id: 'guide-left',
+      identifier: 'guide-left',
+      name: 'left',
+      locked: true,
+      customData: { guideFlag: 1 },
+      sourceData: { glyphs: { fields: { guideRole: 'stem' } } },
+    })
+    expect(compositeLayer?.componentRefs[0]).toMatchObject({
+      identifier: 'comp-A',
+      customData: { componentFlag: 1 },
+      sourceData: { glyphs: { fields: { componentRole: 'base' } } },
+    })
   })
 
   it('keeps glyph and layer non-geometry metadata', () => {

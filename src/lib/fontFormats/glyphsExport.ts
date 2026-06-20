@@ -175,6 +175,10 @@ const serializeGlyphNode = (node: PathNode) => {
 
 const serializeLayerPaths = (layer: GlyphLayerData) =>
   layer.paths.map((path) => ({
+    ...sourceGlyphsFields(path.sourceData),
+    ...(path.identifier ? { identifier: path.identifier } : {}),
+    ...(path.name ? { name: path.name } : {}),
+    ...(hasRecordEntries(path.customData) ? { userData: path.customData } : {}),
     closed: path.closed ? 1 : 0,
     nodes: path.nodes.map((node) => serializeGlyphNode(node)),
   }))
@@ -186,7 +190,12 @@ const serializeLayerComponents = (layer: GlyphLayerData) =>
   layer.componentRefs.map((component) => {
     const matrix = getComponentMatrix(component)
     return {
+      ...sourceGlyphsFields(component.sourceData),
       name: component.glyphId,
+      ...(component.identifier ? { identifier: component.identifier } : {}),
+      ...(hasRecordEntries(component.customData)
+        ? { userData: component.customData }
+        : {}),
       ...(component.autoAlign === undefined || component.autoAlign === null
         ? {}
         : { automaticAlignment: component.autoAlign ? 1 : 0 }),
@@ -200,16 +209,26 @@ const serializeLayerComponents = (layer: GlyphLayerData) =>
 
 const serializeLayerAnchors = (layer: GlyphLayerData) =>
   layer.anchors.map((anchor) => ({
+    ...sourceGlyphsFields(anchor.sourceData),
     name: anchor.name,
+    ...(anchor.identifier ? { identifier: anchor.identifier } : {}),
+    ...(hasRecordEntries(anchor.customData)
+      ? { userData: anchor.customData }
+      : {}),
     position: formatPointTuple(anchor.x, anchor.y),
   }))
 
 const serializeLayerGuides = (layer: GlyphLayerData) =>
   layer.guidelines.map((guide) => ({
+    ...sourceGlyphsFields(guide.sourceData),
     position: formatPointTuple(guide.x, guide.y),
     angle: guide.angle,
     locked: guide.locked ? 1 : 0,
+    ...(guide.identifier ? { identifier: guide.identifier } : {}),
     ...(guide.name ? { name: guide.name } : {}),
+    ...(hasRecordEntries(guide.customData)
+      ? { userData: guide.customData }
+      : {}),
   }))
 
 // --- Glyphs 3 native geometry (shapes + tuple nodes) ------------------------
@@ -238,6 +257,10 @@ const serializeG3Node = (node: PathNode) => {
 
 const serializeLayerShapesG3 = (layer: GlyphLayerData) => {
   const contours = layer.paths.map((path) => ({
+    ...sourceGlyphsFields(path.sourceData),
+    ...(path.identifier ? { identifier: path.identifier } : {}),
+    ...(path.name ? { name: path.name } : {}),
+    ...(hasRecordEntries(path.customData) ? { userData: path.customData } : {}),
     closed: path.closed ? 1 : 0,
     nodes: path.nodes.map((node) => serializeG3Node(node)),
   }))
@@ -252,7 +275,12 @@ const serializeLayerShapesG3 = (layer: GlyphLayerData) => {
       (component.xyScale ?? 0) !== 0 || (component.yxScale ?? 0) !== 0
     if (hasShear) {
       return {
+        ...sourceGlyphsFields(component.sourceData),
         ref: component.glyphId,
+        ...(component.identifier ? { identifier: component.identifier } : {}),
+        ...(hasRecordEntries(component.customData)
+          ? { userData: component.customData }
+          : {}),
         ...(component.autoAlign === undefined || component.autoAlign === null
           ? {}
           : { automaticAlignment: component.autoAlign ? 1 : 0 }),
@@ -265,7 +293,12 @@ const serializeLayerShapesG3 = (layer: GlyphLayerData) => {
     const y = Math.round(component.y)
     const hasScale = component.scaleX !== 1 || component.scaleY !== 1
     return {
+      ...sourceGlyphsFields(component.sourceData),
       ref: component.glyphId,
+      ...(component.identifier ? { identifier: component.identifier } : {}),
+      ...(hasRecordEntries(component.customData)
+        ? { userData: component.customData }
+        : {}),
       ...(component.autoAlign === undefined || component.autoAlign === null
         ? {}
         : { automaticAlignment: component.autoAlign ? 1 : 0 }),
@@ -286,7 +319,12 @@ const serializeLayerShapesG3 = (layer: GlyphLayerData) => {
 
 const serializeLayerAnchorsG3 = (layer: GlyphLayerData) =>
   layer.anchors.map((anchor) => ({
+    ...sourceGlyphsFields(anchor.sourceData),
     name: anchor.name,
+    ...(anchor.identifier ? { identifier: anchor.identifier } : {}),
+    ...(hasRecordEntries(anchor.customData)
+      ? { userData: anchor.customData }
+      : {}),
     pos: new RawGlyphsValue(
       `(${Math.round(anchor.x)},${Math.round(anchor.y)})`
     ),
@@ -294,10 +332,15 @@ const serializeLayerAnchorsG3 = (layer: GlyphLayerData) =>
 
 const serializeLayerGuidesG3 = (layer: GlyphLayerData) =>
   layer.guidelines.map((guide) => ({
+    ...sourceGlyphsFields(guide.sourceData),
     pos: new RawGlyphsValue(`(${Math.round(guide.x)},${Math.round(guide.y)})`),
     ...(guide.angle ? { angle: guide.angle } : {}),
     ...(guide.locked ? { locked: 1 } : {}),
+    ...(guide.identifier ? { identifier: guide.identifier } : {}),
     ...(guide.name ? { name: guide.name } : {}),
+    ...(hasRecordEntries(guide.customData)
+      ? { userData: guide.customData }
+      : {}),
   }))
 
 const isEmptyLayerContent = (content: GlyphLayerContent) =>
