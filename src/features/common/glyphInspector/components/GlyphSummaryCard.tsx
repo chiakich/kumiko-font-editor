@@ -39,7 +39,6 @@ export function GlyphSummaryCard({
   availableLayers,
   glyph,
   isDirty,
-  selectedLayerId,
   workspaceView,
   showLayerSelect = true,
   onDeleteGlyph,
@@ -92,10 +91,6 @@ export function GlyphSummaryCard({
           </Box>
         )}
         <Stack direction="row" spacing={1} align="center">
-          <Tag alignSelf="start" colorScheme="cyan" variant="subtle">
-            {t('glyphInspector.layer')}
-            {selectedLayerId ?? activeLayer?.id ?? 'default'}
-          </Tag>
           <Tag
             fontSize="xs"
             colorScheme={isDirty ? 'orange' : 'green'}

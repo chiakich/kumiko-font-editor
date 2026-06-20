@@ -768,25 +768,30 @@ const buildFontDataFromUfoGlyphs = (
     typeof metadata.lib['public.postscriptNames'] === 'object'
       ? (metadata.lib['public.postscriptNames'] as Record<string, string>)
       : {}
+  const masterName =
+    typeof metadata.fontinfo?.styleName === 'string' &&
+    metadata.fontinfo.styleName
+      ? metadata.fontinfo.styleName
+      : 'Regular'
+  const masterId = metadata.ufoId
   return {
     glyphs: Object.fromEntries(
       glyphRecords.map((record) => {
         const glyphId = record.glyphName
-        const layerId = metadata.layers[0]?.layerId ?? 'public.default'
 
         return [
           glyphId,
           {
             id: glyphId,
             name: glyphId,
-            activeLayerId: layerId,
-            layerOrder: [layerId],
+            activeLayerId: masterId,
+            layerOrder: [masterId],
             layers: {
-              [layerId]: {
-                id: layerId,
-                name: layerId,
+              [masterId]: {
+                id: masterId,
+                name: masterName,
                 type: 'master',
-                associatedMasterId: layerId,
+                associatedMasterId: masterId,
                 sourceData: {
                   ufo: {
                     ufoId: record.ufoId,

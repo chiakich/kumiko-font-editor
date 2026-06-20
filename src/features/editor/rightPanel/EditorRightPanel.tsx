@@ -84,7 +84,6 @@ export function EditorRightPanel() {
                     availableLayers={panel.availableLayers}
                     glyph={panel.glyph}
                     isDirty={panel.isDirty}
-                    selectedLayerId={panel.selectedLayerId}
                     workspaceView={panel.workspaceView}
                     showLayerSelect={false}
                     onDeleteGlyph={panel.handleDeleteGlyph}

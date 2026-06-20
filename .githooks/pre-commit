@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eu
 
-echo "Formatting staged files before commit..."
+echo "Run pnpm lint before committing."
 pnpm lint-staged
