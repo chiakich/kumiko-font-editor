@@ -4,8 +4,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { Window } from 'happy-dom'
 import {
   applyKumikoRemoteSnapshot,
+  buildKumikoUfoExportManifest,
   buildKumikoProjectSyncReport,
   buildKumikoUfoExportState,
+  loadKumikoUfoExportGlyphBatch,
   markKumikoGitHubCommitSynced,
   markKumikoUfoExportClean,
   prepareKumikoGitHubCommit,
@@ -312,6 +314,21 @@ describe('Kumiko GitHub UFO sync', () => {
 
   it('builds UFO export state and marks canonical glyphs export-clean', async () => {
     await saveCanonicalGitHubProject('github-sync-export')
+
+    const manifest = await buildKumikoUfoExportManifest('github-sync-export')
+    const ufoManifest = manifest.ufos[0]
+    expect(manifest.totalGlyphs).toBe(1)
+    expect(ufoManifest?.glyphIds).toEqual(['A'])
+    expect(ufoManifest?.contents).toEqual({ A: 'A.glif' })
+
+    const batch = await loadKumikoUfoExportGlyphBatch({
+      project: manifest.project,
+      activeUfoId: ufoManifest?.metadata.ufoId ?? '',
+      contents: ufoManifest?.contents ?? {},
+      glyphIds: ufoManifest?.glyphIds ?? [],
+    })
+    expect(batch[0]?.glyphName).toBe('A')
+    expect(batch[0]?.fileName).toBe('A.glif')
 
     const exportState = await buildKumikoUfoExportState('github-sync-export')
     const glyph = exportState.ufos[0]?.layers[0]?.glyphs[0]

@@ -16,7 +16,6 @@ import type {
 import {
   deleteKumikoGlyphRecordBatch,
   listKumikoGlyphSyncMetadataForProject,
-  listKumikoGlyphRecordsForProject,
   listSyncDirtyKumikoGlyphIds,
   loadKumikoProjectRecord,
   loadKumikoGlyphRecords,
@@ -96,6 +95,19 @@ export interface KumikoUfoExportLayer {
 export interface KumikoUfoExportUfo {
   metadata: UfoMetadataRecord
   layers: KumikoUfoExportLayer[]
+}
+
+export interface KumikoUfoExportManifestUfo {
+  metadata: UfoMetadataRecord
+  defaultLayer: UfoLayerRecord
+  contents: Record<string, string>
+  glyphIds: string[]
+}
+
+export interface KumikoUfoExportManifest {
+  project: KumikoProjectRecord
+  ufos: KumikoUfoExportManifestUfo[]
+  totalGlyphs: number
 }
 
 export interface KumikoUfoExportStateUpdate {
@@ -390,7 +402,26 @@ const buildMetadata = (
   }
 }
 
-export const buildKumikoUfoExportState = async (projectId: string) => {
+const orderGlyphExportMetadata = (
+  project: KumikoProjectRecord,
+  glyphs: Array<Pick<KumikoGlyphRecord, 'glyphId' | 'sourceData'>>
+) => {
+  const byGlyphId = new Map(glyphs.map((glyph) => [glyph.glyphId, glyph]))
+  const orderedGlyphIds = new Set(project.glyphOrder)
+  return [
+    ...project.glyphOrder
+      .map((glyphId) => byGlyphId.get(glyphId))
+      .filter(
+        (glyph): glyph is Pick<KumikoGlyphRecord, 'glyphId' | 'sourceData'> =>
+          Boolean(glyph)
+      ),
+    ...glyphs.filter((glyph) => !orderedGlyphIds.has(glyph.glyphId)),
+  ]
+}
+
+export const buildKumikoUfoExportManifest = async (
+  projectId: string
+): Promise<KumikoUfoExportManifest> => {
   const project = await loadKumikoProjectRecord(projectId)
   if (!project) {
     throw new Error('找不到 Kumiko 專案')
@@ -400,37 +431,75 @@ export const buildKumikoUfoExportState = async (projectId: string) => {
     throw new Error('這個專案沒有可匯出的 UFO source metadata')
   }
 
-  const glyphs = await listKumikoGlyphRecordsForProject(projectId)
+  const glyphs = orderGlyphExportMetadata(
+    project,
+    await listKumikoGlyphSyncMetadataForProject(projectId)
+  )
+  const glyphIds = glyphs.map((glyph) => glyph.glyphId)
+  const ufos = ufoSources.map((source) => {
+    const contents = makeContents(project, glyphs, source.ufoId)
+    const metadata = buildMetadata(project, source.ufoId, contents)
+    const { defaultLayer } = getUfoSource(project, source.ufoId)
+    return {
+      metadata,
+      defaultLayer,
+      contents,
+      glyphIds,
+    }
+  })
   return {
     project,
-    ufos: ufoSources.map((source) => {
-      const contents = makeContents(project, glyphs, source.ufoId)
-      const metadata = buildMetadata(project, source.ufoId, contents)
-      const defaultLayer =
-        source.layers.find(
-          (layer) => layer.layerId === source.defaultLayerId
-        ) ??
-        source.layers[0] ??
-        ({
-          layerId: 'public.default',
-          glyphDir: 'glyphs',
-        } satisfies UfoLayerRecord)
-      const defaultGlyphs = glyphs.map((glyph) =>
-        toUfoGlyphRecord({
-          project,
-          glyph,
-          activeUfoId: source.ufoId,
-          fileName: contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`,
-        })
-      )
+    ufos,
+    totalGlyphs: ufos.reduce((sum, ufo) => sum + ufo.glyphIds.length, 0),
+  }
+}
+
+export const loadKumikoUfoExportGlyphBatch = async (input: {
+  project: KumikoProjectRecord
+  activeUfoId: string
+  contents: Record<string, string>
+  glyphIds: string[]
+}): Promise<UfoGlyphRecord[]> => {
+  const glyphs = await loadKumikoGlyphRecords(
+    input.glyphIds.map((glyphId) =>
+      makeKumikoGlyphKey(input.project.projectId, glyphId)
+    )
+  )
+  return glyphs.map((glyph) =>
+    toUfoGlyphRecord({
+      project: input.project,
+      glyph,
+      activeUfoId: input.activeUfoId,
+      fileName: input.contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`,
+    })
+  )
+}
+
+export const buildKumikoUfoExportState = async (
+  projectId: string
+): Promise<{ project: KumikoProjectRecord; ufos: KumikoUfoExportUfo[] }> => {
+  const manifest = await buildKumikoUfoExportManifest(projectId)
+  const ufos = await Promise.all(
+    manifest.ufos.map(async (ufo) => {
+      const defaultGlyphs = await loadKumikoUfoExportGlyphBatch({
+        project: manifest.project,
+        activeUfoId: ufo.metadata.ufoId,
+        contents: ufo.contents,
+        glyphIds: ufo.glyphIds,
+      })
       return {
-        metadata,
-        layers: metadata.layers.map((layer) => ({
+        metadata: ufo.metadata,
+        layers: ufo.metadata.layers.map((layer) => ({
           layer,
-          glyphs: layer.layerId === defaultLayer.layerId ? defaultGlyphs : [],
+          glyphs:
+            layer.layerId === ufo.defaultLayer.layerId ? defaultGlyphs : [],
         })),
       } satisfies KumikoUfoExportUfo
-    }),
+    })
+  )
+  return {
+    project: manifest.project,
+    ufos,
   }
 }
 

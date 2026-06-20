@@ -6,7 +6,8 @@ import {
   serializeXmlPlist,
 } from 'src/lib/fontFormats/adapters/ufo'
 import {
-  buildKumikoUfoExportState,
+  buildKumikoUfoExportManifest,
+  loadKumikoUfoExportGlyphBatch,
   markKumikoUfoExportClean,
   type KumikoUfoExportStateUpdate,
 } from 'src/lib/github/sync/kumikoUfoSync'
@@ -41,6 +42,7 @@ type ZipExportResponse =
   | ZipExportErrorMessage
 
 const OPFS_STAGING_DIR = '__kumiko_zip_staging'
+const GLYPH_LOAD_BATCH_SIZE = 128
 
 const encoder = new TextEncoder()
 
@@ -125,22 +127,15 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
       fixedConcurrency = 8,
     } = event.data.payload
 
-    const exportState = await buildKumikoUfoExportState(projectId)
+    const exportManifest = await buildKumikoUfoExportManifest(projectId)
     const stagingRoot = await ensureOpfsDir(opfsRoot, OPFS_STAGING_DIR)
 
     // --- Phase 1: write all UFO files into OPFS staging ---
-    let totalGlyphs = 0
+    const totalGlyphs = exportManifest.totalGlyphs
     let completedGlyphs = 0
     const concurrency = Math.max(1, fixedConcurrency)
 
     const exportStateUpdates: KumikoUfoExportStateUpdate[] = []
-
-    // First pass: count total glyphs
-    for (const ufo of exportState.ufos) {
-      for (const layer of ufo.layers) {
-        totalGlyphs += layer.glyphs.length
-      }
-    }
 
     const progressWrite = () => {
       const msg: ZipExportResponse = {
@@ -156,7 +151,7 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
 
     progressWrite()
 
-    for (const ufo of exportState.ufos) {
+    for (const ufo of exportManifest.ufos) {
       const metadata = ufo.metadata
       const ufoDir = await ensureOpfsDir(stagingRoot, metadata.relativePath)
 
@@ -202,43 +197,60 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
       }
 
       // Write glyph layers
-      for (const layerExport of ufo.layers) {
-        const layerDir = await ensureOpfsDir(ufoDir, layerExport.layer.glyphDir)
-        const layerGlyphs = layerExport.glyphs
+      for (const layer of metadata.layers) {
+        const layerDir = await ensureOpfsDir(ufoDir, layer.glyphDir)
+        const isDefaultLayer = layer.layerId === ufo.defaultLayer.layerId
 
-        // contents.plist
-        const contents = Object.fromEntries(
-          layerGlyphs.map((g) => [g.glyphName, g.fileName])
-        )
         await writeOpfsFile(
           layerDir,
           'contents.plist',
-          serializeXmlPlist(contents)
+          serializeXmlPlist(isDefaultLayer ? ufo.contents : {})
         )
 
-        // Write glyphs in batches
-        let startIndex = 0
-        while (startIndex < layerGlyphs.length) {
-          const batch = layerGlyphs.slice(startIndex, startIndex + concurrency)
-          await Promise.all(
-            batch.map(async (glyph) => {
-              const glifText = serializeGlifRecord(glyph)
-              const nextHash = hashString(glifText)
-              await writeOpfsFile(layerDir, glyph.fileName, glifText)
+        if (!isDefaultLayer) {
+          continue
+        }
 
-              if (markClean) {
-                exportStateUpdates.push({
-                  activeUfoId: glyph.ufoId,
-                  glyphId: glyph.glyphName,
-                  fileName: glyph.fileName,
-                  sourceHash: nextHash,
-                })
-              }
-            })
+        let glyphStartIndex = 0
+        while (glyphStartIndex < ufo.glyphIds.length) {
+          const glyphIds = ufo.glyphIds.slice(
+            glyphStartIndex,
+            glyphStartIndex + Math.max(GLYPH_LOAD_BATCH_SIZE, concurrency)
           )
-          completedGlyphs += batch.length
-          progressWrite()
-          startIndex += batch.length
+          const glyphs = await loadKumikoUfoExportGlyphBatch({
+            project: exportManifest.project,
+            activeUfoId: metadata.ufoId,
+            contents: ufo.contents,
+            glyphIds,
+          })
+
+          let writeStartIndex = 0
+          while (writeStartIndex < glyphs.length) {
+            const batch = glyphs.slice(
+              writeStartIndex,
+              writeStartIndex + concurrency
+            )
+            await Promise.all(
+              batch.map(async (glyph) => {
+                const glifText = serializeGlifRecord(glyph)
+                const nextHash = hashString(glifText)
+                await writeOpfsFile(layerDir, glyph.fileName, glifText)
+
+                if (markClean) {
+                  exportStateUpdates.push({
+                    activeUfoId: glyph.ufoId,
+                    glyphId: glyph.glyphName,
+                    fileName: glyph.fileName,
+                    sourceHash: nextHash,
+                  })
+                }
+              })
+            )
+            completedGlyphs += batch.length
+            progressWrite()
+            writeStartIndex += batch.length
+          }
+          glyphStartIndex += glyphIds.length
         }
       }
     }
