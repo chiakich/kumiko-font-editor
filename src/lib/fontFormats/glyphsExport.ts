@@ -7,7 +7,9 @@ import { getNodeSegmentType, getNodeType, isOffCurveNode } from 'src/store'
 import type {
   FontData,
   GlyphData,
+  GlyphImage,
   GlyphLayerData,
+  GlyphLayerContent,
   GlyphSourceData,
   PathNode,
 } from 'src/store'
@@ -60,6 +62,21 @@ const assignOptional = (
     delete target[key]
   } else {
     target[key] = value
+  }
+}
+
+const serializeGlyphsImage = (image: GlyphImage): Record<string, unknown> => {
+  const customData = asRecord(image.customData)
+  const xScale = image.xScale ?? 1
+  const xyScale = image.xyScale ?? 0
+  const yxScale = image.yxScale ?? 0
+  const yScale = image.yScale ?? 1
+  const xOffset = image.xOffset ?? 0
+  const yOffset = image.yOffset ?? 0
+  return {
+    ...customData,
+    path: image.fileName,
+    transform: `{${xScale}, ${xyScale}, ${yxScale}, ${yScale}, ${xOffset}, ${yOffset}}`,
   }
 }
 
@@ -283,6 +300,46 @@ const serializeLayerGuidesG3 = (layer: GlyphLayerData) =>
     ...(guide.name ? { name: guide.name } : {}),
   }))
 
+const isEmptyLayerContent = (content: GlyphLayerContent) =>
+  content.paths.length === 0 &&
+  content.componentRefs.length === 0 &&
+  content.anchors.length === 0 &&
+  content.guidelines.length === 0
+
+const layerContentAsGlyphLayer = (
+  content: GlyphLayerContent
+): GlyphLayerData => ({
+  id: 'background',
+  name: 'background',
+  paths: content.paths,
+  componentRefs: content.componentRefs,
+  anchors: content.anchors,
+  guidelines: content.guidelines,
+  metrics: content.metrics,
+})
+
+const serializeGlyphsBackground = (
+  content: GlyphLayerContent,
+  formatVersion: GlyphsFormatVersion
+): Record<string, unknown> => {
+  const layer = layerContentAsGlyphLayer(content)
+  if (formatVersion >= 3) {
+    return {
+      width: Math.round(content.metrics.width),
+      shapes: serializeLayerShapesG3(layer),
+      anchors: serializeLayerAnchorsG3(layer),
+      guides: serializeLayerGuidesG3(layer),
+    }
+  }
+  return {
+    width: Math.round(content.metrics.width),
+    paths: serializeLayerPaths(layer),
+    components: serializeLayerComponents(layer),
+    anchors: serializeLayerAnchors(layer),
+    guides: serializeLayerGuides(layer),
+  }
+}
+
 export const applyLayerEdits = (
   targetLayer: Record<string, unknown>,
   layer: GlyphLayerData,
@@ -307,6 +364,20 @@ export const applyLayerEdits = (
     targetLayer.userData = layer.customData
   } else {
     delete targetLayer.userData
+  }
+  if (layer.image) {
+    targetLayer.backgroundImage = serializeGlyphsImage(layer.image)
+  } else {
+    delete targetLayer.backgroundImage
+    delete targetLayer.image
+  }
+  if (layer.background && !isEmptyLayerContent(layer.background)) {
+    targetLayer.background = serializeGlyphsBackground(
+      layer.background,
+      formatVersion
+    )
+  } else {
+    delete targetLayer.background
   }
   const attributes =
     targetLayer.attributes &&

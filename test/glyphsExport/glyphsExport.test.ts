@@ -284,6 +284,44 @@ describe('serializeGlyphsFileToBlob glyph matching', () => {
               associatedMasterId: 'M1',
               locked: true,
               visible: false,
+              image: {
+                fileName: 'Images/A.png',
+                xScale: 1,
+                xyScale: 0.1,
+                yxScale: 0.2,
+                yScale: 1,
+                xOffset: 30,
+                yOffset: 40,
+                customData: { alpha: 60 },
+              },
+              background: {
+                paths: [
+                  {
+                    id: 'bgp1',
+                    closed: false,
+                    nodes: [
+                      {
+                        id: 'bgn1',
+                        x: 10,
+                        y: 10,
+                        kind: 'oncurve',
+                        segmentType: 'line',
+                      },
+                      {
+                        id: 'bgn2',
+                        x: 90,
+                        y: 10,
+                        kind: 'oncurve',
+                        segmentType: 'line',
+                      },
+                    ],
+                  },
+                ],
+                componentRefs: [],
+                anchors: [],
+                guidelines: [],
+                metrics: { width: 500, lsb: 0, rsb: 500 },
+              },
               customData: { layerFlag: 1 },
               sourceData: { glyphs: { fields: { color: 3 } } },
               paths: [],
@@ -311,6 +349,13 @@ describe('serializeGlyphsFileToBlob glyph matching', () => {
     expect(text).toContain('visible = 0')
     expect(text).toContain('layerFlag = 1')
     expect(text).toContain('color = 3')
+    expect(text).toContain('backgroundImage = {')
+    expect(text).toContain('path = Images/A.png')
+    expect(text).toContain('transform = "{1, 0.1, 0.2, 1, 30, 40}"')
+    expect(text).toContain('alpha = 60')
+    expect(text).toContain('background = {')
+    expect(text).toContain('10 10 LINE')
+    expect(text).toContain('90 10 LINE')
   })
 
   it('generates a Glyphs package from canonical fontData', () => {

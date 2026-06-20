@@ -34,6 +34,8 @@ locked = 1;
 visible = 0;
 userData = { layerFlag = 1; };
 color = 3;
+backgroundImage = { path = "Images/A.png"; transform = "{1, 0.1, 0.2, 1, 30, 40}"; alpha = 60; };
+background = { width = 500; paths = ( { closed = 0; nodes = ( "10 10 LINE", "90 10 LINE" ); } ); };
 paths = (
 { closed = 1; nodes = ( "100 0 LINE", "400 0 LINE", "400 700 CURVE SMOOTH", "250 750 OFFCURVE", "100 700 LINE" ); }
 );
@@ -150,6 +152,27 @@ describe('buildFontDataFromGlyphsDocument (Glyphs 2)', () => {
     expect(m01).toMatchObject({
       locked: true,
       visible: false,
+      image: {
+        fileName: 'Images/A.png',
+        xScale: 1,
+        xyScale: 0.1,
+        yxScale: 0.2,
+        yScale: 1,
+        xOffset: 30,
+        yOffset: 40,
+        customData: { alpha: 60 },
+      },
+      background: {
+        paths: [
+          {
+            closed: false,
+            nodes: [
+              { x: 10, y: 10, kind: 'oncurve', segmentType: 'line' },
+              { x: 90, y: 10, kind: 'oncurve', segmentType: 'line' },
+            ],
+          },
+        ],
+      },
       customData: { layerFlag: 1 },
       sourceData: { glyphs: { fields: { color: 3 } } },
     })

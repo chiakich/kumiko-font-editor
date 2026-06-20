@@ -6,7 +6,9 @@ import type {
   FontSource,
   GlyphComponentRef,
   GlyphData,
+  GlyphImage,
   GlyphLayerData,
+  GlyphLayerContent,
   GlyphSourceData,
   GlyphMetrics,
   PathData,
@@ -332,6 +334,9 @@ const GLYPHS_LAYER_CANONICAL_KEYS = new Set([
   'guides',
   'guideLines',
   'attributes',
+  'backgroundImage',
+  'background',
+  'image',
   'locked',
   'visible',
   'userData',
@@ -353,6 +358,74 @@ const glyphsSourceData = (
   fields: Record<string, unknown> | undefined
 ): GlyphSourceData | undefined =>
   fields ? ({ glyphs: { fields } } as GlyphSourceData) : undefined
+
+const parseGlyphsImage = (layer: Raw): GlyphImage | null => {
+  const image = asRecord(layer.backgroundImage ?? layer.image)
+  const fileName =
+    asString(image.path) ??
+    asString(image.fileName) ??
+    asString(image.name) ??
+    asString(image.imagePath)
+  if (!fileName) {
+    return null
+  }
+  const transform =
+    typeof image.transform === 'string'
+      ? parseTransformString(image.transform)
+      : Array.isArray(image.transform)
+        ? image.transform.map((value) => asNumber(value))
+        : null
+  const customData = compactRecord(
+    Object.fromEntries(
+      Object.entries(image).filter(
+        ([key, value]) =>
+          !['path', 'fileName', 'name', 'imagePath', 'transform'].includes(
+            key
+          ) && value !== undefined
+      )
+    )
+  )
+  return {
+    fileName,
+    ...(transform && transform.length === 6
+      ? {
+          xScale: transform[0],
+          xyScale: transform[1],
+          yxScale: transform[2],
+          yScale: transform[3],
+          xOffset: transform[4],
+          yOffset: transform[5],
+        }
+      : {}),
+    ...(customData ? { customData } : {}),
+  }
+}
+
+const isNonEmptyLayerContent = (content: GlyphLayerContent) =>
+  content.paths.length > 0 ||
+  content.componentRefs.length > 0 ||
+  content.anchors.length > 0 ||
+  content.guidelines.length > 0
+
+const parseGlyphsBackground = (layer: Raw): GlyphLayerContent | null => {
+  const backgroundRecord = asRecord(layer.background)
+  if (Object.keys(backgroundRecord).length === 0) {
+    return null
+  }
+  const content = parseLayerContent(backgroundRecord)
+  const background: GlyphLayerContent = {
+    paths: content.paths,
+    componentRefs: content.componentRefs,
+    anchors: content.anchors,
+    guidelines: content.guidelines,
+    metrics: {
+      width: content.width || asNumber(layer.width, 0),
+      lsb: 0,
+      rsb: content.width || asNumber(layer.width, 0),
+    },
+  }
+  return isNonEmptyLayerContent(background) ? background : null
+}
 
 const componentFromMatrix = (
   name: string,
@@ -749,6 +822,8 @@ export const buildFontDataFromGlyphsDocument = (
       bracketAxisRules: Record<string, { min?: number; max?: number }> | null
       locked?: boolean
       visible?: boolean
+      background?: GlyphLayerContent | null
+      image?: GlyphImage | null
       customData?: GlyphSourceData
       sourceData?: GlyphSourceData
       content: ParsedLayerContent
@@ -803,6 +878,8 @@ export const buildFontDataFromGlyphsDocument = (
         bracketAxisRules,
         locked: parseOptionalBoolean(rawLayer.locked),
         visible: parseOptionalBoolean(rawLayer.visible),
+        background: parseGlyphsBackground(rawLayer),
+        image: parseGlyphsImage(rawLayer),
         customData: parseCustomData(rawLayer.userData),
         sourceData: glyphsSourceData(
           extractGlyphsSourceFields(rawLayer, GLYPHS_LAYER_CANONICAL_KEYS)
@@ -873,6 +950,8 @@ export const buildFontDataFromGlyphsDocument = (
         metrics: buildMetrics(layer.content, bounds),
         locked: layer.locked,
         visible: layer.visible,
+        background: layer.background,
+        image: layer.image,
         customData: layer.customData,
         sourceData: layer.sourceData,
       }
