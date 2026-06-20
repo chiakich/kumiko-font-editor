@@ -5,7 +5,8 @@ import {
 
 const LOCK_KEY = 'projectWriteLock'
 const LOCK_CHANNEL_NAME = 'kumiko-project-locks'
-const LOCK_TTL_MS = 120_000
+export const PROJECT_WRITE_LOCK_TTL_MS = 15_000
+export const PROJECT_WRITE_LOCK_HEARTBEAT_MS = 5_000
 
 export interface ProjectWriteLockRecord {
   ownerId: string
@@ -65,7 +66,7 @@ export const acquireProjectWriteLock = async (projectId: string) => {
   const nextLock: ProjectWriteLockRecord = {
     ownerId,
     acquiredAt: now,
-    expiresAt: now + LOCK_TTL_MS,
+    expiresAt: now + PROJECT_WRITE_LOCK_TTL_MS,
   }
   store.put({ projectId, key: LOCK_KEY, value: nextLock })
   await transactionDone(transaction)
@@ -112,7 +113,7 @@ export const renewProjectWriteLock = async (projectId: string) => {
     value: {
       ownerId,
       acquiredAt: currentLock?.acquiredAt ?? now,
-      expiresAt: now + LOCK_TTL_MS,
+      expiresAt: now + PROJECT_WRITE_LOCK_TTL_MS,
     },
   })
   await transactionDone(transaction)

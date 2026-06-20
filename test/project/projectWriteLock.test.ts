@@ -3,6 +3,8 @@ import 'fake-indexeddb/auto'
 import { describe, expect, it } from 'vitest'
 import {
   acquireProjectWriteLock,
+  PROJECT_WRITE_LOCK_HEARTBEAT_MS,
+  PROJECT_WRITE_LOCK_TTL_MS,
   releaseProjectWriteLock,
   renewProjectWriteLock,
   type ProjectWriteLockRecord,
@@ -13,12 +15,20 @@ import {
 } from 'src/lib/project/kumikoProjectPersistence'
 
 describe('project write lock', () => {
+  it('uses a short stale fallback window for abandoned tabs', () => {
+    expect(PROJECT_WRITE_LOCK_HEARTBEAT_MS).toBe(5_000)
+    expect(PROJECT_WRITE_LOCK_TTL_MS).toBe(15_000)
+  })
+
   it('acquires and releases a project lock', async () => {
     const first = await acquireProjectWriteLock('project-lock-basic')
     const second = await acquireProjectWriteLock('project-lock-basic')
 
     expect(first.acquired).toBe(true)
     expect(second.acquired).toBe(true)
+    expect(first.lock.expiresAt - first.lock.acquiredAt).toBe(
+      PROJECT_WRITE_LOCK_TTL_MS
+    )
 
     await releaseProjectWriteLock('project-lock-basic')
 

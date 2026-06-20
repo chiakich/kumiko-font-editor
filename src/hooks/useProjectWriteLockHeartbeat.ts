@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
-import { renewProjectWriteLock } from 'src/lib/project/projectWriteLock'
+import {
+  PROJECT_WRITE_LOCK_HEARTBEAT_MS,
+  releaseProjectWriteLock,
+  renewProjectWriteLock,
+} from 'src/lib/project/projectWriteLock'
 import { useStore } from 'src/store'
-
-const WRITE_LOCK_HEARTBEAT_MS = 60_000
 
 export function useProjectWriteLockHeartbeat() {
   const projectId = useStore((state) => state.projectId)
@@ -19,7 +21,22 @@ export function useProjectWriteLockHeartbeat() {
     }
 
     renew()
-    const intervalId = window.setInterval(renew, WRITE_LOCK_HEARTBEAT_MS)
-    return () => window.clearInterval(intervalId)
+    const release = () => {
+      void releaseProjectWriteLock(projectId).catch((error) => {
+        console.warn('Project write lock release failed.', error)
+      })
+    }
+    const intervalId = window.setInterval(
+      renew,
+      PROJECT_WRITE_LOCK_HEARTBEAT_MS
+    )
+    window.addEventListener('pagehide', release)
+    window.addEventListener('beforeunload', release)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('pagehide', release)
+      window.removeEventListener('beforeunload', release)
+    }
   }, [projectId])
 }
