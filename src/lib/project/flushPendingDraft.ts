@@ -30,6 +30,8 @@ interface FlushPendingDraftInput {
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback
 
+const projectFlushChains = new Map<string, Promise<unknown>>()
+
 export const hasPendingDraftChanges = ({
   projectQueued,
   uiStateQueued,
@@ -44,7 +46,7 @@ export const hasPendingDraftChanges = ({
   dirtyGlyphIds.length > 0 ||
   deletedGlyphIds.length > 0
 
-export const flushPendingDraft = async ({
+const flushPendingDraftNow = async ({
   projectId,
   projectTitle,
   fontData,
@@ -101,5 +103,22 @@ export const flushPendingDraft = async ({
       getErrorMessage(error, 'Unable to save project draft.')
     )
     throw error
+  }
+}
+
+export const flushPendingDraft = async (input: FlushPendingDraftInput) => {
+  const previous = projectFlushChains.get(input.projectId)
+  const current = (async () => {
+    await previous?.catch(() => {})
+    return flushPendingDraftNow(input)
+  })()
+  projectFlushChains.set(input.projectId, current)
+
+  try {
+    return await current
+  } finally {
+    if (projectFlushChains.get(input.projectId) === current) {
+      projectFlushChains.delete(input.projectId)
+    }
   }
 }
