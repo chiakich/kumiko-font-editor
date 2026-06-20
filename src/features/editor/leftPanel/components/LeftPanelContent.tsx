@@ -1,9 +1,11 @@
 import { Divider, HStack, Stack, Text, VStack } from '@chakra-ui/react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   getFontVerticalBox,
   mapGlyphwikiBoxToFontUnits,
 } from 'src/lib/components/componentAssembly'
+import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import { useStore, activeLayer, type GlyphData } from 'src/store'
 import { ComponentSearchSection } from 'src/features/editor/leftPanel/components/ComponentSearchSection'
 import { GlyphPreviewCard } from 'src/features/editor/leftPanel/components/GlyphPreviewCard'
@@ -27,6 +29,10 @@ export function LeftPanelContent({
   onBack,
 }: LeftPanelContentProps) {
   const fontData = useStore((state) => state.fontData)
+  const projectId = useStore((state) => state.projectId)
+  const hydrateGlyphGeometry = useStore((state) => state.hydrateGlyphGeometry)
+  const loadingRef = useRef(new Map<string, Promise<GlyphData[]>>())
+
   const {
     isCjkGlyph,
     loading,
@@ -58,6 +64,38 @@ export function LeftPanelContent({
       getFontVerticalBox(fontData)
     )
   }, [fontData, selectedGlyph, targetPartBox])
+
+  useEffect(() => {
+    if (!projectId) {
+      return
+    }
+    const missing = resultGlyphs
+      .filter((glyph) => !isGlyphGeometryLoaded(glyph))
+      .map((glyph) => glyph.id)
+      .filter((id) => !loadingRef.current.has(id))
+    if (missing.length === 0) {
+      return
+    }
+    const currentState = useStore.getState()
+    const loadedGlyphIds = Object.values(currentState.fontData?.glyphs ?? {})
+      .filter(isGlyphGeometryLoaded)
+      .map((g) => g.id)
+    const loadPromise = loadProjectGlyphGeometryClosure(projectId, missing, {
+      loadedGlyphIds,
+    }).finally(() => {
+      for (const id of missing) {
+        loadingRef.current.delete(id)
+      }
+    })
+    for (const id of missing) {
+      loadingRef.current.set(id, loadPromise)
+    }
+    void loadPromise.then((loaded) => {
+      if (useStore.getState().projectId === projectId) {
+        hydrateGlyphGeometry(loaded)
+      }
+    })
+  }, [hydrateGlyphGeometry, projectId, resultGlyphs])
 
   return (
     <>

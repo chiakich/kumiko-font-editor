@@ -52,8 +52,12 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
       return null
     }
     const resolvedFont = resolveFontGlyphs(liveFontData)
+    const resolvedGlyph = resolvedFont.glyphs[activeGlyphId]
+    if (!resolvedGlyph) {
+      return null
+    }
     return buildGlyphGeometrySample(
-      resolvedFont.glyphs[activeGlyphId],
+      resolvedGlyph,
       resolvedFont.glyphs,
       resolvedFont.bodyBox
     )
