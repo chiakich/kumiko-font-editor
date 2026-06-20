@@ -48,7 +48,7 @@ const toGlyphMetadataPatch = (glyph: GlyphData) => ({
   sourceData: glyph.sourceData,
 })
 
-export const saveDraftSnapshot = async (input: {
+export interface SaveDraftSnapshotInput {
   projectId: string
   projectTitle: string
   fontData: FontData
@@ -58,7 +58,9 @@ export const saveDraftSnapshot = async (input: {
   projectUiState?: KumikoProjectUiState | null
   glyphEditTimes: GlyphEditTimes
   selectedLayerId: string | null
-}) => {
+}
+
+export const saveDraftSnapshot = async (input: SaveDraftSnapshotInput) => {
   const persistedProject = await loadKumikoProjectRecord(input.projectId)
   const projectSourceFormat =
     getProjectArchiveSourceFormat() ?? persistedProject?.sourceFormat ?? null

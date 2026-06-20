@@ -3,24 +3,39 @@ import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
 import type { FontData } from 'src/store'
 
 const mocks = vi.hoisted(() => ({
-  saveDraftSnapshot: vi.fn(),
-  saveProjectUiState: vi.fn(),
+  saveDraftSnapshotInWorker: vi.fn(),
+  saveProjectUiStateInWorker: vi.fn(),
 }))
 
-vi.mock('src/lib/project/draftSave', () => ({
-  saveDraftSnapshot: mocks.saveDraftSnapshot,
-}))
-
-vi.mock('src/lib/project/projectRepository', () => ({
-  saveProjectUiState: mocks.saveProjectUiState,
+vi.mock('src/lib/project/draftSaveWorkerClient', () => ({
+  saveDraftSnapshotInWorker: mocks.saveDraftSnapshotInWorker,
+  saveProjectUiStateInWorker: mocks.saveProjectUiStateInWorker,
 }))
 
 const fontData: FontData = {
-  glyphOrder: ['A'],
+  glyphOrder: ['A', 'B'],
   glyphs: {
     A: {
       id: 'A',
       name: 'A',
+      unicodes: [],
+      activeLayerId: 'public.default',
+      layerOrder: ['public.default'],
+      layers: {
+        'public.default': {
+          id: 'public.default',
+          name: 'public.default',
+          paths: [],
+          componentRefs: [],
+          anchors: [],
+          guidelines: [],
+          metrics: { width: 1000, lsb: 0, rsb: 1000 },
+        },
+      },
+    },
+    B: {
+      id: 'B',
+      name: 'B',
       unicodes: [],
       activeLayerId: 'public.default',
       layerOrder: ['public.default'],
@@ -62,7 +77,7 @@ describe('flushPendingDraft', () => {
   it('serializes writes for the same project so older flushes finish first', async () => {
     const events: string[] = []
     let releaseFirst: (() => void) | null = null
-    mocks.saveDraftSnapshot
+    mocks.saveDraftSnapshotInWorker
       .mockImplementationOnce(
         () =>
           new Promise<void>((resolve) => {
@@ -89,6 +104,17 @@ describe('flushPendingDraft', () => {
     await second
 
     expect(events).toEqual(['first-start', 'first-end', 'second-start'])
-    expect(mocks.saveDraftSnapshot).toHaveBeenCalledTimes(2)
+    expect(mocks.saveDraftSnapshotInWorker).toHaveBeenCalledTimes(2)
+  })
+
+  it('sends only dirty glyphs to the worker while preserving glyph order', async () => {
+    mocks.saveDraftSnapshotInWorker.mockResolvedValueOnce(undefined)
+
+    await flushPendingDraft(makeFlushInput(1))
+
+    expect(mocks.saveDraftSnapshotInWorker).toHaveBeenCalledTimes(1)
+    const input = mocks.saveDraftSnapshotInWorker.mock.calls[0]?.[0]
+    expect(input.fontData.glyphOrder).toEqual(['A', 'B'])
+    expect(Object.keys(input.fontData.glyphs)).toEqual(['A'])
   })
 })

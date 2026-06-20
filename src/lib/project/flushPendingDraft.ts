@@ -1,5 +1,7 @@
-import { saveDraftSnapshot } from 'src/lib/project/draftSave'
-import { saveProjectUiState } from 'src/lib/project/projectRepository'
+import {
+  saveDraftSnapshotInWorker,
+  saveProjectUiStateInWorker,
+} from 'src/lib/project/draftSaveWorkerClient'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import type { FontData, PersistenceStatus } from 'src/store'
 import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
@@ -31,6 +33,24 @@ const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback
 
 const projectFlushChains = new Map<string, Promise<unknown>>()
+
+export const createDraftPersistenceFontDataSnapshot = (
+  fontData: FontData,
+  dirtyGlyphIds: readonly string[]
+): FontData => {
+  const glyphs: FontData['glyphs'] = {}
+  for (const glyphId of new Set(dirtyGlyphIds)) {
+    const glyph = fontData.glyphs[glyphId]
+    if (glyph) {
+      glyphs[glyphId] = glyph
+    }
+  }
+  return {
+    ...fontData,
+    glyphOrder: fontData.glyphOrder ?? Object.keys(fontData.glyphs),
+    glyphs,
+  }
+}
 
 export const hasPendingDraftChanges = ({
   projectQueued,
@@ -80,12 +100,15 @@ const flushPendingDraftNow = async ({
       dirtyGlyphIds.length === 0 &&
       deletedGlyphIds.length === 0
     ) {
-      await saveProjectUiState(projectId, projectUiState)
+      await saveProjectUiStateInWorker({ projectId, projectUiState })
     } else {
-      await saveDraftSnapshot({
+      await saveDraftSnapshotInWorker({
         projectId,
         projectTitle,
-        fontData,
+        fontData: createDraftPersistenceFontDataSnapshot(
+          fontData,
+          dirtyGlyphIds
+        ),
         dirtyGlyphIds,
         deletedGlyphIds,
         projectQueued,
