@@ -1,4 +1,5 @@
 import {
+  Box,
   HStack,
   IconButton,
   Tooltip,
@@ -6,6 +7,8 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import {
+  CheckCircle,
+  ClockRotateRight,
   Download,
   FontQuestion,
   Github,
@@ -46,6 +49,15 @@ export function ProjectControlActions({
   const hasLocalSaveError = persistenceStatus === 'error'
   const localSaveErrorMessage =
     persistenceError ?? t('projectControl.localSaveFailedFallback')
+  const localSaveStatus =
+    persistenceStatus === 'queued' ||
+    persistenceStatus === 'saving' ||
+    persistenceStatus === 'saved'
+      ? persistenceStatus
+      : null
+  const localSaveStatusLabel = localSaveStatus
+    ? t(`projectControl.localSaveStatus.${localSaveStatus}`)
+    : ''
 
   const handleRetryLocalSave = async () => {
     if (isRetryingLocalSave) {
@@ -203,6 +215,38 @@ export function ProjectControlActions({
               onClick={() => void handleRetryLocalSave()}
               isLoading={isRetryingLocalSave}
             />
+          </Tooltip>
+        ) : null}
+        {localSaveStatus ? (
+          <Tooltip label={localSaveStatusLabel}>
+            <Box
+              role="status"
+              aria-label={localSaveStatusLabel}
+              minW={9}
+              h={9}
+              display="inline-flex"
+              alignItems="center"
+              justifyContent="center"
+              color={
+                localSaveStatus === 'saved' ? 'field.green.500' : 'field.muted'
+              }
+            >
+              {localSaveStatus === 'saved' ? (
+                <CheckCircle
+                  width={18}
+                  height={18}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
+                />
+              ) : (
+                <ClockRotateRight
+                  width={18}
+                  height={18}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
+                />
+              )}
+            </Box>
           </Tooltip>
         ) : null}
         <Tooltip label={t('projectControl.export')}>

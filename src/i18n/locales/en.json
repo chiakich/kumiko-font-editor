@@ -369,6 +369,11 @@
     "localSaveFailedRetryTooltip": "Local save failed: {{message}}. Click to retry.",
     "localSaveRetryFailed": "Local save still failed",
     "localSaveRetrySucceeded": "Local save updated",
+    "localSaveStatus": {
+      "queued": "Waiting for local save",
+      "saving": "Saving locally",
+      "saved": "Saved locally"
+    },
     "locationJson": "Location JSON",
     "lookup": "lookup",
     "lookupFlags": "Lookup flags",

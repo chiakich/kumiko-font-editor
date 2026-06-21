@@ -369,6 +369,11 @@
     "localSaveFailedRetryTooltip": "本機儲存失敗：{{message}}。點擊重試。",
     "localSaveRetryFailed": "本機儲存仍失敗",
     "localSaveRetrySucceeded": "本機儲存已更新",
+    "localSaveStatus": {
+      "queued": "等待本機儲存",
+      "saving": "正在本機儲存",
+      "saved": "已本機儲存"
+    },
     "locationJson": "Location JSON",
     "lookup": "lookup",
     "lookupFlags": "Lookup flags",
