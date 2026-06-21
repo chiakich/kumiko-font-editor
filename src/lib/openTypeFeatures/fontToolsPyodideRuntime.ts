@@ -53,16 +53,12 @@ const runPythonCompile = (
   pyodide: PyodideAPI,
   inputPath: string,
   feaPath: string,
-  outputPath: string,
-  preserveSourcePath: string | null,
-  preserveTables: CompileOptions['affectedTables']
+  outputPath: string
 ) => {
   const resultProxy = pyodide.runPython(
     `kumiko_compile_fea(${JSON.stringify(inputPath)}, ${JSON.stringify(
       feaPath
-    )}, ${JSON.stringify(outputPath)}, ${JSON.stringify(
-      preserveSourcePath
-    )}, ${JSON.stringify(preserveTables)})`
+    )}, ${JSON.stringify(outputPath)})`
   ) as PyProxyLike
 
   try {
@@ -109,30 +105,14 @@ export const compileWithFontToolsRuntime = async (
   const { pyodide } = await getFontToolsRuntime()
   const nonce = `${Date.now()}_${Math.random().toString(36).slice(2)}`
   const inputPath = `/tmp/kumiko_input_${nonce}.font`
-  const preserveSourcePath = options.preserveSourceFontBuffer
-    ? `/tmp/kumiko_preserve_source_${nonce}.font`
-    : null
   const feaPath = `/tmp/kumiko_features_${nonce}.fea`
   const outputPath = `/tmp/kumiko_output_${nonce}.font`
 
   try {
     pyodide.FS.writeFile(inputPath, new Uint8Array(inputFontBuffer))
-    if (preserveSourcePath && options.preserveSourceFontBuffer) {
-      pyodide.FS.writeFile(
-        preserveSourcePath,
-        new Uint8Array(options.preserveSourceFontBuffer)
-      )
-    }
     pyodide.FS.writeFile(feaPath, generatedFea)
 
-    const result = runPythonCompile(
-      pyodide,
-      inputPath,
-      feaPath,
-      outputPath,
-      preserveSourcePath,
-      options.affectedTables
-    )
+    const result = runPythonCompile(pyodide, inputPath, feaPath, outputPath)
 
     if (!result.ok) {
       throw Object.assign(new Error(result.message), {
@@ -171,9 +151,6 @@ export const compileWithFontToolsRuntime = async (
     })
   } finally {
     cleanFile(pyodide, inputPath)
-    if (preserveSourcePath) {
-      cleanFile(pyodide, preserveSourcePath)
-    }
     cleanFile(pyodide, feaPath)
     cleanFile(pyodide, outputPath)
   }

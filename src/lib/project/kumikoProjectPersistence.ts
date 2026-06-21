@@ -125,6 +125,29 @@ export const replaceKumikoProjectData = async (
   await transactionDone(transaction)
 }
 
+export const replaceKumikoProjectDataInBatches = async (
+  project: KumikoProjectRecord,
+  glyphBatches: Iterable<KumikoGlyphRecord[]>
+) => {
+  const database = await openDatabase()
+  const transaction = database.transaction(
+    [KUMIKO_PROJECTS_STORE, KUMIKO_GLYPHS_STORE],
+    'readwrite'
+  )
+  const projectStore = transaction.objectStore(KUMIKO_PROJECTS_STORE)
+  const glyphStore = transaction.objectStore(KUMIKO_GLYPHS_STORE)
+
+  projectStore.put(project)
+  glyphStore.delete(
+    IDBKeyRange.bound([project.projectId, ''], [project.projectId, '\uffff'])
+  )
+  await transactionDone(transaction)
+
+  for (const glyphs of glyphBatches) {
+    await saveKumikoGlyphRecordBatch(glyphs)
+  }
+}
+
 export const patchKumikoProjectData = async (input: {
   project: KumikoProjectRecord
   glyphsToSave?: KumikoGlyphRecord[]

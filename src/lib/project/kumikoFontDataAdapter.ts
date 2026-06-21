@@ -457,18 +457,51 @@ export const fontDataToKumikoGlyphRecords = (input: {
   exportDirtyGlyphIds?: Iterable<string>
   syncDirtyGlyphIds?: Iterable<string>
 }): KumikoGlyphRecord[] => {
+  const records: KumikoGlyphRecord[] = []
+  for (const batch of fontDataToKumikoGlyphRecordBatches(input)) {
+    records.push(...batch)
+  }
+  return records
+}
+
+export const fontDataToKumikoGlyphRecordBatches = (input: {
+  projectId: string
+  fontData: FontData
+  updatedAt: number
+  exportDirtyGlyphIds?: Iterable<string>
+  syncDirtyGlyphIds?: Iterable<string>
+  batchSize?: number
+}): Iterable<KumikoGlyphRecord[]> => {
   const exportDirtyGlyphIds = new Set(input.exportDirtyGlyphIds ?? [])
   const syncDirtyGlyphIds = new Set(input.syncDirtyGlyphIds ?? [])
-  return Object.values(input.fontData.glyphs).map((glyph) =>
-    glyphDataToKumikoGlyphRecord({
-      projectId: input.projectId,
-      glyph,
-      updatedAt: input.updatedAt,
-      exportDirty: exportDirtyGlyphIds.has(glyph.id),
-      syncDirty: syncDirtyGlyphIds.has(glyph.id),
-      projectOutlineType: input.fontData.settings?.outlineType,
-    })
-  )
+  const glyphOrder = input.fontData.glyphOrder ?? []
+  const orderedGlyphIds = new Set(glyphOrder)
+  const glyphIds = [
+    ...glyphOrder.filter((glyphId) => Boolean(input.fontData.glyphs[glyphId])),
+    ...Object.keys(input.fontData.glyphs).filter(
+      (glyphId) => !orderedGlyphIds.has(glyphId)
+    ),
+  ]
+  const batchSize = Math.max(1, input.batchSize ?? 256)
+
+  return {
+    *[Symbol.iterator]() {
+      for (let index = 0; index < glyphIds.length; index += batchSize) {
+        const batchGlyphIds = glyphIds.slice(index, index + batchSize)
+        yield batchGlyphIds.map((glyphId) => {
+          const glyph = input.fontData.glyphs[glyphId]
+          return glyphDataToKumikoGlyphRecord({
+            projectId: input.projectId,
+            glyph,
+            updatedAt: input.updatedAt,
+            exportDirty: exportDirtyGlyphIds.has(glyph.id),
+            syncDirty: syncDirtyGlyphIds.has(glyph.id),
+            projectOutlineType: input.fontData.settings?.outlineType,
+          })
+        })
+      }
+    },
+  }
 }
 
 const toGlyphLayerData = (layer: KumikoGlyphLayerRecord): GlyphLayerData => ({

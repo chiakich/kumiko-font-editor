@@ -7,12 +7,12 @@ import {
   loadKumikoProjectRecord,
   loadKumikoUiValue,
   makeKumikoGlyphKey,
-  replaceKumikoProjectData,
+  replaceKumikoProjectDataInBatches,
   saveKumikoUiValue,
   renameKumikoProjectRecord,
 } from 'src/lib/project/kumikoProjectPersistence'
 import {
-  fontDataToKumikoGlyphRecords,
+  fontDataToKumikoGlyphRecordBatches,
   fontDataToKumikoProjectRecord,
   kumikoGlyphRecordToGlyphData,
   kumikoGlyphRecordToGlyphMetadata,
@@ -254,15 +254,17 @@ export const saveProjectDraft = async (draft: ProjectDraft) => {
     exportDirty: draft.projectExportDirty ?? false,
     syncDirty: draft.projectSyncDirty ?? false,
   })
-  const glyphs = fontDataToKumikoGlyphRecords({
-    projectId: draft.id,
-    fontData: draft.fontData,
-    updatedAt,
-    exportDirtyGlyphIds: draft.exportDirtyGlyphIds ?? [],
-    syncDirtyGlyphIds: draft.syncDirtyGlyphIds ?? [],
-  })
-
-  await replaceKumikoProjectData(project, glyphs)
+  await replaceKumikoProjectDataInBatches(
+    project,
+    fontDataToKumikoGlyphRecordBatches({
+      projectId: draft.id,
+      fontData: draft.fontData,
+      updatedAt,
+      exportDirtyGlyphIds: draft.exportDirtyGlyphIds ?? [],
+      syncDirtyGlyphIds: draft.syncDirtyGlyphIds ?? [],
+      batchSize: PROJECT_DRAFT_GLYPH_BATCH_SIZE,
+    })
+  )
   await saveKumikoUiValue(
     draft.id,
     PROJECT_METADATA_UI_KEY,

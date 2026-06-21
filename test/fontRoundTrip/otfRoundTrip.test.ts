@@ -92,6 +92,7 @@ describe('OTF import → export round-trip', () => {
       format: 'otf',
       repoPath: null,
     })
+    expect('binarySource' in imported.fontData).toBe(false)
     expect(JSON.stringify(imported.projectSourceData.binary)).not.toContain(
       'sfntBuffer'
     )

@@ -40,11 +40,6 @@ export const compileFontWithFeatures = (
       reject(new Error(event.message || 'OpenType feature compiler failed'))
     }
 
-    const transferables = [inputFontBuffer]
-    if (options.preserveSourceFontBuffer) {
-      transferables.push(options.preserveSourceFontBuffer)
-    }
-
     worker.postMessage(
       {
         type: 'compile-font-features',
@@ -55,6 +50,6 @@ export const compileFontWithFeatures = (
           sourceMap,
         },
       },
-      transferables
+      [inputFontBuffer]
     )
   })

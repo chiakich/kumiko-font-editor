@@ -22,7 +22,6 @@ export interface CompilerRuntimeStatus {
 export interface CompileOptions {
   affectedTables: Array<'GSUB' | 'GPOS' | 'GDEF'>
   debug?: boolean
-  preserveSourceFontBuffer?: ArrayBuffer
 }
 
 export interface CompileResult {

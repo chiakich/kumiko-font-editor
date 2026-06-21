@@ -342,10 +342,6 @@ export const importBinaryFontFile = async (file: File) => {
   const fontData = {
     glyphs,
     glyphOrder,
-    binarySource: {
-      format: sourceFormat,
-      sfntBuffer: buffer.slice(0),
-    },
     fontInfo: buildFontInfoFromOpenTypeFont(font),
     unitsPerEm: font.unitsPerEm,
     lineMetricsHorizontalLayout: buildLineMetricsFromOpenTypeFont(font),
@@ -452,7 +448,6 @@ export const exportFontAsBinary = (
     fontData,
     glyphs: getBinaryExportGlyphList(fontData),
     format,
-    preserveSourceFontBuffer: fontData.binarySource?.sfntBuffer.slice(0),
   })
 
 export const exportGlyphListAsBinary = (input: {
@@ -465,7 +460,6 @@ export const exportGlyphListAsBinary = (input: {
   >
   glyphs: GlyphData[]
   format: BinaryFontExportFormat
-  preserveSourceFontBuffer?: ArrayBuffer
 }) => {
   const glyphs = input.glyphs.map((glyph) => {
     const path = new opentype.Path()
@@ -508,10 +502,7 @@ export const exportGlyphListAsBinary = (input: {
   const getOutputBuffer = async () => {
     const compiledBuffer = await compileManagedFontFeatures(
       sfntBuffer,
-      input.fontData.openTypeFeatures,
-      {
-        preserveSourceFontBuffer: input.preserveSourceFontBuffer,
-      }
+      input.fontData.openTypeFeatures
     )
 
     if (input.format === 'woff') {
