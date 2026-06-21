@@ -17,6 +17,7 @@ import {
   listSyncDirtyKumikoGlyphIds,
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
+  markKumikoProjectExportClean,
   makeKumikoGlyphKey,
   patchKumikoGlyphMetadata,
 } from 'src/lib/project/kumikoProjectPersistence'
@@ -380,6 +381,49 @@ describe('projectRepository canonical storage', () => {
       exportDirty: true,
       syncDirty: true,
     })
+  })
+
+  it('marks project and glyph export baselines clean after whole-font export', async () => {
+    await saveProjectDraft({
+      id: 'project-export-clean',
+      title: 'Export Clean',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      fontData: {
+        glyphOrder: ['A', 'B'],
+        glyphs: {
+          A: fontData.glyphs.A,
+          B: {
+            ...fontData.glyphs.A,
+            id: 'B',
+            name: 'B',
+            unicodes: ['0042'],
+          },
+        },
+      },
+      projectMetadata: { familyName: 'Export Clean' },
+      projectExportDirty: true,
+      exportDirtyGlyphIds: ['A', 'B'],
+    })
+
+    await markKumikoProjectExportClean('project-export-clean', { batchSize: 1 })
+
+    const [project, glyphA, glyphB, dirtyState] = await Promise.all([
+      loadKumikoProjectRecord('project-export-clean'),
+      loadKumikoGlyphRecord(makeKumikoGlyphKey('project-export-clean', 'A')),
+      loadKumikoGlyphRecord(makeKumikoGlyphKey('project-export-clean', 'B')),
+      getKumikoProjectDirtyState('project-export-clean'),
+    ])
+
+    expect(project?.exportDirty).toBe(0)
+    expect(project?.exportedDigest).toMatch(/^[0-9a-f]{8}$/)
+    expect(glyphA?.exportDirty).toBe(0)
+    expect(glyphB?.exportDirty).toBe(0)
+    expect(glyphA?.exportedDigest).toMatch(/^[0-9a-f]{8}$/)
+    expect(glyphB?.exportedDigest).toMatch(/^[0-9a-f]{8}$/)
+    expect(dirtyState.exportDirty).toBe(false)
+    expect(dirtyState.exportDirtyGlyphIds).toEqual([])
   })
 
   it('rejects interpolable source layers that mix outline kinds', async () => {

@@ -22,6 +22,7 @@ import {
   serializeCanonicalGlyphsProjectToBlob,
 } from 'src/lib/fontFormats/canonicalGlyphsExport'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { markKumikoProjectExportClean } from 'src/lib/project/kumikoProjectPersistence'
 import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { loadProjectDraft } from 'src/lib/project/projectRepository'
 import {
@@ -154,6 +155,9 @@ export function useFontExport() {
       const sourceFormat = getProjectArchiveSourceFormat()
       const usesCanonicalUfoZipExport =
         canUseCanonicalUfoZipExport(sourceFormat)
+      const shouldMarkProjectExportClean = selectedFormats.some(
+        (format) => format !== 'zip' || !usesCanonicalUfoZipExport
+      )
       const needsFullDraft = shouldLoadFullDraftForExport(
         selectedFormats,
         sourceFormat
@@ -297,6 +301,10 @@ export function useFontExport() {
           files[asset.fileName] = await blobToUint8Array(asset.blob)
         }
         triggerBlobDownload(makeZipBlob(files), `${baseFileName}-exports.zip`)
+      }
+
+      if (shouldMarkProjectExportClean) {
+        await markKumikoProjectExportClean(projectId)
       }
 
       const glyphs3WarningCount =

@@ -7,6 +7,7 @@ import {
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import {
   createKumikoGlyphDigest,
+  createKumikoProjectDigest,
   findGeometryBearingSourceDataKey,
 } from 'src/lib/project/kumikoFontDataAdapter'
 import type {
@@ -563,6 +564,39 @@ export const updateKumikoGlyphExportDirtyState = async (
   }
 
   await transactionDone(transaction)
+}
+
+export const markKumikoProjectExportClean = async (
+  projectId: string,
+  options: { batchSize?: number } = {}
+) => {
+  const batchSize = options.batchSize ?? 256
+  const [project, glyphMetadata] = await Promise.all([
+    loadKumikoProjectRecord(projectId),
+    listKumikoGlyphMetadataForProject(projectId),
+  ])
+  if (!project) {
+    return
+  }
+
+  const timestamp = Date.now()
+  for (let index = 0; index < glyphMetadata.length; index += batchSize) {
+    const batch = glyphMetadata.slice(index, index + batchSize)
+    await updateKumikoGlyphExportDirtyState(
+      batch.map((glyph) => makeKumikoGlyphKey(projectId, glyph.glyphId)),
+      false
+    )
+  }
+
+  const nextProject: KumikoProjectRecord = {
+    ...project,
+    exportDirty: 0,
+    updatedAt: timestamp,
+  }
+  await saveKumikoProjectRecord({
+    ...nextProject,
+    exportedDigest: createKumikoProjectDigest(nextProject),
+  })
 }
 
 export const updateKumikoGlyphSyncDirtyState = async (
