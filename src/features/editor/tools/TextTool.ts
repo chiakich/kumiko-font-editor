@@ -3,6 +3,7 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
+import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 
 export class TextTool extends BaseTool {
   identifier = 'text'
@@ -29,17 +30,5 @@ export class TextTool extends BaseTool {
     for await (const event of asyncEventIterator(eventStream)) {
       event.preventDefault()
     }
-  }
-}
-
-async function* asyncEventIterator(
-  eventStream: EventStream
-): AsyncGenerator<ToolEvent, void> {
-  while (true) {
-    const value = await eventStream.next()
-    if (!value) {
-      break
-    }
-    yield value
   }
 }

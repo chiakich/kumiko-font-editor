@@ -4,6 +4,7 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
+import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 import {
   useStore,
   activeLayer,
@@ -560,17 +561,5 @@ function lerpPoint(
   return {
     x: a.x + (b.x - a.x) * t,
     y: a.y + (b.y - a.y) * t,
-  }
-}
-
-async function* asyncEventIterator(
-  eventStream: EventStream
-): AsyncGenerator<ToolEvent, void, unknown> {
-  while (true) {
-    const event = await eventStream.next()
-    if (event === undefined) {
-      break
-    }
-    yield event
   }
 }

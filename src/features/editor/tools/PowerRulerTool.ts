@@ -4,6 +4,7 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
+import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 import { glyphRulerSegments, type Vec } from 'src/font/powerRuler'
 
 // Snap distance (screen px) within which a click jumps to the contour normal.
@@ -149,17 +150,5 @@ function constrainHorVerDiag(origin: Vec, point: Vec): Vec {
   return {
     x: origin.x + Math.sign(dx || 1) * size,
     y: origin.y + Math.sign(dy || 1) * size,
-  }
-}
-
-async function* asyncEventIterator(
-  eventStream: EventStream
-): AsyncGenerator<ToolEvent, void, unknown> {
-  while (true) {
-    const event = await eventStream.next()
-    if (event === undefined) {
-      break
-    }
-    yield event
   }
 }

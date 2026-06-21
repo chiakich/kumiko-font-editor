@@ -3,6 +3,7 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
+import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 
 export class HandTool extends BaseTool {
   identifier = 'hand'
@@ -39,17 +40,5 @@ export class HandTool extends BaseTool {
     }
 
     this.setCursor('grab')
-  }
-}
-
-async function* asyncEventIterator(
-  eventStream: EventStream
-): AsyncGenerator<ToolEvent, void> {
-  while (true) {
-    const value = await eventStream.next()
-    if (!value) {
-      break
-    }
-    yield value
   }
 }

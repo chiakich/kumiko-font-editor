@@ -5,6 +5,7 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
+import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 import {
   useStore,
   type PathData,
@@ -109,17 +110,5 @@ export class BrushTool extends BaseTool {
 
   private generateId(prefix: string) {
     return `${prefix}_${Math.random().toString(36).slice(2, 10)}`
-  }
-}
-
-async function* asyncEventIterator(
-  eventStream: EventStream
-): AsyncGenerator<ToolEvent, void, unknown> {
-  while (true) {
-    const event = await eventStream.next()
-    if (event === undefined) {
-      break
-    }
-    yield event
   }
 }

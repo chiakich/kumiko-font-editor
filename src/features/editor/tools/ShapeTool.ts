@@ -3,6 +3,7 @@ import {
   type EventStream,
   type ToolEvent,
 } from 'src/features/editor/tools/BaseTool'
+import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 import { useStore, type PathData, type PathNode } from 'src/store'
 
 type ShapeKind = 'rect' | 'ellipse'
@@ -213,16 +214,4 @@ interface Rect {
   yMin: number
   xMax: number
   yMax: number
-}
-
-async function* asyncEventIterator(
-  eventStream: EventStream
-): AsyncGenerator<ToolEvent, void, unknown> {
-  while (true) {
-    const event = await eventStream.next()
-    if (event === undefined) {
-      break
-    }
-    yield event
-  }
 }
