@@ -9,6 +9,10 @@ import {
   loadProjectDraftMetadata,
   loadProjectGlyphGeometryClosure,
 } from 'src/lib/project/projectRepository'
+import {
+  projectBroadcastHasCanonicalChanges,
+  shouldBlockProjectBroadcastReload,
+} from 'src/lib/project/projectBroadcastPolicy'
 import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { subscribeToProjectBroadcasts } from 'src/lib/project/projectBroadcast'
 import { UFO_GLYPH_EDIT_TIMES_KEY } from 'src/lib/glyph/glyphEditTimes'
@@ -42,7 +46,7 @@ export function useProjectBroadcastSync() {
           return
         }
 
-        if (state.isDirty) {
+        if (shouldBlockProjectBroadcastReload(state, message)) {
           state.setPersistenceStatus(
             'error',
             'This project was updated in another window. Save or reload before continuing.'
@@ -55,6 +59,9 @@ export function useProjectBroadcastSync() {
             duration: 5200,
             isClosable: true,
           })
+          return
+        }
+        if (state.isDirty && !projectBroadcastHasCanonicalChanges(message)) {
           return
         }
 
