@@ -10,6 +10,7 @@ import {
   loadProjectGlyphGeometryClosure,
 } from 'src/lib/project/projectRepository'
 import {
+  canMergeProjectBroadcastWhileDirty,
   projectBroadcastHasCanonicalChanges,
   shouldBlockProjectBroadcastReload,
 } from 'src/lib/project/projectBroadcastPolicy'
@@ -62,6 +63,34 @@ export function useProjectBroadcastSync() {
           return
         }
         if (state.isDirty && !projectBroadcastHasCanonicalChanges(message)) {
+          return
+        }
+        if (canMergeProjectBroadcastWhileDirty(state, message)) {
+          void (async () => {
+            const glyphs = await loadProjectGlyphGeometryClosure(
+              message.projectId,
+              message.glyphIds
+            )
+            useStore.getState().hydrateGlyphGeometry(glyphs)
+            toast({
+              title: 'Project updated',
+              description:
+                'Independent glyph changes from another window were loaded.',
+              status: 'info',
+              duration: 2400,
+              isClosable: true,
+            })
+          })().catch((error) => {
+            useStore
+              .getState()
+              .setPersistenceStatus(
+                'error',
+                error instanceof Error
+                  ? error.message
+                  : 'Unable to merge project updates from another window.'
+              )
+            console.warn('Project broadcast merge failed.', error)
+          })
           return
         }
 
