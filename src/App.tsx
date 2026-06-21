@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
-import { OverviewReturnHeroOverlay } from 'src/features/fontOverview/OverviewReturnHeroOverlay'
+import { OverviewReturnHeroOverlay } from 'src/features/common/viewTransition/OverviewReturnHeroOverlay'
 import { useAutoDraftSave } from 'src/hooks/useAutoDraftSave'
 import { useProjectBroadcastSync } from 'src/hooks/useProjectBroadcastSync'
 import { useStore } from 'src/store'

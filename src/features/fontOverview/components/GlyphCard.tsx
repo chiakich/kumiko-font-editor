@@ -1,71 +1,7 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
-import { memo, useCallback, useMemo, type MouseEvent } from 'react'
-import {
-  buildGlyphPreviewData,
-  getGlyphDisplayCharacter,
-} from 'src/lib/glyph/glyphOverview'
-import { useStore, type GlyphData } from 'src/store'
-
-export const GlyphPreview = memo(function GlyphPreview({
-  glyph,
-  glyphMap,
-  inheritFallbackColor = false,
-}: {
-  glyph: GlyphData
-  glyphMap: Record<string, GlyphData>
-  inheritFallbackColor?: boolean
-}) {
-  const unitsPerEm = useStore((state) => state.fontData?.unitsPerEm)
-  const activeMasterId = useStore((state) => state.activeMasterId)
-  // Render the active master's layer (null → the glyph's own active layer).
-  const preview = useMemo(
-    () => buildGlyphPreviewData(glyph, glyphMap, unitsPerEm, activeMasterId),
-    [glyph, glyphMap, unitsPerEm, activeMasterId]
-  )
-  const displayCharacter =
-    getGlyphDisplayCharacter(glyph) ?? glyph.name ?? glyph
-
-  if (!preview.shapes.length) {
-    return (
-      <Flex w="100%" h="100%" align="center" justify="center">
-        <Text
-          w="100%"
-          textAlign="center"
-          fontSize={displayCharacter.length > 1 ? 'sm' : '6xl'}
-          fontWeight="900"
-          color={inheritFallbackColor ? 'currentColor' : 'field.haze'}
-          lineHeight={1}
-          userSelect="none"
-        >
-          {displayCharacter}
-        </Text>
-      </Flex>
-    )
-  }
-
-  return (
-    <Box
-      as="svg"
-      viewBox={preview.viewBox}
-      width="100%"
-      height="100%"
-      preserveAspectRatio="xMidYMid meet"
-      overflow="hidden"
-    >
-      <g transform={`matrix(1 0 0 -1 0 ${preview.flipY})`}>
-        {preview.shapes.map((shape, index) => (
-          <path
-            key={`${glyph.id}-shape-${index}`}
-            d={shape.d}
-            transform={shape.transform}
-            fill="currentColor"
-            stroke="none"
-          />
-        ))}
-      </g>
-    </Box>
-  )
-})
+import { memo, useCallback, type MouseEvent } from 'react'
+import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
+import type { GlyphData } from 'src/store'
 
 interface GlyphCardProps {
   glyph: GlyphData

@@ -4,7 +4,7 @@ import {
   getEditorViewTransitionLandingGlyphId,
   subscribeEditorViewTransitionLanding,
 } from 'src/features/editor/editorViewTransitionLandingStore'
-import { GlyphPreview } from 'src/features/fontOverview/components/GlyphCard'
+import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
 import { useStore } from 'src/store'
 
 export function EditorViewTransitionLanding() {

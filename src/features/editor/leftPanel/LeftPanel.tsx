@@ -3,8 +3,8 @@ import { useMemo, useCallback } from 'react'
 import { flushSync } from 'react-dom'
 import { useStore } from 'src/store'
 import { LeftPanelContent } from 'src/features/editor/leftPanel/components/LeftPanelContent'
-import { getEditorGlyphHeroSourceRect } from 'src/features/fontOverview/overviewReturnHeroGeometry'
-import { startOverviewReturnHeroOverlay } from 'src/features/fontOverview/overviewReturnHeroOverlayStore'
+import { getEditorGlyphHeroSourceRect } from 'src/features/common/viewTransition/overviewReturnHeroGeometry'
+import { startOverviewReturnHeroOverlay } from 'src/features/common/viewTransition/overviewReturnHeroOverlayStore'
 
 export function LeftPanel() {
   const fontData = useStore((state) => state.fontData)

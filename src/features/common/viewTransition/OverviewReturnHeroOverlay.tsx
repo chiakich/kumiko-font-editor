@@ -1,17 +1,17 @@
 import { Box } from '@chakra-ui/react'
 import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import { GlyphPreview } from 'src/features/fontOverview/components/GlyphCard'
+import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
 import {
   findOverviewGlyphTargetRect,
   getOverviewReturnHeroFallbackTargetRect,
   normalizeOverviewReturnHeroRect,
-} from 'src/features/fontOverview/overviewReturnHeroGeometry'
+} from 'src/features/common/viewTransition/overviewReturnHeroGeometry'
 import {
   clearOverviewReturnHeroOverlay,
   getOverviewReturnHeroState,
   subscribeOverviewReturnHero,
-} from 'src/features/fontOverview/overviewReturnHeroOverlayStore'
+} from 'src/features/common/viewTransition/overviewReturnHeroOverlayStore'
 import { useStore } from 'src/store'
 
 const RETURN_HERO_DURATION_MS = 300
