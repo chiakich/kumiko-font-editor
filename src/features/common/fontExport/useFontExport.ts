@@ -82,7 +82,6 @@ export function useFontExport() {
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
-  const markLocalSaved = useStore((state) => state.markLocalSaved)
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const compilerRuntimeStatus = useMemo(() => createCompilerRuntimeStatus(), [])
   const openTypeExportWarnings = useMemo(
@@ -250,7 +249,6 @@ export function useFontExport() {
             markClean: true,
             onProgress: setUfoExportProgress,
           })
-          markLocalSaved()
           return {
             blob: result.blob,
             fileName:
@@ -284,7 +282,6 @@ export function useFontExport() {
           projectTitle: baseFileName,
           selectedLayerId,
         })
-        markLocalSaved()
         return {
           blob,
           fileName: `${baseFileName}.ufo.zip`,

@@ -98,6 +98,7 @@ export const useGitHubCommitFlow = ({
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const persistenceQueue = useStore((state) => state.persistenceQueue)
+  const markLocalSaved = useStore((state) => state.markLocalSaved)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
   const overviewSectionId = useStore((state) => state.overviewSectionId)
@@ -508,6 +509,7 @@ export const useGitHubCommitFlow = ({
         commitSha: result.commitSha,
       })
       markDraftSaved()
+      markLocalSaved()
       void refetchSyncReport()
       void queryClient.invalidateQueries({
         queryKey: projectSyncDirtyStatusQueryKey(projectId),
