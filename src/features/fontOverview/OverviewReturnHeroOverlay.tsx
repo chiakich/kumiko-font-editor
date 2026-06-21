@@ -92,7 +92,7 @@ export function OverviewReturnHeroOverlay() {
             { color: '#aaa', opacity: 0.4, offset: 0.16 },
             {
               color: fieldInkColor,
-              opacity: 0.4,
+              opacity: 0,
               offset: 0.4,
             },
             {

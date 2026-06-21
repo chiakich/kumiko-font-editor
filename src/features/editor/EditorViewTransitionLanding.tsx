@@ -26,7 +26,7 @@ export function EditorViewTransitionLanding() {
       left="50%"
       transform="translateX(-50%)"
       w="110vh"
-      h="110vh"
+      h="100vh"
       color="white"
       pointerEvents="none"
       aria-hidden="true"

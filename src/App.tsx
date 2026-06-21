@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
 import { OverviewReturnHeroOverlay } from 'src/features/fontOverview/OverviewReturnHeroOverlay'
 import { useAutoDraftSave } from 'src/hooks/useAutoDraftSave'
 import { useProjectBroadcastSync } from 'src/hooks/useProjectBroadcastSync'
@@ -13,9 +14,7 @@ const FontOverviewScreen = lazy(() =>
   }))
 )
 const EditorLayout = lazy(() =>
-  import('src/features/editor/EditorLayout').then((module) => ({
-    default: module.EditorLayout,
-  }))
+  preloadEditorLayout().then((module) => ({ default: module.EditorLayout }))
 )
 
 function App() {

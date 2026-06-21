@@ -11,6 +11,7 @@ import {
 } from 'src/lib/glyph/glyphOverview'
 import { setEditorViewTransitionLandingGlyphId } from 'src/features/editor/editorViewTransitionLandingStore'
 import { setPendingEditorViewportRect } from 'src/features/editor/pendingEditorViewport'
+import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
 import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
@@ -275,6 +276,8 @@ export function FontOverviewScreen() {
         setWorkspaceView('editor')
         return
       }
+
+      await preloadEditorLayout()
 
       flushSync(() => {
         setEditorViewTransitionLandingGlyphId(glyphId)
