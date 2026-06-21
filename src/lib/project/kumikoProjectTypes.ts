@@ -1,7 +1,6 @@
 import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
 import type { GitHubProjectSource } from 'src/lib/project/projectTypes'
 import type { Designspace } from 'src/lib/fontFormats/designspace'
-import type { FontFingerprint } from 'src/lib/openTypeFeatures/types'
 import type {
   DevelopmentStatusDefinition,
   FontAxes,
@@ -60,13 +59,6 @@ export interface KumikoProjectSourceData {
   binary?: {
     format: 'ttf' | 'otf' | 'woff' | 'woff2'
     repoPath?: string | null
-    fontFingerprint?: FontFingerprint | null
-    tableInventory?: Array<{
-      tag: string
-      checksum: number
-      offset: number
-      length: number
-    }>
   }
 }
 

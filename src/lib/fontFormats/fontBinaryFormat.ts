@@ -4,7 +4,6 @@ import {
   createFontFingerprint,
   extractBinaryFeatures,
 } from 'src/lib/openTypeFeatures'
-import { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
 import type {
   FontData,
   FontInfo,
@@ -197,23 +196,11 @@ const buildFontInfoFromOpenTypeFont = (font: opentype.Font): FontInfo => {
   }
 }
 
-const buildBinarySourceData = (
-  format: BinaryFontExportFormat,
-  buffer: ArrayBuffer,
-  fontData: FontData
-) => {
-  const directory = readSfntTableDirectory(buffer)
+const buildBinarySourceData = (format: BinaryFontExportFormat) => {
   return {
     binary: {
       format,
       repoPath: null,
-      fontFingerprint: createFontFingerprint(fontData),
-      tableInventory: directory.tables.map((table) => ({
-        tag: table.tag,
-        checksum: table.checksum,
-        offset: table.offset,
-        length: table.length,
-      })),
     },
   }
 }
@@ -375,7 +362,7 @@ export const importBinaryFontFile = async (file: File) => {
     projectTitle: file.name.replace(/\.[^.]+$/, ''),
     fontData,
     sourceFormat,
-    projectSourceData: buildBinarySourceData(sourceFormat, buffer, fontData),
+    projectSourceData: buildBinarySourceData(sourceFormat),
   }
 }
 
