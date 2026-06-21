@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useFlushCurrentDraft } from 'src/features/common/projectPersistence/useFlushCurrentDraft'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
 import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { useStore } from 'src/store'
@@ -26,6 +27,7 @@ export function useAutoDraftSave() {
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
+  const flushCurrentDraft = useFlushCurrentDraft()
   const autosaveTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -112,8 +114,17 @@ export function useAutoDraftSave() {
       event.preventDefault()
       event.returnValue = ''
     }
+    const handlePageHide = () => {
+      void flushCurrentDraft().catch((error) => {
+        console.warn('Pagehide draft save failed.', error)
+      })
+    }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [isDirty, persistenceStatus])
+    window.addEventListener('pagehide', handlePageHide)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handlePageHide)
+    }
+  }, [flushCurrentDraft, isDirty, persistenceStatus])
 }
