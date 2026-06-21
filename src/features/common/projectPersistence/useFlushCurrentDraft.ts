@@ -1,11 +1,39 @@
 import { useCallback } from 'react'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
 import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
-import { useStore } from 'src/store'
+import { useStore, type FontData, type PersistenceStatus } from 'src/store'
 
-export const useFlushCurrentDraft = () => {
+interface FlushCurrentDraftOptions {
+  allowErrorRetry?: boolean
+}
+
+interface CurrentDraftFlushState {
+  projectId: string | null
+  projectTitle: string
+  fontData: FontData | null
+  persistenceStatus: PersistenceStatus
+}
+
+interface FlushableCurrentDraftState extends CurrentDraftFlushState {
+  projectId: string
+  fontData: FontData
+}
+
+export const canFlushCurrentDraft = (
+  state: CurrentDraftFlushState,
+  options: FlushCurrentDraftOptions = {}
+): state is FlushableCurrentDraftState =>
+  Boolean(state.projectId) &&
+  Boolean(state.projectTitle) &&
+  Boolean(state.fontData) &&
+  (state.persistenceStatus !== 'error' || options.allowErrorRetry === true)
+
+export const useFlushCurrentDraft = (
+  options: FlushCurrentDraftOptions = {}
+) => {
   const markDraftSaved = useStore((state) => state.markDraftSaved)
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
+  const allowErrorRetry = options.allowErrorRetry === true
 
   return useCallback(async () => {
     const {
@@ -25,19 +53,21 @@ export const useFlushCurrentDraft = () => {
       overviewGridState,
     } = useStore.getState()
 
-    if (
-      !projectId ||
-      !projectTitle ||
-      !fontData ||
-      persistenceStatus === 'error'
-    ) {
+    const currentDraft = {
+      projectId,
+      projectTitle,
+      fontData,
+      persistenceStatus,
+    }
+
+    if (!canFlushCurrentDraft(currentDraft, { allowErrorRetry })) {
       return false
     }
 
     return flushPendingDraft({
-      projectId,
-      projectTitle,
-      fontData,
+      projectId: currentDraft.projectId,
+      projectTitle: currentDraft.projectTitle,
+      fontData: currentDraft.fontData,
       projectQueued: persistenceQueue.projectQueued,
       uiStateQueued: persistenceQueue.uiStateQueued,
       projectUiState: createProjectUiStateSnapshot({
@@ -56,5 +86,5 @@ export const useFlushCurrentDraft = () => {
       setPersistenceStatus,
       markDraftSaved,
     })
-  }, [markDraftSaved, setPersistenceStatus])
+  }, [allowErrorRetry, markDraftSaved, setPersistenceStatus])
 }
