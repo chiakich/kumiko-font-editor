@@ -8,6 +8,7 @@ import {
 } from 'src/lib/fontFormats/adapters/ufo'
 import {
   buildKumikoUfoExportManifest,
+  loadKumikoUfoExportExtraGlyphBatch,
   loadKumikoUfoExportGlyphBatch,
   markKumikoUfoExportClean,
   type KumikoUfoExportStateUpdate,
@@ -239,6 +240,7 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
           const glyphs = await loadKumikoUfoExportGlyphBatch({
             project: exportManifest.project,
             activeUfoId: metadata.ufoId,
+            source: ufo.source,
             contents: ufo.contents,
             glyphIds,
             targetLayer: layer,
@@ -274,6 +276,34 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
             writeStartIndex += batch.length
           }
           glyphStartIndex += glyphIds.length
+        }
+
+        if (isDefaultLayer && (ufo.extraGlyphs?.length ?? 0) > 0) {
+          const extraGlyphs = await loadKumikoUfoExportExtraGlyphBatch({
+            project: exportManifest.project,
+            activeUfoId: metadata.ufoId,
+            source: ufo.source,
+            extraGlyphs: ufo.extraGlyphs ?? [],
+            targetLayer: layer,
+          })
+
+          let writeStartIndex = 0
+          while (writeStartIndex < extraGlyphs.length) {
+            const batch = extraGlyphs.slice(
+              writeStartIndex,
+              writeStartIndex + concurrency
+            )
+            await Promise.all(
+              batch.map(async (glyph) => {
+                const glifText = serializeGlifRecord(glyph)
+                await writeOpfsFile(layerDir, glyph.fileName, glifText)
+                writtenContents[glyph.glyphName] = glyph.fileName
+              })
+            )
+            completedGlyphs += batch.length
+            progressWrite()
+            writeStartIndex += batch.length
+          }
         }
 
         await writeOpfsFile(

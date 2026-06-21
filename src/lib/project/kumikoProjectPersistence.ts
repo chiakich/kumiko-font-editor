@@ -14,6 +14,7 @@ import type {
   KumikoGlyphPrimaryKey,
   KumikoGlyphMetadataRecord,
   KumikoGlyphRecord,
+  KumikoGlyphSpecialLayerMetadata,
   KumikoGlyphSyncMetadata,
   KumikoProjectRecord,
   KumikoUiStateRecord,
@@ -401,6 +402,51 @@ export const listKumikoGlyphMetadataForProject = async (projectId: string) => {
         customData: record.customData,
         sourceData: record.sourceData,
       })
+      cursor.continue()
+    }
+    request.onerror = () => reject(request.error)
+  })
+  await transactionDone(transaction)
+  return records
+}
+
+export const listKumikoGlyphSpecialLayerMetadataForProject = async (
+  projectId: string
+) => {
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
+  const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
+  const records: KumikoGlyphSpecialLayerMetadata[] = []
+  await new Promise<void>((resolve, reject) => {
+    const request = index.openCursor(projectId)
+    request.onsuccess = () => {
+      const cursor = request.result
+      if (!cursor) {
+        resolve()
+        return
+      }
+      const record = cursor.value as KumikoGlyphRecord
+      for (const layer of Object.values(record.layers)) {
+        if (layer.type === 'brace' && layer.braceLocation) {
+          records.push({
+            projectId: record.projectId,
+            glyphId: record.glyphId,
+            layerId: layer.id,
+            name: layer.name,
+            type: 'brace',
+            braceLocation: layer.braceLocation,
+          })
+        } else if (layer.type === 'bracket' && layer.bracketAxisRules) {
+          records.push({
+            projectId: record.projectId,
+            glyphId: record.glyphId,
+            layerId: layer.id,
+            name: layer.name,
+            type: 'bracket',
+            bracketAxisRules: layer.bracketAxisRules,
+          })
+        }
+      }
       cursor.continue()
     }
     request.onerror = () => reject(request.error)

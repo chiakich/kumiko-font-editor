@@ -214,6 +214,16 @@ export type KumikoGlyphMetadataRecord = Pick<
   | 'sourceData'
 >
 
+export interface KumikoGlyphSpecialLayerMetadata {
+  projectId: string
+  glyphId: string
+  layerId: string
+  name: string
+  type: 'brace' | 'bracket'
+  braceLocation?: Record<string, number> | null
+  bracketAxisRules?: Record<string, { min?: number; max?: number }> | null
+}
+
 export interface KumikoUiStateRecord {
   projectId: string
   key: string

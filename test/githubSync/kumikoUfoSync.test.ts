@@ -7,11 +7,13 @@ import {
   buildKumikoUfoExportManifest,
   buildKumikoProjectSyncReport,
   buildKumikoUfoExportState,
+  loadKumikoUfoExportExtraGlyphBatch,
   loadKumikoUfoExportGlyphBatch,
   markKumikoGitHubCommitSynced,
   markKumikoUfoExportClean,
   prepareKumikoGitHubCommit,
 } from 'src/lib/github/sync/kumikoUfoSync'
+import { parseDesignspace } from 'src/lib/fontFormats/designspace'
 import { saveProjectDraft } from 'src/lib/project/projectRepository'
 import {
   loadKumikoGlyphRecord,
@@ -603,6 +605,132 @@ describe('Kumiko GitHub UFO sync', () => {
     expect(manifest.designspace?.text).toContain('filename="Bold.ufo"')
     expect(boldManifest?.metadata.relativePath).toBe('Bold.ufo')
     expect(boldBatch[0]?.contours[0]?.points[0]?.x).toBe(80)
+  })
+
+  it('projects canonical brace layers and bracket rules to UFO designspace exports', async () => {
+    const fontData = makeMultiSourceFontData()
+    fontData.glyphs.A.layers = {
+      ...fontData.glyphs.A.layers,
+      brace: {
+        id: 'brace',
+        name: 'A Brace',
+        type: 'brace',
+        associatedMasterId: 'Light',
+        braceLocation: { Weight: 50 },
+        paths: [
+          {
+            id: 'brace-path',
+            closed: false,
+            nodes: [
+              {
+                id: 'brace-node',
+                kind: 'oncurve',
+                segmentType: 'line',
+                x: 40,
+                y: 0,
+              },
+            ],
+          },
+        ],
+        componentRefs: [],
+        anchors: [],
+        guidelines: [],
+        metrics: { width: 550, lsb: 40, rsb: 510 },
+      },
+      bracket: {
+        id: 'bracket',
+        name: 'A Bracket',
+        type: 'bracket',
+        associatedMasterId: 'Light',
+        bracketAxisRules: { Weight: { min: 80, max: 100 } },
+        paths: [
+          {
+            id: 'bracket-path',
+            closed: false,
+            nodes: [
+              {
+                id: 'bracket-node',
+                kind: 'oncurve',
+                segmentType: 'line',
+                x: 90,
+                y: 0,
+              },
+            ],
+          },
+        ],
+        componentRefs: [],
+        anchors: [],
+        guidelines: [],
+        metrics: { width: 560, lsb: 90, rsb: 470 },
+      },
+    }
+    fontData.glyphs.A.layerOrder = ['Light', 'Bold', 'brace', 'bracket']
+
+    await saveProjectDraft({
+      id: 'canonical-special-layer-export',
+      title: 'Family',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Family.glyphs',
+      sourceType: 'local',
+      githubSource: null,
+      fontData,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'glyphs',
+      projectRoundTripFormat: null,
+      projectGlyphsPackage: null,
+    })
+
+    const manifest = await buildKumikoUfoExportManifest(
+      'canonical-special-layer-export'
+    )
+    const designspace = parseDesignspace(manifest.designspace?.text ?? '')
+    const lightManifest = manifest.ufos.find(
+      (ufo) => ufo.metadata.ufoId === 'Light'
+    )!
+    const braceManifest = manifest.ufos.find((ufo) =>
+      ufo.metadata.relativePath.includes('brace.ufo')
+    )!
+    const extraBatch = await loadKumikoUfoExportExtraGlyphBatch({
+      project: manifest.project,
+      activeUfoId: lightManifest.metadata.ufoId,
+      source: lightManifest.source,
+      extraGlyphs: lightManifest.extraGlyphs ?? [],
+      targetLayer: lightManifest.defaultLayer,
+    })
+    const braceBatch = await loadKumikoUfoExportGlyphBatch({
+      project: manifest.project,
+      activeUfoId: braceManifest.metadata.ufoId,
+      source: braceManifest.source,
+      contents: braceManifest.contents,
+      glyphIds: braceManifest.glyphIds,
+    })
+
+    expect(manifest.totalGlyphs).toBe(5)
+    expect(
+      designspace.sources.some((source) =>
+        source.filename.includes('brace.ufo')
+      )
+    ).toBe(true)
+    expect(designspace.rules?.[0]).toMatchObject({
+      name: 'A.bracket',
+      conditions: { Weight: { minimum: 80, maximum: 100 } },
+      substitutions: [{ name: 'A', with: 'A.bracket.bracket' }],
+    })
+    expect(lightManifest.extraGlyphs?.[0]).toMatchObject({
+      glyphId: 'A',
+      layerId: 'bracket',
+      glyphName: 'A.bracket.bracket',
+    })
+    expect(extraBatch[0]?.glyphName).toBe('A.bracket.bracket')
+    expect(extraBatch[0]?.unicodes).toEqual([])
+    expect(extraBatch[0]?.contours[0]?.points[0]?.x).toBe(90)
+    expect(braceBatch[0]?.glyphName).toBe('A')
+    expect(braceBatch[0]?.unicodes).toEqual([])
+    expect(braceBatch[0]?.advance.width).toBe(550)
+    expect(braceBatch[0]?.contours[0]?.points[0]?.x).toBe(40)
   })
 
   it('maps source-backed designspace UFOs to their canonical source layers', async () => {

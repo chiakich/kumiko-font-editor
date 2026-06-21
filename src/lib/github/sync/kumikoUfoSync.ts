@@ -16,6 +16,7 @@ import type {
 import {
   deleteKumikoGlyphRecordBatch,
   listKumikoGlyphMetadataForProject,
+  listKumikoGlyphSpecialLayerMetadataForProject,
   listKumikoGlyphSyncMetadataForProject,
   listSyncDirtyKumikoGlyphIds,
   loadKumikoProjectRecord,
@@ -28,10 +29,12 @@ import type {
   KumikoGlyphLayerRecord,
   KumikoGlyphMetadataRecord,
   KumikoGlyphRecord,
+  KumikoGlyphSpecialLayerMetadata,
   KumikoProjectRecord,
 } from 'src/lib/project/kumikoProjectTypes'
 import {
   serializeDesignspace,
+  type DesignspaceRule,
   type DesignspaceSourceOut,
 } from 'src/lib/fontFormats/designspace'
 import {
@@ -115,10 +118,13 @@ export interface KumikoUfoExportUfo {
 }
 
 export interface KumikoUfoExportManifestUfo {
+  source: KumikoProjectUfoSource
   metadata: UfoMetadataRecord
   defaultLayer: UfoLayerRecord
   contents: Record<string, string>
   glyphIds: string[]
+  canonicalLayerId: string
+  extraGlyphs?: KumikoUfoExportExtraGlyph[]
   designspaceSource?: DesignspaceSourceOut
 }
 
@@ -139,12 +145,26 @@ export interface KumikoUfoExportStateUpdate {
   sourceHash: string | null
 }
 
+export interface KumikoUfoExportExtraGlyph {
+  glyphId: string
+  layerId: string
+  glyphName: string
+  fileName: string
+}
+
+interface KumikoUfoExportSourceEntry {
+  source: KumikoProjectUfoSource
+  designspaceSource?: DesignspaceSourceOut
+  glyphIds?: string[]
+  includeBracketExtras: boolean
+}
+
 const UFO_STATE_MARK_BATCH_SIZE = 256
 const GENERIC_UFO_ID = 'font-export'
 const DEFAULT_UFO_LAYER_ID = 'public.default'
 const DEFAULT_UFO_GLYPH_DIR = 'glyphs'
 
-type KumikoProjectUfoSource = NonNullable<
+export type KumikoProjectUfoSource = NonNullable<
   NonNullable<NonNullable<KumikoProjectRecord['sourceData']>['ufo']>['ufos']
 >[number]
 
@@ -213,6 +233,17 @@ const makeUniqueUfoDir = (
   usedNames.add(fileName.toLowerCase())
   return fileName
 }
+
+const sanitizeGlyphNamePart = (value: string) =>
+  Array.from(value.trim() || 'layer', (char) =>
+    char.charCodeAt(0) < 32 || /[\s<>:"/\\|?*]/.test(char) ? '_' : char
+  ).join('')
+
+const substituteGlyphName = (glyphId: string, layerId: string) =>
+  `${glyphId}.bracket.${sanitizeGlyphNamePart(layerId)}`
+
+const makeBraceUfoId = (glyphId: string, layerId: string) =>
+  `brace:${glyphId}:${layerId}`
 
 const getGenericExportSources = (
   project: KumikoProjectRecord
@@ -334,8 +365,13 @@ const getCanonicalLayerIdForUfo = (
   )
 }
 
-const getUfoSource = (project: KumikoProjectRecord, activeUfoId: string) => {
+const getUfoSource = (
+  project: KumikoProjectRecord,
+  activeUfoId: string,
+  sourceOverride?: KumikoProjectUfoSource
+) => {
   const source =
+    sourceOverride ??
     project.sourceData?.ufo?.ufos?.find(
       (candidate) => candidate.ufoId === activeUfoId
     ) ??
@@ -393,9 +429,10 @@ type KumikoUfoLayerContent = Pick<
 const makeContents = (
   project: KumikoProjectRecord,
   glyphs: Array<Pick<KumikoGlyphRecord, 'glyphId' | 'sourceData'>>,
-  activeUfoId: string
+  activeUfoId: string,
+  sourceOverride?: KumikoProjectUfoSource
 ) => {
-  const { source } = getUfoSource(project, activeUfoId)
+  const { source } = getUfoSource(project, activeUfoId, sourceOverride)
   const usedFileNames = new Set(
     Object.values(source.contents).map((fileName) => fileName.toLowerCase())
   )
@@ -411,25 +448,135 @@ const makeContents = (
   return contents
 }
 
+const makeBracketExtraGlyphs = (
+  bracketLayers: KumikoGlyphSpecialLayerMetadata[],
+  contents: Record<string, string>
+): KumikoUfoExportExtraGlyph[] => {
+  const usedFileNames = new Set(
+    Object.values(contents).map((fileName) => fileName.toLowerCase())
+  )
+  return bracketLayers.map((layer) => {
+    const glyphName = substituteGlyphName(layer.glyphId, layer.layerId)
+    const fileName = userNameToFileName(glyphName, usedFileNames, '.glif')
+    usedFileNames.add(fileName.toLowerCase())
+    return {
+      glyphId: layer.glyphId,
+      layerId: layer.layerId,
+      glyphName,
+      fileName,
+    }
+  })
+}
+
+const makeBracketRules = (
+  bracketLayers: KumikoGlyphSpecialLayerMetadata[]
+): DesignspaceRule[] =>
+  bracketLayers.map((layer) => ({
+    name: `${layer.glyphId}.${layer.layerId}`,
+    conditions: Object.fromEntries(
+      Object.entries(layer.bracketAxisRules ?? {}).map(([axis, rule]) => [
+        axis,
+        {
+          ...(rule.min !== undefined ? { minimum: rule.min } : {}),
+          ...(rule.max !== undefined ? { maximum: rule.max } : {}),
+        },
+      ])
+    ),
+    substitutions: [
+      {
+        name: layer.glyphId,
+        with: substituteGlyphName(layer.glyphId, layer.layerId),
+      },
+    ],
+  }))
+
+const mergeDesignspaceRules = (
+  existingRules: DesignspaceRule[],
+  generatedRules: DesignspaceRule[]
+) => {
+  const generatedNames = new Set(generatedRules.map((rule) => rule.name))
+  return [
+    ...existingRules.filter((rule) => !generatedNames.has(rule.name)),
+    ...generatedRules,
+  ]
+}
+
+const makeBraceUfoSourceEntries = (
+  braceLayers: KumikoGlyphSpecialLayerMetadata[],
+  usedDirs: Set<string>
+): KumikoUfoExportSourceEntry[] =>
+  braceLayers.map((layer) => {
+    const relativePath = makeUniqueUfoDir(
+      `${layer.glyphId}-${layer.layerId}.brace`,
+      usedDirs
+    )
+    return {
+      source: {
+        ufoId: makeBraceUfoId(layer.glyphId, layer.layerId),
+        relativePath,
+        defaultLayerId: layer.layerId,
+        layers: [
+          {
+            layerId: DEFAULT_UFO_LAYER_ID,
+            glyphDir: DEFAULT_UFO_GLYPH_DIR,
+          },
+        ],
+        contents: {
+          [layer.glyphId]: userNameToFileName(
+            layer.glyphId,
+            new Set(),
+            '.glif'
+          ),
+        },
+        glyphOrder: [layer.glyphId],
+        metainfo: null,
+        fontinfoExtra: null,
+        libExtra: null,
+        groupsExtra: null,
+        kerningExtra: null,
+      },
+      designspaceSource: {
+        filename: relativePath,
+        name: layer.name || layer.layerId,
+        styleName: layer.name || layer.layerId,
+        location: layer.braceLocation ?? {},
+      },
+      glyphIds: [layer.glyphId],
+      includeBracketExtras: false,
+    }
+  })
+
 const toUfoGlyphRecord = (input: {
   project: KumikoProjectRecord
   glyph: KumikoGlyphRecord
   activeUfoId: string
   fileName: string
+  source?: KumikoProjectUfoSource
+  layerId?: string
+  glyphName?: string
   targetLayer?: UfoLayerRecord
 }): UfoGlyphRecord => {
   const { source, defaultLayer } = getUfoSource(
     input.project,
-    input.activeUfoId
+    input.activeUfoId,
+    input.source
   )
   const targetLayer = input.targetLayer ?? defaultLayer
-  const layer = selectLayerForUfo(
-    input.glyph,
-    getCanonicalLayerIdForUfo(input.project, source)
-  )
+  const layer = input.layerId
+    ? input.glyph.layers[input.layerId]
+    : selectLayerForUfo(
+        input.glyph,
+        getCanonicalLayerIdForUfo(input.project, source)
+      )
   if (!layer) {
     throw new Error(`字圖 ${input.glyph.glyphId} 沒有可寫入 UFO 的 layer`)
   }
+  const isSyntheticBraceSource = source.ufoId.startsWith('brace:')
+  const isPrimaryDefaultGlyph =
+    targetLayer.layerId === defaultLayer.layerId &&
+    !input.glyphName &&
+    !input.layerId &&
+    !isSyntheticBraceSource
   const content: KumikoUfoLayerContent | null =
     targetLayer.layerId === defaultLayer.layerId
       ? {
@@ -454,24 +601,20 @@ const toUfoGlyphRecord = (input: {
     projectId: input.project.projectId,
     ufoId: source.ufoId,
     layerId: targetLayer.layerId,
-    glyphName: input.glyph.glyphId,
+    glyphName: input.glyphName ?? input.glyph.glyphId,
     fileName: input.fileName,
-    sourceHash:
-      targetLayer.layerId === defaultLayer.layerId
-        ? (glyphSource.sourceHash ?? layerSource.sourceHash ?? null)
-        : null,
-    remoteBlobSha:
-      targetLayer.layerId === defaultLayer.layerId
-        ? (glyphSource.remoteBlobSha ?? layerSource.remoteBlobSha ?? null)
-        : null,
-    unicodes:
-      targetLayer.layerId === defaultLayer.layerId ? input.glyph.unicodes : [],
+    sourceHash: isPrimaryDefaultGlyph
+      ? (glyphSource.sourceHash ?? layerSource.sourceHash ?? null)
+      : null,
+    remoteBlobSha: isPrimaryDefaultGlyph
+      ? (glyphSource.remoteBlobSha ?? layerSource.remoteBlobSha ?? null)
+      : null,
+    unicodes: isPrimaryDefaultGlyph ? input.glyph.unicodes : [],
     advance: {
       width: content.metrics.width,
-      height:
-        targetLayer.layerId === defaultLayer.layerId
-          ? (layer.verticalMetrics?.height ?? null)
-          : null,
+      height: isPrimaryDefaultGlyph
+        ? (layer.verticalMetrics?.height ?? null)
+        : null,
     },
     anchors: content.anchors.map((anchor) => ({
       x: anchor.x,
@@ -502,21 +645,17 @@ const toUfoGlyphRecord = (input: {
         yOffset: matrix.f,
       }
     }),
-    note:
-      targetLayer.layerId === defaultLayer.layerId
-        ? (layerSource.note ?? input.glyph.note ?? null)
-        : null,
+    note: isPrimaryDefaultGlyph
+      ? (layerSource.note ?? input.glyph.note ?? null)
+      : null,
     image:
-      targetLayer.layerId === defaultLayer.layerId && layer.image
+      isPrimaryDefaultGlyph && layer.image
         ? {
             ...layer.image,
             color: serializeUfoColor(layer.image.color),
           }
         : null,
-    lib:
-      targetLayer.layerId === defaultLayer.layerId
-        ? (layerSource.lib ?? null)
-        : null,
+    lib: isPrimaryDefaultGlyph ? (layerSource.lib ?? null) : null,
     dirty: input.glyph.syncDirty === 1,
     dirtyIndex: input.glyph.syncDirty,
     updatedAt: input.glyph.updatedAt,
@@ -651,9 +790,10 @@ const buildMetadata = (
   project: KumikoProjectRecord,
   activeUfoId: string,
   contents: Record<string, string>,
-  glyphMetadata: KumikoGlyphMetadataRecord[]
+  glyphMetadata: KumikoGlyphMetadataRecord[],
+  sourceOverride?: KumikoProjectUfoSource
 ): UfoMetadataRecord => {
-  const { source } = getUfoSource(project, activeUfoId)
+  const { source } = getUfoSource(project, activeUfoId, sourceOverride)
   const metadataFontData = makeProjectFontDataFromMetadata(
     project,
     glyphMetadata
@@ -672,7 +812,8 @@ const buildMetadata = (
     featuresText: project.features?.text ?? null,
     layers: source.layers,
     contents,
-    glyphOrder: project.glyphOrder,
+    glyphOrder:
+      source.glyphOrder.length > 0 ? source.glyphOrder : project.glyphOrder,
     updatedAt: project.updatedAt,
   }
 }
@@ -701,27 +842,79 @@ export const buildKumikoUfoExportManifest = async (
     throw new Error('找不到 Kumiko 專案')
   }
   const sourceBackedUfos = project.sourceData?.ufo?.ufos
-  const ufoSourceEntries = sourceBackedUfos?.length
-    ? sourceBackedUfos.map((source, index) => ({
-        source,
-        designspaceSource: getProjectDesignspaceSource(project, source, index),
-      }))
-    : getGenericExportSources(project)
+  const baseUfoSourceEntries: KumikoUfoExportSourceEntry[] =
+    sourceBackedUfos?.length
+      ? sourceBackedUfos.map((source, index) => ({
+          source,
+          designspaceSource: getProjectDesignspaceSource(
+            project,
+            source,
+            index
+          ),
+          includeBracketExtras: true,
+        }))
+      : getGenericExportSources(project).map((entry) => ({
+          ...entry,
+          includeBracketExtras: true,
+        }))
 
   const glyphs = orderGlyphExportMetadata(
     project,
     await listKumikoGlyphMetadataForProject(projectId)
   )
   const glyphIds = glyphs.map((glyph) => glyph.glyphId)
-  const ufos = ufoSourceEntries.map(({ source, designspaceSource }) => {
-    const contents = makeContents(project, glyphs, source.ufoId)
-    const metadata = buildMetadata(project, source.ufoId, contents, glyphs)
-    const { defaultLayer } = getUfoSource(project, source.ufoId)
+  const glyphIdSet = new Set(glyphIds)
+  const specialLayers = (
+    await listKumikoGlyphSpecialLayerMetadataForProject(projectId)
+  ).filter((layer) => glyphIdSet.has(layer.glyphId))
+  const braceLayers = specialLayers.filter(
+    (layer) => layer.type === 'brace' && layer.braceLocation
+  )
+  const bracketLayers = specialLayers.filter(
+    (layer) => layer.type === 'bracket' && layer.bracketAxisRules
+  )
+  const usedDirs = new Set(
+    baseUfoSourceEntries.map(({ source }) => source.relativePath.toLowerCase())
+  )
+  const braceUfoSourceEntries = makeBraceUfoSourceEntries(braceLayers, usedDirs)
+  const glyphsById = new Map(glyphs.map((glyph) => [glyph.glyphId, glyph]))
+  const ufoSourceEntries = [...baseUfoSourceEntries, ...braceUfoSourceEntries]
+  const ufos = ufoSourceEntries.map((entry) => {
+    const { source, designspaceSource } = entry
+    const entryGlyphIds = entry.glyphIds ?? glyphIds
+    const entryGlyphs = entryGlyphIds
+      .map((glyphId) => glyphsById.get(glyphId))
+      .filter((glyph): glyph is KumikoGlyphMetadataRecord => Boolean(glyph))
+    const contents = makeContents(project, entryGlyphs, source.ufoId, source)
+    const extraGlyphs = entry.includeBracketExtras
+      ? makeBracketExtraGlyphs(bracketLayers, contents)
+      : []
+    const metadataContents = {
+      ...contents,
+      ...Object.fromEntries(
+        extraGlyphs.map((glyph) => [glyph.glyphName, glyph.fileName])
+      ),
+    }
+    const metadata = buildMetadata(
+      project,
+      source.ufoId,
+      metadataContents,
+      entryGlyphs,
+      source
+    )
+    const { defaultLayer, canonicalLayerId } = getUfoSource(
+      project,
+      source.ufoId,
+      source
+    )
     return {
+      source,
       metadata,
       defaultLayer,
       contents,
-      glyphIds,
+      glyphIds: entryGlyphIds,
+      canonicalLayerId,
+      ...(extraGlyphs.length > 0 ? { extraGlyphs } : {}),
       designspaceSource,
     }
   })
@@ -729,7 +922,14 @@ export const buildKumikoUfoExportManifest = async (
     .map((ufo) => ufo.designspaceSource)
     .filter((source): source is DesignspaceSourceOut => Boolean(source))
   const needsDesignspace =
-    project.sourceFormat === 'designspace' || designspaceSources.length > 1
+    project.sourceFormat === 'designspace' ||
+    designspaceSources.length > 1 ||
+    braceUfoSourceEntries.length > 0 ||
+    bracketLayers.length > 0
+  const designspaceRules = mergeDesignspaceRules(
+    project.sourceData?.ufo?.designspace?.rules ?? [],
+    makeBracketRules(bracketLayers)
+  )
   const designspace =
     needsDesignspace && designspaceSources.length > 0
       ? {
@@ -739,14 +939,17 @@ export const buildKumikoUfoExportManifest = async (
           text: serializeDesignspace(
             project.axes,
             designspaceSources,
-            project.sourceData?.ufo?.designspace?.rules ?? []
+            designspaceRules
           ),
         }
       : null
   return {
     project,
     ufos,
-    totalGlyphs: ufos.reduce((sum, ufo) => sum + ufo.glyphIds.length, 0),
+    totalGlyphs: ufos.reduce(
+      (sum, ufo) => sum + ufo.glyphIds.length + (ufo.extraGlyphs?.length ?? 0),
+      0
+    ),
     designspace,
   }
 }
@@ -754,6 +957,7 @@ export const buildKumikoUfoExportManifest = async (
 export const loadKumikoUfoExportGlyphBatch = async (input: {
   project: KumikoProjectRecord
   activeUfoId: string
+  source?: KumikoProjectUfoSource
   contents: Record<string, string>
   glyphIds: string[]
   targetLayer?: UfoLayerRecord
@@ -765,7 +969,8 @@ export const loadKumikoUfoExportGlyphBatch = async (input: {
   )
   const { defaultLayer, canonicalLayerId } = getUfoSource(
     input.project,
-    input.activeUfoId
+    input.activeUfoId,
+    input.source
   )
   const targetLayer = input.targetLayer ?? defaultLayer
   return glyphs.flatMap((glyph) => {
@@ -781,8 +986,45 @@ export const loadKumikoUfoExportGlyphBatch = async (input: {
         project: input.project,
         glyph,
         activeUfoId: input.activeUfoId,
+        source: input.source,
         fileName: input.contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`,
         targetLayer,
+      }),
+    ]
+  })
+}
+
+export const loadKumikoUfoExportExtraGlyphBatch = async (input: {
+  project: KumikoProjectRecord
+  activeUfoId: string
+  source?: KumikoProjectUfoSource
+  extraGlyphs: KumikoUfoExportExtraGlyph[]
+  targetLayer?: UfoLayerRecord
+}): Promise<UfoGlyphRecord[]> => {
+  const uniqueGlyphIds = [
+    ...new Set(input.extraGlyphs.map((glyph) => glyph.glyphId)),
+  ]
+  const glyphs = await loadKumikoGlyphRecords(
+    uniqueGlyphIds.map((glyphId) =>
+      makeKumikoGlyphKey(input.project.projectId, glyphId)
+    )
+  )
+  const glyphsById = new Map(glyphs.map((glyph) => [glyph.glyphId, glyph]))
+  return input.extraGlyphs.flatMap((extraGlyph) => {
+    const glyph = glyphsById.get(extraGlyph.glyphId)
+    if (!glyph) {
+      return []
+    }
+    return [
+      toUfoGlyphRecord({
+        project: input.project,
+        glyph,
+        activeUfoId: input.activeUfoId,
+        source: input.source,
+        fileName: extraGlyph.fileName,
+        targetLayer: input.targetLayer,
+        layerId: extraGlyph.layerId,
+        glyphName: extraGlyph.glyphName,
       }),
     ]
   })
@@ -797,15 +1039,25 @@ export const buildKumikoUfoExportState = async (
       const defaultGlyphs = await loadKumikoUfoExportGlyphBatch({
         project: manifest.project,
         activeUfoId: ufo.metadata.ufoId,
+        source: ufo.source,
         contents: ufo.contents,
         glyphIds: ufo.glyphIds,
+      })
+      const extraGlyphs = await loadKumikoUfoExportExtraGlyphBatch({
+        project: manifest.project,
+        activeUfoId: ufo.metadata.ufoId,
+        source: ufo.source,
+        extraGlyphs: ufo.extraGlyphs ?? [],
+        targetLayer: ufo.defaultLayer,
       })
       return {
         metadata: ufo.metadata,
         layers: ufo.metadata.layers.map((layer) => ({
           layer,
           glyphs:
-            layer.layerId === ufo.defaultLayer.layerId ? defaultGlyphs : [],
+            layer.layerId === ufo.defaultLayer.layerId
+              ? [...defaultGlyphs, ...extraGlyphs]
+              : [],
         })),
       } satisfies KumikoUfoExportUfo
     })
