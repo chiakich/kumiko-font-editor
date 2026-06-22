@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { createDefaultOverviewCustomFilters } from 'src/lib/glyph/glyphOverview'
+import {
+  createDefaultOverviewCustomFilters,
+  type OverviewCustomFilter,
+} from 'src/lib/glyph/glyphOverview'
 import {
   loadAppOverviewCustomFilters,
   saveAppOverviewCustomFilters,
@@ -68,6 +71,34 @@ describe('overview custom filter app preferences', () => {
     saveAppOverviewCustomFilters([], storage)
 
     expect(loadAppOverviewCustomFilters(storage)).toEqual([])
+  })
+
+  it('drops obsolete seeded app filters while keeping current seeds', () => {
+    const storage = createMemoryStorage()
+    const obsoleteSeededFilter: OverviewCustomFilter = {
+      id: 'seeded:exporting',
+      mode: 'all',
+      name: 'Exporting',
+      rules: [
+        {
+          field: 'export',
+          id: 'export-is-true',
+          operator: 'is',
+          value: 'true',
+        },
+      ],
+      source: 'seeded',
+      sort: 'codePoint',
+    }
+
+    saveAppOverviewCustomFilters(
+      [...createDefaultOverviewCustomFilters(), obsoleteSeededFilter],
+      storage
+    )
+
+    expect(
+      loadAppOverviewCustomFilters(storage).map((filter) => filter.id)
+    ).toEqual(createDefaultOverviewCustomFilters().map((filter) => filter.id))
   })
 
   it('does not hydrate filters from project UI state', () => {

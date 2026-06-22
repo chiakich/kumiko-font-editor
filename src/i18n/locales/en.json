@@ -255,8 +255,8 @@
       "deleteRule": "Delete rule",
       "deleteFilter": "Delete filter",
       "save": "Save",
-      "booleanTrue": "Yes",
-      "booleanFalse": "No",
+      "booleanTrue": "true",
+      "booleanFalse": "false",
       "fields": {
         "glyphName": "Glyph name",
         "unicode": "Unicode / character",

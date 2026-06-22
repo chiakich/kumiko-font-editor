@@ -17,6 +17,16 @@ const getLocalStorage = (): StorageLike | null => {
   }
 }
 
+const currentSeededFilterIds = () =>
+  new Set(createDefaultOverviewCustomFilters().map((filter) => filter.id))
+
+const migrateAppOverviewCustomFilters = (filters: OverviewCustomFilter[]) => {
+  const seededFilterIds = currentSeededFilterIds()
+  return filters.filter(
+    (filter) => filter.source !== 'seeded' || seededFilterIds.has(filter.id)
+  )
+}
+
 export const loadAppOverviewCustomFilters = (
   storage: StorageLike | null = getLocalStorage()
 ): OverviewCustomFilter[] => {
@@ -30,9 +40,14 @@ export const loadAppOverviewCustomFilters = (
       return createDefaultOverviewCustomFilters()
     }
     const parsedFilters = JSON.parse(rawFilters) as unknown
-    return Array.isArray(parsedFilters)
-      ? normalizeOverviewCustomFilters(parsedFilters)
-      : createDefaultOverviewCustomFilters()
+    if (!Array.isArray(parsedFilters)) {
+      return createDefaultOverviewCustomFilters()
+    }
+    const filters = migrateAppOverviewCustomFilters(
+      normalizeOverviewCustomFilters(parsedFilters)
+    )
+    saveAppOverviewCustomFilters(filters, storage)
+    return filters
   } catch {
     return createDefaultOverviewCustomFilters()
   }

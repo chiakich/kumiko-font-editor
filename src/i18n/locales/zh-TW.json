@@ -255,8 +255,8 @@
       "deleteRule": "刪除規則",
       "deleteFilter": "刪除篩選器",
       "save": "儲存",
-      "booleanTrue": "是",
-      "booleanFalse": "否",
+      "booleanTrue": "true",
+      "booleanFalse": "false",
       "fields": {
         "glyphName": "Glyph 名稱",
         "unicode": "Unicode / 字元",

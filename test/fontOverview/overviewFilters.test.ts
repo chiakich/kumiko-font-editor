@@ -11,6 +11,7 @@ import { normalizeGlyphToLayers } from 'src/store'
 const makeGlyph = (input: {
   anchors?: string[]
   category?: string | null
+  color?: GlyphData['color']
   componentRefs?: string[]
   drawn?: boolean
   export?: boolean
@@ -26,6 +27,7 @@ const makeGlyph = (input: {
     id: input.id,
     name: input.id,
     category: input.category,
+    color: input.color,
     componentRefs: (input.componentRefs ?? []).map((glyphId) => ({
       glyphId,
       id: `component-${glyphId}`,
@@ -182,7 +184,11 @@ describe('Glyphs-like overview tree', () => {
       id: 'uni4E00',
       unicode: '4E00',
     }),
-    makeGlyph({ id: 'logo.alt', production: 'logoAlt' }),
+    makeGlyph({
+      color: [0.9, 0.2, 0.2, 1],
+      id: 'logo.alt',
+      production: 'logoAlt',
+    }),
   ]
 
   const tree = getGlyphOverviewTree(glyphs, {
@@ -234,20 +240,9 @@ describe('Glyphs-like overview tree', () => {
       ids(findNode(tree, seededFilterNodeId('empty'))?.glyphs ?? [])
     ).toEqual(['uni4E00', 'logo.alt'])
     expect(
-      ids(findNode(tree, seededFilterNodeId('not-exporting'))?.glyphs ?? [])
-    ).toEqual(['uni4E00'])
-    expect(
-      ids(findNode(tree, seededFilterNodeId('has-components'))?.glyphs ?? [])
-    ).toEqual(['Aacute'])
-    expect(
-      ids(findNode(tree, seededFilterNodeId('has-anchors'))?.glyphs ?? [])
-    ).toEqual(['acute'])
-    expect(
-      ids(findNode(tree, seededFilterNodeId('has-hints'))?.glyphs ?? [])
-    ).toEqual(['acute'])
-    expect(
-      ids(findNode(tree, seededFilterNodeId('has-metrics-keys'))?.glyphs ?? [])
-    ).toEqual(['acute'])
+      ids(findNode(tree, seededFilterNodeId('has-color-label'))?.glyphs ?? [])
+    ).toEqual(['logo.alt'])
+    expect(findNode(tree, seededFilterNodeId('not-exporting'))).toBeNull()
   })
 
   it('adds custom filter sections under smart filters', () => {
