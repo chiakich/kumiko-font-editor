@@ -22,7 +22,15 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import { ArrowRight, Plus, Trash } from 'iconoir-react'
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidingTabList } from 'src/features/common/SlidingTabList'
 import type {
@@ -511,7 +519,65 @@ function OverviewCustomFilterModalForm({
   const { t } = useTranslation()
   const [draft, setDraft] = useState<OverviewCustomFilterDraft>(initialDraft)
   const [activeTabIndex, setActiveTabIndex] = useState(filter ? 1 : 0)
+  const presetScrollRef = useRef<HTMLDivElement | null>(null)
+  const [presetScrollMask, setPresetScrollMask] = useState({
+    canScrollDown: false,
+    canScrollUp: false,
+  })
   const presets = useMemo(() => createOverviewCustomFilterPresets(), [])
+
+  const updatePresetScrollMask = useCallback(() => {
+    const scrollContainer = presetScrollRef.current
+    if (!scrollContainer) {
+      setPresetScrollMask({ canScrollDown: false, canScrollUp: false })
+      return
+    }
+
+    const maxScrollTop =
+      scrollContainer.scrollHeight - scrollContainer.clientHeight
+    const nextMask = {
+      canScrollDown: maxScrollTop - scrollContainer.scrollTop > 1,
+      canScrollUp: scrollContainer.scrollTop > 1,
+    }
+
+    setPresetScrollMask((current) =>
+      current.canScrollDown === nextMask.canScrollDown &&
+      current.canScrollUp === nextMask.canScrollUp
+        ? current
+        : nextMask
+    )
+  }, [])
+
+  useEffect(() => {
+    if (activeTabIndex !== 0) {
+      return
+    }
+
+    updatePresetScrollMask()
+    const scrollContainer = presetScrollRef.current
+    if (!scrollContainer) {
+      return
+    }
+
+    const resizeObserver = new ResizeObserver(updatePresetScrollMask)
+    resizeObserver.observe(scrollContainer)
+    window.addEventListener('resize', updatePresetScrollMask)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updatePresetScrollMask)
+    }
+  }, [activeTabIndex, presets.length, updatePresetScrollMask])
+
+  const presetScrollMaskImage = useMemo(() => {
+    const topMask = presetScrollMask.canScrollUp
+      ? 'transparent, black 72px'
+      : 'black 0'
+    const bottomMask = presetScrollMask.canScrollDown
+      ? 'black calc(100% - 72px), transparent'
+      : 'black 100%'
+    return `linear-gradient(to bottom, ${topMask}, ${bottomMask})`
+  }, [presetScrollMask.canScrollDown, presetScrollMask.canScrollUp])
 
   const canSave = useMemo(
     () =>
@@ -622,15 +688,15 @@ function OverviewCustomFilterModalForm({
           <TabPanels h="100%">
             <TabPanel h="100%" p={0} position="relative">
               <Box
+                ref={presetScrollRef}
                 h="100%"
                 overflow="auto"
                 pb={8}
                 pr={1}
+                onScroll={updatePresetScrollMask}
                 sx={{
-                  maskImage:
-                    'linear-gradient(to bottom, transparent, black 72px, black calc(100% - 72px), transparent)',
-                  WebkitMaskImage:
-                    'linear-gradient(to bottom, transparent, black 72px, black calc(100% - 72px), transparent)',
+                  maskImage: presetScrollMaskImage,
+                  WebkitMaskImage: presetScrollMaskImage,
                 }}
               >
                 <PresetFilterList
