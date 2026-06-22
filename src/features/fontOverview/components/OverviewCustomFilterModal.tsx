@@ -13,7 +13,6 @@ import {
   ModalFooter,
   ModalOverlay,
   Select,
-  SimpleGrid,
   Stack,
   TabPanel,
   TabPanels,
@@ -22,7 +21,7 @@ import {
   Tooltip,
   VStack,
 } from '@chakra-ui/react'
-import { Plus, Trash } from 'iconoir-react'
+import { ArrowRight, Plus, Trash } from 'iconoir-react'
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidingTabList } from 'src/features/common/SlidingTabList'
@@ -202,76 +201,92 @@ const getPresetSummary = (
 }
 
 interface PresetFilterListProps {
-  activePresetId: string | null
-  onApplyPreset: (preset: OverviewCustomFilterPreset) => void
+  onCreatePreset: (preset: OverviewCustomFilterPreset) => void
   presets: OverviewCustomFilterPreset[]
 }
 
-function PresetFilterList({
-  activePresetId,
-  onApplyPreset,
-  presets,
-}: PresetFilterListProps) {
+function PresetFilterList({ onCreatePreset, presets }: PresetFilterListProps) {
   const { t } = useTranslation()
 
   return (
-    <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={2}>
+    <VStack align="stretch" spacing={0}>
       {presets.map((preset) => {
-        const isActive = activePresetId === preset.id
-        const selectedBg = 'field.ink'
-        const selectedColor = 'field.yellow.300'
-        const mutedColor = isActive ? 'field.panelMuted' : 'field.muted'
-
         return (
           <Button
             key={preset.id}
-            alignItems="center"
-            bg={isActive ? selectedBg : 'white'}
-            borderColor={isActive ? 'field.ink' : 'field.haze'}
-            borderRadius="sm"
-            borderWidth={2}
-            color={isActive ? selectedColor : 'field.ink'}
+            alignItems="stretch"
+            bg="transparent"
+            borderBottom="1px solid"
+            borderColor="field.haze"
+            borderRadius={0}
+            color="field.ink"
             h="auto"
-            justifyContent="center"
-            minH="116px"
-            p={3}
+            justifyContent="flex-start"
+            minH="58px"
+            px={3}
+            py={2}
             position="relative"
-            textAlign="center"
-            variant="outline"
+            role="group"
+            textAlign="left"
+            transition="min-height 180ms ease, background-color 180ms ease"
+            variant="ghost"
             whiteSpace="normal"
             _active={{
-              bg: isActive ? selectedBg : 'field.panel',
-              color: isActive ? selectedColor : 'field.ink',
+              bg: 'field.panelMuted',
+              color: 'field.ink',
             }}
             _focusVisible={{
               boxShadow: '0 0 0 2px var(--chakra-colors-field-ink)',
             }}
             _hover={{
-              bg: isActive ? selectedBg : 'field.panel',
-              borderColor: 'field.ink',
-              color: isActive ? selectedColor : 'field.ink',
+              bg: 'field.panelMuted',
+              color: 'field.ink',
+              minH: '82px',
             }}
-            onClick={() => onApplyPreset(preset)}
+            onClick={() => onCreatePreset(preset)}
           >
-            <VStack align="center" spacing={2} w="100%">
-              <Text fontSize="sm" fontWeight="900" lineHeight="1.2">
+            <HStack align="center" flex={1} minW={0} spacing={4} w="100%">
+              <Text
+                flexShrink={0}
+                fontSize="md"
+                fontWeight="900"
+                lineHeight="1.2"
+                minW={{ base: '96px', md: '132px' }}
+              >
                 {t(preset.labelKey)}
               </Text>
               <Text
-                color={mutedColor}
+                color="field.muted"
+                flex={1}
                 fontFamily="mono"
                 fontSize="xs"
                 fontWeight="normal"
                 lineHeight="1.35"
-                noOfLines={3}
+                maxH="18px"
+                minW={0}
+                overflow="hidden"
+                transition="max-height 180ms ease"
+                _groupHover={{ maxH: '48px' }}
               >
                 {getPresetSummary(preset, t)}
               </Text>
-            </VStack>
+              <Box
+                color="field.muted"
+                flexShrink={0}
+                transform="translateX(0)"
+                transition="color 180ms ease, transform 180ms ease"
+                _groupHover={{
+                  color: 'field.ink',
+                  transform: 'translateX(3px)',
+                }}
+              >
+                <ArrowRight width={18} height={18} strokeWidth={2.2} />
+              </Box>
+            </HStack>
           </Button>
         )
       })}
-    </SimpleGrid>
+    </VStack>
   )
 }
 
@@ -477,9 +492,6 @@ function OverviewCustomFilterModalForm({
   const { t } = useTranslation()
   const [draft, setDraft] = useState<OverviewCustomFilterDraft>(initialDraft)
   const [activeTabIndex, setActiveTabIndex] = useState(filter ? 1 : 0)
-  const [activePresetId, setActivePresetId] = useState<string | null>(
-    filter?.id.startsWith('seeded:') ? filter.id.replace('seeded:', '') : null
-  )
   const presets = useMemo(() => createOverviewCustomFilterPresets(), [])
 
   const canSave = useMemo(
@@ -494,7 +506,6 @@ function OverviewCustomFilterModalForm({
     ruleId: string,
     patch: Partial<OverviewCustomFilterRule>
   ) => {
-    setActivePresetId(null)
     setDraft((current) => ({
       ...current,
       rules: current.rules.map((rule) => {
@@ -509,16 +520,9 @@ function OverviewCustomFilterModalForm({
     }))
   }
 
-  const setAdvancedDraft: Dispatch<
-    SetStateAction<OverviewCustomFilterDraft>
-  > = (nextDraft) => {
-    setActivePresetId(null)
-    setDraft(nextDraft)
-  }
-
-  const handleApplyPreset = (preset: OverviewCustomFilterPreset) => {
-    setActivePresetId(preset.id)
-    setDraft(createFilterDraftFromPreset(preset, t(preset.labelKey)))
+  const handleCreatePreset = (preset: OverviewCustomFilterPreset) => {
+    onCreateFilter(createFilterDraftFromPreset(preset, t(preset.labelKey)))
+    onClose()
   }
 
   const handleSave = () => {
@@ -573,59 +577,68 @@ function OverviewCustomFilterModalForm({
           gap={4}
           justify="space-between"
           pb={3}
-          pr={14}
+          pr={16}
           pt={5}
           px={6}
         >
-          <Text as="h2" fontSize="xl" fontWeight="900">
-            {filter
-              ? t('fontOverview.customFilter.editTitle')
-              : t('fontOverview.customFilter.createTitle')}
+          <Text as="h2" flexShrink={0} fontSize="xl" fontWeight="900">
+            {activeTabIndex === 0
+              ? t('fontOverview.customFilter.createTitle')
+              : filter
+                ? t('fontOverview.customFilter.editTitle')
+                : t('fontOverview.customFilter.createTitle')}
           </Text>
-          <SlidingTabList
-            activeIndex={activeTabIndex}
-            labels={[
-              t('fontOverview.customFilter.presetTab'),
-              t('fontOverview.customFilter.advancedTab'),
-            ]}
-            layoutGroupId="overview-custom-filter-modal-tabs"
-          />
+          <Box minW={0}>
+            <SlidingTabList
+              activeIndex={activeTabIndex}
+              labels={[
+                t('fontOverview.customFilter.presetTab'),
+                t('fontOverview.customFilter.advancedTab'),
+              ]}
+              layoutGroupId="overview-custom-filter-modal-tabs"
+            />
+          </Box>
         </HStack>
         <ModalBody flex={1} minH={0} pb={5}>
           <TabPanels h="100%">
             <TabPanel h="100%" overflow="auto" p={0} pr={1}>
               <PresetFilterList
-                activePresetId={activePresetId}
                 presets={presets}
-                onApplyPreset={handleApplyPreset}
+                onCreatePreset={handleCreatePreset}
               />
             </TabPanel>
             <TabPanel h="100%" overflow="auto" p={0} pr={1}>
               <AdvancedFilterFields
                 draft={draft}
-                setDraft={setAdvancedDraft}
+                setDraft={setDraft}
                 updateRule={updateRule}
               />
             </TabPanel>
           </TabPanels>
         </ModalBody>
-        <ModalFooter justifyContent="space-between" gap={3}>
-          <Box>
-            {filter ? (
-              <Button colorScheme="red" variant="ghost" onClick={handleDelete}>
-                {t('fontOverview.customFilter.deleteFilter')}
+        {activeTabIndex === 1 ? (
+          <ModalFooter justifyContent="space-between" gap={3}>
+            <Box>
+              {filter ? (
+                <Button
+                  colorScheme="red"
+                  variant="ghost"
+                  onClick={handleDelete}
+                >
+                  {t('fontOverview.customFilter.deleteFilter')}
+                </Button>
+              ) : null}
+            </Box>
+            <HStack spacing={3}>
+              <Button variant="ghost" onClick={onClose}>
+                {t('fontOverview.cancel')}
               </Button>
-            ) : null}
-          </Box>
-          <HStack spacing={3}>
-            <Button variant="ghost" onClick={onClose}>
-              {t('fontOverview.cancel')}
-            </Button>
-            <Button isDisabled={!canSave} onClick={handleSave}>
-              {t('fontOverview.customFilter.save')}
-            </Button>
-          </HStack>
-        </ModalFooter>
+              <Button isDisabled={!canSave} onClick={handleSave}>
+                {t('fontOverview.customFilter.save')}
+              </Button>
+            </HStack>
+          </ModalFooter>
+        ) : null}
       </Tabs>
     </ModalContent>
   )
