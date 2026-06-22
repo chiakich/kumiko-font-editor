@@ -520,32 +520,30 @@ function OverviewCustomFilterModalForm({
   const [draft, setDraft] = useState<OverviewCustomFilterDraft>(initialDraft)
   const [activeTabIndex, setActiveTabIndex] = useState(filter ? 1 : 0)
   const presetScrollRef = useRef<HTMLDivElement | null>(null)
-  const [presetScrollMask, setPresetScrollMask] = useState({
-    canScrollDown: false,
-    canScrollUp: false,
-  })
   const presets = useMemo(() => createOverviewCustomFilterPresets(), [])
 
   const updatePresetScrollMask = useCallback(() => {
     const scrollContainer = presetScrollRef.current
     if (!scrollContainer) {
-      setPresetScrollMask({ canScrollDown: false, canScrollUp: false })
       return
     }
 
     const maxScrollTop =
       scrollContainer.scrollHeight - scrollContainer.clientHeight
-    const nextMask = {
-      canScrollDown: maxScrollTop - scrollContainer.scrollTop > 1,
-      canScrollUp: scrollContainer.scrollTop > 1,
-    }
+    const canScrollDown = maxScrollTop - scrollContainer.scrollTop > 1
+    const canScrollUp = scrollContainer.scrollTop > 1
+    const topMask = canScrollUp ? 'transparent, black 72px' : 'black 0'
+    const bottomMask = canScrollDown
+      ? 'black calc(100% - 72px), transparent'
+      : 'black 100%'
+    const maskImage = `linear-gradient(to bottom, ${topMask}, ${bottomMask})`
 
-    setPresetScrollMask((current) =>
-      current.canScrollDown === nextMask.canScrollDown &&
-      current.canScrollUp === nextMask.canScrollUp
-        ? current
-        : nextMask
-    )
+    if (
+      scrollContainer.style.getPropertyValue('--preset-scroll-mask') !==
+      maskImage
+    ) {
+      scrollContainer.style.setProperty('--preset-scroll-mask', maskImage)
+    }
   }, [])
 
   useEffect(() => {
@@ -568,16 +566,6 @@ function OverviewCustomFilterModalForm({
       window.removeEventListener('resize', updatePresetScrollMask)
     }
   }, [activeTabIndex, presets.length, updatePresetScrollMask])
-
-  const presetScrollMaskImage = useMemo(() => {
-    const topMask = presetScrollMask.canScrollUp
-      ? 'transparent, black 72px'
-      : 'black 0'
-    const bottomMask = presetScrollMask.canScrollDown
-      ? 'black calc(100% - 72px), transparent'
-      : 'black 100%'
-    return `linear-gradient(to bottom, ${topMask}, ${bottomMask})`
-  }, [presetScrollMask.canScrollDown, presetScrollMask.canScrollUp])
 
   const canSave = useMemo(
     () =>
@@ -695,8 +683,10 @@ function OverviewCustomFilterModalForm({
                 pr={1}
                 onScroll={updatePresetScrollMask}
                 sx={{
-                  maskImage: presetScrollMaskImage,
-                  WebkitMaskImage: presetScrollMaskImage,
+                  maskImage:
+                    'var(--preset-scroll-mask, linear-gradient(to bottom, black, black))',
+                  WebkitMaskImage:
+                    'var(--preset-scroll-mask, linear-gradient(to bottom, black, black))',
                 }}
               >
                 <PresetFilterList
