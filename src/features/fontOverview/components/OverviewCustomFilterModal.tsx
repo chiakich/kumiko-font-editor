@@ -289,11 +289,14 @@ function PresetFilterList({ onCreatePreset, presets }: PresetFilterListProps) {
               <Box
                 color="field.muted"
                 flexShrink={0}
-                transform="translateX(0)"
-                transition="color 180ms ease, transform 180ms ease"
+                opacity={0.45}
+                transform="scale(1)"
+                transformOrigin="center"
+                transition="color 180ms ease, opacity 180ms ease, transform 180ms ease"
                 _groupHover={{
                   color: 'field.ink',
-                  transform: 'translateX(8px)',
+                  opacity: 1,
+                  transform: 'scale(1.16)',
                 }}
               >
                 <ArrowRight width={24} height={24} strokeWidth={2.2} />
