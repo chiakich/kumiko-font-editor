@@ -17,7 +17,7 @@ export interface ParsedOverviewGridSizeInput {
 }
 
 export const DEFAULT_OVERVIEW_GRID_SIZE_PX = 120
-export const MIN_OVERVIEW_GRID_SIZE_PX = 56
+export const MIN_OVERVIEW_GRID_SIZE_PX = 12
 export const MAX_OVERVIEW_GRID_SIZE_PX = 280
 export const OVERVIEW_GRID_SIZE_STEP_BY_UNIT: Record<
   OverviewGridSizeUnit,
@@ -78,7 +78,7 @@ export const formatOverviewGridSizeInput = (
   const formattedValue = Number.isInteger(rounded)
     ? String(rounded)
     : rounded.toFixed(1)
-  return unit === 'pt' ? `${formattedValue}pt` : formattedValue
+  return `${formattedValue} ${unit}`
 }
 
 export const buildOverviewGridZoomLayout = (
@@ -86,10 +86,10 @@ export const buildOverviewGridZoomLayout = (
 ): OverviewGridZoomLayout => {
   const cardMinWidth = Math.round(clampOverviewGridSizePx(inputSizePx))
   const showGlyphName = cardMinWidth >= GLYPH_NAME_HIDE_THRESHOLD_PX
-  const gap = Math.round(clampNumber(cardMinWidth / 10, 6, 18))
+  const gap = Math.round(clampNumber(cardMinWidth / 10, 2, 18))
   const previewHeight = showGlyphName
     ? Math.max(88, Math.round(cardMinWidth * 0.9))
-    : Math.max(44, cardMinWidth + 4)
+    : Math.max(12, cardMinWidth + 4)
   const cardHeight = showGlyphName ? previewHeight + 36 : previewHeight + 8
 
   return {

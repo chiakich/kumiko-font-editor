@@ -1,5 +1,5 @@
 import { Grid, GridItem } from '@chakra-ui/react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { ListRange } from 'react-virtuoso'
 import { useStore, type GlyphData } from 'src/store'
@@ -41,6 +41,8 @@ import {
   parseOverviewGridSizeInput,
   type OverviewGridSizeUnit,
 } from 'src/features/fontOverview/utils/overviewGridZoom'
+
+const OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS = 250
 
 export function FontOverviewScreen() {
   useHistoryShortcuts()
@@ -302,28 +304,36 @@ export function FontOverviewScreen() {
   const applyOverviewGridSizePx = useCallback(
     (nextSizePx: number) => {
       const clampedSizePx = clampOverviewGridSizePx(nextSizePx)
-      resetGridState()
-      setOverviewGridSizePx(clampedSizePx)
+      if (clampedSizePx !== overviewGridSizePx) {
+        resetGridState()
+        setOverviewGridSizePx(clampedSizePx)
+      }
       return clampedSizePx
     },
-    [resetGridState]
+    [overviewGridSizePx, resetGridState]
   )
 
-  const handleOverviewGridSizeInputChange = useCallback(
-    (value: string) => {
-      setOverviewGridSizeInput(value)
-      const parsedInput = parseOverviewGridSizeInput(value)
-      if (parsedInput === null) {
-        return
-      }
+  const handleOverviewGridSizeInputChange = useCallback((value: string) => {
+    setOverviewGridSizeInput(value)
+  }, [])
 
+  useEffect(() => {
+    const parsedInput = parseOverviewGridSizeInput(overviewGridSizeInput)
+    if (parsedInput === null) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
       applyOverviewGridSizePx(
         overviewGridSizeUnitToPx(parsedInput.value, parsedInput.unit)
       )
       setOverviewGridSizeUnit(parsedInput.unit)
-    },
-    [applyOverviewGridSizePx]
-  )
+    }, OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [applyOverviewGridSizePx, overviewGridSizeInput])
 
   const handleOverviewGridSizeInputBlur = useCallback(() => {
     const parsedInput = parseOverviewGridSizeInput(overviewGridSizeInput)

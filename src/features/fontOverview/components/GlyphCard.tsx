@@ -74,6 +74,7 @@ export const GlyphCard = memo(function GlyphCard({
           justify="center"
           h={`${previewHeight}px`}
           minH={0}
+          overflow="hidden"
           borderRadius="sm"
         >
           <Box
