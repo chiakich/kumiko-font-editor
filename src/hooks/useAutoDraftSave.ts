@@ -2,12 +2,34 @@ import { useEffect, useRef } from 'react'
 import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
 import { buildCurrentDraftFlushInput } from 'src/lib/project/currentDraftFlush'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
-import { useStore } from 'src/store'
+import {
+  useStore,
+  type PersistenceQueueState,
+  type PersistenceStatus,
+} from 'src/store'
 
 export const AUTO_DRAFT_SAVE_DELAY_MS = 10_000
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'Auto draft save failed.'
+
+export const hasBlockingDraftChanges = (queue: PersistenceQueueState) =>
+  queue.projectQueued ||
+  queue.glyphIds.length > 0 ||
+  queue.deletedGlyphIds.length > 0
+
+export const shouldBlockBeforeUnload = ({
+  isDirty,
+  persistenceQueue,
+  persistenceStatus,
+}: {
+  isDirty: boolean
+  persistenceQueue: PersistenceQueueState
+  persistenceStatus: PersistenceStatus
+}) =>
+  isDirty &&
+  persistenceStatus !== 'saved' &&
+  hasBlockingDraftChanges(persistenceQueue)
 
 export function useAutoDraftSave() {
   const fontData = useStore((state) => state.fontData)
@@ -115,11 +137,20 @@ export function useAutoDraftSave() {
       })
     }
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    const shouldBlock = shouldBlockBeforeUnload({
+      isDirty,
+      persistenceQueue,
+      persistenceStatus,
+    })
+    if (shouldBlock) {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+    }
     window.addEventListener('pagehide', handlePageHide)
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      if (shouldBlock) {
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+      }
       window.removeEventListener('pagehide', handlePageHide)
     }
-  }, [flushCurrentDraft, isDirty, persistenceStatus])
+  }, [flushCurrentDraft, isDirty, persistenceQueue, persistenceStatus])
 }
