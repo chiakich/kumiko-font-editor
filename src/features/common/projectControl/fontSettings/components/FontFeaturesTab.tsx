@@ -15,6 +15,7 @@ import {
   buildAutoFeatureSuggestions,
   generateFea,
   ignoreAutoFeatureSuggestion,
+  setRawFeatureTextSource,
   validateFeatures,
   type AutoFeatureSuggestion,
   type ExportPolicy,
@@ -72,7 +73,11 @@ export function FontFeaturesTab({
   }
 
   const updateRawFeatureText = (rawFeatureText: string) => {
-    onOpenTypeFeaturesChange({ ...openTypeFeatures, rawFeatureText })
+    onOpenTypeFeaturesChange(
+      setRawFeatureTextSource(openTypeFeatures, rawFeatureText, {
+        origin: 'manual-input',
+      })
+    )
   }
 
   const selectedFeature =

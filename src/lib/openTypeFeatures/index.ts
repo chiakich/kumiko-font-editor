@@ -51,6 +51,12 @@ export {
   hasExportableFeatureText,
   selectUfoFeatureText,
 } from 'src/lib/openTypeFeatures/ufoFeatureText'
+export {
+  RAW_FEATURE_TEXT_SOURCE_ID,
+  createCompiledTableSourceSection,
+  createRawFeatureTextSourceSection,
+  setRawFeatureTextSource,
+} from 'src/lib/openTypeFeatures/featureSourceSections'
 export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 export { parseGdefTable } from 'src/lib/openTypeFeatures/gdefParser'
 export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'

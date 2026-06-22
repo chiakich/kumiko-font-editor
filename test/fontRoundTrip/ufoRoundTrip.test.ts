@@ -120,6 +120,19 @@ describe('UFO import → export → reimport round-trip', () => {
     expect(first.fontData.openTypeFeatures?.rawFeatureText).toBe(
       originalFeatureText
     )
+    expect(first.fontData.openTypeFeatures?.sourceSections).toMatchObject([
+      {
+        id: 'source_raw_feature_text',
+        kind: 'ufo-fea',
+        origin: 'ufo-import',
+        format: 'fea',
+        stage: 'source',
+        status: 'raw',
+        path: 'features.fea',
+        textRef: 'rawFeatureText',
+        preservationPolicy: 'editable-rebuild',
+      },
+    ])
 
     const blob = await exportCanonicalFontDataAsUfoZip({
       fontData: first.fontData,

@@ -3,6 +3,7 @@ import {
   readSfntTableDirectory,
 } from 'src/lib/openTypeFeatures/binaryReader'
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { createCompiledTableSourceSection } from 'src/lib/openTypeFeatures/featureSourceSections'
 import {
   createLookupProvenance,
   parseLayoutTableInventory,
@@ -25,6 +26,7 @@ import type {
   FeatureDiagnostic,
   FeatureEntry,
   FeatureRecord,
+  FeatureSourceSection,
   FontFingerprint,
   GlyphClass,
   GposLookupType,
@@ -334,6 +336,83 @@ const mergeFeatureRecords = (records: FeatureRecord[]) => {
   return Array.from(merged.values())
 }
 
+const getFeatureIdsForLookupIds = (
+  features: FeatureRecord[],
+  lookupIds: Set<string>
+) =>
+  features
+    .filter((feature) =>
+      feature.entries.some((entry) =>
+        entry.lookupIds.some((lookupId) => lookupIds.has(lookupId))
+      )
+    )
+    .map((feature) => feature.id)
+
+const toCompiledLayoutSourceSections = (
+  inventories: LayoutTableInventory[],
+  state: OpenTypeFeaturesState,
+  diagnostics: FeatureDiagnostic[]
+): FeatureSourceSection[] => {
+  const sections: FeatureSourceSection[] = []
+
+  for (const inventory of inventories) {
+    const lookupIds = state.lookups
+      .filter((lookup) => lookup.table === inventory.table)
+      .map((lookup) => lookup.id)
+    const lookupIdSet = new Set(lookupIds)
+    const unsupportedLookupIds = state.unsupportedLookups
+      .filter((lookup) => lookup.table === inventory.table)
+      .map((lookup) => lookup.id)
+    const diagnosticIds = diagnostics
+      .filter(
+        (diagnostic) =>
+          diagnostic.id.includes(inventory.table.toLowerCase()) ||
+          diagnostic.message.includes(inventory.table)
+      )
+      .map((diagnostic) => diagnostic.id)
+
+    sections.push(
+      createCompiledTableSourceSection({
+        table: inventory.table,
+        featureIds: getFeatureIdsForLookupIds(state.features, lookupIdSet),
+        lookupIds,
+        unsupportedLookupIds,
+        diagnosticIds,
+        meta: {
+          tableOffset: inventory.tableOffset,
+          featureCount: inventory.features.length,
+          lookupCount: inventory.lookups.length,
+          languageCount: inventory.languages.length,
+          featureVariationsPresent:
+            inventory.featureVariationsOffset !== undefined,
+        },
+      })
+    )
+  }
+
+  if (state.gdef) {
+    sections.push(
+      createCompiledTableSourceSection({
+        table: 'GDEF',
+        diagnosticIds: diagnostics
+          .filter(
+            (diagnostic) =>
+              diagnostic.id.includes('gdef') ||
+              diagnostic.message.includes('GDEF')
+          )
+          .map((diagnostic) => diagnostic.id),
+        meta: {
+          hasGlyphClasses: Boolean(state.gdef.glyphClasses),
+          markGlyphSetCount: state.gdef.markGlyphSets?.length ?? 0,
+          ligatureCaretCount: state.gdef.ligatureCarets?.length ?? 0,
+        },
+      })
+    )
+  }
+
+  return sections
+}
+
 export const extractBinaryFeatures = (
   buffer: ArrayBuffer,
   fontFingerprint: FontFingerprint | null,
@@ -414,6 +493,11 @@ export const extractBinaryFeatures = (
   )
   state.gdef = parsedGdef?.gdef ?? null
   state.diagnostics = diagnostics
+  state.sourceSections = toCompiledLayoutSourceSections(
+    inventories,
+    state,
+    diagnostics
+  )
 
   return state
 }

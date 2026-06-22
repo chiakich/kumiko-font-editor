@@ -35,6 +35,9 @@ const countErrors = (diagnostics: FeatureDiagnostic[]) =>
 
 const hasImportedLayoutData = (state: OpenTypeFeaturesState) =>
   state.unsupportedLookups.length > 0 ||
+  (state.sourceSections ?? []).some(
+    (section) => section.origin === 'binary-import'
+  ) ||
   state.lookups.some((lookup) => lookup.origin === 'imported') ||
   state.features.some((feature) => feature.origin === 'imported')
 

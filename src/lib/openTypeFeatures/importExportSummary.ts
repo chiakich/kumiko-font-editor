@@ -13,6 +13,11 @@ export interface OpenTypeImportExportSummary {
   editableLookups: number
   preservedLookups: number
   overrideLookups: number
+  sourceSections: number
+  rawFeatureSourceSections: number
+  compiledSourceSections: number
+  classifiedSourceSections: number
+  sourceRecordRefs: number
   exportModeLabel: string
   exportModeDescription: string
 }
@@ -48,6 +53,7 @@ export function deriveOpenTypeImportExportSummary(
       (rule) => rule.meta.origin === 'auto' || rule.meta.origin === 'synthetic'
     )
   ).length
+  const sourceSections = state.sourceSections ?? []
 
   return {
     importedFeatures,
@@ -66,6 +72,20 @@ export function deriveOpenTypeImportExportSummary(
         lookup.origin === 'manual' &&
         lookup.rules.some((rule) => rule.meta.userOverridden)
     ).length,
+    sourceSections: sourceSections.length,
+    rawFeatureSourceSections: sourceSections.filter(
+      (section) => section.format === 'fea' && section.status === 'raw'
+    ).length,
+    compiledSourceSections: sourceSections.filter(
+      (section) => section.kind === 'compiled-table'
+    ).length,
+    classifiedSourceSections: sourceSections.filter(
+      (section) =>
+        section.status === 'classified' ||
+        section.status === 'partially-classified'
+    ).length,
+    sourceRecordRefs: sourceSections.flatMap((section) => section.recordRefs)
+      .length,
     ...describeExportMode(state.exportPolicy),
   }
 }

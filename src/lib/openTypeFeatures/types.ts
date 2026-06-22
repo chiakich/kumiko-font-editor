@@ -298,6 +298,73 @@ export interface SourceProvenance {
   subtableFormat?: number
 }
 
+export type FeatureSourceKind =
+  | 'manual-fea'
+  | 'ufo-fea'
+  | 'compiled-table'
+  | 'generated-fea'
+
+export type FeatureSourceOrigin =
+  | 'manual-input'
+  | 'ufo-import'
+  | 'binary-import'
+  | 'kumiko-generated'
+
+export type FeatureSourceFormat = 'fea' | 'opentype-layout-table'
+
+export type FeatureSourceStage =
+  | 'source'
+  | 'decompiled'
+  | 'classified'
+  | 'kumiko-model'
+  | 'generated'
+
+export type FeatureSourceStatus =
+  | 'raw'
+  | 'inventoried'
+  | 'partially-classified'
+  | 'classified'
+  | 'unsupported'
+  | 'generated'
+
+export type FeatureSourcePreservationPolicy =
+  | 'editable-rebuild'
+  | 'preserve-if-unchanged'
+  | 'drop-on-rebuild'
+  | 'generated-output'
+
+export type FeatureSourceTextRef = 'rawFeatureText'
+
+export interface ClassifiedFeatureRecordRef {
+  kind:
+    | 'languageSystem'
+    | 'feature'
+    | 'lookup'
+    | 'glyphClass'
+    | 'markClass'
+    | 'gdef'
+    | 'unsupportedLookup'
+    | 'diagnostic'
+  id: string
+  table?: OpenTypeTableTag
+}
+
+export interface FeatureSourceSection {
+  id: string
+  title: string
+  kind: FeatureSourceKind
+  origin: FeatureSourceOrigin
+  format: FeatureSourceFormat
+  stage: FeatureSourceStage
+  status: FeatureSourceStatus
+  table?: OpenTypeTableTag
+  path?: string
+  textRef?: FeatureSourceTextRef
+  recordRefs: ClassifiedFeatureRecordRef[]
+  preservationPolicy: FeatureSourcePreservationPolicy
+  meta?: Record<string, unknown>
+}
+
 export interface UnsupportedLookup {
   id: string
   table: 'GSUB' | 'GPOS'
@@ -376,6 +443,7 @@ export interface OpenTypeFeaturesState {
   anchors: AnchorDefinition[]
   gdef: GdefState | null
   unsupportedLookups: UnsupportedLookup[]
+  sourceSections: FeatureSourceSection[]
   autoFeatureConfig: AutoFeatureConfig
   ignoredSuggestionIds: string[]
   exportPolicy: ExportPolicy

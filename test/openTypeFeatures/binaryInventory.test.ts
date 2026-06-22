@@ -394,6 +394,25 @@ describe('SFNT binary inventory', () => {
         preserveMode: 'preserve-if-unchanged',
       },
     ])
+    expect(state.sourceSections).toMatchObject([
+      {
+        id: 'source_compiled_gsub',
+        kind: 'compiled-table',
+        origin: 'binary-import',
+        format: 'opentype-layout-table',
+        stage: 'classified',
+        status: 'inventoried',
+        table: 'GSUB',
+        preservationPolicy: 'preserve-if-unchanged',
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'feature', id: state.features[0]?.id, table: 'GSUB' },
+        { kind: 'lookup', id: 'lookup_gsub_0', table: 'GSUB' },
+        { kind: 'unsupportedLookup', id: 'unsupported_gsub_0', table: 'GSUB' },
+      ])
+    )
   })
 
   it('extracts editable GSUB SingleSubst rules from straightforward subtables', () => {

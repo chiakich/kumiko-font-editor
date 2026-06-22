@@ -33,6 +33,28 @@ binary export compile
 
 `openTypeFeatures.rawFeatureText` 是手寫或匯入 `.fea` 的第一階段入口。它會被插入 `generateFea(openTypeFeatures)` 的輸出，並在 binary export rebuild layout tables 時交給 fontTools 編譯。
 
+`openTypeFeatures.sourceSections` 是來源層模型。它記錄每段 feature data 從哪裡來、目前處於哪個處理階段、是否已經分類成 Kumiko records，以及 export 時應該如何保留或重建。
+
+目前的正式模型分成三層：
+
+1. `sourceSections`
+   - `.fea` source：手寫輸入與 UFO `features.fea`
+   - compiled table source：GDEF / GPOS / GSUB 反組譯入口
+   - 每個 section 會標記 `origin`、`format`、`stage`、`status`、`preservationPolicy`
+2. classified records
+   - `languagesystems`
+   - `features`
+   - `lookups`
+   - `glyphClasses`
+   - `markClasses`
+   - `gdef`
+   - `unsupportedLookups`
+3. generated output
+   - `generateFea(openTypeFeatures)` 產生 disposable build `.fea`
+   - binary export compile 使用這份 generated `.fea` 重建 layout tables
+
+`sourceSections.recordRefs` 用來把來源連回分類後的 records。例如 GSUB compiled table source 可以連到 `feature_liga`、`lookup_gsub_0` 和 `unsupported_gsub_0`。這讓 UI 之後可以先顯示來源與 records 的關係，再逐步提供可視覺化編輯。
+
 長期來說，`rawFeatureText` 不應是主要編輯單位。更理想的狀態是把 `.fea` 解析成 Kumiko 可理解的 feature / lookup records，而不是永遠用一整段 raw text 管理。
 
 ## 反組譯的目標
@@ -66,6 +88,7 @@ Kumiko 的目標比較接近 Glyphs 的做法：
 UFO features.fea
         ↓
 openTypeFeatures.rawFeatureText
+openTypeFeatures.sourceSections[]
         ↓
 generateFea(openTypeFeatures)
         ↓
@@ -77,6 +100,7 @@ OTF / TTF / WOFF layout tables
         ↓
 extractBinaryFeatures()
         ↓
+openTypeFeatures.sourceSections[]
 openTypeFeatures.features
 openTypeFeatures.lookups
 openTypeFeatures.glyphClasses

@@ -123,6 +123,19 @@ describe('GDEF and variation inventory', () => {
       ],
       ligatureCarets: [{ glyph: 'f_i', carets: [300] }],
     })
+    expect(state.sourceSections).toMatchObject([
+      {
+        id: 'source_compiled_gdef',
+        kind: 'compiled-table',
+        origin: 'binary-import',
+        format: 'opentype-layout-table',
+        stage: 'classified',
+        status: 'classified',
+        table: 'GDEF',
+        preservationPolicy: 'editable-rebuild',
+        recordRefs: [{ kind: 'gdef', id: 'gdef', table: 'GDEF' }],
+      },
+    ])
     expect(state.diagnostics ?? []).toEqual([])
   })
 

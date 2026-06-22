@@ -95,6 +95,7 @@ export const createEmptyOpenTypeFeaturesState = (
   anchors: [],
   gdef: null,
   unsupportedLookups: [],
+  sourceSections: [],
   autoFeatureConfig: DEFAULT_AUTO_FEATURE_CONFIG,
   ignoredSuggestionIds: [],
   exportPolicy: 'rebuild-managed-layout-tables',

@@ -30,7 +30,13 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
         </Badge>
       </HStack>
 
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+      <SimpleGrid columns={{ base: 1, md: 4 }} spacing={3}>
+        <OverviewTile
+          accent="Sources"
+          detail={`${summary.rawFeatureSourceSections} raw / ${summary.compiledSourceSections} compiled`}
+          label={t('projectControl.sourceSections')}
+          value={summary.sourceSections}
+        />
         <OverviewTile
           accent="Imported"
           detail={`${summary.importedFeatures} features / ${summary.importedLookups} lookups`}
@@ -53,9 +59,20 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
 
       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
         <StatusLine
+          label={t('projectControl.classifiedSourceSections')}
+          value={summary.classifiedSourceSections}
+        />
+        <StatusLine
+          label={t('projectControl.sourceRecordRefs')}
+          value={summary.sourceRecordRefs}
+        />
+        <StatusLine
           label={t('projectControl.editableLookups')}
           value={summary.editableLookups}
         />
+      </SimpleGrid>
+
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
         <StatusLine
           label={t('projectControl.preservedRawLookups')}
           value={summary.preservedLookups}

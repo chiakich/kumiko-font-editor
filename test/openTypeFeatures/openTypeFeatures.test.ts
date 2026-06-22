@@ -23,6 +23,7 @@ import {
   requiresDropUnsupportedConfirmation,
 } from 'src/lib/openTypeFeatures/exportPolicy'
 import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
 import type {
   AutoFeatureSuggestion,
   LookupRecord,
@@ -226,6 +227,27 @@ describe('OpenType auto feature suggestions', () => {
 })
 
 describe('OpenType FEA source maps', () => {
+  it('tracks raw .fea text as a formal feature source section', () => {
+    const state = setRawFeatureTextSource(
+      createEmptyOpenTypeFeaturesState(),
+      '@Code = [hyphen greater];'
+    )
+
+    expect(state.rawFeatureText).toBe('@Code = [hyphen greater];')
+    expect(state.sourceSections).toMatchObject([
+      {
+        id: 'source_raw_feature_text',
+        kind: 'manual-fea',
+        origin: 'manual-input',
+        format: 'fea',
+        stage: 'source',
+        status: 'raw',
+        textRef: 'rawFeatureText',
+        preservationPolicy: 'editable-rebuild',
+      },
+    ])
+  })
+
   it('includes raw .fea source in generated FEA output', () => {
     const generated = generateFea({
       ...createEmptyOpenTypeFeaturesState(),

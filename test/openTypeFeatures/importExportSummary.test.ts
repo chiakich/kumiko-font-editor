@@ -109,6 +109,40 @@ describe('OpenType import/export summary', () => {
           rawSummary: 'GSUB lookup 4',
         },
       ],
+      sourceSections: [
+        {
+          id: 'source_raw_feature_text',
+          title: 'Handwritten .fea source',
+          kind: 'manual-fea',
+          origin: 'manual-input',
+          format: 'fea',
+          stage: 'source',
+          status: 'raw',
+          textRef: 'rawFeatureText',
+          recordRefs: [],
+          preservationPolicy: 'editable-rebuild',
+        },
+        {
+          id: 'source_compiled_gsub',
+          title: 'GSUB compiled table',
+          kind: 'compiled-table',
+          origin: 'binary-import',
+          format: 'opentype-layout-table',
+          stage: 'classified',
+          status: 'partially-classified',
+          table: 'GSUB',
+          recordRefs: [
+            { kind: 'feature', id: 'feature_liga', table: 'GSUB' },
+            { kind: 'lookup', id: 'lookup_liga_imported', table: 'GSUB' },
+            {
+              kind: 'unsupportedLookup',
+              id: 'unsupported_gsub_4',
+              table: 'GSUB',
+            },
+          ],
+          preservationPolicy: 'preserve-if-unchanged',
+        },
+      ],
     }
 
     expect(deriveOpenTypeImportExportSummary(state)).toMatchObject({
@@ -123,6 +157,11 @@ describe('OpenType import/export summary', () => {
       unsupportedLookups: 1,
       editableLookups: 2,
       preservedLookups: 1,
+      sourceSections: 2,
+      rawFeatureSourceSections: 1,
+      compiledSourceSections: 1,
+      classifiedSourceSections: 1,
+      sourceRecordRefs: 3,
       exportModeLabel: 'Rebuild managed',
     })
   })

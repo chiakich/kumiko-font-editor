@@ -99,7 +99,6 @@ interface KumikoProjectRecord {
   axes?: FontAxes
   sources?: Record<string, FontSource>
   exportInstances?: FontExportInstance[]
-  features?: OpenTypeFeatures
   openTypeFeatures?: OpenTypeFeaturesState
   kerningGroups?: KerningGroup[]
   kerningPairs?: KerningPair[]
