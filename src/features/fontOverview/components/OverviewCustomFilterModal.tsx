@@ -27,9 +27,13 @@ import type {
   OverviewCustomFilterRule,
   OverviewCustomFilterRuleField,
   OverviewCustomFilterRuleOperator,
+  OverviewCustomFilterSort,
 } from 'src/lib/glyph/glyphOverview'
 
-type OverviewCustomFilterDraft = Omit<OverviewCustomFilter, 'id'>
+type OverviewCustomFilterDraft = Omit<
+  OverviewCustomFilter,
+  'id' | 'labelKey' | 'source'
+>
 
 interface OverviewCustomFilterModalProps {
   filter: OverviewCustomFilter | null
@@ -61,6 +65,7 @@ const BOOLEAN_OPERATORS: OverviewCustomFilterRuleOperator[] = ['is', 'isNot']
 const BOOLEAN_FIELDS = new Set<OverviewCustomFilterRuleField>([
   'export',
   'empty',
+  'edited',
   'hasUnicode',
   'hasComponents',
   'hasAnchors',
@@ -78,6 +83,7 @@ const RULE_FIELDS: OverviewCustomFilterRuleField[] = [
   'component',
   'export',
   'empty',
+  'edited',
   'hasUnicode',
   'hasComponents',
   'hasAnchors',
@@ -101,6 +107,7 @@ const createDefaultFilterDraft = (): OverviewCustomFilterDraft => ({
   mode: 'all',
   name: '',
   rules: [createDefaultRule()],
+  sort: 'codePoint',
 })
 
 const isBooleanField = (field: OverviewCustomFilterRuleField) =>
@@ -132,15 +139,17 @@ const normalizeDraftRule = (rule: OverviewCustomFilterRule) =>
   normalizeRuleForField(rule, rule.field)
 
 const createFilterDraft = (
-  filter: OverviewCustomFilter | null
+  filter: OverviewCustomFilter | null,
+  translatedFilterName?: string
 ): OverviewCustomFilterDraft =>
   filter
     ? {
         mode: filter.mode,
-        name: filter.name,
+        name: translatedFilterName ?? filter.name,
         rules: filter.rules.length
           ? filter.rules.map(normalizeDraftRule)
           : [createDefaultRule()],
+        sort: filter.sort ?? 'codePoint',
       }
     : createDefaultFilterDraft()
 
@@ -196,10 +205,11 @@ function OverviewCustomFilterModalForm({
         ...rule,
         value: operatorNeedsValue(rule.operator) ? rule.value.trim() : '',
       })),
+      sort: draft.sort ?? 'codePoint',
     }
 
     if (filter) {
-      onUpdateFilter({ ...nextFilter, id: filter.id })
+      onUpdateFilter({ ...nextFilter, id: filter.id, source: 'user' })
     } else {
       onCreateFilter(nextFilter)
     }
@@ -254,6 +264,26 @@ function OverviewCustomFilterModalForm({
               </option>
               <option value="any">
                 {t('fontOverview.customFilter.matchAny')}
+              </option>
+            </Select>
+          </FormControl>
+
+          <FormControl maxW="220px">
+            <FormLabel>{t('fontOverview.customFilter.sort')}</FormLabel>
+            <Select
+              value={draft.sort ?? 'codePoint'}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  sort: event.target.value as OverviewCustomFilterSort,
+                }))
+              }
+            >
+              <option value="codePoint">
+                {t('fontOverview.customFilter.sortCodePoint')}
+              </option>
+              <option value="recentEdit">
+                {t('fontOverview.customFilter.sortRecentEdit')}
               </option>
             </Select>
           </FormControl>
@@ -408,7 +438,15 @@ export function OverviewCustomFilterModal({
   onDeleteFilter,
   onUpdateFilter,
 }: OverviewCustomFilterModalProps) {
-  const initialDraft = useMemo(() => createFilterDraft(filter), [filter])
+  const { t } = useTranslation()
+  const initialDraft = useMemo(
+    () =>
+      createFilterDraft(
+        filter,
+        filter?.labelKey ? t(filter.labelKey) : undefined
+      ),
+    [filter, t]
+  )
   const contentKey = filter?.id ?? 'new'
 
   return (

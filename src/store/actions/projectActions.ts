@@ -16,7 +16,10 @@ import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import { getProjectGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import { normalizeOverviewCustomFilters } from 'src/lib/glyph/glyphOverview'
+import {
+  createDefaultOverviewCustomFilters,
+  normalizeOverviewCustomFilters,
+} from 'src/lib/glyph/glyphOverview'
 import {
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
@@ -101,8 +104,17 @@ export const buildProjectActions = (
       state.editorTextCursorIndex = 0
       state.editorActiveGlyphIndex = 0
       state.workspaceView = 'overview'
+      const hasSavedOverviewCustomFilters = Boolean(
+        projectUiState &&
+        Object.prototype.hasOwnProperty.call(
+          projectUiState,
+          'overviewCustomFilters'
+        )
+      )
       state.overviewCustomFilters = normalizeOverviewCustomFilters(
-        projectUiState?.overviewCustomFilters
+        hasSavedOverviewCustomFilters
+          ? projectUiState?.overviewCustomFilters
+          : createDefaultOverviewCustomFilters()
       )
       state.overviewGroupBy = 'script'
       state.overviewSectionId = projectUiState?.overviewSectionId ?? 'all'

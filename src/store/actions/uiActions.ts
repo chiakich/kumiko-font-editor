@@ -13,7 +13,10 @@ import {
 import { syncFilteredGlyphList } from 'src/store/glyphSearch'
 import { setGlyphActiveLayer } from 'src/store/glyphLayer'
 import { markUiStateDirty } from 'src/store/dirtyState'
-import { customOverviewFilterIdToNodeId } from 'src/lib/glyph/glyphOverview'
+import {
+  customOverviewFilterIdToNodeId,
+  normalizeOverviewCustomFilters,
+} from 'src/lib/glyph/glyphOverview'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>
@@ -57,8 +60,12 @@ export const buildUiActions = (set: ImmerSet) => ({
       const nextFilter = {
         ...filter,
         id: filterId,
+        sort: filter.sort ?? 'codePoint',
+        source: filter.source ?? 'user',
       }
-      state.overviewCustomFilters.push(nextFilter)
+      state.overviewCustomFilters.push(
+        normalizeOverviewCustomFilters([nextFilter])[0] ?? nextFilter
+      )
       state.overviewSectionId = customOverviewFilterIdToNodeId(filterId)
       markUiStateDirty(state)
     })
@@ -75,7 +82,8 @@ export const buildUiActions = (set: ImmerSet) => ({
       if (index < 0) {
         return
       }
-      state.overviewCustomFilters[index] = filter
+      state.overviewCustomFilters[index] =
+        normalizeOverviewCustomFilters([filter])[0] ?? filter
       markUiStateDirty(state)
     }),
 

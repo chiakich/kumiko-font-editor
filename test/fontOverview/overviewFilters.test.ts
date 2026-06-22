@@ -79,6 +79,8 @@ const findNode = (
 }
 
 const ids = (glyphs: GlyphData[]) => glyphs.map((glyph) => glyph.id)
+const seededFilterNodeId = (id: string) =>
+  customOverviewFilterIdToNodeId(`seeded:${id}`)
 
 describe('overview search filters', () => {
   const glyphs = [
@@ -224,30 +226,27 @@ describe('Glyphs-like overview tree', () => {
     ).toEqual(['uni4E00'])
   })
 
-  it('creates built-in smart filter style sections', () => {
-    expect(ids(findNode(tree, 'filter:recent-edits')?.glyphs ?? [])).toEqual([
-      'acute',
-      'Aacute',
-      'A',
-    ])
-    expect(ids(findNode(tree, 'filter:empty')?.glyphs ?? [])).toEqual([
-      'uni4E00',
-      'logo.alt',
-    ])
-    expect(ids(findNode(tree, 'filter:not-exporting')?.glyphs ?? [])).toEqual([
-      'uni4E00',
-    ])
-    expect(ids(findNode(tree, 'filter:has-components')?.glyphs ?? [])).toEqual([
-      'Aacute',
-    ])
-    expect(ids(findNode(tree, 'filter:has-anchors')?.glyphs ?? [])).toEqual([
-      'acute',
-    ])
-    expect(ids(findNode(tree, 'filter:has-hints')?.glyphs ?? [])).toEqual([
-      'acute',
-    ])
+  it('creates seeded smart filter style sections', () => {
     expect(
-      ids(findNode(tree, 'filter:has-metrics-keys')?.glyphs ?? [])
+      ids(findNode(tree, seededFilterNodeId('recent-edits'))?.glyphs ?? [])
+    ).toEqual(['acute', 'Aacute', 'A'])
+    expect(
+      ids(findNode(tree, seededFilterNodeId('empty'))?.glyphs ?? [])
+    ).toEqual(['uni4E00', 'logo.alt'])
+    expect(
+      ids(findNode(tree, seededFilterNodeId('not-exporting'))?.glyphs ?? [])
+    ).toEqual(['uni4E00'])
+    expect(
+      ids(findNode(tree, seededFilterNodeId('has-components'))?.glyphs ?? [])
+    ).toEqual(['Aacute'])
+    expect(
+      ids(findNode(tree, seededFilterNodeId('has-anchors'))?.glyphs ?? [])
+    ).toEqual(['acute'])
+    expect(
+      ids(findNode(tree, seededFilterNodeId('has-hints'))?.glyphs ?? [])
+    ).toEqual(['acute'])
+    expect(
+      ids(findNode(tree, seededFilterNodeId('has-metrics-keys'))?.glyphs ?? [])
     ).toEqual(['acute'])
   })
 

@@ -39,17 +39,6 @@ const OVERVIEW_NODE_LABEL_KEYS: Record<string, string> = {
   'category:Mark': 'fontOverview.filterLabels.categoryMark',
   'category:Other': 'fontOverview.filterLabels.categoryOther',
   'category:Unencoded': 'fontOverview.filterLabels.categoryUnencoded',
-  'filter:recent-edits': 'fontOverview.filterLabels.recentEdits',
-  'filter:empty': 'fontOverview.filterLabels.emptyGlyphs',
-  'filter:exporting': 'fontOverview.filterLabels.exporting',
-  'filter:not-exporting': 'fontOverview.filterLabels.notExporting',
-  'filter:has-unicode': 'fontOverview.filterLabels.hasUnicode',
-  'filter:no-unicode': 'fontOverview.filterLabels.noUnicode',
-  'filter:has-components': 'fontOverview.filterLabels.hasComponents',
-  'filter:has-anchors': 'fontOverview.filterLabels.hasAnchors',
-  'filter:has-hints': 'fontOverview.filterLabels.hasHints',
-  'filter:has-metrics-keys': 'fontOverview.filterLabels.hasMetricsKeys',
-  'filter:has-color-label': 'fontOverview.filterLabels.hasColorLabel',
 }
 
 const getNextExpandedIds = (expandedIds: string[], nodeId: string): string[] =>
@@ -264,6 +253,9 @@ export function OverviewTreeNav({
   const createCustomFilterLabel = t('fontOverview.customFilter.createTitle')
   const editCustomFilterLabel = t('fontOverview.customFilter.editTitle')
   const translateNodeLabel = (node: GlyphOverviewTreeNode) => {
+    if (node.labelKey) {
+      return t(node.labelKey)
+    }
     const labelKey = OVERVIEW_NODE_LABEL_KEYS[node.id]
     return labelKey ? t(labelKey) : node.label
   }

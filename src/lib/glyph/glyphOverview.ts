@@ -7,6 +7,7 @@ export {
 export {
   DEFAULT_OVERVIEW_SEARCH_FIELDS,
   createOverviewSearchMatcher,
+  createDefaultOverviewCustomFilters,
   customOverviewFilterIdToNodeId,
   customOverviewFilterNodeIdToFilterId,
   filterGlyphsByOverviewSearch,
@@ -28,6 +29,8 @@ export {
   type OverviewCustomFilterRule,
   type OverviewCustomFilterRuleField,
   type OverviewCustomFilterRuleOperator,
+  type OverviewCustomFilterSort,
+  type OverviewCustomFilterSource,
   type OverviewGroupBy,
   type OverviewSearchField,
   type OverviewSearchModel,

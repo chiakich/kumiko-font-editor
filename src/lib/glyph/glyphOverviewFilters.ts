@@ -17,6 +17,7 @@ export type GlyphOverviewTreeKind = 'all' | 'category' | 'language' | 'filter'
 
 export interface GlyphOverviewSection {
   id: string
+  labelKey?: string
   label: string
   glyphs: GlyphData[]
   kind?: GlyphOverviewTreeKind
@@ -42,6 +43,8 @@ export interface OverviewSearchModel {
 }
 
 export type OverviewCustomFilterMode = 'all' | 'any'
+export type OverviewCustomFilterSource = 'seeded' | 'glyphs' | 'user'
+export type OverviewCustomFilterSort = 'codePoint' | 'recentEdit'
 
 export type OverviewCustomFilterRuleField =
   | 'glyphName'
@@ -52,6 +55,7 @@ export type OverviewCustomFilterRuleField =
   | 'component'
   | 'export'
   | 'empty'
+  | 'edited'
   | 'hasUnicode'
   | 'hasComponents'
   | 'hasAnchors'
@@ -76,9 +80,12 @@ export interface OverviewCustomFilterRule {
 
 export interface OverviewCustomFilter {
   id: string
+  labelKey?: string
   mode: OverviewCustomFilterMode
   name: string
   rules: OverviewCustomFilterRule[]
+  sort?: OverviewCustomFilterSort
+  source?: OverviewCustomFilterSource
 }
 
 export const DEFAULT_OVERVIEW_SEARCH_FIELDS: OverviewSearchField[] = [
@@ -242,13 +249,11 @@ const sortGlyphsByRecentEdit = (
   glyphs: GlyphData[],
   glyphEditTimes: GlyphEditTimes
 ) =>
-  [...glyphs]
-    .filter((glyph) => Number.isFinite(glyphEditTimes[glyph.id]))
-    .sort(
-      (left, right) =>
-        (glyphEditTimes[right.id] ?? 0) - (glyphEditTimes[left.id] ?? 0) ||
-        left.id.localeCompare(right.id)
-    )
+  [...glyphs].sort(
+    (left, right) =>
+      (glyphEditTimes[right.id] ?? 0) - (glyphEditTimes[left.id] ?? 0) ||
+      left.id.localeCompare(right.id)
+  )
 
 const findRangeLabel = (
   codePoint: number | null,
@@ -303,10 +308,12 @@ const createSectionNode = (
   label: string,
   glyphs: GlyphData[],
   kind: GlyphOverviewTreeKind,
-  children?: GlyphOverviewTreeNode[]
+  children?: GlyphOverviewTreeNode[],
+  labelKey?: string
 ): GlyphOverviewTreeNode => ({
   id,
   label,
+  ...(labelKey ? { labelKey } : {}),
   glyphs,
   kind,
   ...(children ? { children } : {}),
@@ -402,6 +409,7 @@ const CUSTOM_FILTER_FIELDS = new Set<OverviewCustomFilterRuleField>([
   'component',
   'export',
   'empty',
+  'edited',
   'hasUnicode',
   'hasComponents',
   'hasAnchors',
@@ -417,6 +425,17 @@ const CUSTOM_FILTER_OPERATORS = new Set<OverviewCustomFilterRuleOperator>([
   'isNot',
   'exists',
   'missing',
+])
+
+const CUSTOM_FILTER_SOURCES = new Set<OverviewCustomFilterSource>([
+  'seeded',
+  'glyphs',
+  'user',
+])
+
+const CUSTOM_FILTER_SORTS = new Set<OverviewCustomFilterSort>([
+  'codePoint',
+  'recentEdit',
 ])
 
 const toCustomFilterString = (value: unknown) =>
@@ -438,6 +457,18 @@ const isCustomFilterOperator = (
   typeof value === 'string' &&
   CUSTOM_FILTER_OPERATORS.has(value as OverviewCustomFilterRuleOperator)
 
+const isCustomFilterSource = (
+  value: unknown
+): value is OverviewCustomFilterSource =>
+  typeof value === 'string' &&
+  CUSTOM_FILTER_SOURCES.has(value as OverviewCustomFilterSource)
+
+const isCustomFilterSort = (
+  value: unknown
+): value is OverviewCustomFilterSort =>
+  typeof value === 'string' &&
+  CUSTOM_FILTER_SORTS.has(value as OverviewCustomFilterSort)
+
 export const normalizeOverviewCustomFilters = (
   filters: unknown
 ): OverviewCustomFilter[] => {
@@ -446,7 +477,7 @@ export const normalizeOverviewCustomFilters = (
   }
 
   return filters
-    .map((rawFilter) => {
+    .map((rawFilter): OverviewCustomFilter | null => {
       const record = rawFilter as Partial<OverviewCustomFilter>
       const id = toCustomFilterString(record.id)
       const name = toCustomFilterString(record.name)
@@ -477,11 +508,15 @@ export const normalizeOverviewCustomFilters = (
             .filter((rule): rule is OverviewCustomFilterRule => Boolean(rule))
         : []
 
+      const labelKey = toCustomFilterString(record.labelKey)
       return {
         id,
+        ...(labelKey ? { labelKey } : {}),
         mode: isCustomFilterMode(record.mode) ? record.mode : 'all',
         name,
         rules,
+        sort: isCustomFilterSort(record.sort) ? record.sort : 'codePoint',
+        source: isCustomFilterSource(record.source) ? record.source : 'user',
       }
     })
     .filter((filter): filter is OverviewCustomFilter => Boolean(filter))
@@ -594,16 +629,6 @@ const buildLanguageNodes = (glyphs: GlyphData[]) => {
     .filter((node) => node.glyphs.length > 0)
 }
 
-interface BuiltInOverviewFilterDefinition {
-  id: string
-  label: string
-  getGlyphs?: (
-    glyphs: GlyphData[],
-    glyphEditTimes: GlyphEditTimes
-  ) => GlyphData[]
-  matches?: (glyph: GlyphData, glyphEditTimes: GlyphEditTimes) => boolean
-}
-
 const hasMetricsKeys = (glyph: GlyphData) =>
   Boolean(
     glyph.leftMetricsKey || glyph.rightMetricsKey || glyph.widthMetricsKey
@@ -613,100 +638,153 @@ const getLayer = (glyph: GlyphData) => activeLayer(glyph)
 
 const booleanString = (value: boolean) => (value ? 'true' : 'false')
 
-const BUILT_IN_OVERVIEW_FILTERS: BuiltInOverviewFilterDefinition[] = [
+const createSeedRule = (
+  field: OverviewCustomFilterRuleField,
+  value = 'true'
+): OverviewCustomFilterRule => ({
+  field,
+  id: `${field}-is-${value}`,
+  operator: 'is',
+  value,
+})
+
+const DEFAULT_OVERVIEW_CUSTOM_FILTERS: OverviewCustomFilter[] = [
   {
-    id: 'recent-edits',
-    label: 'Recently Edited',
-    getGlyphs: sortGlyphsByRecentEdit,
+    id: 'seeded:recent-edits',
+    labelKey: 'fontOverview.filterLabels.recentEdits',
+    mode: 'all',
+    name: 'Recently Edited',
+    rules: [createSeedRule('edited')],
+    sort: 'recentEdit',
+    source: 'seeded',
   },
   {
-    id: 'empty',
-    label: 'Empty Glyphs',
-    matches: (glyph) => isEmptyGlyphToEdit(glyph),
+    id: 'seeded:empty',
+    labelKey: 'fontOverview.filterLabels.emptyGlyphs',
+    mode: 'all',
+    name: 'Empty Glyphs',
+    rules: [createSeedRule('empty')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'exporting',
-    label: 'Exporting',
-    matches: (glyph) => glyph.export !== false,
+    id: 'seeded:exporting',
+    labelKey: 'fontOverview.filterLabels.exporting',
+    mode: 'all',
+    name: 'Exporting',
+    rules: [createSeedRule('export')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'not-exporting',
-    label: 'Not Exporting',
-    matches: (glyph) => glyph.export === false,
+    id: 'seeded:not-exporting',
+    labelKey: 'fontOverview.filterLabels.notExporting',
+    mode: 'all',
+    name: 'Not Exporting',
+    rules: [createSeedRule('export', 'false')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'has-unicode',
-    label: 'Has Unicode',
-    matches: (glyph) => getGlyphUnicodes(glyph).length > 0,
+    id: 'seeded:has-unicode',
+    labelKey: 'fontOverview.filterLabels.hasUnicode',
+    mode: 'all',
+    name: 'Has Unicode',
+    rules: [createSeedRule('hasUnicode')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'no-unicode',
-    label: 'No Unicode',
-    matches: (glyph) => getGlyphUnicodes(glyph).length === 0,
+    id: 'seeded:no-unicode',
+    labelKey: 'fontOverview.filterLabels.noUnicode',
+    mode: 'all',
+    name: 'No Unicode',
+    rules: [createSeedRule('hasUnicode', 'false')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'has-components',
-    label: 'Has Components',
-    matches: (glyph) => getGlyphComponentGlyphIds(glyph).length > 0,
+    id: 'seeded:has-components',
+    labelKey: 'fontOverview.filterLabels.hasComponents',
+    mode: 'all',
+    name: 'Has Components',
+    rules: [createSeedRule('hasComponents')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'has-anchors',
-    label: 'Has Anchors',
-    matches: (glyph) => getLayer(glyph).anchors.length > 0,
+    id: 'seeded:has-anchors',
+    labelKey: 'fontOverview.filterLabels.hasAnchors',
+    mode: 'all',
+    name: 'Has Anchors',
+    rules: [createSeedRule('hasAnchors')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'has-hints',
-    label: 'Has Hints',
-    matches: (glyph) => (getLayer(glyph).hints ?? []).length > 0,
+    id: 'seeded:has-hints',
+    labelKey: 'fontOverview.filterLabels.hasHints',
+    mode: 'all',
+    name: 'Has Hints',
+    rules: [createSeedRule('hasHints')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'has-metrics-keys',
-    label: 'Has Metrics Keys',
-    matches: hasMetricsKeys,
+    id: 'seeded:has-metrics-keys',
+    labelKey: 'fontOverview.filterLabels.hasMetricsKeys',
+    mode: 'all',
+    name: 'Has Metrics Keys',
+    rules: [createSeedRule('hasMetricsKeys')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
   {
-    id: 'has-color-label',
-    label: 'Has Color Label',
-    matches: (glyph) => Boolean(glyph.color),
+    id: 'seeded:has-color-label',
+    labelKey: 'fontOverview.filterLabels.hasColorLabel',
+    mode: 'all',
+    name: 'Has Color Label',
+    rules: [createSeedRule('hasColorLabel')],
+    sort: 'codePoint',
+    source: 'seeded',
   },
 ]
+
+export const createDefaultOverviewCustomFilters = () =>
+  DEFAULT_OVERVIEW_CUSTOM_FILTERS.map((filter) => ({
+    ...filter,
+    rules: filter.rules.map((rule) => ({ ...rule })),
+  }))
 
 const buildFilterNodes = (
   glyphs: GlyphData[],
   glyphEditTimes: GlyphEditTimes,
   customFilters: OverviewCustomFilter[]
 ) => {
-  const builtInNodes = BUILT_IN_OVERVIEW_FILTERS.map((definition) => {
-    const filterGlyphs = definition.getGlyphs
-      ? definition.getGlyphs(glyphs, glyphEditTimes)
-      : glyphs.filter((glyph) => definition.matches?.(glyph, glyphEditTimes))
+  return customFilters.map((filter) => {
+    const filterGlyphs = glyphs.filter((glyph) =>
+      matchesOverviewCustomFilter(glyph, filter, glyphEditTimes)
+    )
+    const sortedGlyphs =
+      filter.sort === 'recentEdit'
+        ? sortGlyphsByRecentEdit(filterGlyphs, glyphEditTimes)
+        : sortGlyphsByCodePoint(filterGlyphs)
 
     return createSectionNode(
-      `filter:${definition.id}`,
-      definition.label,
-      definition.id === 'recent-edits'
-        ? filterGlyphs
-        : sortGlyphsByCodePoint(filterGlyphs),
-      'filter'
-    )
-  })
-  const customNodes = customFilters.map((filter) =>
-    createSectionNode(
       customOverviewFilterIdToNodeId(filter.id),
       filter.name,
-      sortGlyphsByCodePoint(
-        glyphs.filter((glyph) => matchesOverviewCustomFilter(glyph, filter))
-      ),
-      'filter'
+      sortedGlyphs,
+      'filter',
+      undefined,
+      filter.labelKey
     )
-  )
-
-  return [...builtInNodes, ...customNodes]
+  })
 }
 
 const getOverviewCustomFilterRuleValues = (
   glyph: GlyphData,
-  field: OverviewCustomFilterRuleField
+  field: OverviewCustomFilterRuleField,
+  glyphEditTimes: GlyphEditTimes
 ) => {
   const { category, subCategory } = getGlyphCategoryPath(glyph)
 
@@ -734,6 +812,8 @@ const getOverviewCustomFilterRuleValues = (
       return [booleanString(glyph.export !== false)]
     case 'empty':
       return [booleanString(isEmptyGlyphToEdit(glyph))]
+    case 'edited':
+      return [booleanString(Number.isFinite(glyphEditTimes[glyph.id]))]
     case 'hasUnicode':
       return [booleanString(getGlyphUnicodes(glyph).length > 0)]
     case 'hasComponents':
@@ -751,9 +831,14 @@ const getOverviewCustomFilterRuleValues = (
 
 const matchesOverviewCustomFilterRule = (
   glyph: GlyphData,
-  rule: OverviewCustomFilterRule
+  rule: OverviewCustomFilterRule,
+  glyphEditTimes: GlyphEditTimes
 ) => {
-  const values = getOverviewCustomFilterRuleValues(glyph, rule.field)
+  const values = getOverviewCustomFilterRuleValues(
+    glyph,
+    rule.field,
+    glyphEditTimes
+  )
   const normalizedValues = values.map((value) =>
     normalizeSearchText(value, false)
   )
@@ -791,7 +876,8 @@ const matchesOverviewCustomFilterRule = (
 
 export const matchesOverviewCustomFilter = (
   glyph: GlyphData,
-  filter: OverviewCustomFilter
+  filter: OverviewCustomFilter,
+  glyphEditTimes: GlyphEditTimes = {}
 ) => {
   const rules = filter.rules
   if (!rules.length) {
@@ -799,14 +885,18 @@ export const matchesOverviewCustomFilter = (
   }
 
   return filter.mode === 'any'
-    ? rules.some((rule) => matchesOverviewCustomFilterRule(glyph, rule))
-    : rules.every((rule) => matchesOverviewCustomFilterRule(glyph, rule))
+    ? rules.some((rule) =>
+        matchesOverviewCustomFilterRule(glyph, rule, glyphEditTimes)
+      )
+    : rules.every((rule) =>
+        matchesOverviewCustomFilterRule(glyph, rule, glyphEditTimes)
+      )
 }
 
 export const getGlyphOverviewTree = (
   glyphs: GlyphData[],
   glyphEditTimes: GlyphEditTimes,
-  customFilters: OverviewCustomFilter[] = []
+  customFilters: OverviewCustomFilter[] = createDefaultOverviewCustomFilters()
 ): GlyphOverviewTreeNode[] => {
   const sortedGlyphs = sortGlyphsByCodePoint(glyphs)
   const categoryNodes = buildCategoryNodes(glyphs)
@@ -849,6 +939,7 @@ export const flattenGlyphOverviewTree = (
   nodes.flatMap((node) => [
     {
       id: node.id,
+      labelKey: node.labelKey,
       label: node.label,
       glyphs: node.glyphs,
       kind: node.kind,

@@ -42,12 +42,22 @@ export function useOverviewSections({
     [treeNodes]
   )
 
+  const translateSection = useMemo(
+    () => (section: (typeof sections)[number]) => ({
+      ...section,
+      label: section.labelKey ? t(section.labelKey) : section.label,
+    }),
+    [t]
+  )
+
   const visibleSections = useMemo(() => {
     const selectedSection = sections.find(
       (section) => section.id === selectedSectionId
     )
-    return selectedSection?.glyphs.length ? [selectedSection] : []
-  }, [sections, selectedSectionId])
+    return selectedSection?.glyphs.length
+      ? [translateSection(selectedSection)]
+      : []
+  }, [sections, selectedSectionId, translateSection])
 
   const activeSection = useMemo(() => {
     if (selectedSectionId === 'all') {
@@ -59,14 +69,17 @@ export function useOverviewSections({
       }
     }
 
-    return (
-      sections.find((section) => section.id === selectedSectionId) ?? {
-        id: 'all',
-        label: t('fontOverview.allGlyphs'),
-        glyphs: overviewGlyphs,
-      }
+    const selectedSection = sections.find(
+      (section) => section.id === selectedSectionId
     )
-  }, [overviewGlyphs, sections, selectedSectionId, t])
+    return selectedSection
+      ? translateSection(selectedSection)
+      : {
+          id: 'all',
+          label: t('fontOverview.allGlyphs'),
+          glyphs: overviewGlyphs,
+        }
+  }, [overviewGlyphs, sections, selectedSectionId, t, translateSection])
 
   useEffect(() => {
     if (

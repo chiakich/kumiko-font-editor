@@ -7,6 +7,7 @@ import {
   DEFAULT_OVERVIEW_SEARCH_OPTIONS,
   IDS_DICTIONARY,
 } from 'src/store/glyphSearch'
+import { createDefaultOverviewCustomFilters } from 'src/lib/glyph/glyphOverview'
 import { buildUiActions } from 'src/store/actions/uiActions'
 import { buildGlyphActions } from 'src/store/actions/glyphActions'
 import { buildPathActions } from 'src/store/actions/pathActions'
@@ -123,7 +124,7 @@ const initialState = {
   componentTargetRect: null,
   idsDictionary: IDS_DICTIONARY,
   currentSearchQuery: '',
-  overviewCustomFilters: [],
+  overviewCustomFilters: createDefaultOverviewCustomFilters(),
   overviewSearchOptions: DEFAULT_OVERVIEW_SEARCH_OPTIONS,
   filteredGlyphList: [],
   selectedGlyphId: null,
