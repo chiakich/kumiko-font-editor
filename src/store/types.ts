@@ -5,7 +5,10 @@ import type {
 import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import type { OverviewSearchField } from 'src/lib/glyph/glyphOverview'
+import type {
+  OverviewCustomFilter,
+  OverviewSearchField,
+} from 'src/lib/glyph/glyphOverview'
 import type {
   AlternateBehaviorDraft,
   CombinationBehaviorDraft,
@@ -17,6 +20,7 @@ import type {
 } from 'src/lib/openTypeFeatures'
 export type { ProjectRoundTripFormat, ProjectSourceFormat }
 export type { OpenTypeFeaturesState }
+export type { OverviewCustomFilter }
 
 export type OnCurveNodeType = 'corner' | 'smooth'
 export type NodeType = OnCurveNodeType
@@ -430,6 +434,7 @@ export interface GlobalState {
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
   workspaceView: WorkspaceView
+  overviewCustomFilters: OverviewCustomFilter[]
   overviewSearchOptions: OverviewSearchOptionsState
   overviewGroupBy: OverviewGroupByState
   overviewSectionId: string
@@ -441,6 +446,11 @@ export interface GlobalState {
   setOverviewSearchOptions: (
     options: Partial<OverviewSearchOptionsState>
   ) => void
+  addOverviewCustomFilter: (
+    filter: Omit<OverviewCustomFilter, 'id'> & { id?: string }
+  ) => string
+  updateOverviewCustomFilter: (filter: OverviewCustomFilter) => void
+  deleteOverviewCustomFilter: (filterId: string) => void
   refreshFilteredGlyphList: () => void
   setSelectedGlyphId: (id: string | null) => void
   addGlyphToEditor: (id: string) => void

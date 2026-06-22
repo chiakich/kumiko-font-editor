@@ -101,6 +101,7 @@ export const useGitHubCommitFlow = ({
   const markLocalSaved = useStore((state) => state.markLocalSaved)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
   const overviewSectionId = useStore((state) => state.overviewSectionId)
   const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
   const overviewGridState = useStore((state) => state.overviewGridState)
@@ -323,6 +324,7 @@ export const useGitHubCommitFlow = ({
           fontData,
           glyphEditTimes,
           markDraftSaved,
+          overviewCustomFilters,
           overviewGridState,
           overviewSectionId,
           overviewTopGlyphId,
@@ -471,6 +473,7 @@ export const useGitHubCommitFlow = ({
           fontData,
           glyphEditTimes,
           markDraftSaved,
+          overviewCustomFilters,
           overviewGridState,
           overviewSectionId,
           overviewTopGlyphId,

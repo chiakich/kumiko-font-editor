@@ -13,10 +13,21 @@ import {
 import { syncFilteredGlyphList } from 'src/store/glyphSearch'
 import { setGlyphActiveLayer } from 'src/store/glyphLayer'
 import { markUiStateDirty } from 'src/store/dirtyState'
+import { customOverviewFilterIdToNodeId } from 'src/lib/glyph/glyphOverview'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>
 >[0]
+
+const createOverviewCustomFilterId = () => {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return `overview-filter-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`
+}
 
 export const buildUiActions = (set: ImmerSet) => ({
   setSearchQuery: (query: string) =>
@@ -34,6 +45,51 @@ export const buildUiActions = (set: ImmerSet) => ({
         ...options,
       }
       syncFilteredGlyphList(state)
+    }),
+
+  addOverviewCustomFilter: (
+    filter: Omit<GlobalState['overviewCustomFilters'][number], 'id'> & {
+      id?: string
+    }
+  ) => {
+    const filterId = filter.id ?? createOverviewCustomFilterId()
+    set((state) => {
+      const nextFilter = {
+        ...filter,
+        id: filterId,
+      }
+      state.overviewCustomFilters.push(nextFilter)
+      state.overviewSectionId = customOverviewFilterIdToNodeId(filterId)
+      markUiStateDirty(state)
+    })
+    return filterId
+  },
+
+  updateOverviewCustomFilter: (
+    filter: GlobalState['overviewCustomFilters'][number]
+  ) =>
+    set((state) => {
+      const index = state.overviewCustomFilters.findIndex(
+        (current) => current.id === filter.id
+      )
+      if (index < 0) {
+        return
+      }
+      state.overviewCustomFilters[index] = filter
+      markUiStateDirty(state)
+    }),
+
+  deleteOverviewCustomFilter: (filterId: string) =>
+    set((state) => {
+      state.overviewCustomFilters = state.overviewCustomFilters.filter(
+        (filter) => filter.id !== filterId
+      )
+      if (
+        state.overviewSectionId === customOverviewFilterIdToNodeId(filterId)
+      ) {
+        state.overviewSectionId = 'filters'
+      }
+      markUiStateDirty(state)
     }),
 
   // Rebuild the overview list against the current fontData. Needed after an

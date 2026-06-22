@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   flattenGlyphOverviewTree,
   getGlyphOverviewTree,
+  type OverviewCustomFilter,
 } from 'src/lib/glyph/glyphOverview'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import type { GlyphData } from 'src/store'
@@ -10,6 +11,7 @@ import type { GlyphData } from 'src/store'
 interface UseOverviewSectionsOptions {
   filteredGlyphList: GlyphData[]
   glyphEditTimes: GlyphEditTimes
+  overviewCustomFilters: OverviewCustomFilter[]
   selectedSectionId: string
   onSelectedSectionChange: (sectionId: string) => void
 }
@@ -17,6 +19,7 @@ interface UseOverviewSectionsOptions {
 export function useOverviewSections({
   filteredGlyphList,
   glyphEditTimes,
+  overviewCustomFilters,
   selectedSectionId,
   onSelectedSectionChange,
 }: UseOverviewSectionsOptions) {
@@ -25,8 +28,13 @@ export function useOverviewSections({
   const overviewGlyphs = filteredGlyphList
 
   const treeNodes = useMemo(
-    () => getGlyphOverviewTree(overviewGlyphs, glyphEditTimes),
-    [glyphEditTimes, overviewGlyphs]
+    () =>
+      getGlyphOverviewTree(
+        overviewGlyphs,
+        glyphEditTimes,
+        overviewCustomFilters
+      ),
+    [glyphEditTimes, overviewCustomFilters, overviewGlyphs]
   )
 
   const sections = useMemo(

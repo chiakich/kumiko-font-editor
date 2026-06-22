@@ -23,6 +23,7 @@ export function useCloseProjectWithDraftSave() {
   const selectedLayerId = useStore((state) => state.selectedLayerId)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
   const overviewSectionId = useStore((state) => state.overviewSectionId)
   const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
   const overviewGridState = useStore((state) => state.overviewGridState)
@@ -67,6 +68,7 @@ export function useCloseProjectWithDraftSave() {
           selectedGlyphId,
           selectedLayerId,
           activeMasterId,
+          overviewCustomFilters,
           overviewSectionId,
           overviewTopGlyphId,
           overviewGridState,
@@ -102,6 +104,7 @@ export function useCloseProjectWithDraftSave() {
     isDirty,
     markDraftSaved,
     activeMasterId,
+    overviewCustomFilters,
     overviewGridState,
     overviewSectionId,
     overviewTopGlyphId,

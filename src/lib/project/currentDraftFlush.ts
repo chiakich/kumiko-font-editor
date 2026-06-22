@@ -10,6 +10,7 @@ interface BuildCurrentDraftFlushInputOptions {
   fontData: FontData
   glyphEditTimes: GlyphEditTimes
   markDraftSaved: FlushPendingDraftInput['markDraftSaved']
+  overviewCustomFilters: GlobalState['overviewCustomFilters']
   overviewGridState: unknown | null
   overviewSectionId: string
   overviewTopGlyphId: string | null
@@ -28,6 +29,7 @@ export type CurrentDraftFlushState = Pick<
   | 'dirtyGlyphIds'
   | 'fontData'
   | 'glyphEditTimes'
+  | 'overviewCustomFilters'
   | 'overviewGridState'
   | 'overviewSectionId'
   | 'overviewTopGlyphId'
@@ -45,6 +47,7 @@ export const buildCurrentDraftFlushInput = ({
   fontData,
   glyphEditTimes,
   markDraftSaved,
+  overviewCustomFilters,
   overviewGridState,
   overviewSectionId,
   overviewTopGlyphId,
@@ -64,6 +67,7 @@ export const buildCurrentDraftFlushInput = ({
     selectedGlyphId,
     selectedLayerId,
     activeMasterId,
+    overviewCustomFilters,
     overviewSectionId,
     overviewTopGlyphId,
     overviewGridState,

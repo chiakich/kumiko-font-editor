@@ -41,6 +41,46 @@ export interface OverviewSearchModel {
   regex?: boolean
 }
 
+export type OverviewCustomFilterMode = 'all' | 'any'
+
+export type OverviewCustomFilterRuleField =
+  | 'glyphName'
+  | 'unicode'
+  | 'note'
+  | 'category'
+  | 'subCategory'
+  | 'component'
+  | 'export'
+  | 'empty'
+  | 'hasUnicode'
+  | 'hasComponents'
+  | 'hasAnchors'
+  | 'hasHints'
+  | 'hasMetricsKeys'
+  | 'hasColorLabel'
+
+export type OverviewCustomFilterRuleOperator =
+  | 'contains'
+  | 'doesNotContain'
+  | 'is'
+  | 'isNot'
+  | 'exists'
+  | 'missing'
+
+export interface OverviewCustomFilterRule {
+  field: OverviewCustomFilterRuleField
+  id: string
+  operator: OverviewCustomFilterRuleOperator
+  value: string
+}
+
+export interface OverviewCustomFilter {
+  id: string
+  mode: OverviewCustomFilterMode
+  name: string
+  rules: OverviewCustomFilterRule[]
+}
+
 export const DEFAULT_OVERVIEW_SEARCH_FIELDS: OverviewSearchField[] = [
   'glyphName',
   'unicodeValue',
@@ -153,6 +193,8 @@ const UNENCODED_CATEGORY = {
   label: 'Unencoded',
 }
 
+const CUSTOM_FILTER_NODE_ID_PREFIX = 'custom-filter:'
+
 const normalizeSearchText = (value: string, matchCase: boolean) =>
   matchCase ? value : value.toLocaleLowerCase()
 
@@ -160,6 +202,17 @@ const compact = <T>(values: Array<T | null | undefined | false>): T[] =>
   values.filter((value): value is T => Boolean(value))
 
 const encodeFilterIdPart = (value: string) => encodeURIComponent(value)
+
+export const isCustomOverviewFilterNodeId = (nodeId: string) =>
+  nodeId.startsWith(CUSTOM_FILTER_NODE_ID_PREFIX)
+
+export const customOverviewFilterIdToNodeId = (filterId: string) =>
+  `${CUSTOM_FILTER_NODE_ID_PREFIX}${encodeFilterIdPart(filterId)}`
+
+export const customOverviewFilterNodeIdToFilterId = (nodeId: string) =>
+  isCustomOverviewFilterNodeId(nodeId)
+    ? decodeURIComponent(nodeId.slice(CUSTOM_FILTER_NODE_ID_PREFIX.length))
+    : null
 
 const getCodePoint = (glyph: GlyphData) => {
   const primaryUnicode = getPrimaryGlyphUnicode(glyph)
@@ -340,6 +393,100 @@ export const filterGlyphsByOverviewSearch = (
   return glyphs.filter(matcher)
 }
 
+const CUSTOM_FILTER_FIELDS = new Set<OverviewCustomFilterRuleField>([
+  'glyphName',
+  'unicode',
+  'note',
+  'category',
+  'subCategory',
+  'component',
+  'export',
+  'empty',
+  'hasUnicode',
+  'hasComponents',
+  'hasAnchors',
+  'hasHints',
+  'hasMetricsKeys',
+  'hasColorLabel',
+])
+
+const CUSTOM_FILTER_OPERATORS = new Set<OverviewCustomFilterRuleOperator>([
+  'contains',
+  'doesNotContain',
+  'is',
+  'isNot',
+  'exists',
+  'missing',
+])
+
+const toCustomFilterString = (value: unknown) =>
+  typeof value === 'string' ? value.trim() : ''
+
+const isCustomFilterMode = (
+  value: unknown
+): value is OverviewCustomFilterMode => value === 'all' || value === 'any'
+
+const isCustomFilterField = (
+  value: unknown
+): value is OverviewCustomFilterRuleField =>
+  typeof value === 'string' &&
+  CUSTOM_FILTER_FIELDS.has(value as OverviewCustomFilterRuleField)
+
+const isCustomFilterOperator = (
+  value: unknown
+): value is OverviewCustomFilterRuleOperator =>
+  typeof value === 'string' &&
+  CUSTOM_FILTER_OPERATORS.has(value as OverviewCustomFilterRuleOperator)
+
+export const normalizeOverviewCustomFilters = (
+  filters: unknown
+): OverviewCustomFilter[] => {
+  if (!Array.isArray(filters)) {
+    return []
+  }
+
+  return filters
+    .map((rawFilter) => {
+      const record = rawFilter as Partial<OverviewCustomFilter>
+      const id = toCustomFilterString(record.id)
+      const name = toCustomFilterString(record.name)
+      if (!id || !name) {
+        return null
+      }
+
+      const rules = Array.isArray(record.rules)
+        ? record.rules
+            .map((rawRule) => {
+              const rule = rawRule as Partial<OverviewCustomFilterRule>
+              const ruleId = toCustomFilterString(rule.id)
+              if (
+                !ruleId ||
+                !isCustomFilterField(rule.field) ||
+                !isCustomFilterOperator(rule.operator)
+              ) {
+                return null
+              }
+
+              return {
+                field: rule.field,
+                id: ruleId,
+                operator: rule.operator,
+                value: toCustomFilterString(rule.value),
+              }
+            })
+            .filter((rule): rule is OverviewCustomFilterRule => Boolean(rule))
+        : []
+
+      return {
+        id,
+        mode: isCustomFilterMode(record.mode) ? record.mode : 'all',
+        name,
+        rules,
+      }
+    })
+    .filter((filter): filter is OverviewCustomFilter => Boolean(filter))
+}
+
 const buildCategoryNodes = (glyphs: GlyphData[]) => {
   const categoryMap = new Map<
     string,
@@ -464,6 +611,8 @@ const hasMetricsKeys = (glyph: GlyphData) =>
 
 const getLayer = (glyph: GlyphData) => activeLayer(glyph)
 
+const booleanString = (value: boolean) => (value ? 'true' : 'false')
+
 const BUILT_IN_OVERVIEW_FILTERS: BuiltInOverviewFilterDefinition[] = [
   {
     id: 'recent-edits',
@@ -524,9 +673,10 @@ const BUILT_IN_OVERVIEW_FILTERS: BuiltInOverviewFilterDefinition[] = [
 
 const buildFilterNodes = (
   glyphs: GlyphData[],
-  glyphEditTimes: GlyphEditTimes
-) =>
-  BUILT_IN_OVERVIEW_FILTERS.map((definition) => {
+  glyphEditTimes: GlyphEditTimes,
+  customFilters: OverviewCustomFilter[]
+) => {
+  const builtInNodes = BUILT_IN_OVERVIEW_FILTERS.map((definition) => {
     const filterGlyphs = definition.getGlyphs
       ? definition.getGlyphs(glyphs, glyphEditTimes)
       : glyphs.filter((glyph) => definition.matches?.(glyph, glyphEditTimes))
@@ -540,15 +690,132 @@ const buildFilterNodes = (
       'filter'
     )
   })
+  const customNodes = customFilters.map((filter) =>
+    createSectionNode(
+      customOverviewFilterIdToNodeId(filter.id),
+      filter.name,
+      sortGlyphsByCodePoint(
+        glyphs.filter((glyph) => matchesOverviewCustomFilter(glyph, filter))
+      ),
+      'filter'
+    )
+  )
+
+  return [...builtInNodes, ...customNodes]
+}
+
+const getOverviewCustomFilterRuleValues = (
+  glyph: GlyphData,
+  field: OverviewCustomFilterRuleField
+) => {
+  const { category, subCategory } = getGlyphCategoryPath(glyph)
+
+  switch (field) {
+    case 'glyphName':
+      return compact([
+        glyph.id,
+        glyph.name,
+        glyph.displayName,
+        glyph.production,
+      ])
+    case 'unicode':
+      return getGlyphUnicodes(glyph).flatMap((unicode) =>
+        compact([unicode, `U+${unicode}`, unicodeHexToCharacter(unicode)])
+      )
+    case 'note':
+      return compact([glyph.note])
+    case 'category':
+      return [category]
+    case 'subCategory':
+      return compact([subCategory])
+    case 'component':
+      return getGlyphComponentGlyphIds(glyph)
+    case 'export':
+      return [booleanString(glyph.export !== false)]
+    case 'empty':
+      return [booleanString(isEmptyGlyphToEdit(glyph))]
+    case 'hasUnicode':
+      return [booleanString(getGlyphUnicodes(glyph).length > 0)]
+    case 'hasComponents':
+      return [booleanString(getGlyphComponentGlyphIds(glyph).length > 0)]
+    case 'hasAnchors':
+      return [booleanString(getLayer(glyph).anchors.length > 0)]
+    case 'hasHints':
+      return [booleanString((getLayer(glyph).hints ?? []).length > 0)]
+    case 'hasMetricsKeys':
+      return [booleanString(hasMetricsKeys(glyph))]
+    case 'hasColorLabel':
+      return [booleanString(Boolean(glyph.color))]
+  }
+}
+
+const matchesOverviewCustomFilterRule = (
+  glyph: GlyphData,
+  rule: OverviewCustomFilterRule
+) => {
+  const values = getOverviewCustomFilterRuleValues(glyph, rule.field)
+  const normalizedValues = values.map((value) =>
+    normalizeSearchText(value, false)
+  )
+  const normalizedValue = normalizeSearchText(rule.value, false)
+  const hasValue = values.some((value) => value.trim().length > 0)
+  const hasComparableValue = normalizedValue.trim().length > 0
+
+  switch (rule.operator) {
+    case 'exists':
+      return hasValue
+    case 'missing':
+      return !hasValue
+    case 'contains':
+      return (
+        hasComparableValue &&
+        normalizedValues.some((value) => value.includes(normalizedValue))
+      )
+    case 'doesNotContain':
+      return (
+        hasComparableValue &&
+        normalizedValues.every((value) => !value.includes(normalizedValue))
+      )
+    case 'is':
+      return (
+        hasComparableValue &&
+        normalizedValues.some((value) => value === normalizedValue)
+      )
+    case 'isNot':
+      return (
+        hasComparableValue &&
+        normalizedValues.every((value) => value !== normalizedValue)
+      )
+  }
+}
+
+export const matchesOverviewCustomFilter = (
+  glyph: GlyphData,
+  filter: OverviewCustomFilter
+) => {
+  const rules = filter.rules
+  if (!rules.length) {
+    return false
+  }
+
+  return filter.mode === 'any'
+    ? rules.some((rule) => matchesOverviewCustomFilterRule(glyph, rule))
+    : rules.every((rule) => matchesOverviewCustomFilterRule(glyph, rule))
+}
 
 export const getGlyphOverviewTree = (
   glyphs: GlyphData[],
-  glyphEditTimes: GlyphEditTimes
+  glyphEditTimes: GlyphEditTimes,
+  customFilters: OverviewCustomFilter[] = []
 ): GlyphOverviewTreeNode[] => {
   const sortedGlyphs = sortGlyphsByCodePoint(glyphs)
   const categoryNodes = buildCategoryNodes(glyphs)
   const languageNodes = buildLanguageNodes(glyphs)
-  const filterNodes = buildFilterNodes(glyphs, glyphEditTimes)
+  const filterNodes = buildFilterNodes(
+    glyphs,
+    glyphEditTimes,
+    normalizeOverviewCustomFilters(customFilters)
+  )
 
   return [
     createSectionNode('all', 'All', sortedGlyphs, 'all'),

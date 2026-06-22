@@ -65,6 +65,7 @@ export function useFontExport() {
   const selectedLayerId = useStore((state) => state.selectedLayerId)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
+  const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
   const overviewSectionId = useStore((state) => state.overviewSectionId)
   const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
   const overviewGridState = useStore((state) => state.overviewGridState)
@@ -135,6 +136,7 @@ export function useFontExport() {
           selectedGlyphId,
           selectedLayerId,
           activeMasterId,
+          overviewCustomFilters,
           overviewSectionId,
           overviewTopGlyphId,
           overviewGridState,

@@ -5,16 +5,22 @@ import {
   IconButton,
   Tag,
   Text,
+  Tooltip,
   VStack,
 } from '@chakra-ui/react'
-import { NavArrowDown, NavArrowRight } from 'iconoir-react'
+import { NavArrowDown, NavArrowRight, Plus, Settings } from 'iconoir-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { GlyphOverviewTreeNode } from 'src/lib/glyph/glyphOverview'
+import {
+  customOverviewFilterNodeIdToFilterId,
+  type GlyphOverviewTreeNode,
+} from 'src/lib/glyph/glyphOverview'
 
 interface OverviewTreeNavProps {
   nodes: GlyphOverviewTreeNode[]
   selectedSectionId: string
+  onCreateCustomFilter: () => void
+  onEditCustomFilter: (filterId: string) => void
   onSectionSelect: (sectionId: string) => void
 }
 
@@ -84,24 +90,33 @@ function TreeIndentSpacer() {
 }
 
 function OverviewTreeRow({
+  createCustomFilterLabel,
   depth,
+  editCustomFilterLabel,
   isExpanded,
   isSelected,
   node,
+  onCreateCustomFilter,
+  onEditCustomFilter,
   onSectionSelect,
   onToggle,
   translateNodeLabel,
 }: {
+  createCustomFilterLabel: string
   depth: number
+  editCustomFilterLabel: string
   isExpanded: boolean
   isSelected: boolean
   node: GlyphOverviewTreeNode
+  onCreateCustomFilter: () => void
+  onEditCustomFilter: (filterId: string) => void
   onSectionSelect: (sectionId: string) => void
   onToggle: (sectionId: string) => void
   translateNodeLabel: (node: GlyphOverviewTreeNode) => string
 }) {
   const hasChildren = Boolean(node.children?.length)
   const label = translateNodeLabel(node)
+  const customFilterId = customOverviewFilterNodeIdToFilterId(node.id)
 
   return (
     <HStack spacing={0} pl={depth * 2.5}>
@@ -127,24 +142,70 @@ function OverviewTreeRow({
         onClick={() => onSectionSelect(node.id)}
       >
         <Text noOfLines={1}>{label}</Text>
-        <Tag size="sm">{node.glyphs.length}</Tag>
+        {node.id !== 'filters' ? (
+          <Tag size="sm">{node.glyphs.length}</Tag>
+        ) : null}
       </Button>
+      {node.id === 'filters' ? (
+        <Tooltip label={createCustomFilterLabel}>
+          <IconButton
+            aria-label={createCustomFilterLabel}
+            icon={<Plus width={17} height={17} strokeWidth={2.2} />}
+            minW="28px"
+            w="28px"
+            h="32px"
+            ml={1}
+            size="sm"
+            variant="ghost"
+            onClick={(event) => {
+              event.stopPropagation()
+              onCreateCustomFilter()
+            }}
+          />
+        </Tooltip>
+      ) : null}
+      {customFilterId ? (
+        <Tooltip label={editCustomFilterLabel}>
+          <IconButton
+            aria-label={editCustomFilterLabel}
+            icon={<Settings width={17} height={17} strokeWidth={2.1} />}
+            minW="28px"
+            w="28px"
+            h="32px"
+            ml={1}
+            size="sm"
+            variant="ghost"
+            onClick={(event) => {
+              event.stopPropagation()
+              onEditCustomFilter(customFilterId)
+            }}
+          />
+        </Tooltip>
+      ) : null}
     </HStack>
   )
 }
 
 function OverviewTreeBranch({
+  createCustomFilterLabel,
   depth,
+  editCustomFilterLabel,
   expandedIds,
   node,
+  onCreateCustomFilter,
+  onEditCustomFilter,
   selectedSectionId,
   onSectionSelect,
   onToggle,
   translateNodeLabel,
 }: {
+  createCustomFilterLabel: string
   depth: number
+  editCustomFilterLabel: string
   expandedIds: string[]
   node: GlyphOverviewTreeNode
+  onCreateCustomFilter: () => void
+  onEditCustomFilter: (filterId: string) => void
   selectedSectionId: string
   onSectionSelect: (sectionId: string) => void
   onToggle: (sectionId: string) => void
@@ -155,10 +216,14 @@ function OverviewTreeBranch({
   return (
     <Box>
       <OverviewTreeRow
+        createCustomFilterLabel={createCustomFilterLabel}
         depth={depth}
+        editCustomFilterLabel={editCustomFilterLabel}
         isExpanded={isExpanded}
         isSelected={selectedSectionId === node.id}
         node={node}
+        onCreateCustomFilter={onCreateCustomFilter}
+        onEditCustomFilter={onEditCustomFilter}
         onSectionSelect={onSectionSelect}
         onToggle={onToggle}
         translateNodeLabel={translateNodeLabel}
@@ -167,9 +232,13 @@ function OverviewTreeBranch({
         node.children?.map((child) => (
           <OverviewTreeBranch
             key={child.id}
+            createCustomFilterLabel={createCustomFilterLabel}
             depth={depth + 1}
+            editCustomFilterLabel={editCustomFilterLabel}
             expandedIds={expandedIds}
             node={child}
+            onCreateCustomFilter={onCreateCustomFilter}
+            onEditCustomFilter={onEditCustomFilter}
             selectedSectionId={selectedSectionId}
             onSectionSelect={onSectionSelect}
             onToggle={onToggle}
@@ -183,6 +252,8 @@ function OverviewTreeBranch({
 export function OverviewTreeNav({
   nodes,
   selectedSectionId,
+  onCreateCustomFilter,
+  onEditCustomFilter,
   onSectionSelect,
 }: OverviewTreeNavProps) {
   const { t } = useTranslation()
@@ -190,6 +261,8 @@ export function OverviewTreeNav({
   const handleToggle = (nodeId: string) => {
     setExpandedIds((current) => getNextExpandedIds(current, nodeId))
   }
+  const createCustomFilterLabel = t('fontOverview.customFilter.createTitle')
+  const editCustomFilterLabel = t('fontOverview.customFilter.editTitle')
   const translateNodeLabel = (node: GlyphOverviewTreeNode) => {
     const labelKey = OVERVIEW_NODE_LABEL_KEYS[node.id]
     return labelKey ? t(labelKey) : node.label
@@ -200,9 +273,13 @@ export function OverviewTreeNav({
       {nodes.map((node) => (
         <OverviewTreeBranch
           key={node.id}
+          createCustomFilterLabel={createCustomFilterLabel}
           depth={0}
+          editCustomFilterLabel={editCustomFilterLabel}
           expandedIds={expandedIds}
           node={node}
+          onCreateCustomFilter={onCreateCustomFilter}
+          onEditCustomFilter={onEditCustomFilter}
           selectedSectionId={selectedSectionId}
           onSectionSelect={onSectionSelect}
           onToggle={handleToggle}

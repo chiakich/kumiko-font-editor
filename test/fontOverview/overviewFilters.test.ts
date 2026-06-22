@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  customOverviewFilterIdToNodeId,
   filterGlyphsByOverviewSearch,
   getGlyphOverviewTree,
   type GlyphOverviewTreeNode,
@@ -248,5 +249,42 @@ describe('Glyphs-like overview tree', () => {
     expect(
       ids(findNode(tree, 'filter:has-metrics-keys')?.glyphs ?? [])
     ).toEqual(['acute'])
+  })
+
+  it('adds custom filter sections under smart filters', () => {
+    const customFilterId = 'components-with-accent'
+    const customTree = getGlyphOverviewTree(glyphs, {}, [
+      {
+        id: customFilterId,
+        mode: 'all',
+        name: 'Components with accent',
+        rules: [
+          {
+            field: 'component',
+            id: 'component-rule',
+            operator: 'contains',
+            value: 'acute',
+          },
+          {
+            field: 'export',
+            id: 'export-rule',
+            operator: 'is',
+            value: 'true',
+          },
+        ],
+      },
+    ])
+
+    const filtersNode = findNode(customTree, 'filters')
+    const customNode = findNode(
+      customTree,
+      customOverviewFilterIdToNodeId(customFilterId)
+    )
+
+    expect(filtersNode?.children?.at(-1)?.id).toBe(
+      customOverviewFilterIdToNodeId(customFilterId)
+    )
+    expect(customNode?.label).toBe('Components with accent')
+    expect(ids(customNode?.glyphs ?? [])).toEqual(['Aacute'])
   })
 })

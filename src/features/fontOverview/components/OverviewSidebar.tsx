@@ -94,6 +94,8 @@ interface OverviewSidebarProps {
   treeNodes: GlyphOverviewTreeNode[]
   visibleGlyphCount: number
   onCloseProject: () => void
+  onCreateCustomFilter: () => void
+  onEditCustomFilter: (filterId: string) => void
   onSearchQueryChange: (value: string) => void
   onSearchOptionsChange: (options: Partial<OverviewSearchOptionsState>) => void
   onSectionSelect: (sectionId: string) => void
@@ -109,6 +111,8 @@ export function OverviewSidebar({
   treeNodes,
   visibleGlyphCount,
   onCloseProject,
+  onCreateCustomFilter,
+  onEditCustomFilter,
   onSearchQueryChange,
   onSearchOptionsChange,
   onSectionSelect,
@@ -252,6 +256,8 @@ export function OverviewSidebar({
         <OverviewTreeNav
           nodes={treeNodes}
           selectedSectionId={selectedSectionId}
+          onCreateCustomFilter={onCreateCustomFilter}
+          onEditCustomFilter={onEditCustomFilter}
           onSectionSelect={onSectionSelect}
         />
       </Box>
