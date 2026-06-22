@@ -11,10 +11,10 @@ import {
   ModalCloseButton,
   ModalContent,
   ModalFooter,
-  ModalHeader,
   ModalOverlay,
   Select,
   SimpleGrid,
+  Stack,
   TabPanel,
   TabPanels,
   Tabs,
@@ -215,34 +215,55 @@ function PresetFilterList({
   const { t } = useTranslation()
 
   return (
-    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
       {presets.map((preset) => {
         const isActive = activePresetId === preset.id
+        const selectedBg = 'field.ink'
+        const selectedColor = 'field.yellow.300'
+        const mutedColor = isActive ? 'field.panelMuted' : 'field.muted'
+
         return (
           <Button
             key={preset.id}
-            alignItems="stretch"
-            borderColor={isActive ? 'field.yellow.300' : 'field.border'}
+            alignItems="center"
+            bg={isActive ? selectedBg : 'white'}
+            borderColor={isActive ? 'field.ink' : 'field.haze'}
             borderRadius="sm"
-            borderWidth="1px"
+            borderWidth={2}
+            color={isActive ? selectedColor : 'field.ink'}
             h="auto"
-            justifyContent="flex-start"
-            minH="92px"
+            justifyContent="center"
+            minH="116px"
             p={3}
-            textAlign="left"
+            position="relative"
+            textAlign="center"
             variant="outline"
             whiteSpace="normal"
+            _active={{
+              bg: isActive ? selectedBg : 'field.panel',
+              color: isActive ? selectedColor : 'field.ink',
+            }}
+            _focusVisible={{
+              boxShadow: '0 0 0 2px var(--chakra-colors-field-ink)',
+            }}
+            _hover={{
+              bg: isActive ? selectedBg : 'field.panel',
+              borderColor: 'field.ink',
+              color: isActive ? selectedColor : 'field.ink',
+            }}
             onClick={() => onApplyPreset(preset)}
           >
-            <VStack align="stretch" spacing={2} w="100%">
-              <Text fontSize="sm" fontWeight="900">
+            <VStack align="center" spacing={2} w="100%">
+              <Text fontSize="sm" fontWeight="900" lineHeight="1.2">
                 {t(preset.labelKey)}
               </Text>
               <Text
-                color="field.muted"
+                color={mutedColor}
                 fontFamily="mono"
                 fontSize="xs"
-                fontWeight="500"
+                fontWeight="normal"
+                lineHeight="1.35"
+                noOfLines={3}
               >
                 {getPresetSummary(preset, t)}
               </Text>
@@ -283,43 +304,49 @@ function AdvancedFilterFields({
         />
       </FormControl>
 
-      <FormControl maxW="220px">
-        <FormLabel>{t('fontOverview.customFilter.matchMode')}</FormLabel>
-        <Select
-          value={draft.mode}
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              mode: event.target.value as OverviewCustomFilterMode,
-            }))
-          }
-        >
-          <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
-          <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
-        </Select>
-      </FormControl>
+      <Stack direction={{ base: 'column', md: 'row' }} spacing={3}>
+        <FormControl>
+          <FormLabel>{t('fontOverview.customFilter.matchMode')}</FormLabel>
+          <Select
+            value={draft.mode}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                mode: event.target.value as OverviewCustomFilterMode,
+              }))
+            }
+          >
+            <option value="all">
+              {t('fontOverview.customFilter.matchAll')}
+            </option>
+            <option value="any">
+              {t('fontOverview.customFilter.matchAny')}
+            </option>
+          </Select>
+        </FormControl>
 
-      <FormControl maxW="220px">
-        <FormLabel>{t('fontOverview.customFilter.sort')}</FormLabel>
-        <Select
-          value={draft.sort ?? 'codePoint'}
-          onChange={(event) =>
-            setDraft((current) => ({
-              ...current,
-              sort: event.target.value as OverviewCustomFilterSort,
-            }))
-          }
-        >
-          <option value="codePoint">
-            {t('fontOverview.customFilter.sortCodePoint')}
-          </option>
-          <option value="recentEdit">
-            {t('fontOverview.customFilter.sortRecentEdit')}
-          </option>
-        </Select>
-      </FormControl>
+        <FormControl>
+          <FormLabel>{t('fontOverview.customFilter.sort')}</FormLabel>
+          <Select
+            value={draft.sort ?? 'codePoint'}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                sort: event.target.value as OverviewCustomFilterSort,
+              }))
+            }
+          >
+            <option value="codePoint">
+              {t('fontOverview.customFilter.sortCodePoint')}
+            </option>
+            <option value="recentEdit">
+              {t('fontOverview.customFilter.sortRecentEdit')}
+            </option>
+          </Select>
+        </FormControl>
+      </Stack>
 
-      <Box>
+      <Box border="2px solid" borderColor="field.haze" borderRadius="2px" p={3}>
         <HStack justify="space-between" mb={2}>
           <Text fontWeight="900">{t('fontOverview.customFilter.rules')}</Text>
           <Button
@@ -343,7 +370,12 @@ function AdvancedFilterFields({
             const booleanField = isBooleanField(rule.field)
 
             return (
-              <HStack key={rule.id} align="flex-start" spacing={2}>
+              <Stack
+                key={rule.id}
+                align={{ base: 'stretch', md: 'flex-start' }}
+                direction={{ base: 'column', md: 'row' }}
+                spacing={2}
+              >
                 <Select
                   flex="1"
                   value={rule.field}
@@ -412,6 +444,7 @@ function AdvancedFilterFields({
                 <Tooltip label={t('fontOverview.customFilter.deleteRule')}>
                   <IconButton
                     aria-label={t('fontOverview.customFilter.deleteRule')}
+                    alignSelf={{ base: 'flex-end', md: 'auto' }}
                     icon={<Trash width={17} height={17} strokeWidth={2.1} />}
                     isDisabled={draft.rules.length <= 1}
                     onClick={() =>
@@ -424,7 +457,7 @@ function AdvancedFilterFields({
                     }
                   />
                 </Tooltip>
-              </HStack>
+              </Stack>
             )
           })}
         </VStack>
@@ -520,40 +553,54 @@ function OverviewCustomFilterModalForm({
   }
 
   return (
-    <ModalContent>
+    <ModalContent
+      borderRadius="sm"
+      h={{ base: 'calc(100vh - 32px)', md: '720px' }}
+    >
+      <ModalCloseButton zIndex={2} />
       <Tabs
+        display="flex"
+        flex={1}
+        flexDirection="column"
         index={activeTabIndex}
+        minH={0}
+        size="sm"
         onChange={setActiveTabIndex}
-        variant="unstyled"
+        variant="enclosed"
       >
-        <ModalHeader pr={14}>
-          <HStack align="center" justify="space-between" spacing={4}>
-            <Text as="span">
-              {filter
-                ? t('fontOverview.customFilter.editTitle')
-                : t('fontOverview.customFilter.createTitle')}
-            </Text>
-            <SlidingTabList
-              activeIndex={activeTabIndex}
-              labels={[
-                t('fontOverview.customFilter.presetTab'),
-                t('fontOverview.customFilter.advancedTab'),
-              ]}
-              layoutGroupId="overview-custom-filter-modal-tabs"
-            />
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <TabPanels>
-            <TabPanel p={0}>
+        <HStack
+          align="center"
+          gap={4}
+          justify="space-between"
+          pb={3}
+          pr={14}
+          pt={5}
+          px={6}
+        >
+          <Text as="h2" fontSize="xl" fontWeight="900">
+            {filter
+              ? t('fontOverview.customFilter.editTitle')
+              : t('fontOverview.customFilter.createTitle')}
+          </Text>
+          <SlidingTabList
+            activeIndex={activeTabIndex}
+            labels={[
+              t('fontOverview.customFilter.presetTab'),
+              t('fontOverview.customFilter.advancedTab'),
+            ]}
+            layoutGroupId="overview-custom-filter-modal-tabs"
+          />
+        </HStack>
+        <ModalBody flex={1} minH={0} pb={5}>
+          <TabPanels h="100%">
+            <TabPanel h="100%" overflow="auto" p={0} pr={1}>
               <PresetFilterList
                 activePresetId={activePresetId}
                 presets={presets}
                 onApplyPreset={handleApplyPreset}
               />
             </TabPanel>
-            <TabPanel p={0}>
+            <TabPanel h="100%" overflow="auto" p={0} pr={1}>
               <AdvancedFilterFields
                 draft={draft}
                 setDraft={setAdvancedDraft}
@@ -562,7 +609,7 @@ function OverviewCustomFilterModalForm({
             </TabPanel>
           </TabPanels>
         </ModalBody>
-        <ModalFooter justifyContent="space-between">
+        <ModalFooter justifyContent="space-between" gap={3}>
           <Box>
             {filter ? (
               <Button colorScheme="red" variant="ghost" onClick={handleDelete}>
@@ -570,15 +617,11 @@ function OverviewCustomFilterModalForm({
               </Button>
             ) : null}
           </Box>
-          <HStack>
+          <HStack spacing={3}>
             <Button variant="ghost" onClick={onClose}>
               {t('fontOverview.cancel')}
             </Button>
-            <Button
-              colorScheme="yellow"
-              isDisabled={!canSave}
-              onClick={handleSave}
-            >
+            <Button isDisabled={!canSave} onClick={handleSave}>
               {t('fontOverview.customFilter.save')}
             </Button>
           </HStack>
@@ -608,7 +651,13 @@ export function OverviewCustomFilterModal({
   const contentKey = filter?.id ?? 'new'
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
+    <Modal
+      isCentered
+      isOpen={isOpen}
+      onClose={onClose}
+      scrollBehavior="inside"
+      size="4xl"
+    >
       <ModalOverlay />
       {isOpen ? (
         <OverviewCustomFilterModalForm
