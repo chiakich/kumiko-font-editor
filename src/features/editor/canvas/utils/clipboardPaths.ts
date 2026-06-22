@@ -29,6 +29,31 @@ export function serializeClipboardPaths(payload: ClipboardPathPayload) {
   return `${CLIPBOARD_PREFIX}${JSON.stringify(payload)}`
 }
 
+export function serializeClipboardPathsAsSvg(payload: ClipboardPathPayload) {
+  const bounds = getBounds(payload.paths)
+  if (!bounds) {
+    return null
+  }
+
+  const contentWidth = bounds.xMax - bounds.xMin
+  const contentHeight = bounds.yMax - bounds.yMin
+  const viewBoxWidth = Math.max(1, contentWidth)
+  const viewBoxHeight = Math.max(1, contentHeight)
+  const pathData = payload.paths
+    .map((path) => serializePathAsSvgPathData(path, bounds))
+    .filter(Boolean)
+    .join(' ')
+  if (!pathData) {
+    return null
+  }
+
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${formatSvgNumber(viewBoxWidth)} ${formatSvgNumber(viewBoxHeight)}">`,
+    `<path d="${pathData}" fill="black"/>`,
+    '</svg>',
+  ].join('')
+}
+
 export function parseClipboardPathsText(
   text: string
 ): ClipboardPathPayload | null {
@@ -258,6 +283,111 @@ function getBounds(paths: ClipboardPathPayload['paths']) {
   }
 
   return { xMin, yMin, xMax, yMax }
+}
+
+function serializePathAsSvgPathData(
+  path: ClipboardPathPayload['paths'][number],
+  bounds: { xMin: number; yMin: number; xMax: number; yMax: number }
+) {
+  const nodes = path.nodes
+  const firstOnCurveIndex = nodes.findIndex((node) => !isOffCurveNode(node))
+  if (firstOnCurveIndex < 0) {
+    return ''
+  }
+
+  const orderedNodes = [
+    ...nodes.slice(firstOnCurveIndex),
+    ...nodes.slice(0, firstOnCurveIndex),
+  ]
+  const first = orderedNodes[0]
+  const commands = [`M ${formatSvgPoint(first, bounds)}`]
+  let pendingOffCurves: ClipboardNode[] = []
+
+  for (const node of orderedNodes.slice(1)) {
+    if (isOffCurveNode(node)) {
+      pendingOffCurves.push(node)
+      continue
+    }
+
+    commands.push(serializeSegmentCommand(pendingOffCurves, node, bounds))
+    pendingOffCurves = []
+  }
+
+  if (path.closed) {
+    if (pendingOffCurves.length > 0) {
+      commands.push(serializeSegmentCommand(pendingOffCurves, first, bounds))
+    }
+    commands.push('Z')
+  }
+
+  return commands.join(' ')
+}
+
+function serializeSegmentCommand(
+  offCurves: ClipboardNode[],
+  endNode: ClipboardNode,
+  bounds: { xMin: number; yMin: number; xMax: number; yMax: number }
+) {
+  if (offCurves.length >= 2 || endNode.segmentType === 'cubic') {
+    const [firstHandle, secondHandle] = offCurves
+    if (firstHandle && secondHandle) {
+      return [
+        'C',
+        formatSvgPoint(firstHandle, bounds),
+        formatSvgPoint(secondHandle, bounds),
+        formatSvgPoint(endNode, bounds),
+      ].join(' ')
+    }
+  }
+
+  if (offCurves.length >= 1 || endNode.segmentType === 'quadratic') {
+    const [handle] = offCurves
+    if (handle) {
+      return [
+        'Q',
+        formatSvgPoint(handle, bounds),
+        formatSvgPoint(endNode, bounds),
+      ].join(' ')
+    }
+  }
+
+  return `L ${formatSvgPoint(endNode, bounds)}`
+}
+
+function formatSvgPoint(
+  node: ClipboardNode,
+  bounds: { xMin: number; yMin: number; xMax: number; yMax: number }
+) {
+  return `${formatSvgNumber(node.x - bounds.xMin)} ${formatSvgNumber(
+    getSvgY(node.y, bounds)
+  )}`
+}
+
+function getSvgY(y: number, bounds: { yMin: number; yMax: number }) {
+  const contentHeight = bounds.yMax - bounds.yMin
+  if (contentHeight <= 0) {
+    return 0
+  }
+  return contentHeight - (y - bounds.yMin)
+}
+
+function formatSvgNumber(value: number) {
+  if (!Number.isFinite(value)) {
+    return '0'
+  }
+
+  const rounded = Math.round(value * 1000) / 1000
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : rounded.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')
+}
+
+function isOffCurveNode(node: ClipboardNode) {
+  return (
+    node.kind === 'offcurve' ||
+    node.type === 'offcurve' ||
+    node.type === 'qcurve'
+  )
 }
 
 function parseSvgLikePaths(text: string): ClipboardPathPayload['paths'] {

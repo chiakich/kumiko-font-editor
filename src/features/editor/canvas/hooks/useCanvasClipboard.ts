@@ -5,7 +5,7 @@ import {
   buildClipboardPayloadFromSelection,
   materializeClipboardPaths,
   parseClipboardPathsText,
-  serializeClipboardPaths,
+  serializeClipboardPathsAsSvg,
 } from 'src/features/editor/canvas/utils/clipboardPaths'
 
 interface UseCanvasClipboardOptions {
@@ -44,7 +44,7 @@ export function useCanvasClipboard({
       return
     }
 
-    await navigator.clipboard.writeText(serializeClipboardPaths(payload))
+    await writeClipboardSvg(serializeClipboardPathsAsSvg(payload))
   }, [activeEditorGlyphId, fontData, selectedNodeIds, selectedSegment])
 
   const cutSelection = useCallback(async () => {
@@ -87,4 +87,49 @@ export function useCanvasClipboard({
     cutSelection,
     pasteSelection,
   }
+}
+
+async function writeClipboardSvg(svgText: string | null) {
+  if (!svgText) {
+    return
+  }
+
+  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+    const svgBlob = new Blob([svgText], { type: 'image/svg+xml' })
+    const htmlBlob = new Blob([svgText], { type: 'text/html' })
+    const plainTextBlob = new Blob([svgText], { type: 'text/plain' })
+    const richTypes: Record<string, Blob> = {
+      'text/plain': plainTextBlob,
+      'text/html': htmlBlob,
+    }
+
+    if (canWriteClipboardType('image/svg+xml')) {
+      richTypes['image/svg+xml'] = svgBlob
+    }
+
+    try {
+      await navigator.clipboard.write([new ClipboardItem(richTypes)])
+      return
+    } catch {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': plainTextBlob,
+            'text/html': htmlBlob,
+          }),
+        ])
+        return
+      } catch {
+        // Fall through to plain SVG text. Kumiko can parse it back on paste.
+      }
+    }
+  }
+
+  await navigator.clipboard.writeText(svgText)
+}
+
+function canWriteClipboardType(type: string) {
+  return (
+    typeof ClipboardItem.supports !== 'function' || ClipboardItem.supports(type)
+  )
 }
