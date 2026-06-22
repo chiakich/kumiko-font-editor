@@ -1,11 +1,16 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { memo, useCallback, type MouseEvent } from 'react'
-import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
+import {
+  GlyphPreview,
+  GlyphPreviewArtwork,
+} from 'src/features/common/glyphPreview/GlyphPreview'
+import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
 import type { GlyphData } from 'src/store'
 
 interface GlyphCardProps {
   glyph: GlyphData
   glyphMap: Record<string, GlyphData>
+  preview: GlyphPreviewData | null
   isSelected: boolean
   isTransitioning?: boolean
   onEnterEditor: (glyphId: string) => void
@@ -15,6 +20,7 @@ interface GlyphCardProps {
 export const GlyphCard = memo(function GlyphCard({
   glyph,
   glyphMap,
+  preview,
   isSelected,
   isTransitioning,
   onEnterEditor,
@@ -67,7 +73,11 @@ export const GlyphCard = memo(function GlyphCard({
                 : undefined
             }
           >
-            <GlyphPreview glyph={glyph} glyphMap={glyphMap} />
+            {preview ? (
+              <GlyphPreviewArtwork glyph={glyph} preview={preview} />
+            ) : (
+              <GlyphPreview glyph={glyph} glyphMap={glyphMap} />
+            )}
           </Box>
         </Flex>
 

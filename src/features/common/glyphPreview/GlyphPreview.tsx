@@ -4,6 +4,7 @@ import {
   buildGlyphPreviewData,
   getGlyphDisplayCharacter,
 } from 'src/lib/glyph/glyphOverview'
+import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
 import { useStore, type GlyphData } from 'src/store'
 
 interface GlyphPreviewProps {
@@ -12,22 +13,21 @@ interface GlyphPreviewProps {
   inheritFallbackColor?: boolean
 }
 
-export const GlyphPreview = memo(function GlyphPreview({
+interface GlyphPreviewArtworkProps {
+  glyph: GlyphData
+  inheritFallbackColor?: boolean
+  preview: GlyphPreviewData | null
+}
+
+export const GlyphPreviewArtwork = memo(function GlyphPreviewArtwork({
   glyph,
-  glyphMap,
   inheritFallbackColor = false,
-}: GlyphPreviewProps) {
-  const unitsPerEm = useStore((state) => state.fontData?.unitsPerEm)
-  const activeMasterId = useStore((state) => state.activeMasterId)
-  // Render the active master's layer (null -> the glyph's own active layer).
-  const preview = useMemo(
-    () => buildGlyphPreviewData(glyph, glyphMap, unitsPerEm, activeMasterId),
-    [glyph, glyphMap, unitsPerEm, activeMasterId]
-  )
+  preview,
+}: GlyphPreviewArtworkProps) {
   const displayCharacter =
     getGlyphDisplayCharacter(glyph) ?? glyph.name ?? glyph.id
 
-  if (!preview.shapes.length) {
+  if (!preview?.shapes.length) {
     return (
       <Flex w="100%" h="100%" align="center" justify="center">
         <Text
@@ -66,5 +66,26 @@ export const GlyphPreview = memo(function GlyphPreview({
         ))}
       </g>
     </Box>
+  )
+})
+
+export const GlyphPreview = memo(function GlyphPreview({
+  glyph,
+  glyphMap,
+  inheritFallbackColor = false,
+}: GlyphPreviewProps) {
+  const unitsPerEm = useStore((state) => state.fontData?.unitsPerEm)
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  // Render the active master's layer (null -> the glyph's own active layer).
+  const preview = useMemo(
+    () => buildGlyphPreviewData(glyph, glyphMap, unitsPerEm, activeMasterId),
+    [glyph, glyphMap, unitsPerEm, activeMasterId]
+  )
+  return (
+    <GlyphPreviewArtwork
+      glyph={glyph}
+      inheritFallbackColor={inheritFallbackColor}
+      preview={preview}
+    />
   )
 })

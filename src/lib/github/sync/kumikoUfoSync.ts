@@ -59,6 +59,7 @@ import type {
 } from 'src/lib/fontFormats/ufoTypes'
 import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
 import {
+  getKumikoComponentRefMatrix,
   glyphDataToKumikoGlyphRecord,
   kumikoGlyphRecordToGlyphData,
   kumikoGlyphRecordToGlyphMetadata,
@@ -633,7 +634,7 @@ const toUfoGlyphRecord = (input: {
     })),
     contours: content.paths.map((path) => pathToUfoContour(path)),
     components: content.componentRefs.map((component) => {
-      const matrix = component.transform
+      const matrix = getKumikoComponentRefMatrix(component)
       return {
         base: component.glyphId,
         identifier: component.identifier ?? component.id,

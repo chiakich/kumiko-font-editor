@@ -227,6 +227,58 @@ describe('kumikoFontDataAdapter', () => {
     expect(rebuilt.glyphs.A.unicodes).toEqual(['0041'])
   })
 
+  it('rebuilds component refs from legacy records without canonical transform', () => {
+    const project = fontDataToKumikoProjectRecord({
+      projectId: 'project-1',
+      title: 'Test',
+      fontData,
+      createdAt: 10,
+      updatedAt: 20,
+    })
+    const glyphs = fontDataToKumikoGlyphRecords({
+      projectId: 'project-1',
+      fontData,
+      updatedAt: 20,
+    })
+    const component = glyphs[0].layers['backup-1'].componentRefs[0] as Record<
+      string,
+      unknown
+    >
+    delete component.transform
+    Object.assign(component, {
+      x: 10,
+      y: 20,
+      scaleX: 1,
+      scaleY: 1,
+      xyScale: 0.25,
+      yxScale: -0.5,
+      rotation: 0,
+    })
+
+    const rebuilt = kumikoRecordsToFontData(project, glyphs)
+    const rebuiltComponent =
+      rebuilt.glyphs.A.layers?.['backup-1'].componentRefs[0]
+
+    expect(rebuiltComponent).toMatchObject({
+      glyphId: 'base',
+      x: 10,
+      y: 20,
+      scaleX: 1,
+      scaleY: 1,
+      xyScale: 0.25,
+      yxScale: -0.5,
+      rotation: 0,
+      transform: {
+        a: 1,
+        b: 0.25,
+        c: -0.5,
+        d: 1,
+        e: 10,
+        f: 20,
+      },
+    })
+  })
+
   it('rejects metadata-only glyphs when serializing complete glyph records', () => {
     const metadataOnlyFontData: FontData = {
       glyphOrder: ['A'],

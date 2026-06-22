@@ -9,6 +9,7 @@ import {
   createKumikoGlyphDigest,
   createKumikoProjectDigest,
   findGeometryBearingSourceDataKey,
+  normalizeKumikoGlyphRecord,
 } from 'src/lib/project/kumikoFontDataAdapter'
 import type {
   KumikoGlyphPrimaryKey,
@@ -79,6 +80,16 @@ const normalizeGlyphRecordUnicodes = (
   return [...new Set(normalized)]
 }
 
+const putKumikoGlyphRecord = (
+  store: IDBObjectStore,
+  record: KumikoGlyphRecord
+) => {
+  store.put(normalizeKumikoGlyphRecord(record))
+}
+
+const normalizeLoadedGlyphRecord = (record: KumikoGlyphRecord | undefined) =>
+  record ? normalizeKumikoGlyphRecord(record) : undefined
+
 export const saveKumikoProjectRecord = async (record: KumikoProjectRecord) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_PROJECTS_STORE, 'readwrite')
@@ -119,7 +130,7 @@ export const replaceKumikoProjectData = async (
     IDBKeyRange.bound([project.projectId, ''], [project.projectId, '\uffff'])
   )
   for (const glyph of glyphs) {
-    glyphStore.put(glyph)
+    putKumikoGlyphRecord(glyphStore, glyph)
   }
 
   await transactionDone(transaction)
@@ -166,7 +177,7 @@ export const patchKumikoProjectData = async (input: {
 
   projectStore.put(input.project)
   for (const glyph of input.glyphsToSave ?? []) {
-    glyphStore.put(glyph)
+    putKumikoGlyphRecord(glyphStore, glyph)
   }
   for (const key of input.glyphKeysToDelete ?? []) {
     glyphStore.delete(key)
@@ -174,7 +185,7 @@ export const patchKumikoProjectData = async (input: {
   for (const patchInput of input.glyphMetadataPatches ?? []) {
     const patched = await patchGlyphMetadataInStore(glyphStore, patchInput)
     if (patched) {
-      glyphStore.put(patched)
+      putKumikoGlyphRecord(glyphStore, patched)
     }
   }
   for (const record of input.uiStateToSave ?? []) {
@@ -219,7 +230,7 @@ export const deleteKumikoProjectRecord = async (projectId: string) => {
 export const saveKumikoGlyphRecord = async (record: KumikoGlyphRecord) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readwrite')
-  transaction.objectStore(KUMIKO_GLYPHS_STORE).put(record)
+  putKumikoGlyphRecord(transaction.objectStore(KUMIKO_GLYPHS_STORE), record)
   await transactionDone(transaction)
 }
 
@@ -234,7 +245,7 @@ export const saveKumikoGlyphRecordBatch = async (
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readwrite')
   const store = transaction.objectStore(KUMIKO_GLYPHS_STORE)
   for (const record of records) {
-    store.put(record)
+    putKumikoGlyphRecord(store, record)
   }
   await transactionDone(transaction)
 }
@@ -242,9 +253,10 @@ export const saveKumikoGlyphRecordBatch = async (
 export const loadKumikoGlyphRecord = async (key: KumikoGlyphPrimaryKey) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
-  return requestToPromise(
+  const record = (await requestToPromise(
     transaction.objectStore(KUMIKO_GLYPHS_STORE).get(key)
-  ) as Promise<KumikoGlyphRecord | undefined>
+  )) as KumikoGlyphRecord | undefined
+  return normalizeLoadedGlyphRecord(record)
 }
 
 export const loadKumikoGlyphRecords = async (keys: KumikoGlyphPrimaryKey[]) => {
@@ -265,9 +277,9 @@ export const loadKumikoGlyphRecords = async (keys: KumikoGlyphPrimaryKey[]) => {
     )
   )
   await done
-  return records.filter((record): record is KumikoGlyphRecord =>
-    Boolean(record)
-  )
+  return records
+    .filter((record): record is KumikoGlyphRecord => Boolean(record))
+    .map(normalizeKumikoGlyphRecord)
 }
 
 const patchGlyphMetadataInStore = async (
@@ -275,13 +287,14 @@ const patchGlyphMetadataInStore = async (
   input: KumikoGlyphMetadataPatchInput
 ) => {
   const key = makeKumikoGlyphKey(input.projectId, input.glyphId)
-  const record = (await requestToPromise(store.get(key))) as
+  const storedRecord = (await requestToPromise(store.get(key))) as
     | KumikoGlyphRecord
     | undefined
 
-  if (!record) {
+  if (!storedRecord) {
     return null
   }
+  const record = normalizeKumikoGlyphRecord(storedRecord)
 
   const geometrySourceDataKey = findGeometryBearingSourceDataKey(
     input.patch.sourceData,
@@ -321,9 +334,10 @@ const patchGlyphMetadataInStore = async (
     syncDirty,
     updatedAt: input.updatedAt ?? Date.now(),
   }
-  const digest = createKumikoGlyphDigest(nextRecord)
+  const normalizedNextRecord = normalizeKumikoGlyphRecord(nextRecord)
+  const digest = createKumikoGlyphDigest(normalizedNextRecord)
   const persistedRecord: KumikoGlyphRecord = {
-    ...nextRecord,
+    ...normalizedNextRecord,
     exportedDigest: nextRecord.exportDirty ? record.exportedDigest : digest,
     syncedDigest: nextRecord.syncDirty ? record.syncedDigest : digest,
   }
@@ -349,9 +363,10 @@ export const listKumikoGlyphRecordsForProject = async (projectId: string) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
   const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
-  return requestToPromise(index.getAll(projectId)) as Promise<
-    KumikoGlyphRecord[]
-  >
+  const records = (await requestToPromise(
+    index.getAll(projectId)
+  )) as KumikoGlyphRecord[]
+  return records.map(normalizeKumikoGlyphRecord)
 }
 
 export const listLiveKumikoGlyphRecordsForProject = async (
@@ -492,9 +507,10 @@ export const findKumikoGlyphRecordsByUnicode = async (
   const index = transaction
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byUnicodeKey')
-  return requestToPromise(
+  const records = (await requestToPromise(
     index.getAll(`${projectId}\0${normalizedUnicode}`)
-  ) as Promise<KumikoGlyphRecord[]>
+  )) as KumikoGlyphRecord[]
+  return records.map(normalizeKumikoGlyphRecord)
 }
 
 export const findKumikoGlyphRecordsByComponentRef = async (
@@ -506,9 +522,10 @@ export const findKumikoGlyphRecordsByComponentRef = async (
   const index = transaction
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byComponentRefKey')
-  return requestToPromise(
+  const records = (await requestToPromise(
     index.getAll(`${projectId}\0${componentGlyphId}`)
-  ) as Promise<KumikoGlyphRecord[]>
+  )) as KumikoGlyphRecord[]
+  return records.map(normalizeKumikoGlyphRecord)
 }
 
 export const findKumikoGlyphRecordsByDisplayName = async (
@@ -520,9 +537,10 @@ export const findKumikoGlyphRecordsByDisplayName = async (
   const index = transaction
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byDisplayName')
-  return requestToPromise(index.getAll([projectId, displayName])) as Promise<
-    KumikoGlyphRecord[]
-  >
+  const records = (await requestToPromise(
+    index.getAll([projectId, displayName])
+  )) as KumikoGlyphRecord[]
+  return records.map(normalizeKumikoGlyphRecord)
 }
 
 export const listExportDirtyKumikoGlyphRecords = async (projectId: string) => {
@@ -531,9 +549,10 @@ export const listExportDirtyKumikoGlyphRecords = async (projectId: string) => {
   const index = transaction
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byProjectExportDirty')
-  return requestToPromise(index.getAll([projectId, 1])) as Promise<
-    KumikoGlyphRecord[]
-  >
+  const records = (await requestToPromise(
+    index.getAll([projectId, 1])
+  )) as KumikoGlyphRecord[]
+  return records.map(normalizeKumikoGlyphRecord)
 }
 
 export const listSyncDirtyKumikoGlyphRecords = async (projectId: string) => {
@@ -542,9 +561,10 @@ export const listSyncDirtyKumikoGlyphRecords = async (projectId: string) => {
   const index = transaction
     .objectStore(KUMIKO_GLYPHS_STORE)
     .index('byProjectSyncDirty')
-  return requestToPromise(index.getAll([projectId, 1])) as Promise<
-    KumikoGlyphRecord[]
-  >
+  const records = (await requestToPromise(
+    index.getAll([projectId, 1])
+  )) as KumikoGlyphRecord[]
+  return records.map(normalizeKumikoGlyphRecord)
 }
 
 const listDirtyKumikoGlyphIds = async (
@@ -619,12 +639,12 @@ export const updateKumikoGlyphExportDirtyState = async (
     if (!record) {
       continue
     }
-    const nextRecord: KumikoGlyphRecord = {
+    const nextRecord: KumikoGlyphRecord = normalizeKumikoGlyphRecord({
       ...record,
       exportDirty: exportDirtyValue,
       updatedAt: timestamp,
-    }
-    store.put({
+    })
+    putKumikoGlyphRecord(store, {
       ...nextRecord,
       exportedDigest: exportDirtyValue
         ? record.exportedDigest
@@ -689,12 +709,12 @@ export const updateKumikoGlyphSyncDirtyState = async (
     if (!record) {
       continue
     }
-    const nextRecord: KumikoGlyphRecord = {
+    const nextRecord: KumikoGlyphRecord = normalizeKumikoGlyphRecord({
       ...record,
       syncDirty: syncDirtyValue,
       updatedAt: timestamp,
-    }
-    store.put({
+    })
+    putKumikoGlyphRecord(store, {
       ...nextRecord,
       syncedDigest: syncDirtyValue
         ? record.syncedDigest

@@ -20,6 +20,7 @@ import {
   OverviewGridItem,
   OverviewGridList,
 } from 'src/features/fontOverview/components/OverviewGridComponents'
+import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
 import type { GlyphData } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
@@ -31,8 +32,9 @@ interface OverviewSection {
 
 interface OverviewContentProps {
   activeSection: OverviewSection
-  glyphMap: Record<string, GlyphData>
   gridRef: React.RefObject<VirtuosoGridHandle | null>
+  glyphMap: Record<string, GlyphData>
+  glyphPreviews: Record<string, GlyphPreviewData>
   restoreSnapshot: GridStateSnapshot | null
   selectedGlyphIds: Set<string>
   topGlyphId: string | null
@@ -47,8 +49,9 @@ interface OverviewContentProps {
 
 export function OverviewContent({
   activeSection,
-  glyphMap,
   gridRef,
+  glyphMap,
+  glyphPreviews,
   restoreSnapshot,
   selectedGlyphIds,
   topGlyphId,
@@ -232,6 +235,7 @@ export function OverviewContent({
                     <GlyphCard
                       glyph={glyph}
                       glyphMap={glyphMap}
+                      preview={glyphPreviews[glyph.id] ?? null}
                       isSelected={selectedGlyphIds.has(glyph.id)}
                       isTransitioning={transitioningGlyphId === glyph.id}
                       onEnterEditor={onEnterEditor}

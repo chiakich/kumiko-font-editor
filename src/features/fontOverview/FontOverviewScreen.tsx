@@ -21,6 +21,7 @@ import { useAddGlyphsFlow } from 'src/features/fontOverview/hooks/useAddGlyphsFl
 import { useCloseProjectWithDraftSave } from 'src/features/fontOverview/hooks/useCloseProjectWithDraftSave'
 import { useHistoryShortcuts } from 'src/features/fontOverview/hooks/useHistoryShortcuts'
 import { useOverviewGridPersistence } from 'src/features/fontOverview/hooks/useOverviewGridPersistence'
+import { useOverviewGlyphPreviews } from 'src/features/fontOverview/hooks/useOverviewGlyphPreviews'
 import { useOverviewSections } from 'src/features/fontOverview/hooks/useOverviewSections'
 import { useOverviewSelection } from 'src/features/fontOverview/hooks/useOverviewSelection'
 import {
@@ -35,6 +36,10 @@ export function FontOverviewScreen() {
   const [transitioningGlyphId, setTransitioningGlyphId] = useState<
     string | null
   >(null)
+  const [overviewPreviewWindow, setOverviewPreviewWindow] = useState<{
+    glyphIds: string[]
+    sectionId: string
+  } | null>(null)
   const currentSearchQuery = useStore((state) => state.currentSearchQuery)
   const setSearchQuery = useStore((state) => state.setSearchQuery)
   const filteredGlyphList = useStore((state) => state.filteredGlyphList)
@@ -92,6 +97,22 @@ export function FontOverviewScreen() {
   const selectedGlyph =
     overviewGlyphs.find((glyph) => glyph.id === selectedGlyphId) ?? null
   const glyphMap = useMemo(() => fontData?.glyphs ?? {}, [fontData?.glyphs])
+  const overviewPreviewGlyphIds = useMemo(() => {
+    if (overviewPreviewWindow?.sectionId === activeSection.id) {
+      return overviewPreviewWindow.glyphIds
+    }
+    return collectOverviewGeometryGlyphIds(activeSection.glyphs, {
+      startIndex: 0,
+      endIndex: 0,
+    })
+  }, [activeSection.glyphs, activeSection.id, overviewPreviewWindow])
+  const overviewGlyphPreviews = useOverviewGlyphPreviews({
+    activeMasterId,
+    glyphEditTimes,
+    glyphIds: overviewPreviewGlyphIds,
+    glyphMap,
+    unitsPerEm: fontData?.unitsPerEm,
+  })
   const {
     addGlyphNames,
     addGlyphsFromInput,
@@ -198,12 +219,29 @@ export function FontOverviewScreen() {
         activeSection.glyphs,
         range
       )
+      setOverviewPreviewWindow((current) => {
+        if (
+          current?.sectionId === activeSection.id &&
+          current.glyphIds.length === glyphIds.length &&
+          current.glyphIds.every(
+            (glyphId, index) => glyphId === glyphIds[index]
+          )
+        ) {
+          return current
+        }
+        return { glyphIds, sectionId: activeSection.id }
+      })
       void ensureGlyphGeometryLoaded(glyphIds, {
         maxLoadedGlyphs: OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY,
         shouldHydrate: () => overviewGeometryRequestIdRef.current === requestId,
       })
     },
-    [activeSection.glyphs, ensureGlyphGeometryLoaded, handleGridRangeChange]
+    [
+      activeSection.glyphs,
+      activeSection.id,
+      ensureGlyphGeometryLoaded,
+      handleGridRangeChange,
+    ]
   )
 
   const handleSectionSelect = (sectionId: string) => {
@@ -338,8 +376,9 @@ export function FontOverviewScreen() {
         <GridItem area="center" minW={0} minH={0}>
           <OverviewContent
             activeSection={activeSection}
-            glyphMap={glyphMap}
             gridRef={gridRef}
+            glyphMap={glyphMap}
+            glyphPreviews={overviewGlyphPreviews}
             restoreSnapshot={overviewGridState}
             selectedGlyphIds={selectedGlyphIdSet}
             topGlyphId={overviewTopGlyphId}

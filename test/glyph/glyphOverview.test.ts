@@ -3,7 +3,10 @@ import { buildGlyphPreviewData } from 'src/lib/glyph/glyphOverview'
 import { normalizeGlyphToLayers } from 'src/store'
 import type { GlyphData } from 'src/store'
 
-const makeGlyph = (id: string): GlyphData =>
+const makeGlyph = (
+  id: string,
+  componentRefs: NonNullable<GlyphData['layers']>[string]['componentRefs'] = []
+): GlyphData =>
   normalizeGlyphToLayers({
     id,
     name: id,
@@ -38,7 +41,7 @@ const makeGlyph = (id: string): GlyphData =>
       },
     ],
     components: [],
-    componentRefs: [],
+    componentRefs,
     anchors: [],
     guidelines: [],
     metrics: { width: 500, lsb: 0, rsb: 500 },
@@ -57,5 +60,28 @@ describe('glyph overview preview', () => {
     const evictedPreview = buildGlyphPreviewData(glyph, glyphMap)
     expect(evictedPreview.shapes).toEqual([])
     expect(evictedPreview.width).toBe(240)
+  })
+
+  it('uses full affine component transforms in preview geometry', () => {
+    const base = makeGlyph('base')
+    const host = makeGlyph('host', [
+      {
+        id: 'component-1',
+        glyphId: 'base',
+        x: 10,
+        y: 20,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+        xyScale: 0.25,
+        yxScale: -0.5,
+      },
+    ])
+    const glyphMap = { base, host }
+
+    const preview = buildGlyphPreviewData(host, glyphMap)
+
+    expect(preview.shapes).toHaveLength(2)
+    expect(preview.shapes[1].transform).toBe('matrix(1 0.25 -0.5 1 10 20)')
   })
 })

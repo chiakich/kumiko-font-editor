@@ -24,7 +24,9 @@ import { hashString } from 'src/lib/hash'
 import { deterministicStringify } from 'src/store/deterministicStringify'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import {
+  composeComponentMatrix,
   componentMatrixToRefFields,
+  type ComponentMatrix,
   getComponentMatrix,
   withComponentMatrix,
 } from 'src/lib/components/componentTransform'
@@ -114,13 +116,104 @@ const GLYPH_DIGEST_OMIT_KEYS = new Set([
   'componentRefKeys',
 ])
 
+type StoredKumikoComponentRefRecord = Omit<
+  KumikoGlyphComponentRefRecord,
+  'transform'
+> &
+  Partial<
+    Pick<
+      GlyphComponentRef,
+      'x' | 'y' | 'scaleX' | 'scaleY' | 'rotation' | 'xyScale' | 'yxScale'
+    >
+  > & {
+    transform?: ComponentMatrix
+  }
+
+const isComponentMatrix = (
+  value: ComponentMatrix | undefined
+): value is ComponentMatrix =>
+  Boolean(value) &&
+  Number.isFinite(value?.a) &&
+  Number.isFinite(value?.b) &&
+  Number.isFinite(value?.c) &&
+  Number.isFinite(value?.d) &&
+  Number.isFinite(value?.e) &&
+  Number.isFinite(value?.f)
+
+export const getKumikoComponentRefMatrix = (
+  componentRef: StoredKumikoComponentRefRecord
+): ComponentMatrix => {
+  if (isComponentMatrix(componentRef.transform)) {
+    return componentRef.transform
+  }
+
+  return composeComponentMatrix({
+    x: componentRef.x ?? 0,
+    y: componentRef.y ?? 0,
+    scaleX: componentRef.scaleX ?? 1,
+    scaleY: componentRef.scaleY ?? 1,
+    rotation: componentRef.rotation ?? 0,
+    xyScale: componentRef.xyScale,
+    yxScale: componentRef.yxScale,
+  })
+}
+
+const normalizeKumikoComponentRefRecord = (
+  componentRef: StoredKumikoComponentRefRecord
+): KumikoGlyphComponentRefRecord => ({
+  id: componentRef.id,
+  identifier: componentRef.identifier,
+  name: componentRef.name,
+  glyphId: componentRef.glyphId,
+  color: componentRef.color,
+  autoAlign: componentRef.autoAlign,
+  customData: componentRef.customData,
+  sourceData: componentRef.sourceData,
+  transform: getKumikoComponentRefMatrix(componentRef),
+})
+
+const normalizeKumikoLayerContentRecord = (
+  content: KumikoGlyphLayerContentRecord
+): KumikoGlyphLayerContentRecord => ({
+  ...content,
+  componentRefs: content.componentRefs.map(normalizeKumikoComponentRefRecord),
+})
+
+const normalizeKumikoLayerRecord = (
+  layer: KumikoGlyphLayerRecord
+): KumikoGlyphLayerRecord => ({
+  ...layer,
+  componentRefs: layer.componentRefs.map(normalizeKumikoComponentRefRecord),
+  background: layer.background
+    ? normalizeKumikoLayerContentRecord(layer.background)
+    : layer.background,
+})
+
+export const normalizeKumikoGlyphRecord = (
+  record: KumikoGlyphRecord
+): KumikoGlyphRecord => {
+  const layers: Record<string, KumikoGlyphLayerRecord> = Object.fromEntries(
+    Object.entries(record.layers).map(([layerId, layer]) => [
+      layerId,
+      normalizeKumikoLayerRecord(layer),
+    ])
+  )
+  return {
+    ...record,
+    layers,
+  }
+}
+
 export const createKumikoProjectDigest = (record: KumikoProjectRecord) => {
   const content = omitRecordKeys(record, PROJECT_DIGEST_OMIT_KEYS)
   return hashString(deterministicStringify(content))
 }
 
 export const createKumikoGlyphDigest = (record: KumikoGlyphRecord) => {
-  const content = omitRecordKeys(record, GLYPH_DIGEST_OMIT_KEYS)
+  const content = omitRecordKeys(
+    normalizeKumikoGlyphRecord(record),
+    GLYPH_DIGEST_OMIT_KEYS
+  )
   return hashString(deterministicStringify(content))
 }
 
@@ -264,19 +357,21 @@ const toKumikoLayerContentRecord = (
 
 const toGlyphComponentRef = (
   componentRef: KumikoGlyphComponentRefRecord
-): GlyphComponentRef =>
-  withComponentMatrix({
+): GlyphComponentRef => {
+  const transform = getKumikoComponentRefMatrix(componentRef)
+  return withComponentMatrix({
     id: componentRef.id,
     identifier: componentRef.identifier,
     name: componentRef.name,
     glyphId: componentRef.glyphId,
-    ...componentMatrixToRefFields(componentRef.transform),
-    transform: componentRef.transform,
+    ...componentMatrixToRefFields(transform),
+    transform,
     color: componentRef.color,
     autoAlign: componentRef.autoAlign,
     customData: componentRef.customData,
     sourceData: componentRef.sourceData,
   })
+}
 
 const toGlyphLayerContent = (
   content: KumikoGlyphLayerContentRecord

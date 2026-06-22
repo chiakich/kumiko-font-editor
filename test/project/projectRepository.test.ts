@@ -20,6 +20,7 @@ import {
   markKumikoProjectExportClean,
   makeKumikoGlyphKey,
   patchKumikoGlyphMetadata,
+  saveKumikoGlyphRecord,
 } from 'src/lib/project/kumikoProjectPersistence'
 import { saveDraftSnapshot } from 'src/lib/project/draftSave'
 import { openDatabase } from 'src/lib/project/persistence'
@@ -119,6 +120,123 @@ describe('projectRepository canonical storage', () => {
       'kumiko_projects',
       'kumiko_ui_state',
     ])
+  })
+
+  it('normalizes decomposed component refs when saving and loading glyph records', async () => {
+    const componentFontData: FontData = {
+      glyphOrder: ['base', 'A'],
+      glyphs: {
+        base: {
+          ...fontData.glyphs.A,
+          id: 'base',
+          name: 'base',
+          unicodes: [],
+          layers: {
+            'public.default': {
+              ...fontData.glyphs.A.layers!['public.default']!,
+              paths: [
+                {
+                  id: 'base-path',
+                  closed: false,
+                  nodes: [
+                    {
+                      id: 'base-node',
+                      kind: 'oncurve',
+                      segmentType: 'line',
+                      x: 0,
+                      y: 0,
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        A: {
+          ...fontData.glyphs.A,
+          layers: {
+            'public.default': {
+              ...fontData.glyphs.A.layers!['public.default']!,
+              componentRefs: [
+                {
+                  id: 'component-1',
+                  glyphId: 'base',
+                  x: 10,
+                  y: 20,
+                  scaleX: 1,
+                  scaleY: 1,
+                  xyScale: 0.25,
+                  yxScale: -0.5,
+                  rotation: 0,
+                },
+              ],
+            },
+          },
+        },
+      },
+    }
+    await saveProjectDraft({
+      id: 'project-normalize-component-record',
+      title: 'Normalize Component',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      fontData: componentFontData,
+      projectMetadata: null,
+    })
+
+    const stored = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('project-normalize-component-record', 'A')
+    )
+    expect(stored).toBeTruthy()
+    const broken = structuredClone(stored!)
+    const component = broken.layers['public.default']
+      .componentRefs[0] as Record<string, unknown>
+    delete component.transform
+    Object.assign(component, {
+      x: 12,
+      y: 24,
+      scaleX: 1,
+      scaleY: 1,
+      xyScale: 0.2,
+      yxScale: -0.4,
+      rotation: 0,
+    })
+
+    await saveKumikoGlyphRecord(broken)
+
+    const loadedRecord = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('project-normalize-component-record', 'A')
+    )
+    const loadedComponent =
+      loadedRecord?.layers['public.default'].componentRefs[0]
+    expect(loadedComponent?.transform).toEqual({
+      a: 1,
+      b: 0.2,
+      c: -0.4,
+      d: 1,
+      e: 12,
+      f: 24,
+    })
+    expect('x' in (loadedComponent as Record<string, unknown>)).toBe(false)
+
+    const closure = await loadProjectGlyphGeometryClosure(
+      'project-normalize-component-record',
+      ['A']
+    )
+    const loadedGlyph = closure.find((glyph) => glyph.id === 'A')
+    expect(
+      loadedGlyph?.layers?.['public.default'].componentRefs[0]
+    ).toMatchObject({
+      glyphId: 'base',
+      x: 12,
+      y: 24,
+      scaleX: 1,
+      scaleY: 1,
+      xyScale: 0.2,
+      yxScale: -0.4,
+      rotation: 0,
+    })
   })
 
   it('autosaves only dirty and deleted glyph records', async () => {
