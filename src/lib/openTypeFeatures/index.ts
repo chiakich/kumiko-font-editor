@@ -48,9 +48,9 @@ export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFea
 export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
 export { resolveHarfBuzzWasmLocation } from 'src/lib/openTypeFeatures/harfbuzzWasmLocation'
 export {
-  hasActiveManagedFeatureText,
+  hasExportableFeatureText,
   selectUfoFeatureText,
-} from 'src/lib/openTypeFeatures/legacyFeatureText'
+} from 'src/lib/openTypeFeatures/ufoFeatureText'
 export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 export { parseGdefTable } from 'src/lib/openTypeFeatures/gdefParser'
 export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'

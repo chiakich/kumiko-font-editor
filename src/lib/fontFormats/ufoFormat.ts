@@ -30,7 +30,6 @@ import {
   fontInfoFromUfoFontInfo,
   fontAxesFromLib,
   fontSourcesFromLib,
-  openTypeFeaturesFromUfo,
   exportInstancesFromLib,
   statusDefinitionsFromLib,
   settingsFromLib,
@@ -839,14 +838,16 @@ const buildFontDataFromUfoGlyphs = (
         { lineMetricsHorizontalLayout: buildLineMetrics(metadata.fontinfo) }
       ),
     },
-    features: openTypeFeaturesFromUfo(metadata.featuresText),
     exportInstances: exportInstancesFromLib(metadata.lib) ?? [],
     statusDefinitions: statusDefinitionsFromLib(metadata.lib) ?? [],
     settings: settingsFromLib(metadata.lib, axes),
     glyphOrder: metadata.glyphOrder,
     unitsPerEm: getUnitsPerEm(metadata.fontinfo),
     lineMetricsHorizontalLayout: buildLineMetrics(metadata.fontinfo),
-    openTypeFeatures: createEmptyOpenTypeFeaturesState(),
+    openTypeFeatures: {
+      ...createEmptyOpenTypeFeaturesState(),
+      rawFeatureText: metadata.featuresText ?? undefined,
+    },
   }
 }
 

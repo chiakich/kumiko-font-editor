@@ -70,7 +70,6 @@ export type {
   DevelopmentStatusDefinition,
   NodeType,
   OnCurveNodeType,
-  OpenTypeFeatures,
   OpenTypeFeaturesState,
   OverviewCustomFilter,
   OverviewSearchOptionsState,

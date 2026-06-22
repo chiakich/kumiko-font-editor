@@ -25,17 +25,13 @@ import type { FontData } from 'src/store'
 
 interface FontFeaturesTabProps {
   fontData: FontData | null
-  featuresText: string
   openTypeFeatures: OpenTypeFeaturesState
-  onFeaturesTextChange: (value: string) => void
   onOpenTypeFeaturesChange: (value: OpenTypeFeaturesState) => void
 }
 
 export function FontFeaturesTab({
   fontData,
-  featuresText,
   openTypeFeatures,
-  onFeaturesTextChange,
   onOpenTypeFeaturesChange,
 }: FontFeaturesTabProps) {
   const [selected, setSelected] = useState<FeatureWorkbenchSelection>({
@@ -73,6 +69,10 @@ export function FontFeaturesTab({
 
   const updateRule = (lookupId: string, rule: Rule) => {
     onOpenTypeFeaturesChange(updateLookupRule(openTypeFeatures, lookupId, rule))
+  }
+
+  const updateRawFeatureText = (rawFeatureText: string) => {
+    onOpenTypeFeaturesChange({ ...openTypeFeatures, rawFeatureText })
   }
 
   const selectedFeature =
@@ -131,9 +131,9 @@ export function FontFeaturesTab({
               />
             ) : (
               <FeaturePreludePanel
-                featuresText={featuresText}
+                rawFeatureText={openTypeFeatures.rawFeatureText ?? ''}
                 state={openTypeFeatures}
-                onFeaturesTextChange={onFeaturesTextChange}
+                onRawFeatureTextChange={updateRawFeatureText}
               />
             )}
           </Box>

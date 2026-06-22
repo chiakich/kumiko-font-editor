@@ -213,7 +213,6 @@ export interface FontData {
   fontInfo?: FontInfo
   axes?: FontAxes
   sources?: Record<string, FontSource>
-  features?: OpenTypeFeatures
   openTypeFeatures?: OpenTypeFeaturesState
   exportInstances?: FontExportInstance[]
   statusDefinitions?: DevelopmentStatusDefinition[]
@@ -302,12 +301,6 @@ export interface FontSource {
   italicAngle?: number
   lineMetricsHorizontalLayout?: Record<string, { value: number; zone?: number }>
   lineMetricsVerticalLayout?: Record<string, { value: number; zone?: number }>
-  customData?: Record<string, unknown>
-}
-
-export interface OpenTypeFeatures {
-  language: string
-  text: string
   customData?: Record<string, unknown>
 }
 

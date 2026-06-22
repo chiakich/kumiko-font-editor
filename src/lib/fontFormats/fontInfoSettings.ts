@@ -7,7 +7,6 @@ import type {
   FontInfoCustomDataValue,
   FontProjectSettings,
   FontSource,
-  OpenTypeFeatures,
 } from 'src/store'
 
 export const KUMIKO_AXES_LIB_KEY = 'com.kumiko.fontEditor.axes'
@@ -406,14 +405,6 @@ export const fontSourcesFromLib = (
 
   return entries.length > 0 ? Object.fromEntries(entries) : undefined
 }
-
-export const openTypeFeaturesFromUfo = (
-  featuresText: string | null | undefined
-): OpenTypeFeatures => ({
-  language: 'fea',
-  text: featuresText ?? '',
-  customData: {},
-})
 
 export const exportInstancesFromLib = (
   lib: Record<string, unknown> | null | undefined

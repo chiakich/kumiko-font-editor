@@ -41,6 +41,7 @@ import {
   buildUfoLibFromFontData,
   fontInfoToUfoFontInfo,
 } from 'src/lib/fontFormats/fontInfoSettings'
+import { selectUfoFeatureText } from 'src/lib/openTypeFeatures'
 import { userNameToFileName } from 'src/lib/fontFormats/ufoFileNames'
 import {
   buildBoundsResolver,
@@ -185,7 +186,6 @@ const makeProjectFontDataFromMetadata = (
   axes: project.axes,
   sources: project.sources,
   exportInstances: project.exportInstances,
-  features: project.features,
   openTypeFeatures: project.openTypeFeatures,
   kerningGroups: project.kerningGroups,
   kerningPairs: project.kerningPairs,
@@ -810,7 +810,7 @@ const buildMetadata = (
     lib: buildUfoLibFromFontData(metadataFontData, source.libExtra),
     groups: source.groupsExtra ?? {},
     kerning: source.kerningExtra ?? {},
-    featuresText: project.features?.text ?? null,
+    featuresText: selectUfoFeatureText(metadataFontData),
     layers: source.layers,
     contents,
     glyphOrder:

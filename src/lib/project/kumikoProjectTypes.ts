@@ -15,7 +15,6 @@ import type {
   KumikoColor,
   KerningGroup,
   KerningPair,
-  OpenTypeFeatures,
   OpenTypeFeaturesState,
 } from 'src/store'
 import type { ComponentMatrix } from 'src/lib/components/componentTransform'
@@ -77,7 +76,6 @@ export interface KumikoProjectRecord {
   axes?: FontAxes
   sources?: Record<string, FontSource>
   exportInstances?: FontExportInstance[]
-  features?: OpenTypeFeatures
   openTypeFeatures?: OpenTypeFeaturesState
   kerningGroups?: KerningGroup[]
   kerningPairs?: KerningPair[]

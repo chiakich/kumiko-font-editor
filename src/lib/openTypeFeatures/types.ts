@@ -379,6 +379,6 @@ export interface OpenTypeFeaturesState {
   autoFeatureConfig: AutoFeatureConfig
   ignoredSuggestionIds: string[]
   exportPolicy: ExportPolicy
-  rawPrelude?: string
+  rawFeatureText?: string
   diagnostics?: FeatureDiagnostic[]
 }

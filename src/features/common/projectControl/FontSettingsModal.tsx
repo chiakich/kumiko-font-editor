@@ -91,9 +91,6 @@ export function FontSettingsModal({
   )
   const [sources, setSources] = useState(() => toSourceDrafts(fontData))
   const [exports, setExports] = useState(() => toExportDrafts(fontData))
-  const [featuresText, setFeaturesText] = useState(
-    () => fontData?.features?.text ?? ''
-  )
   const [openTypeFeatures, setOpenTypeFeatures] = useState(
     () =>
       fontData?.openTypeFeatures ??
@@ -149,11 +146,6 @@ export function FontSettingsModal({
         ...instance,
         location: parseLocation(instance.locationText),
       })),
-      features: {
-        language: 'fea',
-        text: featuresText,
-        customData: fontData?.features?.customData ?? {},
-      },
       openTypeFeatures,
       statusDefinitions,
       settings: nextSettings,
@@ -232,9 +224,7 @@ export function FontSettingsModal({
               <TabPanel p={0} h="100%" overflow="hidden">
                 <FontFeaturesTab
                   fontData={fontData}
-                  featuresText={featuresText}
                   openTypeFeatures={openTypeFeatures}
-                  onFeaturesTextChange={setFeaturesText}
                   onOpenTypeFeaturesChange={setOpenTypeFeatures}
                 />
               </TabPanel>

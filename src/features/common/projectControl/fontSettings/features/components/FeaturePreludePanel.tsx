@@ -1,6 +1,7 @@
 import {
   Badge,
   FormControl,
+  FormHelperText,
   FormLabel,
   HStack,
   Stack,
@@ -11,15 +12,15 @@ import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface FeaturePreludePanelProps {
-  featuresText: string
+  rawFeatureText: string
   state: OpenTypeFeaturesState
-  onFeaturesTextChange: (value: string) => void
+  onRawFeatureTextChange: (value: string) => void
 }
 
 export function FeaturePreludePanel({
-  featuresText,
+  rawFeatureText,
   state,
-  onFeaturesTextChange,
+  onRawFeatureTextChange,
 }: FeaturePreludePanelProps) {
   const { t } = useTranslation()
 
@@ -28,7 +29,7 @@ export function FeaturePreludePanel({
       <Stack spacing={2}>
         <Text fontWeight="semibold">{t('projectControl.prelude')}</Text>
         <Text fontSize="sm" color="field.muted">
-          {t('projectControl.languageSystemsAndImportedFeatureSource')}
+          {t('projectControl.featurePreludeDataFlow')}
         </Text>
       </Stack>
 
@@ -47,15 +48,18 @@ export function FeaturePreludePanel({
 
       <FormControl>
         <FormLabel fontSize="sm">
-          {t('projectControl.importedOrLegacyFeatureText')}
+          {t('projectControl.rawFeatureText')}
         </FormLabel>
         <Textarea
-          minH="220px"
+          minH="180px"
           fontFamily="mono"
-          value={featuresText}
-          onChange={(event) => onFeaturesTextChange(event.target.value)}
-          placeholder={t('projectControl.languagesystemDfltDfltFeatureLigaSub')}
+          value={rawFeatureText}
+          onChange={(event) => onRawFeatureTextChange(event.target.value)}
+          placeholder={t('projectControl.rawFeatureTextPlaceholder')}
         />
+        <FormHelperText fontSize="xs">
+          {t('projectControl.rawFeatureTextHelp')}
+        </FormHelperText>
       </FormControl>
     </Stack>
   )

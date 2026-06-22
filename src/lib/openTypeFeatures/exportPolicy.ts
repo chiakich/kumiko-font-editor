@@ -49,7 +49,7 @@ export const hasManagedFeatureEdits = (state: OpenTypeFeaturesState) =>
   state.glyphClasses.length > 0 ||
   state.markClasses.length > 0 ||
   state.anchors.length > 0 ||
-  Boolean(state.rawPrelude?.trim())
+  Boolean(state.rawFeatureText?.trim())
 
 export const hasBlockingExportWarnings = (warnings: OpenTypeExportWarning[]) =>
   warnings.some((warning) => warning.severity === 'error')

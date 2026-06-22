@@ -286,8 +286,8 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
 
   const statements: FeaNode[] = [
     ...headerComments.map((value) => ({ kind: 'Comment' as const, value })),
-    ...(state.rawPrelude
-      ? [{ kind: 'Raw' as const, value: state.rawPrelude }]
+    ...(state.rawFeatureText
+      ? [{ kind: 'Raw' as const, value: state.rawFeatureText }]
       : []),
     ...state.languagesystems.map((languageSystem) => ({
       kind: 'LanguageSystem' as const,
