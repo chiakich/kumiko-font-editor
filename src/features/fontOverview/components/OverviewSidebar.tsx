@@ -206,7 +206,7 @@ export function OverviewSidebar({
                   icon={
                     <Box h="22px" position="relative" w="22px">
                       <Search width={18} height={18} strokeWidth={2.2} />
-                      <Box bottom={0} position="absolute" right={0}>
+                      <Box bottom={0} position="absolute" right="-3px">
                         <NavArrowDown
                           width={10}
                           height={10}
@@ -222,7 +222,7 @@ export function OverviewSidebar({
                   _hover={{ bg: 'transparent' }}
                 />
               </Tooltip>
-              <MenuList bg="transparent" minW="220px">
+              <MenuList bg="white" minW="220px">
                 <MenuOptionGroup
                   title={t('fontOverview.searchFieldsTitle')}
                   type="checkbox"
