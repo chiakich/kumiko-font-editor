@@ -5,14 +5,12 @@ import {
   getGlyphOverviewTree,
 } from 'src/lib/glyph/glyphOverview'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import { isEmptyGlyphToEdit } from 'src/lib/glyph/glyphBlankness'
 import type { GlyphData } from 'src/store'
 
 interface UseOverviewSectionsOptions {
   filteredGlyphList: GlyphData[]
   glyphEditTimes: GlyphEditTimes
   selectedSectionId: string
-  showOnlyEmptyGlyphs: boolean
   onSelectedSectionChange: (sectionId: string) => void
 }
 
@@ -20,18 +18,11 @@ export function useOverviewSections({
   filteredGlyphList,
   glyphEditTimes,
   selectedSectionId,
-  showOnlyEmptyGlyphs,
   onSelectedSectionChange,
 }: UseOverviewSectionsOptions) {
   const { t } = useTranslation()
 
-  const overviewGlyphs = useMemo(
-    () =>
-      showOnlyEmptyGlyphs
-        ? filteredGlyphList.filter(isEmptyGlyphToEdit)
-        : filteredGlyphList,
-    [filteredGlyphList, showOnlyEmptyGlyphs]
-  )
+  const overviewGlyphs = filteredGlyphList
 
   const treeNodes = useMemo(
     () => getGlyphOverviewTree(overviewGlyphs, glyphEditTimes),

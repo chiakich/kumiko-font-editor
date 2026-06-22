@@ -25,6 +25,17 @@ export const buildUiActions = (set: ImmerSet) => ({
       syncFilteredGlyphList(state)
     }),
 
+  setOverviewSearchOptions: (
+    options: Partial<GlobalState['overviewSearchOptions']>
+  ) =>
+    set((state) => {
+      state.overviewSearchOptions = {
+        ...state.overviewSearchOptions,
+        ...options,
+      }
+      syncFilteredGlyphList(state)
+    }),
+
   // Rebuild the overview list against the current fontData. Needed after an
   // undo/redo, which restores fontData but leaves filteredGlyphList (not part
   // of the temporal partialize set) holding stale glyph references.

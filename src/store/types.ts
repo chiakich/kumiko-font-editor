@@ -5,6 +5,7 @@ import type {
 import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+import type { OverviewSearchField } from 'src/lib/glyph/glyphOverview'
 import type {
   AlternateBehaviorDraft,
   CombinationBehaviorDraft,
@@ -355,6 +356,12 @@ export type WorkspaceView = 'overview' | 'editor'
 export type OverviewGroupByState = 'none' | 'script' | 'block'
 export type PersistenceStatus = 'idle' | 'queued' | 'saving' | 'saved' | 'error'
 
+export interface OverviewSearchOptionsState {
+  fields: OverviewSearchField[]
+  matchCase: boolean
+  regex: boolean
+}
+
 export interface PersistenceQueueState {
   projectQueued: boolean
   uiStateQueued: boolean
@@ -423,6 +430,7 @@ export interface GlobalState {
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
   workspaceView: WorkspaceView
+  overviewSearchOptions: OverviewSearchOptionsState
   overviewGroupBy: OverviewGroupByState
   overviewSectionId: string
   overviewGridState: unknown | null
@@ -430,6 +438,9 @@ export interface GlobalState {
   viewport: ViewportState
 
   setSearchQuery: (query: string) => void
+  setOverviewSearchOptions: (
+    options: Partial<OverviewSearchOptionsState>
+  ) => void
   refreshFilteredGlyphList: () => void
   setSelectedGlyphId: (id: string | null) => void
   addGlyphToEditor: (id: string) => void

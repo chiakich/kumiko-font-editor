@@ -3,7 +3,10 @@ import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { temporal, type TemporalState } from 'zundo'
 import type { GlobalState } from 'src/store/types'
-import { IDS_DICTIONARY } from 'src/store/glyphSearch'
+import {
+  DEFAULT_OVERVIEW_SEARCH_OPTIONS,
+  IDS_DICTIONARY,
+} from 'src/store/glyphSearch'
 import { buildUiActions } from 'src/store/actions/uiActions'
 import { buildGlyphActions } from 'src/store/actions/glyphActions'
 import { buildPathActions } from 'src/store/actions/pathActions'
@@ -68,6 +71,7 @@ export type {
   OnCurveNodeType,
   OpenTypeFeatures,
   OpenTypeFeaturesState,
+  OverviewSearchOptionsState,
   OverviewGroupByState,
   PathData,
   PathNode,
@@ -118,6 +122,7 @@ const initialState = {
   componentTargetRect: null,
   idsDictionary: IDS_DICTIONARY,
   currentSearchQuery: '',
+  overviewSearchOptions: DEFAULT_OVERVIEW_SEARCH_OPTIONS,
   filteredGlyphList: [],
   selectedGlyphId: null,
   selectedLayerId: 'default',

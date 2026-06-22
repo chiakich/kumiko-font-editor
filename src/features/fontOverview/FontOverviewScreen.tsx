@@ -47,7 +47,6 @@ const OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS = 250
 export function FontOverviewScreen() {
   useHistoryShortcuts()
 
-  const [showOnlyEmptyGlyphs, setShowOnlyEmptyGlyphs] = useState(false)
   const [overviewGridSizePx, setOverviewGridSizePx] = useState(
     DEFAULT_OVERVIEW_GRID_SIZE_PX
   )
@@ -64,7 +63,11 @@ export function FontOverviewScreen() {
     sectionId: string
   } | null>(null)
   const currentSearchQuery = useStore((state) => state.currentSearchQuery)
+  const overviewSearchOptions = useStore((state) => state.overviewSearchOptions)
   const setSearchQuery = useStore((state) => state.setSearchQuery)
+  const setOverviewSearchOptions = useStore(
+    (state) => state.setOverviewSearchOptions
+  )
   const filteredGlyphList = useStore((state) => state.filteredGlyphList)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const setEditorTextState = useStore((state) => state.setEditorTextState)
@@ -92,7 +95,6 @@ export function FontOverviewScreen() {
     filteredGlyphList,
     glyphEditTimes,
     selectedSectionId,
-    showOnlyEmptyGlyphs,
     onSelectedSectionChange: setOverviewSectionId,
   })
   const {
@@ -479,16 +481,17 @@ export function FontOverviewScreen() {
         <GridItem area="left" minW={0} minH={0}>
           <OverviewSidebar
             currentSearchQuery={currentSearchQuery}
-            overviewGlyphCount={overviewGlyphs.length}
+            overviewSearchOptions={overviewSearchOptions}
             projectTitle={projectTitle}
             selectedSectionId={selectedSectionId}
-            showOnlyEmptyGlyphs={showOnlyEmptyGlyphs}
             isClosingProject={isClosingProject}
+            totalGlyphCount={Object.keys(glyphMap).length}
             treeNodes={treeNodes}
+            visibleGlyphCount={overviewGlyphs.length}
             onCloseProject={closeProject}
             onSearchQueryChange={setSearchQuery}
+            onSearchOptionsChange={setOverviewSearchOptions}
             onSectionSelect={handleSectionSelect}
-            onShowOnlyEmptyGlyphsChange={setShowOnlyEmptyGlyphs}
           />
         </GridItem>
 
