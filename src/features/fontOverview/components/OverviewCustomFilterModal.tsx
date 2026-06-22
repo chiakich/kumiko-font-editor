@@ -14,21 +14,28 @@ import {
   ModalHeader,
   ModalOverlay,
   Select,
+  SimpleGrid,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Text,
   Tooltip,
   VStack,
 } from '@chakra-ui/react'
 import { Plus, Trash } from 'iconoir-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
+import { SlidingTabList } from 'src/features/common/SlidingTabList'
 import type {
   OverviewCustomFilter,
   OverviewCustomFilterMode,
+  OverviewCustomFilterPreset,
   OverviewCustomFilterRule,
   OverviewCustomFilterRuleField,
   OverviewCustomFilterRuleOperator,
   OverviewCustomFilterSort,
 } from 'src/lib/glyph/glyphOverview'
+import { createOverviewCustomFilterPresets } from 'src/lib/glyph/glyphOverview'
 
 type OverviewCustomFilterDraft = Omit<
   OverviewCustomFilter,
@@ -153,8 +160,278 @@ const createFilterDraft = (
       }
     : createDefaultFilterDraft()
 
+const createFilterDraftFromPreset = (
+  preset: OverviewCustomFilterPreset,
+  translatedFilterName: string
+): OverviewCustomFilterDraft => ({
+  mode: preset.filter.mode,
+  name: translatedFilterName,
+  rules: preset.filter.rules.map((rule) => ({
+    ...normalizeDraftRule(rule),
+    id: createRuleId(),
+  })),
+  sort: preset.filter.sort ?? 'codePoint',
+})
+
 const hasValidRuleValue = (rule: OverviewCustomFilterRule) =>
   !operatorNeedsValue(rule.operator) || rule.value.trim().length > 0
+
+const getRuleSummary = (
+  rule: OverviewCustomFilterRule,
+  t: ReturnType<typeof useTranslation>['t']
+) => {
+  const field = t(`fontOverview.customFilter.fields.${rule.field}`)
+  const operator = t(`fontOverview.customFilter.operators.${rule.operator}`)
+  if (!operatorNeedsValue(rule.operator)) {
+    return `${field} ${operator}`
+  }
+  return `${field} ${operator} ${rule.value}`
+}
+
+const getPresetSummary = (
+  preset: OverviewCustomFilterPreset,
+  t: ReturnType<typeof useTranslation>['t']
+) => {
+  const rules = preset.filter.rules.map((rule) => getRuleSummary(rule, t))
+  const sort = t(
+    preset.filter.sort === 'recentEdit'
+      ? 'fontOverview.customFilter.sortRecentEdit'
+      : 'fontOverview.customFilter.sortCodePoint'
+  )
+  return [...rules, sort].join(' / ')
+}
+
+interface PresetFilterListProps {
+  activePresetId: string | null
+  onApplyPreset: (preset: OverviewCustomFilterPreset) => void
+  presets: OverviewCustomFilterPreset[]
+}
+
+function PresetFilterList({
+  activePresetId,
+  onApplyPreset,
+  presets,
+}: PresetFilterListProps) {
+  const { t } = useTranslation()
+
+  return (
+    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+      {presets.map((preset) => {
+        const isActive = activePresetId === preset.id
+        return (
+          <Button
+            key={preset.id}
+            alignItems="stretch"
+            borderColor={isActive ? 'field.yellow.300' : 'field.border'}
+            borderRadius="sm"
+            borderWidth="1px"
+            h="auto"
+            justifyContent="flex-start"
+            minH="92px"
+            p={3}
+            textAlign="left"
+            variant="outline"
+            whiteSpace="normal"
+            onClick={() => onApplyPreset(preset)}
+          >
+            <VStack align="stretch" spacing={2} w="100%">
+              <Text fontSize="sm" fontWeight="900">
+                {t(preset.labelKey)}
+              </Text>
+              <Text
+                color="field.muted"
+                fontFamily="mono"
+                fontSize="xs"
+                fontWeight="500"
+              >
+                {getPresetSummary(preset, t)}
+              </Text>
+            </VStack>
+          </Button>
+        )
+      })}
+    </SimpleGrid>
+  )
+}
+
+interface AdvancedFilterFieldsProps {
+  draft: OverviewCustomFilterDraft
+  setDraft: Dispatch<SetStateAction<OverviewCustomFilterDraft>>
+  updateRule: (ruleId: string, patch: Partial<OverviewCustomFilterRule>) => void
+}
+
+function AdvancedFilterFields({
+  draft,
+  setDraft,
+  updateRule,
+}: AdvancedFilterFieldsProps) {
+  const { t } = useTranslation()
+
+  return (
+    <VStack align="stretch" spacing={4}>
+      <FormControl>
+        <FormLabel>{t('fontOverview.customFilter.name')}</FormLabel>
+        <Input
+          value={draft.name}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              name: event.target.value,
+            }))
+          }
+          placeholder={t('fontOverview.customFilter.namePlaceholder')}
+        />
+      </FormControl>
+
+      <FormControl maxW="220px">
+        <FormLabel>{t('fontOverview.customFilter.matchMode')}</FormLabel>
+        <Select
+          value={draft.mode}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              mode: event.target.value as OverviewCustomFilterMode,
+            }))
+          }
+        >
+          <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
+          <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
+        </Select>
+      </FormControl>
+
+      <FormControl maxW="220px">
+        <FormLabel>{t('fontOverview.customFilter.sort')}</FormLabel>
+        <Select
+          value={draft.sort ?? 'codePoint'}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              sort: event.target.value as OverviewCustomFilterSort,
+            }))
+          }
+        >
+          <option value="codePoint">
+            {t('fontOverview.customFilter.sortCodePoint')}
+          </option>
+          <option value="recentEdit">
+            {t('fontOverview.customFilter.sortRecentEdit')}
+          </option>
+        </Select>
+      </FormControl>
+
+      <Box>
+        <HStack justify="space-between" mb={2}>
+          <Text fontWeight="900">{t('fontOverview.customFilter.rules')}</Text>
+          <Button
+            size="sm"
+            leftIcon={<Plus width={16} height={16} strokeWidth={2.2} />}
+            onClick={() =>
+              setDraft((current) => ({
+                ...current,
+                rules: [...current.rules, createDefaultRule()],
+              }))
+            }
+          >
+            {t('fontOverview.customFilter.addRule')}
+          </Button>
+        </HStack>
+
+        <VStack align="stretch" spacing={2}>
+          {draft.rules.map((rule) => {
+            const operators = getOperatorsForField(rule.field)
+            const needsValue = operatorNeedsValue(rule.operator)
+            const booleanField = isBooleanField(rule.field)
+
+            return (
+              <HStack key={rule.id} align="flex-start" spacing={2}>
+                <Select
+                  flex="1"
+                  value={rule.field}
+                  onChange={(event) =>
+                    updateRule(rule.id, {
+                      field: event.target
+                        .value as OverviewCustomFilterRuleField,
+                    })
+                  }
+                >
+                  {RULE_FIELDS.map((field) => (
+                    <option key={field} value={field}>
+                      {t(`fontOverview.customFilter.fields.${field}`)}
+                    </option>
+                  ))}
+                </Select>
+
+                <Select
+                  flex="1"
+                  value={rule.operator}
+                  onChange={(event) =>
+                    updateRule(rule.id, {
+                      operator: event.target
+                        .value as OverviewCustomFilterRuleOperator,
+                      value: event.target.value === 'missing' ? '' : rule.value,
+                    })
+                  }
+                >
+                  {operators.map((operator) => (
+                    <option key={operator} value={operator}>
+                      {t(`fontOverview.customFilter.operators.${operator}`)}
+                    </option>
+                  ))}
+                </Select>
+
+                {needsValue ? (
+                  booleanField ? (
+                    <Select
+                      flex="1"
+                      value={rule.value === 'false' ? 'false' : 'true'}
+                      onChange={(event) =>
+                        updateRule(rule.id, { value: event.target.value })
+                      }
+                    >
+                      <option value="true">
+                        {t('fontOverview.customFilter.booleanTrue')}
+                      </option>
+                      <option value="false">
+                        {t('fontOverview.customFilter.booleanFalse')}
+                      </option>
+                    </Select>
+                  ) : (
+                    <Input
+                      flex="1"
+                      value={rule.value}
+                      onChange={(event) =>
+                        updateRule(rule.id, { value: event.target.value })
+                      }
+                      placeholder={t('fontOverview.customFilter.value')}
+                    />
+                  )
+                ) : (
+                  <Box flex="1" />
+                )}
+
+                <Tooltip label={t('fontOverview.customFilter.deleteRule')}>
+                  <IconButton
+                    aria-label={t('fontOverview.customFilter.deleteRule')}
+                    icon={<Trash width={17} height={17} strokeWidth={2.1} />}
+                    isDisabled={draft.rules.length <= 1}
+                    onClick={() =>
+                      setDraft((current) => ({
+                        ...current,
+                        rules: current.rules.filter(
+                          (currentRule) => currentRule.id !== rule.id
+                        ),
+                      }))
+                    }
+                  />
+                </Tooltip>
+              </HStack>
+            )
+          })}
+        </VStack>
+      </Box>
+    </VStack>
+  )
+}
 
 function OverviewCustomFilterModalForm({
   filter,
@@ -166,6 +443,11 @@ function OverviewCustomFilterModalForm({
 }: OverviewCustomFilterModalFormProps) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState<OverviewCustomFilterDraft>(initialDraft)
+  const [activeTabIndex, setActiveTabIndex] = useState(filter ? 1 : 0)
+  const [activePresetId, setActivePresetId] = useState<string | null>(
+    filter?.id.startsWith('seeded:') ? filter.id.replace('seeded:', '') : null
+  )
+  const presets = useMemo(() => createOverviewCustomFilterPresets(), [])
 
   const canSave = useMemo(
     () =>
@@ -179,6 +461,7 @@ function OverviewCustomFilterModalForm({
     ruleId: string,
     patch: Partial<OverviewCustomFilterRule>
   ) => {
+    setActivePresetId(null)
     setDraft((current) => ({
       ...current,
       rules: current.rules.map((rule) => {
@@ -191,6 +474,18 @@ function OverviewCustomFilterModalForm({
           : nextRule
       }),
     }))
+  }
+
+  const setAdvancedDraft: Dispatch<
+    SetStateAction<OverviewCustomFilterDraft>
+  > = (nextDraft) => {
+    setActivePresetId(null)
+    setDraft(nextDraft)
+  }
+
+  const handleApplyPreset = (preset: OverviewCustomFilterPreset) => {
+    setActivePresetId(preset.id)
+    setDraft(createFilterDraftFromPreset(preset, t(preset.labelKey)))
   }
 
   const handleSave = () => {
@@ -226,206 +521,69 @@ function OverviewCustomFilterModalForm({
 
   return (
     <ModalContent>
-      <ModalHeader>
-        {filter
-          ? t('fontOverview.customFilter.editTitle')
-          : t('fontOverview.customFilter.createTitle')}
-      </ModalHeader>
-      <ModalCloseButton />
-      <ModalBody>
-        <VStack align="stretch" spacing={4}>
-          <FormControl>
-            <FormLabel>{t('fontOverview.customFilter.name')}</FormLabel>
-            <Input
-              value={draft.name}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              placeholder={t('fontOverview.customFilter.namePlaceholder')}
+      <Tabs
+        index={activeTabIndex}
+        onChange={setActiveTabIndex}
+        variant="unstyled"
+      >
+        <ModalHeader pr={14}>
+          <HStack align="center" justify="space-between" spacing={4}>
+            <Text as="span">
+              {filter
+                ? t('fontOverview.customFilter.editTitle')
+                : t('fontOverview.customFilter.createTitle')}
+            </Text>
+            <SlidingTabList
+              activeIndex={activeTabIndex}
+              labels={[
+                t('fontOverview.customFilter.presetTab'),
+                t('fontOverview.customFilter.advancedTab'),
+              ]}
+              layoutGroupId="overview-custom-filter-modal-tabs"
             />
-          </FormControl>
-
-          <FormControl maxW="220px">
-            <FormLabel>{t('fontOverview.customFilter.matchMode')}</FormLabel>
-            <Select
-              value={draft.mode}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  mode: event.target.value as OverviewCustomFilterMode,
-                }))
-              }
-            >
-              <option value="all">
-                {t('fontOverview.customFilter.matchAll')}
-              </option>
-              <option value="any">
-                {t('fontOverview.customFilter.matchAny')}
-              </option>
-            </Select>
-          </FormControl>
-
-          <FormControl maxW="220px">
-            <FormLabel>{t('fontOverview.customFilter.sort')}</FormLabel>
-            <Select
-              value={draft.sort ?? 'codePoint'}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  sort: event.target.value as OverviewCustomFilterSort,
-                }))
-              }
-            >
-              <option value="codePoint">
-                {t('fontOverview.customFilter.sortCodePoint')}
-              </option>
-              <option value="recentEdit">
-                {t('fontOverview.customFilter.sortRecentEdit')}
-              </option>
-            </Select>
-          </FormControl>
-
+          </HStack>
+        </ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <TabPanels>
+            <TabPanel p={0}>
+              <PresetFilterList
+                activePresetId={activePresetId}
+                presets={presets}
+                onApplyPreset={handleApplyPreset}
+              />
+            </TabPanel>
+            <TabPanel p={0}>
+              <AdvancedFilterFields
+                draft={draft}
+                setDraft={setAdvancedDraft}
+                updateRule={updateRule}
+              />
+            </TabPanel>
+          </TabPanels>
+        </ModalBody>
+        <ModalFooter justifyContent="space-between">
           <Box>
-            <HStack justify="space-between" mb={2}>
-              <Text fontWeight="900">
-                {t('fontOverview.customFilter.rules')}
-              </Text>
-              <Button
-                size="sm"
-                leftIcon={<Plus width={16} height={16} strokeWidth={2.2} />}
-                onClick={() =>
-                  setDraft((current) => ({
-                    ...current,
-                    rules: [...current.rules, createDefaultRule()],
-                  }))
-                }
-              >
-                {t('fontOverview.customFilter.addRule')}
+            {filter ? (
+              <Button colorScheme="red" variant="ghost" onClick={handleDelete}>
+                {t('fontOverview.customFilter.deleteFilter')}
               </Button>
-            </HStack>
-
-            <VStack align="stretch" spacing={2}>
-              {draft.rules.map((rule) => {
-                const operators = getOperatorsForField(rule.field)
-                const needsValue = operatorNeedsValue(rule.operator)
-                const booleanField = isBooleanField(rule.field)
-
-                return (
-                  <HStack key={rule.id} align="flex-start" spacing={2}>
-                    <Select
-                      flex="1"
-                      value={rule.field}
-                      onChange={(event) =>
-                        updateRule(rule.id, {
-                          field: event.target
-                            .value as OverviewCustomFilterRuleField,
-                        })
-                      }
-                    >
-                      {RULE_FIELDS.map((field) => (
-                        <option key={field} value={field}>
-                          {t(`fontOverview.customFilter.fields.${field}`)}
-                        </option>
-                      ))}
-                    </Select>
-
-                    <Select
-                      flex="1"
-                      value={rule.operator}
-                      onChange={(event) =>
-                        updateRule(rule.id, {
-                          operator: event.target
-                            .value as OverviewCustomFilterRuleOperator,
-                          value:
-                            event.target.value === 'missing' ? '' : rule.value,
-                        })
-                      }
-                    >
-                      {operators.map((operator) => (
-                        <option key={operator} value={operator}>
-                          {t(`fontOverview.customFilter.operators.${operator}`)}
-                        </option>
-                      ))}
-                    </Select>
-
-                    {needsValue ? (
-                      booleanField ? (
-                        <Select
-                          flex="1"
-                          value={rule.value === 'false' ? 'false' : 'true'}
-                          onChange={(event) =>
-                            updateRule(rule.id, { value: event.target.value })
-                          }
-                        >
-                          <option value="true">
-                            {t('fontOverview.customFilter.booleanTrue')}
-                          </option>
-                          <option value="false">
-                            {t('fontOverview.customFilter.booleanFalse')}
-                          </option>
-                        </Select>
-                      ) : (
-                        <Input
-                          flex="1"
-                          value={rule.value}
-                          onChange={(event) =>
-                            updateRule(rule.id, { value: event.target.value })
-                          }
-                          placeholder={t('fontOverview.customFilter.value')}
-                        />
-                      )
-                    ) : (
-                      <Box flex="1" />
-                    )}
-
-                    <Tooltip label={t('fontOverview.customFilter.deleteRule')}>
-                      <IconButton
-                        aria-label={t('fontOverview.customFilter.deleteRule')}
-                        icon={
-                          <Trash width={17} height={17} strokeWidth={2.1} />
-                        }
-                        isDisabled={draft.rules.length <= 1}
-                        onClick={() =>
-                          setDraft((current) => ({
-                            ...current,
-                            rules: current.rules.filter(
-                              (currentRule) => currentRule.id !== rule.id
-                            ),
-                          }))
-                        }
-                      />
-                    </Tooltip>
-                  </HStack>
-                )
-              })}
-            </VStack>
+            ) : null}
           </Box>
-        </VStack>
-      </ModalBody>
-      <ModalFooter justifyContent="space-between">
-        <Box>
-          {filter ? (
-            <Button colorScheme="red" variant="ghost" onClick={handleDelete}>
-              {t('fontOverview.customFilter.deleteFilter')}
+          <HStack>
+            <Button variant="ghost" onClick={onClose}>
+              {t('fontOverview.cancel')}
             </Button>
-          ) : null}
-        </Box>
-        <HStack>
-          <Button variant="ghost" onClick={onClose}>
-            {t('fontOverview.cancel')}
-          </Button>
-          <Button
-            colorScheme="yellow"
-            isDisabled={!canSave}
-            onClick={handleSave}
-          >
-            {t('fontOverview.customFilter.save')}
-          </Button>
-        </HStack>
-      </ModalFooter>
+            <Button
+              colorScheme="yellow"
+              isDisabled={!canSave}
+              onClick={handleSave}
+            >
+              {t('fontOverview.customFilter.save')}
+            </Button>
+          </HStack>
+        </ModalFooter>
+      </Tabs>
     </ModalContent>
   )
 }

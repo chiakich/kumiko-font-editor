@@ -88,6 +88,12 @@ export interface OverviewCustomFilter {
   source?: OverviewCustomFilterSource
 }
 
+export interface OverviewCustomFilterPreset {
+  filter: Omit<OverviewCustomFilter, 'id' | 'source'>
+  id: string
+  labelKey: string
+}
+
 export const DEFAULT_OVERVIEW_SEARCH_FIELDS: OverviewSearchField[] = [
   'glyphName',
   'unicodeValue',
@@ -648,41 +654,123 @@ const createSeedRule = (
   value,
 })
 
-const DEFAULT_OVERVIEW_CUSTOM_FILTERS: OverviewCustomFilter[] = [
-  {
-    id: 'seeded:recent-edits',
-    labelKey: 'fontOverview.filterLabels.recentEdits',
+const createPresetFilter = (
+  id: string,
+  labelKey: string,
+  name: string,
+  rules: OverviewCustomFilterRule[],
+  sort: OverviewCustomFilterSort = 'codePoint'
+): OverviewCustomFilterPreset => ({
+  filter: {
+    labelKey,
     mode: 'all',
-    name: 'Recently Edited',
-    rules: [createSeedRule('edited')],
-    sort: 'recentEdit',
-    source: 'seeded',
+    name,
+    rules,
+    sort,
   },
-  {
-    id: 'seeded:empty',
-    labelKey: 'fontOverview.filterLabels.emptyGlyphs',
-    mode: 'all',
-    name: 'Empty Glyphs',
-    rules: [createSeedRule('empty')],
-    sort: 'codePoint',
-    source: 'seeded',
-  },
-  {
-    id: 'seeded:has-color-label',
-    labelKey: 'fontOverview.filterLabels.hasColorLabel',
-    mode: 'all',
-    name: 'Has Color Label',
-    rules: [createSeedRule('hasColorLabel')],
-    sort: 'codePoint',
-    source: 'seeded',
-  },
+  id,
+  labelKey,
+})
+
+const OVERVIEW_CUSTOM_FILTER_PRESETS: OverviewCustomFilterPreset[] = [
+  createPresetFilter(
+    'recent-edits',
+    'fontOverview.filterLabels.recentEdits',
+    'Recently Edited',
+    [createSeedRule('edited')],
+    'recentEdit'
+  ),
+  createPresetFilter(
+    'empty',
+    'fontOverview.filterLabels.emptyGlyphs',
+    'Empty Glyphs',
+    [createSeedRule('empty')]
+  ),
+  createPresetFilter(
+    'has-color-label',
+    'fontOverview.filterLabels.hasColorLabel',
+    'Has Color Label',
+    [createSeedRule('hasColorLabel')]
+  ),
+  createPresetFilter(
+    'exporting',
+    'fontOverview.filterLabels.exporting',
+    'Exporting',
+    [createSeedRule('export')]
+  ),
+  createPresetFilter(
+    'not-exporting',
+    'fontOverview.filterLabels.notExporting',
+    'Not Exporting',
+    [createSeedRule('export', 'false')]
+  ),
+  createPresetFilter(
+    'has-unicode',
+    'fontOverview.filterLabels.hasUnicode',
+    'Has Unicode',
+    [createSeedRule('hasUnicode')]
+  ),
+  createPresetFilter(
+    'no-unicode',
+    'fontOverview.filterLabels.noUnicode',
+    'No Unicode',
+    [createSeedRule('hasUnicode', 'false')]
+  ),
+  createPresetFilter(
+    'has-components',
+    'fontOverview.filterLabels.hasComponents',
+    'Has Components',
+    [createSeedRule('hasComponents')]
+  ),
+  createPresetFilter(
+    'has-anchors',
+    'fontOverview.filterLabels.hasAnchors',
+    'Has Anchors',
+    [createSeedRule('hasAnchors')]
+  ),
+  createPresetFilter(
+    'has-hints',
+    'fontOverview.filterLabels.hasHints',
+    'Has Hints',
+    [createSeedRule('hasHints')]
+  ),
+  createPresetFilter(
+    'has-metrics-keys',
+    'fontOverview.filterLabels.hasMetricsKeys',
+    'Has Metrics Keys',
+    [createSeedRule('hasMetricsKeys')]
+  ),
 ]
 
-export const createDefaultOverviewCustomFilters = () =>
-  DEFAULT_OVERVIEW_CUSTOM_FILTERS.map((filter) => ({
-    ...filter,
-    rules: filter.rules.map((rule) => ({ ...rule })),
+const DEFAULT_OVERVIEW_CUSTOM_FILTER_PRESET_IDS = new Set([
+  'recent-edits',
+  'empty',
+  'has-color-label',
+])
+
+const clonePresetFilter = (
+  filter: OverviewCustomFilterPreset['filter']
+): OverviewCustomFilterPreset['filter'] => ({
+  ...filter,
+  rules: filter.rules.map((rule) => ({ ...rule })),
+})
+
+export const createOverviewCustomFilterPresets = () =>
+  OVERVIEW_CUSTOM_FILTER_PRESETS.map((preset) => ({
+    ...preset,
+    filter: clonePresetFilter(preset.filter),
   }))
+
+export const createDefaultOverviewCustomFilters = () =>
+  createOverviewCustomFilterPresets()
+    .filter((preset) =>
+      DEFAULT_OVERVIEW_CUSTOM_FILTER_PRESET_IDS.has(preset.id)
+    )
+    .map((preset) => ({
+      ...clonePresetFilter(preset.filter),
+      id: `seeded:${preset.id}`,
+      source: 'seeded' as const,
+    }))
 
 const buildFilterNodes = (
   glyphs: GlyphData[],

@@ -241,6 +241,8 @@
     "customFilter": {
       "createTitle": "新增自定篩選器",
       "editTitle": "編輯自定篩選器",
+      "presetTab": "預設組",
+      "advancedTab": "進階設定",
       "name": "名稱",
       "namePlaceholder": "例如：待補標點",
       "matchMode": "符合條件",

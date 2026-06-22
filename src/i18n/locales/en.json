@@ -241,6 +241,8 @@
     "customFilter": {
       "createTitle": "New custom filter",
       "editTitle": "Edit custom filter",
+      "presetTab": "Presets",
+      "advancedTab": "Advanced",
       "name": "Name",
       "namePlaceholder": "For example: punctuation to draw",
       "matchMode": "Match",

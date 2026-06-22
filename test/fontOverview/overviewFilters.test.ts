@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  createDefaultOverviewCustomFilters,
+  createOverviewCustomFilterPresets,
   customOverviewFilterIdToNodeId,
   filterGlyphsByOverviewSearch,
   getGlyphOverviewTree,
@@ -83,6 +85,29 @@ const findNode = (
 const ids = (glyphs: GlyphData[]) => glyphs.map((glyph) => glyph.id)
 const seededFilterNodeId = (id: string) =>
   customOverviewFilterIdToNodeId(`seeded:${id}`)
+
+describe('overview custom filter presets', () => {
+  it('keeps the default sidebar seeds smaller than the available presets', () => {
+    expect(
+      createDefaultOverviewCustomFilters().map((filter) => filter.id)
+    ).toEqual(['seeded:recent-edits', 'seeded:empty', 'seeded:has-color-label'])
+    expect(
+      createOverviewCustomFilterPresets().map((preset) => preset.id)
+    ).toEqual([
+      'recent-edits',
+      'empty',
+      'has-color-label',
+      'exporting',
+      'not-exporting',
+      'has-unicode',
+      'no-unicode',
+      'has-components',
+      'has-anchors',
+      'has-hints',
+      'has-metrics-keys',
+    ])
+  })
+})
 
 describe('overview search filters', () => {
   const glyphs = [
