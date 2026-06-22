@@ -27,8 +27,11 @@ import { OverviewTreeNav } from 'src/features/fontOverview/components/OverviewTr
 import type { OverviewSearchOptionsState } from 'src/store'
 import { NavArrowDown, Search, Xmark } from 'iconoir-react'
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState } from 'react'
 
 type SearchFieldGroupId = 'glyphName' | 'unicode' | 'note' | 'component' | 'ids'
+
+const SEARCH_QUERY_DEBOUNCE_MS = 250
 
 const SEARCH_FIELD_GROUPS: Array<{
   fields: OverviewSearchField[]
@@ -118,6 +121,8 @@ export function OverviewSidebar({
   onSectionSelect,
 }: OverviewSidebarProps) {
   const { t } = useTranslation()
+  const [localSearchQuery, setLocalSearchQuery] = useState<string | null>(null)
+  const displayedSearchQuery = localSearchQuery ?? currentSearchQuery
   const selectedFieldGroups = getSelectedSearchFieldGroups(
     overviewSearchOptions.fields
   )
@@ -125,6 +130,24 @@ export function OverviewSidebar({
     ...(overviewSearchOptions.matchCase ? ['matchCase'] : []),
     ...(overviewSearchOptions.regex ? ['regex'] : []),
   ]
+
+  useEffect(() => {
+    if (localSearchQuery === null || localSearchQuery === currentSearchQuery) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      onSearchQueryChange(localSearchQuery)
+      setLocalSearchQuery(null)
+    }, SEARCH_QUERY_DEBOUNCE_MS)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [currentSearchQuery, localSearchQuery, onSearchQueryChange])
+
+  const handleClearSearch = () => {
+    setLocalSearchQuery(null)
+    onSearchQueryChange('')
+  }
 
   return (
     <Box
@@ -181,16 +204,25 @@ export function OverviewSidebar({
                   as={IconButton}
                   aria-label={t('fontOverview.searchOptions')}
                   icon={
-                    <VStack spacing={0}>
+                    <Box h="22px" position="relative" w="22px">
                       <Search width={18} height={18} strokeWidth={2.2} />
-                      <NavArrowDown width={10} height={10} strokeWidth={2.4} />
-                    </VStack>
+                      <Box bottom={0} position="absolute" right={0}>
+                        <NavArrowDown
+                          width={10}
+                          height={10}
+                          strokeWidth={2.4}
+                        />
+                      </Box>
+                    </Box>
                   }
                   size="sm"
                   variant="ghost"
+                  _active={{ bg: 'transparent' }}
+                  _expanded={{ bg: 'transparent' }}
+                  _hover={{ bg: 'transparent' }}
                 />
               </Tooltip>
-              <MenuList minW="220px">
+              <MenuList bg="transparent" minW="220px">
                 <MenuOptionGroup
                   title={t('fontOverview.searchFieldsTitle')}
                   type="checkbox"
@@ -239,10 +271,10 @@ export function OverviewSidebar({
             pl={9}
             pr={11}
             placeholder={t('fontOverview.searchPlaceholder')}
-            value={currentSearchQuery}
-            onChange={(event) => onSearchQueryChange(event.target.value)}
+            value={displayedSearchQuery}
+            onChange={(event) => setLocalSearchQuery(event.target.value)}
           />
-          {currentSearchQuery ? (
+          {displayedSearchQuery ? (
             <InputRightElement>
               <Tooltip label={t('fontOverview.clearSearch')}>
                 <IconButton
@@ -250,7 +282,7 @@ export function OverviewSidebar({
                   icon={<Xmark width={18} height={18} strokeWidth={2.2} />}
                   size="sm"
                   variant="ghost"
-                  onClick={() => onSearchQueryChange('')}
+                  onClick={handleClearSearch}
                 />
               </Tooltip>
             </InputRightElement>
