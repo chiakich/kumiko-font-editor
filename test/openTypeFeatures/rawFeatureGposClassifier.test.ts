@@ -306,6 +306,53 @@ describe('OpenType raw FEA GPOS classifier', () => {
     expect(generateFea(state).text).toContain('pos A V -80 -20;')
   })
 
+  it('accepts raw subtable break hints without preserving them as rules', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'feature kern {',
+          '  pos A V -80;',
+          '  subtable;',
+          '  pos T o -40;',
+          '} kern;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_kern_0',
+        table: 'GPOS',
+        lookupType: 'pairPos',
+        rules: [
+          {
+            kind: 'pairPositioning',
+            left: { kind: 'glyph', glyph: 'A' },
+            right: { kind: 'glyph', glyph: 'V' },
+            firstValue: { xAdvance: -80 },
+          },
+          {
+            kind: 'pairPositioning',
+            left: { kind: 'glyph', glyph: 'T' },
+            right: { kind: 'glyph', glyph: 'o' },
+            firstValue: { xAdvance: -40 },
+          },
+        ],
+      },
+    ])
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('pos A V -80;')
+    expect(generated).toContain('pos T o -40;')
+    expect(generated).not.toContain('subtable;')
+  })
+
   it('classifies raw mark classes and mark positioning lookup blocks', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(

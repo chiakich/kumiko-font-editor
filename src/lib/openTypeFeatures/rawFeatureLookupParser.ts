@@ -48,6 +48,9 @@ const matchSubstitutionStatement = (statement: string, bodyPattern: string) =>
 const matchPositioningStatement = (statement: string, bodyPattern: string) =>
   statement.match(new RegExp(`^${POSITIONING_KEYWORD}\\s+${bodyPattern}$`, 'i'))
 
+const isSubtableBreakStatement = (statement: string) =>
+  /^subtable$/i.test(statement)
+
 const parseValueRecord = (value: string): ValueRecord | null => {
   if (/^-?\d+$/.test(value)) {
     return { xAdvance: Number(value) }
@@ -789,6 +792,10 @@ export const parseLookupStatements = (
   let markFilteringSetClassId: string | undefined
 
   for (const [index, statement] of splitStatements(body).entries()) {
+    if (isSubtableBreakStatement(statement)) {
+      continue
+    }
+
     const lookupFlagStatement = parseLookupFlagStatement(
       statement,
       glyphClassIdByName
