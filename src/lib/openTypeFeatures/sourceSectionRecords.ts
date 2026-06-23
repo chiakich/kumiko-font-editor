@@ -24,6 +24,11 @@ export interface SourceSectionRecordGroup {
   missingCount: number
 }
 
+export type SourceSectionRecordSelector = Pick<
+  ClassifiedFeatureRecordRef,
+  'kind' | 'id' | 'table'
+>
+
 export const deriveOpenTypeSourceSectionRecords = (
   state: OpenTypeFeaturesState
 ): SourceSectionRecordGroup[] =>
@@ -41,6 +46,25 @@ export const deriveOpenTypeSourceSectionRecords = (
         .length,
     }
   })
+
+export const findOpenTypeSourceSectionsForRecord = (
+  state: OpenTypeFeaturesState,
+  selector: SourceSectionRecordSelector
+): SourceSectionRecordGroup[] =>
+  deriveOpenTypeSourceSectionRecords(state).filter((group) =>
+    group.records.some((record) => matchesRecordSelector(record, selector))
+  )
+
+function matchesRecordSelector(
+  record: SourceSectionRecordSummary,
+  selector: SourceSectionRecordSelector
+) {
+  return (
+    record.kind === selector.kind &&
+    record.id === selector.id &&
+    (!selector.table || !record.table || record.table === selector.table)
+  )
+}
 
 function resolveSourceSectionRecord(
   state: OpenTypeFeaturesState,

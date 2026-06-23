@@ -1,11 +1,13 @@
 import { Badge, HStack, Stack, Text } from '@chakra-ui/react'
 import { LookupInspector } from 'src/features/common/projectControl/fontSettings/features/components/LookupInspector'
-import type {
-  FeatureDiagnostic,
-  FeatureRecord,
-  LookupRecord,
-  OpenTypeFeaturesState,
-  Rule,
+import { SourceReferenceSummary } from 'src/features/common/projectControl/fontSettings/features/components/SourceReferenceSummary'
+import {
+  findOpenTypeSourceSectionsForRecord,
+  type FeatureDiagnostic,
+  type FeatureRecord,
+  type LookupRecord,
+  type OpenTypeFeaturesState,
+  type Rule,
 } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
@@ -25,6 +27,13 @@ export function FeatureDetailPanel({
   const { t } = useTranslation()
 
   const lookups = getFeatureLookups(feature, state.lookups)
+  const featureSourceSectionRecords = findOpenTypeSourceSectionsForRecord(
+    state,
+    {
+      kind: 'feature',
+      id: feature.id,
+    }
+  )
 
   return (
     <Stack spacing={4}>
@@ -44,6 +53,10 @@ export function FeatureDetailPanel({
           </Text>
         </Stack>
       </HStack>
+
+      <SourceReferenceSummary
+        sourceSectionRecords={featureSourceSectionRecords}
+      />
 
       <FeatureEntries feature={feature} lookups={state.lookups} />
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   createEmptyOpenTypeFeaturesState,
   deriveOpenTypeSourceSectionRecords,
+  findOpenTypeSourceSectionsForRecord,
   type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 
@@ -168,5 +169,82 @@ describe('OpenType source section record summaries', () => {
       status: 'missing',
       detail: 'Referenced record is missing from the current feature model.',
     })
+  })
+
+  it('finds source sections that reference a specific model record', () => {
+    const state: OpenTypeFeaturesState = {
+      ...createEmptyOpenTypeFeaturesState(),
+      features: [
+        {
+          id: 'feature_liga',
+          tag: 'liga',
+          isActive: true,
+          origin: 'imported',
+          entries: [],
+        },
+      ],
+      lookups: [
+        {
+          id: 'lookup_liga',
+          name: 'liga lookup',
+          table: 'GSUB',
+          lookupType: 'ligatureSubst',
+          lookupFlag: {},
+          editable: true,
+          origin: 'imported',
+          rules: [],
+        },
+      ],
+      sourceSections: [
+        {
+          id: 'source_raw_feature_text',
+          title: 'Handwritten .fea source',
+          kind: 'manual-fea',
+          origin: 'manual-input',
+          format: 'fea',
+          stage: 'classified',
+          status: 'classified',
+          textRef: 'rawFeatureText',
+          recordRefs: [{ kind: 'feature', id: 'feature_liga' }],
+          preservationPolicy: 'editable-rebuild',
+        },
+        {
+          id: 'source_compiled_gsub',
+          title: 'GSUB compiled table',
+          kind: 'compiled-table',
+          origin: 'binary-import',
+          format: 'opentype-layout-table',
+          stage: 'classified',
+          status: 'classified',
+          table: 'GSUB',
+          recordRefs: [
+            { kind: 'feature', id: 'feature_liga', table: 'GSUB' },
+            { kind: 'lookup', id: 'lookup_liga', table: 'GSUB' },
+          ],
+          preservationPolicy: 'editable-rebuild',
+        },
+      ],
+    }
+
+    expect(
+      findOpenTypeSourceSectionsForRecord(state, {
+        kind: 'feature',
+        id: 'feature_liga',
+      }).map((group) => group.section.id)
+    ).toEqual(['source_raw_feature_text', 'source_compiled_gsub'])
+    expect(
+      findOpenTypeSourceSectionsForRecord(state, {
+        kind: 'lookup',
+        id: 'lookup_liga',
+        table: 'GSUB',
+      }).map((group) => group.section.id)
+    ).toEqual(['source_compiled_gsub'])
+    expect(
+      findOpenTypeSourceSectionsForRecord(state, {
+        kind: 'lookup',
+        id: 'lookup_liga',
+        table: 'GPOS',
+      })
+    ).toEqual([])
   })
 })

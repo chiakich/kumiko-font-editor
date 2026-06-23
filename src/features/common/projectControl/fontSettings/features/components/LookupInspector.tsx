@@ -7,13 +7,14 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import type {
-  FeatureDiagnostic,
-  FeatureSourceSection,
-  LookupRecord,
-  OpenTypeFeaturesState,
-  Rule,
+import {
+  findOpenTypeSourceSectionsForRecord,
+  type FeatureDiagnostic,
+  type LookupRecord,
+  type OpenTypeFeaturesState,
+  type Rule,
 } from 'src/lib/openTypeFeatures'
+import { SourceReferenceSummary } from 'src/features/common/projectControl/fontSettings/features/components/SourceReferenceSummary'
 import { RuleEditorList } from 'src/features/common/projectControl/fontSettings/features/components/RuleEditorList'
 import { useTranslation } from 'react-i18next'
 
@@ -68,7 +69,7 @@ export function LookupInspector({
           <LookupDetails
             lookup={selectedLookup}
             diagnostics={diagnostics}
-            sourceSections={state.sourceSections}
+            state={state}
             onRuleChange={onRuleChange}
           />
         ) : null}
@@ -124,18 +125,25 @@ function LookupList({
 interface LookupDetailsProps {
   lookup: LookupRecord
   diagnostics: FeatureDiagnostic[]
-  sourceSections: FeatureSourceSection[]
+  state: OpenTypeFeaturesState
   onRuleChange: (lookupId: string, rule: Rule) => void
 }
 
 function LookupDetails({
   lookup,
   diagnostics,
-  sourceSections,
+  state,
   onRuleChange,
 }: LookupDetailsProps) {
   const lookupDiagnostics = diagnosticsForLookup(diagnostics, lookup.id)
-  const lookupSourceSections = sourceSectionsForLookup(sourceSections, lookup)
+  const lookupSourceSectionRecords = findOpenTypeSourceSectionsForRecord(
+    state,
+    {
+      kind: 'lookup',
+      id: lookup.id,
+      table: lookup.table,
+    }
+  )
 
   return (
     <Stack spacing={3} borderWidth="1px" borderRadius="sm" p={3}>
@@ -152,7 +160,9 @@ function LookupDetails({
       </HStack>
       <LookupFlags lookup={lookup} />
       <ProvenanceSummary lookup={lookup} />
-      <SourceReferenceSummary sourceSections={lookupSourceSections} />
+      <SourceReferenceSummary
+        sourceSectionRecords={lookupSourceSectionRecords}
+      />
       {lookupDiagnostics.length > 0 ? (
         <Stack spacing={1}>
           {lookupDiagnostics.map((diagnostic) => (
@@ -265,34 +275,6 @@ function ProvenanceSummary({ lookup }: { lookup: LookupRecord }) {
   )
 }
 
-function SourceReferenceSummary({
-  sourceSections,
-}: {
-  sourceSections: FeatureSourceSection[]
-}) {
-  const { t } = useTranslation()
-
-  if (sourceSections.length === 0) {
-    return null
-  }
-
-  return (
-    <Stack spacing={1}>
-      <Text fontSize="xs" color="field.muted">
-        {t('projectControl.sourceSections')}
-      </Text>
-      <HStack wrap="wrap">
-        {sourceSections.map((section) => (
-          <Badge key={section.id} variant="outline">
-            {section.table ? `${section.table} ` : ''}
-            {section.status}
-          </Badge>
-        ))}
-      </HStack>
-    </Stack>
-  )
-}
-
 function diagnosticsForLookup(
   diagnostics: FeatureDiagnostic[],
   lookupId: string
@@ -301,19 +283,5 @@ function diagnosticsForLookup(
     (diagnostic) =>
       diagnostic.target.kind === 'lookup' &&
       diagnostic.target.lookupId === lookupId
-  )
-}
-
-function sourceSectionsForLookup(
-  sourceSections: FeatureSourceSection[],
-  lookup: LookupRecord
-) {
-  return sourceSections.filter((section) =>
-    section.recordRefs.some(
-      (ref) =>
-        ref.kind === 'lookup' &&
-        ref.id === lookup.id &&
-        (!ref.table || ref.table === lookup.table)
-    )
   )
 }
