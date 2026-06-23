@@ -329,6 +329,104 @@ describe('OpenType FEA source maps', () => {
     expect(generated.text).toContain('sub f i by f_i;')
   })
 
+  it('classifies raw lookup blocks and contextual substitution rules', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'languagesystem latn dflt;',
+          'lookup SwapA {',
+          '  sub A by A.alt;',
+          '} SwapA;',
+          'feature calt {',
+          '  script latn;',
+          '  language dflt;',
+          "  sub A' lookup SwapA B;",
+          "  ignore sub C C' D;",
+          '} calt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+      meta: {
+        classifiedIntoModel: true,
+        preserveRawTextInGeneratedFea: false,
+      },
+    })
+    expect(state.features).toMatchObject([
+      {
+        id: 'feature_raw_calt',
+        tag: 'calt',
+        entries: [
+          {
+            script: 'latn',
+            language: 'dflt',
+            lookupIds: ['lookup_raw_calt_0'],
+          },
+        ],
+      },
+    ])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_SwapA',
+        name: 'SwapA',
+        table: 'GSUB',
+        lookupType: 'singleSubst',
+        rules: [
+          {
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'A' },
+            replacement: 'A.alt',
+          },
+        ],
+      },
+      {
+        id: 'lookup_raw_calt_0',
+        table: 'GSUB',
+        lookupType: 'chainingContextSubst',
+        rules: [
+          {
+            kind: 'contextualSubstitution',
+            mode: 'chaining',
+            backtrack: [],
+            input: [
+              {
+                selector: { kind: 'glyph', glyph: 'A' },
+                lookupIds: ['lookup_raw_SwapA'],
+              },
+            ],
+            lookahead: [{ kind: 'glyph', glyph: 'B' }],
+          },
+          {
+            kind: 'contextualSubstitution',
+            mode: 'chaining',
+            backtrack: [{ kind: 'glyph', glyph: 'C' }],
+            input: [{ selector: { kind: 'glyph', glyph: 'C' } }],
+            lookahead: [{ kind: 'glyph', glyph: 'D' }],
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'lookup', id: 'lookup_raw_SwapA', table: 'GSUB' },
+        { kind: 'lookup', id: 'lookup_raw_calt_0', table: 'GSUB' },
+        { kind: 'feature', id: 'feature_raw_calt' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated.indexOf('lookup SwapA {')).toBeLessThan(
+      generated.indexOf('lookup raw_calt_0 {')
+    )
+    expect(generated).toContain("sub A' lookup SwapA B;")
+    expect(generated).toContain("ignore sub C C' D;")
+  })
+
   it('preserves unsupported raw .fea source instead of partially committing it', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(
@@ -363,6 +461,42 @@ describe('OpenType FEA source maps', () => {
       ])
     )
     expect(generateFea(state).text).toContain('RAW SOURCE MARKER')
+  })
+
+  it('preserves raw .fea when contextual rules reference unsupported lookup blocks', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'lookup BadLookup {',
+          '  sub A by @Missing;',
+          '} BadLookup;',
+          'feature calt {',
+          "  sub A' lookup BadLookup B;",
+          '} calt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'source',
+      status: 'raw',
+      recordRefs: [],
+      meta: {
+        classifiedIntoModel: false,
+        preserveRawTextInGeneratedFea: true,
+      },
+    })
+    expect(state.features).toEqual([])
+    expect(state.lookups).toEqual([])
+    expect(
+      state.diagnostics?.some(
+        (diagnostic) =>
+          diagnostic.id ===
+          'feature-diagnostic-warning-raw-fea-parser-unsupported-statements'
+      )
+    ).toBe(true)
   })
 
   it('includes raw .fea source in generated FEA output', () => {

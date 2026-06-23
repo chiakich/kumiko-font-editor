@@ -38,8 +38,23 @@ interface ParsedRawFeatureText {
   unsupportedStatements: string[]
 }
 
+interface BlockMatch {
+  body: string
+  end: number
+  name: string
+  raw: string
+  start: number
+}
+
+interface LookupCandidate {
+  record: LookupRecord
+  raw: string
+}
+
 const RAW_FEATURE_DIAGNOSTIC_PREFIX =
   'feature-diagnostic-warning-raw-fea-parser'
+
+const FEA_NAME_PATTERN = '[A-Za-z_][A-Za-z0-9_.-]*'
 
 const getFeatureOrigin = (origin: RawFeatureTextOrigin): FeatureOrigin =>
   origin === 'ufo-import' ? 'imported' : 'manual'
@@ -79,6 +94,11 @@ const splitGlyphList = (body: string) =>
     .map((glyph) => glyph.trim())
     .filter(Boolean)
 
+const isInsideRange = (
+  index: number,
+  ranges: Array<{ start: number; end: number }>
+) => ranges.some((range) => index > range.start && index < range.end)
+
 const makeLanguageSystemId = (script: string, language: string) =>
   `languagesystem_${toStableIdPart(script)}_${toStableIdPart(language)}`
 
@@ -96,6 +116,17 @@ const selectorFromToken = (
 
   if (token.includes("'")) return null
   return { kind: 'glyph', glyph: token }
+}
+
+const selectorFromMarkedToken = (
+  token: string,
+  glyphClassIdByName: Map<string, string>
+) => {
+  const marked = token.endsWith("'")
+  const cleanToken = marked ? token.slice(0, -1) : token
+  if (!cleanToken || cleanToken.includes("'")) return null
+  const selector = selectorFromToken(cleanToken, glyphClassIdByName)
+  return selector ? { marked, selector } : null
 }
 
 const parseValueRecord = (value: string): ValueRecord | null => {
@@ -124,6 +155,86 @@ const parseLookupFlagStatement = (statement: string): LookupFlagIR | null => {
     ignoreBaseGlyphs: /\bIgnoreBaseGlyphs\b/i.test(value) || undefined,
     ignoreLigatures: /\bIgnoreLigatures\b/i.test(value) || undefined,
     ignoreMarks: /\bIgnoreMarks\b/i.test(value) || undefined,
+  }
+}
+
+const parseContextualSubstitutionRule = (
+  statement: string,
+  ruleId: string,
+  origin: FeatureOrigin,
+  glyphClassIdByName: Map<string, string>,
+  lookupIdByName: Map<string, string>
+): Rule | null => {
+  const ignoreMatch = statement.match(/^ignore\s+sub\s+(.+)$/i)
+  const substituteMatch = statement.match(/^sub\s+(.+)$/i)
+  const context = ignoreMatch?.[1] ?? substituteMatch?.[1]
+  if (!context || /\sby\s/i.test(context)) return null
+
+  const selectorEntries: Array<{
+    lookupIds: string[]
+    marked: boolean
+    selector: GlyphSelector
+  }> = []
+  const tokens = context.trim().split(/\s+/).filter(Boolean)
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index]
+    if (/^lookup$/i.test(token)) {
+      const lookupName = tokens[index + 1]
+      const lookupId = lookupName ? lookupIdByName.get(lookupName) : undefined
+      const previousEntry = selectorEntries.at(-1)
+      if (!lookupId || !previousEntry?.marked) return null
+      previousEntry.lookupIds.push(lookupId)
+      index += 1
+      continue
+    }
+
+    const parsed = selectorFromMarkedToken(token, glyphClassIdByName)
+    if (!parsed) return null
+    selectorEntries.push({
+      lookupIds: [],
+      marked: parsed.marked,
+      selector: parsed.selector,
+    })
+  }
+
+  const firstInputIndex = selectorEntries.findIndex((entry) => entry.marked)
+  const lastInputIndex = selectorEntries.findLastIndex((entry) => entry.marked)
+  if (firstInputIndex < 0 || lastInputIndex < firstInputIndex) return null
+
+  const inputEntries = selectorEntries.slice(
+    firstInputIndex,
+    lastInputIndex + 1
+  )
+  if (inputEntries.some((entry) => !entry.marked)) return null
+  if (ignoreMatch && inputEntries.some((entry) => entry.lookupIds.length > 0)) {
+    return null
+  }
+  if (
+    substituteMatch &&
+    inputEntries.every((entry) => entry.lookupIds.length === 0)
+  ) {
+    return null
+  }
+
+  return {
+    id: ruleId,
+    kind: 'contextualSubstitution',
+    mode: 'chaining',
+    backtrack: selectorEntries
+      .slice(0, firstInputIndex)
+      .map((entry) => entry.selector),
+    input: inputEntries.map((entry) => ({
+      selector: entry.selector,
+      ...(entry.lookupIds.length > 0 ? { lookupIds: entry.lookupIds } : {}),
+    })),
+    lookahead: selectorEntries
+      .slice(lastInputIndex + 1)
+      .map((entry) => entry.selector),
+    meta: {
+      origin,
+      provenance: { table: 'GSUB' },
+    },
   }
 }
 
@@ -228,6 +339,7 @@ const getLookupShape = (rules: Rule[]) => {
   > = {
     singleSubstitution: 'singleSubst',
     ligatureSubstitution: 'ligatureSubst',
+    contextualSubstitution: 'chainingContextSubst',
     singlePositioning: 'singlePos',
     pairPositioning: 'pairPos',
   }
@@ -251,7 +363,8 @@ const parseLookupStatements = (
   body: string,
   idPrefix: string,
   origin: FeatureOrigin,
-  glyphClassIdByName: Map<string, string>
+  glyphClassIdByName: Map<string, string>,
+  lookupIdByName: Map<string, string>
 ) => {
   const rules: Rule[] = []
   const unsupportedStatements: string[] = []
@@ -266,6 +379,13 @@ const parseLookupStatements = (
 
     const ruleId = `${idPrefix}_rule_${index}`
     const rule =
+      parseContextualSubstitutionRule(
+        statement,
+        ruleId,
+        origin,
+        glyphClassIdByName,
+        lookupIdByName
+      ) ??
       parseSubstitutionRule(statement, ruleId, origin, glyphClassIdByName) ??
       parsePositioningRule(statement, ruleId, origin, glyphClassIdByName)
 
@@ -277,6 +397,55 @@ const parseLookupStatements = (
   }
 
   return { rules, lookupFlag, unsupportedStatements }
+}
+
+const collectNamedBlocks = (text: string, blockName: 'feature' | 'lookup') =>
+  [
+    ...text.matchAll(
+      new RegExp(
+        `\\b${blockName}\\s+(${blockName === 'feature' ? '[A-Za-z0-9]{4}' : FEA_NAME_PATTERN})\\s*\\{([\\s\\S]*?)\\}\\s*\\1\\s*;`,
+        'g'
+      )
+    ),
+  ].map(
+    (match): BlockMatch => ({
+      body: match[2],
+      end: (match.index ?? 0) + match[0].length,
+      name: match[1],
+      raw: match[0],
+      start: match.index ?? 0,
+    })
+  )
+
+const referencedLookupIdsForRules = (rules: Rule[]) =>
+  rules.flatMap((rule) =>
+    rule.kind === 'contextualSubstitution'
+      ? rule.input.flatMap((entry) => entry.lookupIds ?? [])
+      : []
+  )
+
+const partitionLookupCandidates = (candidates: LookupCandidate[]) => {
+  const validIds = new Set(candidates.map((candidate) => candidate.record.id))
+  let changed = true
+
+  while (changed) {
+    changed = false
+    for (const candidate of candidates) {
+      if (!validIds.has(candidate.record.id)) continue
+      const references = referencedLookupIdsForRules(candidate.record.rules)
+      if (references.some((lookupId) => !validIds.has(lookupId))) {
+        validIds.delete(candidate.record.id)
+        changed = true
+      }
+    }
+  }
+
+  return {
+    invalid: candidates.filter(
+      (candidate) => !validIds.has(candidate.record.id)
+    ),
+    valid: candidates.filter((candidate) => validIds.has(candidate.record.id)),
+  }
 }
 
 const toLookupRecord = (
@@ -351,23 +520,39 @@ const parseRawFeatureText = (
     )
   }
 
-  for (const match of workingText.matchAll(
-    /\blookup\s+([A-Za-z_][A-Za-z0-9_.-]*)\s*\{([\s\S]*?)\}\s*\1\s*;/g
-  )) {
-    const name = match[1]
+  const featureBlocks = collectNamedBlocks(workingText, 'feature')
+  const featureRanges = featureBlocks.map((block) => ({
+    start: block.start,
+    end: block.end,
+  }))
+  const lookupBlocks = collectNamedBlocks(workingText, 'lookup').filter(
+    (block) => !isInsideRange(block.start, featureRanges)
+  )
+  const lookupIdByName = new Map(
+    lookupBlocks.map((block) => [
+      block.name,
+      `lookup_raw_${toStableIdPart(block.name)}`,
+    ])
+  )
+  const lookupCandidates: LookupCandidate[] = []
+
+  for (const block of lookupBlocks) {
+    const name = block.name
     const id = `lookup_raw_${toStableIdPart(name)}`
     const parsed = parseLookupStatements(
-      match[2],
+      block.body,
       id,
       featureOrigin,
-      glyphClassIdByName
+      glyphClassIdByName,
+      lookupIdByName
     )
     const shape = getLookupShape(parsed.rules)
     if (parsed.unsupportedStatements.length > 0 || !shape) {
-      unsupportedStatements.push(match[0].trim())
+      unsupportedStatements.push(block.raw.trim())
     } else {
-      lookups.push(
-        toLookupRecord(
+      lookupCandidates.push({
+        raw: block.raw.trim(),
+        record: toLookupRecord(
           {
             id,
             name,
@@ -377,22 +562,27 @@ const parseRawFeatureText = (
             rules: parsed.rules,
           },
           lookupOrigin
-        )
-      )
+        ),
+      })
     }
-    workingText = blankRange(
-      workingText,
-      match.index ?? 0,
-      (match.index ?? 0) + match[0].length
-    )
+    workingText = blankRange(workingText, block.start, block.end)
   }
+  const partitionedLookupCandidates =
+    partitionLookupCandidates(lookupCandidates)
+  lookups.push(
+    ...partitionedLookupCandidates.valid.map((candidate) => candidate.record)
+  )
+  unsupportedStatements.push(
+    ...partitionedLookupCandidates.invalid.map((candidate) => candidate.raw)
+  )
 
   const lookupByName = new Map(lookups.map((lookup) => [lookup.name, lookup]))
-  for (const match of workingText.matchAll(
-    /\bfeature\s+([A-Za-z0-9]{4})\s*\{([\s\S]*?)\}\s*\1\s*;/g
-  )) {
-    const tag = match[1]
-    let featureBody = match[2]
+  const committedLookupIdByName = new Map(
+    lookups.map((lookup) => [lookup.name, lookup.id])
+  )
+  for (const block of collectNamedBlocks(workingText, 'feature')) {
+    const tag = block.name
+    let featureBody = block.body
     const scripts = [...featureBody.matchAll(/\bscript\s+([A-Za-z]{4})\s*;/g)]
     const languages = [
       ...featureBody.matchAll(/\blanguage\s+([A-Za-z0-9_.-]{4})\s*;/g),
@@ -418,14 +608,15 @@ const parseRawFeatureText = (
       .replace(/\blookup\s+[A-Za-z_][A-Za-z0-9_.-]*\s*;/g, '')
 
     if (/\blookup\s+[A-Za-z_][A-Za-z0-9_.-]*\s*\{/.test(featureBody)) {
-      unsupportedStatements.push(match[0].trim())
+      unsupportedStatements.push(block.raw.trim())
     } else {
       const inlineLookupId = `lookup_raw_${toStableIdPart(tag)}_${features.length}`
       const parsed = parseLookupStatements(
         featureBody,
         inlineLookupId,
         featureOrigin,
-        glyphClassIdByName
+        glyphClassIdByName,
+        committedLookupIdByName
       )
       const shape = getLookupShape(parsed.rules)
       if (parsed.unsupportedStatements.length > 0) {
@@ -472,11 +663,7 @@ const parseRawFeatureText = (
         classifiedFromRawFeatureText: true,
       },
     })
-    workingText = blankRange(
-      workingText,
-      match.index ?? 0,
-      (match.index ?? 0) + match[0].length
-    )
+    workingText = blankRange(workingText, block.start, block.end)
   }
 
   const leftovers = splitStatements(workingText)

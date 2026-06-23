@@ -209,8 +209,11 @@ generated .fea / UI / export policy
 - 簡單 `feature` block
 - feature 內簡單 `script` / `language`
 - feature 內簡單 `lookup SomeLookup;` reference
+- top-level `lookup Name { ... } Name;` block
 - 簡單 `sub a by a.alt;`
 - 簡單 ligature `sub f i by f_i;`
+- contextual substitution，例如 `sub A' lookup SomeLookup B;`
+- contextual ignore rule，例如 `ignore sub A A' B;`
 - 簡單 `pos A -20;`
 - 簡單 pair positioning `pos A V -80;`
 
