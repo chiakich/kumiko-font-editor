@@ -8,6 +8,7 @@ import {
   Tag,
   Text,
 } from '@chakra-ui/react'
+import { GlyphColorLabelPicker } from 'src/features/common/glyphInspector/components/GlyphColorLabelPicker'
 import {
   getGlyphBlockLabel,
   getGlyphDisplayCharacter,
@@ -15,7 +16,12 @@ import {
   getGlyphScriptLabel,
 } from 'src/lib/glyph/glyphOverview'
 import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
-import type { GlyphData, GlyphLayerData, WorkspaceView } from 'src/store'
+import type {
+  GlyphData,
+  GlyphLayerData,
+  KumikoColor,
+  WorkspaceView,
+} from 'src/store'
 import { useTranslation } from 'react-i18next'
 import { PageSearch } from 'iconoir-react'
 
@@ -29,6 +35,7 @@ interface GlyphSummaryCardProps {
   showLayerSelect?: boolean
   onDeleteGlyph: () => void
   onEnterEditor: () => void
+  onGlyphColorChange: (color: KumikoColor | null) => void
   onOpenQualityCheck?: () => void
   onLayerChange: (layerId: string) => void
 }
@@ -42,6 +49,7 @@ export function GlyphSummaryCard({
   showLayerSelect = true,
   onDeleteGlyph,
   onEnterEditor,
+  onGlyphColorChange,
   onOpenQualityCheck,
   onLayerChange,
 }: GlyphSummaryCardProps) {
@@ -98,6 +106,10 @@ export function GlyphSummaryCard({
             {isDirty ? '等待本機儲存' : '已同步到本機'}
           </Tag>
         </Stack>
+        <GlyphColorLabelPicker
+          value={glyph.color}
+          onChange={onGlyphColorChange}
+        />
         {showLayerSelect && availableLayers.length > 0 && (
           <Box>
             <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">

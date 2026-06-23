@@ -16,6 +16,7 @@ import type {
   PathNode,
   PathSegmentType,
 } from 'src/store'
+import { parseGlyphsLabelColor } from 'src/lib/color/kumikoColor'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 
 // Build a multi-master FontData from a parsed .glyphs / .glyphspackage document
@@ -472,28 +473,6 @@ const parseOptionalBoolean = (value: unknown): boolean | undefined => {
     return undefined
   }
   return value === 1 || value === true
-}
-
-const GLYPHS_LABEL_COLORS: KumikoColor[] = [
-  [0.85, 0.26, 0.22, 1],
-  [0.9, 0.5, 0.18, 1],
-  [0.95, 0.75, 0.18, 1],
-  [0.3, 0.69, 0.31, 1],
-  [0.18, 0.55, 0.85, 1],
-  [0.43, 0.36, 0.84, 1],
-  [0.75, 0.32, 0.76, 1],
-  [0.55, 0.55, 0.55, 1],
-  [0.35, 0.35, 0.35, 1],
-  [0, 0, 0, 1],
-  [1, 1, 1, 1],
-]
-
-const parseGlyphsLabelColor = (value: unknown): KumikoColor | null => {
-  const index = asNumber(value, Number.NaN)
-  if (!Number.isInteger(index) || index < 0) {
-    return null
-  }
-  return GLYPHS_LABEL_COLORS[index] ?? null
 }
 
 const parseCustomData = (value: unknown): GlyphSourceData | undefined => {

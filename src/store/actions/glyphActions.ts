@@ -9,8 +9,10 @@ import type {
   GlobalState,
   GlyphData,
   GlyphMetrics,
+  KumikoColor,
   OnCurveNodeType,
 } from 'src/store/types'
+import { areKumikoColorsEqual } from 'src/lib/color/kumikoColor'
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
 import { findSourceIdAtLocation } from 'src/font/designspaceLocation'
 import {
@@ -230,6 +232,18 @@ export const buildGlyphActions = (set: ImmerSet) => ({
     })
     return renamed
   },
+
+  setGlyphColor: (glyphId: string, color: KumikoColor | null) =>
+    set((state) => {
+      const glyph = state.fontData?.glyphs[glyphId]
+      if (!glyph || areKumikoColorsEqual(glyph.color, color)) {
+        return
+      }
+
+      glyph.color = color
+      markGlyphDirty(state, glyphId)
+      syncFilteredGlyphList(state)
+    }),
 
   addGlyphs: (
     glyphs: Array<{

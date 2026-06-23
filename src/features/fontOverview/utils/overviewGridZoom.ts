@@ -86,7 +86,7 @@ export const buildOverviewGridZoomLayout = (
 ): OverviewGridZoomLayout => {
   const cardMinWidth = Math.round(clampOverviewGridSizePx(inputSizePx))
   const showGlyphName = cardMinWidth >= GLYPH_NAME_HIDE_THRESHOLD_PX
-  const gap = Math.round(clampNumber(cardMinWidth / 10, 2, 18))
+  const gap = Math.round(clampNumber(cardMinWidth / 20, 2, 18))
   const previewHeight = showGlyphName
     ? Math.max(88, Math.round(cardMinWidth * 0.9))
     : Math.max(12, cardMinWidth + 4)

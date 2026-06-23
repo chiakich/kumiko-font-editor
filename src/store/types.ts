@@ -466,6 +466,7 @@ export interface GlobalState {
   setOverviewTopGlyphId: (glyphId: string | null) => void
   deleteGlyph: (glyphId: string) => void
   renameGlyph: (oldGlyphId: string, newGlyphId: string) => boolean
+  setGlyphColor: (glyphId: string, color: KumikoColor | null) => void
   addComponentRef: (glyphId: string, componentGlyphId: string) => boolean
   addGlyphs: (
     glyphs: Array<{

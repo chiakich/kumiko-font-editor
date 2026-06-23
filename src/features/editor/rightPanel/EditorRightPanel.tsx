@@ -89,6 +89,7 @@ export function EditorRightPanel() {
                     showLayerSelect={false}
                     onDeleteGlyph={panel.handleDeleteGlyph}
                     onEnterEditor={() => panel.setWorkspaceView('editor')}
+                    onGlyphColorChange={panel.handleGlyphColorChange}
                     onLayerChange={panel.setSelectedLayerId}
                   />
 

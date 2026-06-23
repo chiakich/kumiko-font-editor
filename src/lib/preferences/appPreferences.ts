@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import {
   createDefaultOverviewCustomFilters,
   normalizeOverviewCustomFilters,
@@ -6,6 +7,12 @@ import {
 
 const OVERVIEW_CUSTOM_FILTERS_STORAGE_KEY =
   'kumiko.app.overviewCustomFilters.v1'
+const GLYPH_COLOR_LABEL_DISPLAY_MODE_STORAGE_KEY =
+  'kumiko.app.glyphColorLabelDisplayMode.v1'
+export type GlyphColorLabelDisplayMode = 'card' | 'dot'
+
+const DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE: GlyphColorLabelDisplayMode =
+  'card'
 
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
 
@@ -72,3 +79,76 @@ export const saveAppOverviewCustomFilters = (
   }
   return normalizedFilters
 }
+
+const glyphColorLabelDisplayModeListeners = new Set<() => void>()
+
+const normalizeGlyphColorLabelDisplayMode = (
+  value: string | null | undefined
+): GlyphColorLabelDisplayMode =>
+  value === 'dot' || value === 'card'
+    ? value
+    : DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE
+
+export const loadGlyphColorLabelDisplayMode = (
+  storage: StorageLike | null = getLocalStorage()
+): GlyphColorLabelDisplayMode => {
+  if (!storage) {
+    return DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE
+  }
+
+  try {
+    return normalizeGlyphColorLabelDisplayMode(
+      storage.getItem(GLYPH_COLOR_LABEL_DISPLAY_MODE_STORAGE_KEY)
+    )
+  } catch {
+    return DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE
+  }
+}
+
+export const saveGlyphColorLabelDisplayMode = (
+  mode: GlyphColorLabelDisplayMode,
+  storage: StorageLike | null = getLocalStorage()
+) => {
+  const normalizedMode = normalizeGlyphColorLabelDisplayMode(mode)
+  if (storage) {
+    try {
+      storage.setItem(
+        GLYPH_COLOR_LABEL_DISPLAY_MODE_STORAGE_KEY,
+        normalizedMode
+      )
+    } catch {
+      // Keep the in-memory setting responsive even when storage is unavailable.
+    }
+  }
+  glyphColorLabelDisplayModeListeners.forEach((listener) => listener())
+  return normalizedMode
+}
+
+const subscribeGlyphColorLabelDisplayMode = (listener: () => void) => {
+  glyphColorLabelDisplayModeListeners.add(listener)
+
+  if (typeof window === 'undefined') {
+    return () => {
+      glyphColorLabelDisplayModeListeners.delete(listener)
+    }
+  }
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === GLYPH_COLOR_LABEL_DISPLAY_MODE_STORAGE_KEY) {
+      listener()
+    }
+  }
+  window.addEventListener('storage', handleStorage)
+
+  return () => {
+    glyphColorLabelDisplayModeListeners.delete(listener)
+    window.removeEventListener('storage', handleStorage)
+  }
+}
+
+export const useGlyphColorLabelDisplayMode = (): GlyphColorLabelDisplayMode =>
+  useSyncExternalStore(
+    subscribeGlyphColorLabelDisplayMode,
+    () => loadGlyphColorLabelDisplayMode(),
+    () => DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE
+  )

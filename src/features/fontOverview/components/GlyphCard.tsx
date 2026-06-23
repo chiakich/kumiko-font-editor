@@ -4,7 +4,9 @@ import {
   GlyphPreview,
   GlyphPreviewArtwork,
 } from 'src/features/common/glyphPreview/GlyphPreview'
+import { kumikoColorToCssRgba } from 'src/lib/color/kumikoColor'
 import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
+import type { GlyphColorLabelDisplayMode } from 'src/lib/preferences/appPreferences'
 import type { GlyphData } from 'src/store'
 
 interface GlyphCardProps {
@@ -12,6 +14,7 @@ interface GlyphCardProps {
   glyphMap: Record<string, GlyphData>
   preview: GlyphPreviewData | null
   cardHeight: number
+  colorLabelDisplayMode: GlyphColorLabelDisplayMode
   previewHeight: number
   showGlyphName: boolean
   isSelected: boolean
@@ -25,6 +28,7 @@ export const GlyphCard = memo(function GlyphCard({
   glyphMap,
   preview,
   cardHeight,
+  colorLabelDisplayMode,
   previewHeight,
   showGlyphName,
   isSelected,
@@ -53,14 +57,27 @@ export const GlyphCard = memo(function GlyphCard({
     [glyph.id, onEnterEditor]
   )
 
+  const hasFullCardColor = Boolean(
+    glyph.color && colorLabelDisplayMode === 'card'
+  )
+  const showColorDot = Boolean(glyph.color && colorLabelDisplayMode === 'dot')
+  const cardColorOverlay = glyph.color
+    ? `linear-gradient(${kumikoColorToCssRgba(
+        glyph.color,
+        0.6
+      )}, ${kumikoColorToCssRgba(glyph.color, 0.6)})`
+    : undefined
+
   return (
     <Box
       p={1}
       h={`${cardHeight}px`}
       overflow="hidden"
       sx={{ contain: 'layout paint style' }}
+      position="relative"
       borderRadius="sm"
-      bg={isSelected ? 'field.yellow.300' : 'field.panel'}
+      bg={isSelected ? 'field.yellow.400' : 'field.panel'}
+      bgImage={hasFullCardColor && !isSelected ? cardColorOverlay : undefined}
       boxShadow="none"
       transition="background 60ms ease"
       userSelect="none"
@@ -68,6 +85,20 @@ export const GlyphCard = memo(function GlyphCard({
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
     >
+      {showColorDot && glyph.color ? (
+        <Box
+          position="absolute"
+          top="5px"
+          right="5px"
+          zIndex={1}
+          w="10px"
+          h="10px"
+          borderRadius="full"
+          bg={kumikoColorToCssRgba(glyph.color)}
+          boxShadow="0 0 0 1px rgba(8, 11, 13, 0.36), 0 0 0 2px rgba(255, 255, 255, 0.72)"
+          pointerEvents="none"
+        />
+      ) : null}
       <Stack spacing={showGlyphName ? 1 : 0} h="100%">
         <Flex
           align="center"

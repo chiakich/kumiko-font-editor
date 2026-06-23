@@ -11,9 +11,9 @@ import type {
   GlyphLayerData,
   GlyphLayerContent,
   GlyphSourceData,
-  KumikoColor,
   PathNode,
 } from 'src/store'
+import { nearestGlyphsLabelColorIndex } from 'src/lib/color/kumikoColor'
 import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 
 // A pre-formatted OpenStep token emitted verbatim (no quoting, no re-indent).
@@ -93,41 +93,6 @@ const serializeGlyphsImage = (image: GlyphImage): Record<string, unknown> => {
     path: image.fileName,
     transform: `{${xScale}, ${xyScale}, ${yxScale}, ${yScale}, ${xOffset}, ${yOffset}}`,
   }
-}
-
-const GLYPHS_LABEL_COLORS: KumikoColor[] = [
-  [0.85, 0.26, 0.22, 1],
-  [0.9, 0.5, 0.18, 1],
-  [0.95, 0.75, 0.18, 1],
-  [0.3, 0.69, 0.31, 1],
-  [0.18, 0.55, 0.85, 1],
-  [0.43, 0.36, 0.84, 1],
-  [0.75, 0.32, 0.76, 1],
-  [0.55, 0.55, 0.55, 1],
-  [0.35, 0.35, 0.35, 1],
-  [0, 0, 0, 1],
-  [1, 1, 1, 1],
-]
-
-const nearestGlyphsLabelColorIndex = (
-  color: KumikoColor | null | undefined
-) => {
-  if (!color) {
-    return null
-  }
-  let bestIndex = 0
-  let bestDistance = Infinity
-  GLYPHS_LABEL_COLORS.forEach((candidate, index) => {
-    const distance = candidate.reduce((sum, value, channel) => {
-      const delta = value - color[channel]
-      return sum + delta * delta
-    }, 0)
-    if (distance < bestDistance) {
-      bestDistance = distance
-      bestIndex = index
-    }
-  })
-  return bestIndex
 }
 
 const serializeOpenStepValueToChunks = (
@@ -648,13 +613,11 @@ export const createGlyphsRecordFromFontDataGlyph = (
     glyphname: glyph.id,
     export: glyph.export === false ? 0 : 1,
   }
-  if (patchedGlyph.color === undefined) {
-    assignOptional(
-      patchedGlyph,
-      'color',
-      nearestGlyphsLabelColorIndex(glyph.color)
-    )
-  }
+  assignOptional(
+    patchedGlyph,
+    'color',
+    nearestGlyphsLabelColorIndex(glyph.color)
+  )
   assignOptional(patchedGlyph, 'unicode', getPrimaryGlyphUnicode(glyph))
   assignOptional(patchedGlyph, 'category', glyph.category)
   assignOptional(patchedGlyph, 'subCategory', glyph.subCategory)

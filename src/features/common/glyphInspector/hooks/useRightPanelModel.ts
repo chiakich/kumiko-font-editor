@@ -7,6 +7,7 @@ import {
   getGlyphLayer,
   isPathEndpointNode,
   useStore,
+  type KumikoColor,
   type NodeType,
 } from 'src/store'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
@@ -44,6 +45,7 @@ export function useRightPanelModel() {
   const updateNodePositions = useStore((state) => state.updateNodePositions)
   const updateNodeType = useStore((state) => state.updateNodeType)
   const updateGlyphMetrics = useStore((state) => state.updateGlyphMetrics)
+  const setGlyphColor = useStore((state) => state.setGlyphColor)
   const applyPathBooleanOperation = useStore(
     (state) => state.applyPathBooleanOperation
   )
@@ -173,6 +175,14 @@ export function useRightPanelModel() {
     })
   }
 
+  const handleGlyphColorChange = (color: KumikoColor | null) => {
+    if (!glyph) {
+      return
+    }
+
+    setGlyphColor(glyph.id, color)
+  }
+
   const handleConvertSelectedSegment = () => {
     if (
       isInterpolatedPreview ||
@@ -281,6 +291,7 @@ export function useRightPanelModel() {
     handleConvertSelectedSegment,
     handleCoordinateChange,
     handleDeleteGlyph,
+    handleGlyphColorChange,
     handleMetricsChange,
     handleMoveSelection,
     handleNodeTypeChange,

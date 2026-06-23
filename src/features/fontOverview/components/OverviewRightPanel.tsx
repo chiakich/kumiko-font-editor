@@ -113,6 +113,7 @@ export function OverviewRightPanel({
                 onEnterEditor(panel.glyph.id)
               }
             }}
+            onGlyphColorChange={panel.handleGlyphColorChange}
             onOpenQualityCheck={handleOpenSelectedQualityCheck}
             onLayerChange={panel.setSelectedLayerId}
           />

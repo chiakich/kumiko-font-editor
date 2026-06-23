@@ -343,6 +343,22 @@
     "branchName": "Branch 名稱",
     "cancel": "取消",
     "commitMessage": "Commit message",
+    "colorLabel": "色彩標籤",
+    "colorLabels": {
+      "none": "無色彩標籤",
+      "red": "紅色標籤",
+      "orange": "橘色標籤",
+      "brown": "棕色標籤",
+      "yellow": "黃色標籤",
+      "lightGreen": "淺綠標籤",
+      "green": "綠色標籤",
+      "lightBlue": "淺藍標籤",
+      "blue": "藍色標籤",
+      "purple": "紫色標籤",
+      "pink": "粉紅標籤",
+      "gray": "灰色標籤",
+      "black": "黑色標籤"
+    },
     "contoursComponents": "Contours / Components",
     "createBranch": "建立新 branch",
     "createCommit": "建立 Commit",
@@ -651,6 +667,9 @@
     "workflowSection": "工作流程"
   },
   "settings": {
+    "glyphColorLabelDisplay": "字符色彩標籤顯示",
+    "glyphColorLabelDisplayCard": "鋪滿卡片",
+    "glyphColorLabelDisplayDot": "右上小點",
     "language": "語言",
     "languageName": "繁體中文",
     "title": "設定"

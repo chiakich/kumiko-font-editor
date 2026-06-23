@@ -343,6 +343,22 @@
     "branchName": "Branch name",
     "cancel": "Cancel",
     "commitMessage": "Commit message",
+    "colorLabel": "Color label",
+    "colorLabels": {
+      "none": "No color label",
+      "red": "Red label",
+      "orange": "Orange label",
+      "brown": "Brown label",
+      "yellow": "Yellow label",
+      "lightGreen": "Light green label",
+      "green": "Green label",
+      "lightBlue": "Light blue label",
+      "blue": "Blue label",
+      "purple": "Purple label",
+      "pink": "Pink label",
+      "gray": "Gray label",
+      "black": "Black label"
+    },
     "contoursComponents": "Contours / Components",
     "createBranch": "Create branch",
     "createCommit": "Create commit",
@@ -651,6 +667,9 @@
     "workflowSection": "Workflow"
   },
   "settings": {
+    "glyphColorLabelDisplay": "Glyph color label display",
+    "glyphColorLabelDisplayCard": "Fill card",
+    "glyphColorLabelDisplayDot": "Top-right dot",
     "language": "Language",
     "languageName": "English",
     "title": "Settings"

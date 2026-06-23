@@ -25,6 +25,7 @@ import {
   OverviewGridList,
 } from 'src/features/fontOverview/components/OverviewGridComponents'
 import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
+import { useGlyphColorLabelDisplayMode } from 'src/lib/preferences/appPreferences'
 import type { GlyphData } from 'src/store'
 import { useTranslation } from 'react-i18next'
 import type { OverviewGridZoomLayout } from 'src/features/fontOverview/utils/overviewGridZoom'
@@ -85,6 +86,7 @@ export function OverviewContent({
   onSelectGlyph,
 }: OverviewContentProps) {
   const { t } = useTranslation()
+  const glyphColorLabelDisplayMode = useGlyphColorLabelDisplayMode()
 
   const gridComponents = useMemo(
     () => ({
@@ -269,6 +271,7 @@ export function OverviewContent({
                         cardHeight={zoomLayout.cardHeight}
                         previewHeight={zoomLayout.previewHeight}
                         showGlyphName={zoomLayout.showGlyphName}
+                        colorLabelDisplayMode={glyphColorLabelDisplayMode}
                         isSelected={selectedGlyphIds.has(glyph.id)}
                         isTransitioning={transitioningGlyphId === glyph.id}
                         onEnterEditor={onEnterEditor}
