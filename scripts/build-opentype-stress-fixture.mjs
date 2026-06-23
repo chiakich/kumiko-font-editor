@@ -105,6 +105,14 @@ lookup GPOS_kern {
   pos @Bases V -20;
 } GPOS_kern;
 
+lookup GPOS_context_helper {
+  pos V -40;
+} GPOS_context_helper;
+
+lookup GPOS_contextual {
+  pos A V' lookup GPOS_context_helper;
+} GPOS_contextual;
+
 lookup GPOS_mark {
   pos base A <anchor 300 700> mark @TOP;
   pos base B <anchor 310 700> mark @TOP;
@@ -151,6 +159,7 @@ feature kern {
   script latn;
   language dflt;
   lookup GPOS_kern;
+  lookup GPOS_contextual;
 } kern;
 
 feature mark {

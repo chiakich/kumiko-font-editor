@@ -123,6 +123,13 @@ describe('Kumiko synthetic OpenType stress fixture', () => {
           editable: true,
         }),
         expect.objectContaining({
+          lookupType: 'chainingContextPos',
+          editable: true,
+          rules: expect.arrayContaining([
+            expect.objectContaining({ kind: 'contextualPositioning' }),
+          ]),
+        }),
+        expect.objectContaining({
           lookupType: 'markToBasePos',
           editable: true,
         }),
@@ -141,6 +148,7 @@ describe('Kumiko synthetic OpenType stress fixture', () => {
         expect.objectContaining({ kind: 'singleSubstitution' }),
         expect.objectContaining({ kind: 'ligatureSubstitution' }),
         expect.objectContaining({ kind: 'contextualSubstitution' }),
+        expect.objectContaining({ kind: 'contextualPositioning' }),
         expect.objectContaining({ kind: 'pairPositioning' }),
         expect.objectContaining({ kind: 'markToBase' }),
         expect.objectContaining({ kind: 'markToLigature' }),
@@ -184,5 +192,8 @@ describe('Kumiko synthetic OpenType stress fixture', () => {
     expect((await shapeComparable(sourceArrayBuffer, 'A-A'))[1]).toEqual(
       expect.objectContaining({ glyphId: 11 })
     )
+    expect(
+      (await shapeComparable(sourceArrayBuffer, 'AV'))[1].xAdvance
+    ).toBeLessThan((await shapeComparable(sourceArrayBuffer, 'BV'))[1].xAdvance)
   }, 180000)
 })

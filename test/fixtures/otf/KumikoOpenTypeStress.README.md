@@ -6,8 +6,8 @@
 The glyph outlines are simple rectangles created in the script. The feature
 topology is intentionally inspired by real programming fonts such as Fira Code:
 it includes contextual GSUB, ligatures, alternates, kerning, mark attachment,
-mark-to-mark attachment, mark-to-ligature attachment, and GDEF glyph classes and
-ligature carets.
+contextual GPOS, mark attachment, mark-to-mark attachment, mark-to-ligature
+attachment, and GDEF glyph classes and ligature carets.
 
 This fixture should stay synthetic. When adding coverage from real fonts, reduce
 the observed behavior to a minimal generated case instead of copying outlines or

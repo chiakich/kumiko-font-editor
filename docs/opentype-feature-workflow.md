@@ -110,7 +110,7 @@ Kumiko 的目標比較接近 Glyphs 的做法：
 - 目前 synthetic regression：`GSUB type 6 format 3` coverage / lookup records 會轉成 `ContextualRule`，multi-glyph coverage 會轉成 imported `glyphClasses`
 - 目前 Fira Code regression：fixture 存在時，`calt` 的 124 個 `GSUB type 6 format 3` lookup 會重建成 552 條 editable contextual rules，`unsupportedLookups` 為 0
 - 目前 generated FEA regression：fixture 存在時，Fira Code 反組譯後的 generated `.fea` 可以交給 fontTools 編譯
-- 目前 behavior regression：committed synthetic `KumikoOpenTypeStress.otf` 會比較原始 fixture 與 generated FEA rebuild 後的 HarfBuzz shaping 結果
+- 目前 behavior regression：committed synthetic `KumikoOpenTypeStress.otf` 會比較原始 fixture 與 generated FEA rebuild 後的 HarfBuzz shaping 結果，涵蓋 contextual GSUB 與 contextual GPOS
 - 目標：持續用 Fira Code 鎖住 format 3 contextual substitution regression，並逐步擴充更多 contextual / class-based / preservation 相關 lookup 形狀
 
 ## 目前資料流
@@ -184,7 +184,7 @@ generated .fea / UI / export policy
   - GSUB `type 6 format 3` chaining contextual substitution 的 synthetic binary regression。
   - Fira Code 本機 fixture regression（fixture 缺少時 skip）。
   - Fira Code generated `.fea` fontTools compile regression（fixture 缺少時 skip）。
-  - synthetic OpenType stress fixture 的 HarfBuzz shaping comparison，確認 generated FEA rebuild 後行為一致。
+  - synthetic OpenType stress fixture 的 HarfBuzz shaping comparison，確認 contextual GSUB / contextual GPOS 等 generated FEA rebuild 後行為一致。
   - GDEF compiled source section。
 - GSUB contextual parser
   - `GSUB type 5 format 2` / `type 6 format 2` 會讀取 class-based context / chaining context rules，並把 class definition 提升成 imported glyph classes。
