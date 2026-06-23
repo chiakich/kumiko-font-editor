@@ -232,6 +232,11 @@ const serializeGdefTable = (
       `GlyphClassDef ${formatGdefGlyphClass(base)}, ${formatGdefGlyphClass(ligature)}, ${formatGdefGlyphClass(mark)}, ${formatGdefGlyphClass(component)};`
     )
   }
+  for (const markGlyphSet of gdef.markGlyphSets ?? []) {
+    if (markGlyphSet.glyphs.length > 0) {
+      lines.push(`MarkGlyphSetsDef ${formatGlyphList(markGlyphSet.glyphs)};`)
+    }
+  }
   for (const caret of gdef.ligatureCarets ?? []) {
     if (caret.carets.length > 0) {
       lines.push(`LigatureCaretByPos ${caret.glyph} ${caret.carets.join(' ')};`)

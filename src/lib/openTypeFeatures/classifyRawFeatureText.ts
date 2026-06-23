@@ -680,8 +680,41 @@ const glyphsForGdefClassToken = (
   return bracketMatch ? splitGlyphList(bracketMatch[1]) : [trimmed]
 }
 
+const markGlyphSetForGdefToken = (
+  token: string,
+  index: number,
+  origin: FeatureOrigin,
+  glyphClassIdByName: Map<string, string>,
+  glyphClassById: Map<string, GlyphClass>
+): GlyphClass | null => {
+  const trimmed = token.trim()
+  if (trimmed.startsWith('@')) {
+    const classId = glyphClassIdByName.get(trimmed)
+    return classId ? (glyphClassById.get(classId) ?? null) : null
+  }
+
+  const glyphs = glyphsForGdefClassToken(
+    trimmed,
+    glyphClassIdByName,
+    glyphClassById
+  )
+  return glyphs && glyphs.length > 0
+    ? {
+        id: `gdef_mark_glyph_set_raw_${index}`,
+        name: `@GDEFMarkGlyphSet${index}`,
+        glyphs,
+        origin,
+        meta: {
+          sourceSectionId: RAW_FEATURE_TEXT_SOURCE_ID,
+          classifiedFromRawFeatureText: true,
+        },
+      }
+    : null
+}
+
 const parseGdefStatement = (
   statement: string,
+  origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
   glyphClassById: Map<string, GlyphClass>,
   gdef: GdefState
@@ -700,6 +733,20 @@ const parseGdefStatement = (
       ...(mark.length > 0 ? { mark } : {}),
       ...(component.length > 0 ? { component } : {}),
     }
+    return true
+  }
+
+  const markGlyphSetsMatch = statement.match(/^MarkGlyphSetsDef\s+(.+)$/i)
+  if (markGlyphSetsMatch) {
+    const markGlyphSet = markGlyphSetForGdefToken(
+      markGlyphSetsMatch[1],
+      gdef.markGlyphSets?.length ?? 0,
+      origin,
+      glyphClassIdByName,
+      glyphClassById
+    )
+    if (!markGlyphSet) return false
+    gdef.markGlyphSets = [...(gdef.markGlyphSets ?? []), markGlyphSet]
     return true
   }
 
@@ -727,6 +774,7 @@ const parseGdefStatement = (
 
 const parseGdefBlock = (
   body: string,
+  origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
   glyphClassById: Map<string, GlyphClass>
 ) => {
@@ -735,14 +783,22 @@ const parseGdefBlock = (
 
   for (const statement of splitStatements(body)) {
     if (
-      !parseGdefStatement(statement, glyphClassIdByName, glyphClassById, gdef)
+      !parseGdefStatement(
+        statement,
+        origin,
+        glyphClassIdByName,
+        glyphClassById,
+        gdef
+      )
     ) {
       unsupportedStatements.push(statement)
     }
   }
 
   const hasGdef =
-    Boolean(gdef.glyphClasses) || Boolean(gdef.ligatureCarets?.length)
+    Boolean(gdef.glyphClasses) ||
+    Boolean(gdef.markGlyphSets?.length) ||
+    Boolean(gdef.ligatureCarets?.length)
 
   return { gdef: hasGdef ? gdef : null, unsupportedStatements }
 }
@@ -814,6 +870,7 @@ const parseRawFeatureText = (
   for (const block of collectGdefBlocks(workingText)) {
     const parsed = parseGdefBlock(
       block.body,
+      featureOrigin,
       glyphClassIdByName,
       glyphClassById
     )
