@@ -19,6 +19,7 @@ export const formatMarkAttachment = (attachment: {
 
 export const formatLookupFlags = (
   flags: LookupFlagIR,
+  markAttachmentClassName?: string,
   markFilteringSetName?: string
 ) => {
   const flagNames = [
@@ -27,6 +28,10 @@ export const formatLookupFlags = (
     flags.ignoreLigatures ? 'IgnoreLigatures' : '',
     flags.ignoreMarks ? 'IgnoreMarks' : '',
   ].filter(Boolean)
+
+  if (flags.markAttachmentType && markAttachmentClassName) {
+    flagNames.push(`MarkAttachmentType ${markAttachmentClassName}`)
+  }
 
   if (flags.useMarkFilteringSet && markFilteringSetName) {
     flagNames.push(`UseMarkFilteringSet ${markFilteringSetName}`)

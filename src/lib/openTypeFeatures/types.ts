@@ -75,6 +75,7 @@ export interface LookupFlagIR {
   ignoreBaseGlyphs?: boolean
   ignoreLigatures?: boolean
   ignoreMarks?: boolean
+  markAttachmentType?: boolean
   useMarkFilteringSet?: boolean
 }
 
@@ -84,6 +85,7 @@ export interface LookupRecord {
   table: 'GSUB' | 'GPOS'
   lookupType: GsubLookupType | GposLookupType
   lookupFlag: LookupFlagIR
+  markAttachmentClassId?: string
   markFilteringSetClassId?: string
   rules: Rule[]
   editable: boolean

@@ -21,6 +21,7 @@ const hasLookupFlags = (flags: LookupFlagIR) =>
     flags.ignoreBaseGlyphs ||
     flags.ignoreLigatures ||
     flags.ignoreMarks ||
+    flags.markAttachmentType ||
     flags.useMarkFilteringSet
   )
 
@@ -186,17 +187,34 @@ const lookupToBlock = (
   glyphClassNameById: Map<string, string>,
   lookupNameById: Map<string, string>
 ): FeaNode => {
+  const markAttachmentClassName = lookup.markAttachmentClassId
+    ? glyphClassNameById.get(lookup.markAttachmentClassId)
+    : undefined
   const markFilteringSetName = lookup.markFilteringSetClassId
     ? glyphClassNameById.get(lookup.markFilteringSetClassId)
     : undefined
+  const missingMarkAttachmentClass =
+    lookup.lookupFlag.markAttachmentType &&
+    lookup.markAttachmentClassId &&
+    !markAttachmentClassName
   const missingMarkFilteringSet =
     lookup.lookupFlag.useMarkFilteringSet &&
     lookup.markFilteringSetClassId &&
     !markFilteringSetName
-  const serializableLookupFlag = missingMarkFilteringSet
-    ? { ...lookup.lookupFlag, useMarkFilteringSet: false }
-    : lookup.lookupFlag
+  const serializableLookupFlag = {
+    ...lookup.lookupFlag,
+    ...(missingMarkAttachmentClass ? { markAttachmentType: false } : {}),
+    ...(missingMarkFilteringSet ? { useMarkFilteringSet: false } : {}),
+  }
   const statements: FeaNode[] = [
+    ...(missingMarkAttachmentClass
+      ? [
+          {
+            kind: 'Comment' as const,
+            value: `Cannot serialize MarkAttachmentType for lookup ${lookup.id}: missing glyph class ${lookup.markAttachmentClassId}`,
+          },
+        ]
+      : []),
     ...(missingMarkFilteringSet
       ? [
           {
@@ -210,6 +228,7 @@ const lookupToBlock = (
           {
             kind: 'LookupFlag' as const,
             flags: serializableLookupFlag,
+            markAttachmentClassName,
             markFilteringSetName,
           },
         ]

@@ -25,6 +25,7 @@ interface ClassifyRawFeatureTextOptions {
 
 interface ParsedLookup {
   id: string
+  markAttachmentClassId?: string
   markFilteringSetClassId?: string
   name: string
   table: LookupRecord['table']
@@ -156,7 +157,11 @@ const parseValueRecord = (value: string): ValueRecord | null => {
 const parseLookupFlagStatement = (
   statement: string,
   glyphClassIdByName: Map<string, string>
-): { lookupFlag: LookupFlagIR; markFilteringSetClassId?: string } | null => {
+): {
+  lookupFlag: LookupFlagIR
+  markAttachmentClassId?: string
+  markFilteringSetClassId?: string
+} | null => {
   const match = statement.match(/^lookupflag\s+(.+)$/i)
   if (!match) return null
 
@@ -166,6 +171,7 @@ const parseLookupFlagStatement = (
   }
 
   const lookupFlag: LookupFlagIR = {}
+  let markAttachmentClassId: string | undefined
   let markFilteringSetClassId: string | undefined
 
   for (let index = 0; index < tokens.length; index += 1) {
@@ -186,6 +192,15 @@ const parseLookupFlagStatement = (
       lookupFlag.ignoreMarks = true
       continue
     }
+    if (/^MarkAttachmentType$/i.test(token)) {
+      const className = tokens[index + 1]
+      const classId = className ? glyphClassIdByName.get(className) : undefined
+      if (!classId) return null
+      lookupFlag.markAttachmentType = true
+      markAttachmentClassId = classId
+      index += 1
+      continue
+    }
     if (/^UseMarkFilteringSet$/i.test(token)) {
       const className = tokens[index + 1]
       const classId = className ? glyphClassIdByName.get(className) : undefined
@@ -201,6 +216,7 @@ const parseLookupFlagStatement = (
 
   return {
     lookupFlag,
+    markAttachmentClassId,
     markFilteringSetClassId,
   }
 }
@@ -537,6 +553,7 @@ const parseLookupStatements = (
   const rules: Rule[] = []
   const unsupportedStatements: string[] = []
   let lookupFlag: LookupFlagIR = {}
+  let markAttachmentClassId: string | undefined
   let markFilteringSetClassId: string | undefined
 
   for (const [index, statement] of splitStatements(body).entries()) {
@@ -546,6 +563,8 @@ const parseLookupStatements = (
     )
     if (lookupFlagStatement) {
       lookupFlag = { ...lookupFlag, ...lookupFlagStatement.lookupFlag }
+      markAttachmentClassId =
+        lookupFlagStatement.markAttachmentClassId ?? markAttachmentClassId
       markFilteringSetClassId =
         lookupFlagStatement.markFilteringSetClassId ?? markFilteringSetClassId
       continue
@@ -577,7 +596,13 @@ const parseLookupStatements = (
     }
   }
 
-  return { rules, lookupFlag, markFilteringSetClassId, unsupportedStatements }
+  return {
+    rules,
+    lookupFlag,
+    markAttachmentClassId,
+    markFilteringSetClassId,
+    unsupportedStatements,
+  }
 }
 
 const collectNamedBlocks = (text: string, blockName: 'feature' | 'lookup') =>
@@ -727,6 +752,7 @@ const toLookupRecord = (
   origin: LookupOrigin
 ): LookupRecord => ({
   id: lookup.id,
+  markAttachmentClassId: lookup.markAttachmentClassId,
   markFilteringSetClassId: lookup.markFilteringSetClassId,
   name: lookup.name,
   table: lookup.table,
@@ -882,6 +908,7 @@ const parseRawFeatureText = (
             table: shape.table,
             lookupType: shape.lookupType,
             lookupFlag: parsed.lookupFlag,
+            markAttachmentClassId: parsed.markAttachmentClassId,
             markFilteringSetClassId: parsed.markFilteringSetClassId,
             rules: parsed.rules,
           },
@@ -955,6 +982,7 @@ const parseRawFeatureText = (
             table: shape.table,
             lookupType: shape.lookupType,
             lookupFlag: parsed.lookupFlag,
+            markAttachmentClassId: parsed.markAttachmentClassId,
             markFilteringSetClassId: parsed.markFilteringSetClassId,
             rules: parsed.rules,
           },

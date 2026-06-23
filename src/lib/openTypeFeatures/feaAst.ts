@@ -38,6 +38,7 @@ export interface GdefTableNode {
 export interface LookupFlagNode {
   kind: 'LookupFlag'
   flags: LookupFlagIR
+  markAttachmentClassName?: string
   markFilteringSetName?: string
 }
 

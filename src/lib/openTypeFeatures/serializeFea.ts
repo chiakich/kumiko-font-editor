@@ -317,7 +317,7 @@ function serializeNode(
     case 'LookupFlag':
       pushLine(
         context,
-        `${indent}lookupflag ${formatLookupFlags(node.flags, node.markFilteringSetName)};`
+        `${indent}lookupflag ${formatLookupFlags(node.flags, node.markAttachmentClassName, node.markFilteringSetName)};`
       )
       return
     case 'LookupBlock':

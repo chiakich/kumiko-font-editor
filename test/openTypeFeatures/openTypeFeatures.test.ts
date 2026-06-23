@@ -636,7 +636,7 @@ describe('OpenType FEA source maps', () => {
     )
   })
 
-  it('preserves MarkAttachmentType lookup flags until the IR can represent them', () => {
+  it('classifies raw MarkAttachmentType lookup flags', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(
         createEmptyOpenTypeFeaturesState(),
@@ -652,22 +652,21 @@ describe('OpenType FEA source maps', () => {
 
     expect(state.sourceSections[0]).toMatchObject({
       id: 'source_raw_feature_text',
-      stage: 'source',
-      status: 'raw',
-      recordRefs: [],
-      meta: {
-        classifiedIntoModel: false,
-        preserveRawTextInGeneratedFea: true,
-      },
+      stage: 'classified',
+      status: 'classified',
     })
-    expect(state.lookups).toEqual([])
-    expect(
-      state.diagnostics?.some(
-        (diagnostic) =>
-          diagnostic.id ===
-          'feature-diagnostic-warning-raw-fea-parser-unsupported-statements'
-      )
-    ).toBe(true)
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_salt_0',
+        lookupFlag: {
+          markAttachmentType: true,
+        },
+        markAttachmentClassId: 'glyph_class_raw_Marks',
+      },
+    ])
+    expect(generateFea(state).text).toContain(
+      'lookupflag MarkAttachmentType @Marks;'
+    )
   })
 
   it('preserves unsupported raw .fea source instead of partially committing it', () => {
