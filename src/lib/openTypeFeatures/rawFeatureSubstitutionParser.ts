@@ -1,24 +1,99 @@
-import type { FeatureOrigin, Rule } from 'src/lib/openTypeFeatures/types'
+import type {
+  FeatureOrigin,
+  GlyphSelector,
+  Rule,
+} from 'src/lib/openTypeFeatures/types'
 import {
   glyphsFromRawClassToken,
   isInlineGlyphClassToken,
+  selectorFromRawMarkedToken,
   selectorFromRawToken,
   splitGlyphPatternTokens,
   type InlineGlyphClassRegistrar,
+  type RawSelectorContext,
 } from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
 import { splitGlyphList } from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
 
 const SUBSTITUTION_KEYWORD = '(?:sub|substitute)'
+const REVERSE_SUBSTITUTION_KEYWORD = 'rsub'
 
 const matchSubstitutionStatement = (statement: string, bodyPattern: string) =>
   statement.match(
     new RegExp(`^${SUBSTITUTION_KEYWORD}\\s+${bodyPattern}$`, 'i')
   )
 
+const matchReverseSubstitutionStatement = (
+  statement: string,
+  bodyPattern: string
+) =>
+  statement.match(
+    new RegExp(`^${REVERSE_SUBSTITUTION_KEYWORD}\\s+${bodyPattern}$`, 'i')
+  )
+
 const makeGsubRuleMeta = (origin: FeatureOrigin) => ({
   origin,
   provenance: { table: 'GSUB' as const },
 })
+
+const parseReverseChainingSingleSubstitutionRules = (
+  statement: string,
+  ruleId: string,
+  origin: FeatureOrigin,
+  selectorContext: RawSelectorContext
+): Rule[] | null => {
+  const reverseMatch = matchReverseSubstitutionStatement(
+    statement,
+    '(.+?)\\s+by\\s+(.+)'
+  )
+  if (!reverseMatch) return null
+
+  const pattern = splitGlyphPatternTokens(reverseMatch[1])
+  const replacement = splitGlyphPatternTokens(reverseMatch[2])
+  if (!pattern || !replacement || replacement.length !== 1) return null
+
+  const replacementGlyph = replacement[0]
+  if (
+    replacementGlyph.startsWith('@') ||
+    replacementGlyph.includes("'") ||
+    isInlineGlyphClassToken(replacementGlyph)
+  ) {
+    return null
+  }
+
+  const selectorEntries: Array<{
+    marked: boolean
+    selector: GlyphSelector
+  }> = []
+  for (const token of pattern) {
+    const parsed = selectorFromRawMarkedToken(token, selectorContext)
+    if (!parsed) return null
+    selectorEntries.push(parsed)
+  }
+
+  if (selectorEntries.filter((entry) => entry.marked).length !== 1) {
+    return null
+  }
+
+  const targetIndex = selectorEntries.findIndex((entry) => entry.marked)
+  const target = selectorEntries[targetIndex]?.selector
+  if (!target || target.kind !== 'glyph') return null
+
+  return [
+    {
+      id: ruleId,
+      kind: 'reverseChainingSingleSubstitution',
+      backtrack: selectorEntries
+        .slice(0, targetIndex)
+        .map((entry) => entry.selector),
+      target,
+      lookahead: selectorEntries
+        .slice(targetIndex + 1)
+        .map((entry) => entry.selector),
+      replacement: replacementGlyph,
+      meta: makeGsubRuleMeta(origin),
+    },
+  ]
+}
 
 export const parseSubstitutionRules = (
   statement: string,
@@ -33,6 +108,15 @@ export const parseSubstitutionRules = (
     glyphClassGlyphsByName,
     registerInlineGlyphClass,
   }
+
+  const reverseRules = parseReverseChainingSingleSubstitutionRules(
+    statement,
+    ruleId,
+    origin,
+    selectorContext
+  )
+  if (reverseRules) return reverseRules
+
   const alternateMatch = matchSubstitutionStatement(
     statement,
     '(\\S+)\\s+from\\s+\\[([^\\]]+)\\]'

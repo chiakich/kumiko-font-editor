@@ -349,4 +349,67 @@ describe('OpenType raw FEA GSUB classifier', () => {
     expect(generated).not.toContain('i,')
     expect(generated).not.toContain('V,')
   })
+
+  it('classifies raw reverse chaining single substitution rules', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          '@Before = [x y];',
+          'feature rvrn {',
+          '  script latn;',
+          '  language dflt;',
+          "  rsub @Before a' [z z.alt] by a.rev;",
+          '} rvrn;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_rvrn_0',
+        table: 'GSUB',
+        lookupType: 'reverseChainingSingleSubst',
+        rules: [
+          {
+            kind: 'reverseChainingSingleSubstitution',
+            backtrack: [
+              {
+                kind: 'class',
+                classId: 'glyph_class_raw_Before',
+              },
+            ],
+            target: { kind: 'glyph', glyph: 'a' },
+            lookahead: [
+              {
+                kind: 'class',
+                classId: 'glyph_class_raw_KumikoRawInline_z_z_alt',
+              },
+            ],
+            replacement: 'a.rev',
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'glyphClass', id: 'glyph_class_raw_Before' },
+        { kind: 'glyphClass', id: 'glyph_class_raw_KumikoRawInline_z_z_alt' },
+        { kind: 'lookup', id: 'lookup_raw_rvrn_0', table: 'GSUB' },
+        { kind: 'feature', id: 'feature_raw_rvrn' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('@Before = [x y];')
+    expect(generated).toContain('@KumikoRawInline_z_z_alt = [z z.alt];')
+    expect(generated).toContain(
+      "rsub @Before a' @KumikoRawInline_z_z_alt by a.rev;"
+    )
+  })
 })

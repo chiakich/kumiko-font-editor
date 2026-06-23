@@ -231,6 +231,7 @@ generated .fea / UI / export policy
 - class-to-class single substitution，例如 `sub @Lower by @SmallCaps;`，會展開成 single substitution rules
 - 簡單 ligature `sub f i by f_i;`
 - contextual substitution，例如 `sub A' lookup SomeLookup B;`
+- reverse chaining single substitution，例如 `rsub @Before a' @After by a.rev;`
 - contextual ignore rule，例如 `ignore sub A A' B;`
 - comma-separated contextual ignore rule，例如 `ignore sub f' i, f' l;`
 - contextual positioning，例如 `pos A' lookup PairLookup V;` 與 `ignore pos X X' V;`
