@@ -787,6 +787,38 @@ describe('OpenType raw FEA classifier', () => {
     )
   })
 
+  it('classifies numeric raw lookup flags for supported low bits', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'feature salt {',
+          '  lookupflag 9;',
+          '  sub A by A.alt;',
+          '} salt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_salt_0',
+        lookupFlag: {
+          rightToLeft: true,
+          ignoreMarks: true,
+        },
+      },
+    ])
+    expect(generateFea(state).text).toContain(
+      'lookupflag RightToLeft IgnoreMarks;'
+    )
+  })
+
   it('preserves unsupported raw .fea source instead of partially committing it', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(

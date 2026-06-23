@@ -218,7 +218,7 @@ generated .fea / UI / export policy
 - feature 內簡單 `script` / `language`
 - feature 內簡單 `lookup SomeLookup;` reference
 - top-level `lookup Name { ... } Name;` block
-- `lookupflag` 的 `RightToLeft` / ignore flags / `MarkAttachmentType` / `UseMarkFilteringSet`
+- `lookupflag` 的 `RightToLeft` / ignore flags / numeric low-bit flags / `MarkAttachmentType` / `UseMarkFilteringSet`
 - 簡單 `sub a by a.alt;`
 - `substitute` 與 `position` 長關鍵字別名會分類後輸出為標準 `sub` / `pos`
 - multiple substitution，例如 `sub a by a a.alt;`

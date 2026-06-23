@@ -71,6 +71,18 @@ const parseLookupFlagStatement = (
   if (tokens.length === 1 && tokens[0] === '0') {
     return { lookupFlag: {} }
   }
+  if (tokens.length === 1 && /^\d+$/.test(tokens[0])) {
+    const value = Number(tokens[0])
+    if (value & ~0x000f) return null
+    return {
+      lookupFlag: {
+        rightToLeft: Boolean(value & 0x0001) || undefined,
+        ignoreBaseGlyphs: Boolean(value & 0x0002) || undefined,
+        ignoreLigatures: Boolean(value & 0x0004) || undefined,
+        ignoreMarks: Boolean(value & 0x0008) || undefined,
+      },
+    }
+  }
 
   const lookupFlag: LookupFlagIR = {}
   let markAttachmentClassId: string | undefined
