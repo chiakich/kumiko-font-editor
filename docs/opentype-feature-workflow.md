@@ -167,14 +167,13 @@ generated .fea / UI / export policy
   - 成功分類後，generated `.fea` 不再重複輸出 raw source，而是從 records 產生。
   - 無法完整分類時，source section 維持 raw，並加 diagnostic；export 仍保留 raw source。
 - UI 初步接線
-  - Font Features raw source editor 會更新 source section 並嘗試分類。
-  - Source panel 會顯示 source sections。
-  - Source panel 會把 `sourceSections.recordRefs` 解析成可讀的 feature / lookup / class / diagnostic 摘要，缺失 record 也會標出。
-  - Feature detail 與 Lookup inspector 會用同一套 resolver 回看來源 section。
-  - Feature detail / Lookup inspector 會顯示 compiled provenance、feature / lookup index、subtable format、extension wrapper policy 與回指 source sections。
+  - Font Settings 的「特性」已改成 `OpenType` 工作區，避免把 layout tables、feature source 與 export policy 都塞進單一 feature editor 心智模型。
+  - 左側 outline 分成 Source、Prefixes、Features、Used layout tables、Build。
+  - 右側工作區依左側選取項目顯示單一內容：raw `features.fea`、imported table source records、prefix records、單一 feature block、單一 table inventory、generated FEA、export policy、diagnostics 或 suggestions。
+  - `sourceSections.recordRefs` 會解析成可讀的 feature / lookup / class / diagnostic 摘要，缺失 record 也會標出。
+  - Feature 與 table 視圖會回指 source sections，保留 compiled provenance、feature / lookup index、subtable format、extension wrapper policy 等資訊。
   - Export policy UI 會列出 raw / rebuild / preserve / drop / review 的 export impact。
-  - Workflow overview 會顯示 source / compiled / classified 計數。
-  - Binary importer diagnostics（例如 FeatureVariations）會併入 workflow diagnostics 與 export policy warnings。
+  - Binary importer diagnostics（例如 FeatureVariations）會併入 diagnostics 與 export policy warnings。
 - 測試覆蓋
   - raw source section 建立。
   - raw `.fea` 成功分類與保留 raw 的兩條路。

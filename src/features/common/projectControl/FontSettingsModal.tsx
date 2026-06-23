@@ -54,7 +54,7 @@ interface FontSettingsModalProps {
   onSave: (update: Partial<FontData>) => void
 }
 
-const tabLabels = ['字型', '主版', '匯出', '特性', '其他', '補充']
+const tabLabels = ['字型', '主版', '匯出', 'OpenType', '其他', '補充']
 
 export function FontSettingsModal({
   fontData,

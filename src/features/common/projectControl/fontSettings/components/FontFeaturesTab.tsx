@@ -1,11 +1,12 @@
 import { Box, Grid, GridItem, Stack } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { FeatureFeaWorkspace } from 'src/features/common/projectControl/fontSettings/features/components/FeatureFeaWorkspace'
-import { FeatureSummary } from 'src/features/common/projectControl/fontSettings/features/components/FeatureSummary'
+import { OpenTypeDocumentWorkspace } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentWorkspace'
+import { OpenTypeOutline } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeOutline'
+import { OpenTypeStatusBar } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeStatusBar'
 import {
-  FeatureWorkbenchSidebar,
-  type FeatureWorkbenchSelection,
-} from 'src/features/common/projectControl/fontSettings/features/components/FeatureWorkbenchSidebar'
+  DEFAULT_OPEN_TYPE_SELECTION,
+  type OpenTypeWorkbenchSelection,
+} from 'src/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
 import {
   applyAutoFeatureSuggestion,
   buildAutoFeatureSuggestions,
@@ -32,9 +33,9 @@ export function FontFeaturesTab({
   openTypeFeatures,
   onOpenTypeFeaturesChange,
 }: FontFeaturesTabProps) {
-  const [selected, setSelected] = useState<FeatureWorkbenchSelection>({
-    kind: 'source',
-  })
+  const [selected, setSelected] = useState<OpenTypeWorkbenchSelection>(
+    DEFAULT_OPEN_TYPE_SELECTION
+  )
   const diagnostics = useMemo(
     () =>
       fontData
@@ -82,19 +83,11 @@ export function FontFeaturesTab({
     )
   }
 
-  const selectedFeature =
-    selected.kind === 'feature'
-      ? (openTypeFeatures.features.find(
-          (feature) => feature.id === selected.featureId
-        ) ?? null)
-      : null
-  const activeSelection = selectedFeature
-    ? selected
-    : ({ kind: 'source' } as const)
+  const activeSelection = normalizeSelection(selected, openTypeFeatures)
 
   return (
     <Stack spacing={5} h="100%" minH={0}>
-      <FeatureSummary state={openTypeFeatures} diagnostics={diagnostics} />
+      <OpenTypeStatusBar state={openTypeFeatures} diagnostics={diagnostics} />
       <Grid
         gap={5}
         flex={1}
@@ -103,7 +96,7 @@ export function FontFeaturesTab({
         templateColumns={{ base: '1fr', lg: '280px minmax(0, 1fr)' }}
       >
         <GridItem minH={0} overflow="auto" pr={{ base: 0, lg: 1 }}>
-          <FeatureWorkbenchSidebar
+          <OpenTypeOutline
             diagnostics={diagnostics}
             selected={activeSelection}
             state={openTypeFeatures}
@@ -113,11 +106,11 @@ export function FontFeaturesTab({
         </GridItem>
         <GridItem minH={0} minW={0} overflow="auto" pr={1}>
           <Box pb={1}>
-            <FeatureFeaWorkspace
+            <OpenTypeDocumentWorkspace
               diagnostics={diagnostics}
               generatedFea={generatedFea}
               rawFeatureText={openTypeFeatures.rawFeatureText ?? ''}
-              selectedFeature={selectedFeature}
+              selection={activeSelection}
               state={openTypeFeatures}
               suggestions={suggestions}
               onAcceptSuggestion={acceptSuggestion}
@@ -133,4 +126,18 @@ export function FontFeaturesTab({
       </Grid>
     </Stack>
   )
+}
+
+function normalizeSelection(
+  selection: OpenTypeWorkbenchSelection,
+  state: OpenTypeFeaturesState
+): OpenTypeWorkbenchSelection {
+  if (
+    selection.kind === 'feature' &&
+    !state.features.some((feature) => feature.id === selection.featureId)
+  ) {
+    return DEFAULT_OPEN_TYPE_SELECTION
+  }
+
+  return selection
 }
