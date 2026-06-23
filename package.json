@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint --max-warnings=0 .",
     "preview": "vite preview",
+    "fixture:opentype-stress": "node scripts/build-opentype-stress-fixture.mjs",
     "data:glyphdata": "node scripts/build-glyphdata.mjs",
     "data:ids": "node scripts/build-ids-data.mjs",
     "data:glyphwiki": "node scripts/build-glyphwiki-data.mjs",
