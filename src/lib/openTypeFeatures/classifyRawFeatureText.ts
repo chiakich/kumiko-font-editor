@@ -660,12 +660,16 @@ const parsePositioningRule = (
     }
   }
 
-  const pairMatch = rest.match(/^(\S+)\s+(-?\d+|<[^>]+>)$/)
+  const pairMatch = rest.match(
+    /^(\S+)\s+(-?\d+|<[^>]+>)(?:\s+(-?\d+|<[^>]+>))?$/
+  )
   if (!pairMatch) return null
 
   const right = selectorFromToken(pairMatch[1], glyphClassIdByName)
   const firstValue = parseValueRecord(pairMatch[2])
+  const secondValue = pairMatch[3] ? parseValueRecord(pairMatch[3]) : null
   if (!right || !firstValue) return null
+  if (pairMatch[3] && !secondValue) return null
 
   return {
     id: ruleId,
@@ -673,6 +677,7 @@ const parsePositioningRule = (
     left,
     right,
     firstValue,
+    ...(secondValue ? { secondValue } : {}),
     meta: {
       origin,
       provenance: { table: 'GPOS' },

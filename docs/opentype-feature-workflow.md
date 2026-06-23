@@ -225,6 +225,7 @@ generated .fea / UI / export policy
 - `markClass` 宣告，支援單 glyph、bracket glyph list 與 glyph class selector
 - 簡單 `pos A -20;`
 - 簡單 pair positioning `pos A V -80;`
+- pair positioning 第二 value record，例如 `pos A V <0 0 -80 0> <0 0 -20 0>;`
 - cursive positioning：`pos cursive beh <anchor NULL> <anchor 480 0>;`
 - mark positioning：`pos base`、`pos mark`、`pos ligature`
 - GDEF table block 的 `GlyphClassDef`、`MarkGlyphSetsDef` 與 `LigatureCaretByPos`

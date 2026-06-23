@@ -585,6 +585,56 @@ describe('OpenType FEA source maps', () => {
     expect(generated).not.toContain('Unsupported generated rule kind')
   })
 
+  it('classifies raw pair positioning with second value records', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'languagesystem latn dflt;',
+          'feature kern {',
+          '  script latn;',
+          '  language dflt;',
+          '  pos A V <0 0 -80 0> <0 0 -20 0>;',
+          '} kern;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_kern_0',
+        table: 'GPOS',
+        lookupType: 'pairPos',
+        rules: [
+          {
+            kind: 'pairPositioning',
+            left: { kind: 'glyph', glyph: 'A' },
+            right: { kind: 'glyph', glyph: 'V' },
+            firstValue: {
+              xPlacement: 0,
+              yPlacement: 0,
+              xAdvance: -80,
+              yAdvance: 0,
+            },
+            secondValue: {
+              xPlacement: 0,
+              yPlacement: 0,
+              xAdvance: -20,
+              yAdvance: 0,
+            },
+          },
+        ],
+      },
+    ])
+
+    expect(generateFea(state).text).toContain('pos A V -80 -20;')
+  })
+
   it('classifies raw mark classes and mark positioning lookup blocks', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(
