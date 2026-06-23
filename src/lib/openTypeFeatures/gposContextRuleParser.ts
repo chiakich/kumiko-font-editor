@@ -171,6 +171,133 @@ export const parseContextPositioningFormat1 = (
   return { rules }
 }
 
+export const parseChainingContextPositioningFormat1 = (
+  subtableReader: BinaryReader,
+  glyphOrder: string[],
+  lookup: LayoutLookupInventory,
+  subtableIndex: number
+): ParsedContextPositioningSubtable | null => {
+  const coverageOffset = subtableReader.uint16(2)
+  const chainPosRuleSetCount = subtableReader.uint16(4)
+  if (coverageOffset === null || chainPosRuleSetCount === null) return null
+
+  const coverageGlyphIds = readCoverageGlyphIds(subtableReader, coverageOffset)
+  const coverageSelectors = coverageGlyphIds
+    ? resolveGlyphSelectors(glyphOrder, coverageGlyphIds)
+    : null
+  if (!coverageSelectors || coverageSelectors.length !== chainPosRuleSetCount) {
+    return null
+  }
+
+  const rules: ContextualRule[] = []
+  for (let setIndex = 0; setIndex < chainPosRuleSetCount; setIndex += 1) {
+    const setOffset = subtableReader.uint16(6 + setIndex * 2)
+    if (setOffset === null) return null
+    if (setOffset === 0) continue
+
+    const setReader = subtableReader.at(setOffset)
+    const chainPosRuleCount = setReader?.uint16(0)
+    if (
+      !setReader ||
+      chainPosRuleCount === null ||
+      chainPosRuleCount === undefined
+    ) {
+      return null
+    }
+
+    for (let ruleIndex = 0; ruleIndex < chainPosRuleCount; ruleIndex += 1) {
+      const ruleOffset = setReader.uint16(2 + ruleIndex * 2)
+      const ruleReader = ruleOffset === null ? null : setReader.at(ruleOffset)
+      const backtrackCount = ruleReader?.uint16(0)
+      if (
+        !ruleReader ||
+        backtrackCount === null ||
+        backtrackCount === undefined
+      ) {
+        return null
+      }
+
+      const backtrackGlyphIds: number[] = []
+      for (let index = 0; index < backtrackCount; index += 1) {
+        const glyphId = ruleReader.uint16(2 + index * 2)
+        if (glyphId === null) return null
+        backtrackGlyphIds.push(glyphId)
+      }
+
+      let cursor = 2 + backtrackCount * 2
+      const inputGlyphCount = ruleReader.uint16(cursor)
+      if (inputGlyphCount === null || inputGlyphCount < 1) return null
+      cursor += 2
+
+      const trailingInputGlyphIds: number[] = []
+      for (let index = 1; index < inputGlyphCount; index += 1) {
+        const glyphId = ruleReader.uint16(cursor)
+        if (glyphId === null) return null
+        trailingInputGlyphIds.push(glyphId)
+        cursor += 2
+      }
+
+      const lookaheadGlyphCount = ruleReader.uint16(cursor)
+      if (lookaheadGlyphCount === null) return null
+      cursor += 2
+
+      const lookaheadGlyphIds: number[] = []
+      for (let index = 0; index < lookaheadGlyphCount; index += 1) {
+        const glyphId = ruleReader.uint16(cursor)
+        if (glyphId === null) return null
+        lookaheadGlyphIds.push(glyphId)
+        cursor += 2
+      }
+
+      const posCount = ruleReader.uint16(cursor)
+      if (posCount === null) return null
+      cursor += 2
+
+      const backtrack = resolveGlyphSelectors(
+        glyphOrder,
+        backtrackGlyphIds
+      )?.reverse()
+      const trailingInput = resolveGlyphSelectors(
+        glyphOrder,
+        trailingInputGlyphIds
+      )
+      const lookahead = resolveGlyphSelectors(glyphOrder, lookaheadGlyphIds)
+      if (!backtrack || !trailingInput || !lookahead) return null
+
+      const input = attachPositioningRecords(
+        [
+          { selector: coverageSelectors[setIndex] },
+          ...trailingInput.map((selector) => ({ selector })),
+        ],
+        ruleReader,
+        cursor,
+        posCount
+      )
+      if (!input) return null
+
+      rules.push({
+        id: makeRuleId(
+          lookup.lookupIndex,
+          subtableIndex,
+          'chainingContext',
+          rules.length
+        ),
+        kind: 'contextualPositioning',
+        mode: 'chaining',
+        backtrack,
+        input,
+        lookahead,
+        meta: {
+          origin: 'imported',
+          provenance: makeProvenance(lookup, subtableIndex),
+        },
+      })
+    }
+  }
+
+  return { rules }
+}
+
 const parseCoverageSelectorClass = (
   subtableReader: BinaryReader,
   glyphOrder: string[],

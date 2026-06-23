@@ -194,6 +194,29 @@ const makeChainingContextPositioningFormat2Subtable = () =>
     ])
   })
 
+const makeChainingContextPositioningFormat1Subtable = () =>
+  makeBytes(36, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 30)
+    writeUint16(view, 4, 1)
+    writeUint16(view, 6, 8)
+
+    writeUint16(view, 8, 1)
+    writeUint16(view, 10, 4)
+
+    writeUint16(view, 12, 1)
+    writeUint16(view, 14, 3)
+    writeUint16(view, 16, 2)
+    writeUint16(view, 18, 2)
+    writeUint16(view, 20, 1)
+    writeUint16(view, 22, 4)
+    writeUint16(view, 24, 1)
+    writeUint16(view, 26, 1)
+    writeUint16(view, 28, 0)
+
+    writeCoverageFormat1(view, 30, [1])
+  })
+
 const makeMarkToBaseSubtable = () =>
   makeBytes(46, (view) => {
     writeUint16(view, 0, 1)
@@ -386,6 +409,57 @@ describe('advanced GPOS reconstruction', () => {
                 lookupType: 7,
                 subtableIndex: 0,
                 subtableFormat: 2,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts ChainingContextPos glyph sequence rules', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GPOS',
+          data: makeGposTable(
+            'kern',
+            8,
+            makeChainingContextPositioningFormat1Subtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'V', 'X', 'Y']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gpos_0',
+        lookupType: 'chainingContextPos',
+        editable: true,
+        rules: [
+          {
+            kind: 'contextualPositioning',
+            mode: 'chaining',
+            backtrack: [{ kind: 'glyph', glyph: 'X' }],
+            input: [
+              { selector: { kind: 'glyph', glyph: 'A' } },
+              {
+                selector: { kind: 'glyph', glyph: 'V' },
+                lookupIds: ['lookup_gpos_0'],
+              },
+            ],
+            lookahead: [{ kind: 'glyph', glyph: 'Y' }],
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GPOS',
+                lookupIndex: 0,
+                lookupType: 8,
+                subtableIndex: 0,
+                subtableFormat: 1,
               },
             },
           },

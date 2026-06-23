@@ -13,6 +13,7 @@ import {
   parseContextPositioningFormat2,
 } from 'src/lib/openTypeFeatures/gposClassContextRuleParser'
 import {
+  parseChainingContextPositioningFormat1,
   parseContextPositioningFormat1,
   parseContextPositioningFormat3,
 } from 'src/lib/openTypeFeatures/gposContextRuleParser'
@@ -908,6 +909,15 @@ const parseSupportedSubtable = (
       lookup,
       subtableIndex,
       'context'
+    )
+  }
+
+  if (lookup.lookupType === 8 && format === 1) {
+    return parseChainingContextPositioningFormat1(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
     )
   }
 
