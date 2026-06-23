@@ -5,6 +5,86 @@ import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
 import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
 
 describe('OpenType raw FEA GSUB classifier', () => {
+  it('classifies feature-local lookup blocks and references', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'feature calt {',
+          '  script latn;',
+          '  language dflt;',
+          '  lookup SwapA {',
+          '    sub A by A.alt;',
+          '  } SwapA;',
+          "  sub A' lookup SwapA B;",
+          '} calt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.features).toMatchObject([
+      {
+        id: 'feature_raw_calt',
+        tag: 'calt',
+        entries: [
+          {
+            script: 'latn',
+            language: 'dflt',
+            lookupIds: ['lookup_raw_calt_SwapA', 'lookup_raw_calt_0'],
+          },
+        ],
+      },
+    ])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_calt_SwapA',
+        name: 'SwapA',
+        table: 'GSUB',
+        lookupType: 'singleSubst',
+        rules: [
+          {
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'A' },
+            replacement: 'A.alt',
+          },
+        ],
+      },
+      {
+        id: 'lookup_raw_calt_0',
+        table: 'GSUB',
+        lookupType: 'chainingContextSubst',
+        rules: [
+          {
+            kind: 'contextualSubstitution',
+            input: [
+              {
+                selector: { kind: 'glyph', glyph: 'A' },
+                lookupIds: ['lookup_raw_calt_SwapA'],
+              },
+            ],
+            lookahead: [{ kind: 'glyph', glyph: 'B' }],
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'lookup', id: 'lookup_raw_calt_SwapA', table: 'GSUB' },
+        { kind: 'lookup', id: 'lookup_raw_calt_0', table: 'GSUB' },
+        { kind: 'feature', id: 'feature_raw_calt' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('lookup SwapA {')
+    expect(generated).toContain("sub A' lookup SwapA B;")
+  })
+
   it('classifies raw lookup blocks and contextual substitution rules', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(

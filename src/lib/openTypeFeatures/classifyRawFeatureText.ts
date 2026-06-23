@@ -361,10 +361,12 @@ const parseRawFeatureText = (
     ...partitionedLookupCandidates.invalid.map((candidate) => candidate.raw)
   )
 
-  const lookupByName = new Map(lookups.map((lookup) => [lookup.name, lookup]))
   const committedLookupIdByName = new Map(
     lookups.map((lookup) => [lookup.name, lookup.id])
   )
+  const appendLookupId = (lookupIds: string[], lookupId: string) => {
+    if (!lookupIds.includes(lookupId)) lookupIds.push(lookupId)
+  }
   for (const block of collectNamedBlocks(workingText, 'feature')) {
     const tag = block.name
     let featureBody = block.body
@@ -376,12 +378,61 @@ const parseRawFeatureText = (
     const language = languages[0]?.[1] ?? 'dflt'
     const lookupIds: string[] = []
 
+    const localLookupBlocks = collectNamedBlocks(featureBody, 'lookup')
+    const localLookupIdByName = new Map(
+      localLookupBlocks.map((lookupBlock) => [
+        lookupBlock.name,
+        `lookup_raw_${toStableIdPart(tag)}_${toStableIdPart(lookupBlock.name)}`,
+      ])
+    )
+    const featureLookupIdByName = new Map([
+      ...committedLookupIdByName,
+      ...localLookupIdByName,
+    ])
+
+    for (const lookupBlock of localLookupBlocks) {
+      const lookupId = localLookupIdByName.get(lookupBlock.name)
+      if (!lookupId) continue
+
+      const parsed = parseLookupStatements(
+        lookupBlock.body,
+        lookupId,
+        featureOrigin,
+        glyphClassIdByName,
+        glyphClassGlyphsByName,
+        markClassIdByName,
+        featureLookupIdByName,
+        registerInlineGlyphClass
+      )
+      const shape = getLookupShape(parsed.rules)
+      if (parsed.unsupportedStatements.length > 0 || !shape) {
+        unsupportedStatements.push(lookupBlock.raw.trim())
+      } else {
+        const localLookup = toLookupRecord(
+          {
+            id: lookupId,
+            name: lookupBlock.name,
+            table: shape.table,
+            lookupType: shape.lookupType,
+            lookupFlag: parsed.lookupFlag,
+            markAttachmentClassId: parsed.markAttachmentClassId,
+            markFilteringSetClassId: parsed.markFilteringSetClassId,
+            rules: parsed.rules,
+          },
+          lookupOrigin
+        )
+        lookups.push(localLookup)
+        appendLookupId(lookupIds, localLookup.id)
+      }
+      featureBody = blankRange(featureBody, lookupBlock.start, lookupBlock.end)
+    }
+
     for (const lookupRef of featureBody.matchAll(
       /\blookup\s+([A-Za-z_][A-Za-z0-9_.-]*)\s*;/g
     )) {
-      const lookup = lookupByName.get(lookupRef[1])
-      if (lookup) {
-        lookupIds.push(lookup.id)
+      const lookupId = featureLookupIdByName.get(lookupRef[1])
+      if (lookupId) {
+        appendLookupId(lookupIds, lookupId)
       } else {
         unsupportedStatements.push(lookupRef[0].trim())
       }
@@ -392,41 +443,37 @@ const parseRawFeatureText = (
       .replace(/\blanguage\s+[A-Za-z0-9_.-]{4}\s*;/g, '')
       .replace(/\blookup\s+[A-Za-z_][A-Za-z0-9_.-]*\s*;/g, '')
 
-    if (/\blookup\s+[A-Za-z_][A-Za-z0-9_.-]*\s*\{/.test(featureBody)) {
-      unsupportedStatements.push(block.raw.trim())
-    } else {
-      const inlineLookupId = `lookup_raw_${toStableIdPart(tag)}_${features.length}`
-      const parsed = parseLookupStatements(
-        featureBody,
-        inlineLookupId,
-        featureOrigin,
-        glyphClassIdByName,
-        glyphClassGlyphsByName,
-        markClassIdByName,
-        committedLookupIdByName,
-        registerInlineGlyphClass
+    const inlineLookupId = `lookup_raw_${toStableIdPart(tag)}_${features.length}`
+    const parsed = parseLookupStatements(
+      featureBody,
+      inlineLookupId,
+      featureOrigin,
+      glyphClassIdByName,
+      glyphClassGlyphsByName,
+      markClassIdByName,
+      featureLookupIdByName,
+      registerInlineGlyphClass
+    )
+    const shape = getLookupShape(parsed.rules)
+    if (parsed.unsupportedStatements.length > 0) {
+      unsupportedStatements.push(...parsed.unsupportedStatements)
+    }
+    if (shape && parsed.rules.length > 0) {
+      const inlineLookup = toLookupRecord(
+        {
+          id: inlineLookupId,
+          name: `raw_${tag}_${features.length}`,
+          table: shape.table,
+          lookupType: shape.lookupType,
+          lookupFlag: parsed.lookupFlag,
+          markAttachmentClassId: parsed.markAttachmentClassId,
+          markFilteringSetClassId: parsed.markFilteringSetClassId,
+          rules: parsed.rules,
+        },
+        lookupOrigin
       )
-      const shape = getLookupShape(parsed.rules)
-      if (parsed.unsupportedStatements.length > 0) {
-        unsupportedStatements.push(...parsed.unsupportedStatements)
-      }
-      if (shape && parsed.rules.length > 0) {
-        const inlineLookup = toLookupRecord(
-          {
-            id: inlineLookupId,
-            name: `raw_${tag}_${features.length}`,
-            table: shape.table,
-            lookupType: shape.lookupType,
-            lookupFlag: parsed.lookupFlag,
-            markAttachmentClassId: parsed.markAttachmentClassId,
-            markFilteringSetClassId: parsed.markFilteringSetClassId,
-            rules: parsed.rules,
-          },
-          lookupOrigin
-        )
-        lookups.push(inlineLookup)
-        lookupIds.push(inlineLookup.id)
-      }
+      lookups.push(inlineLookup)
+      appendLookupId(lookupIds, inlineLookup.id)
     }
 
     const languageSystem = {

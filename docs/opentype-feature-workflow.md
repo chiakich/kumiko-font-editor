@@ -178,6 +178,7 @@ generated .fea / UI / export policy
 - 測試覆蓋
   - raw source section 建立。
   - raw `.fea` 成功分類與保留 raw 的兩條路。
+  - raw `.fea` feature-local lookup blocks 會分類成 lookup records 並掛回所在 feature。
   - UFO `features.fea` source metadata 與 export 行為。
   - GSUB compiled source section record refs。
   - GSUB `type 6 format 3` chaining contextual substitution 的 synthetic binary regression。
