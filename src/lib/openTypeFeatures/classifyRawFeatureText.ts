@@ -161,6 +161,7 @@ const parseRawFeatureText = (
   const languageSystems = new Map<string, LanguageSystem>()
   const unsupportedStatements: string[] = []
   const glyphClassIdByName = new Map<string, string>()
+  const glyphClassGlyphsByName = new Map<string, string[]>()
   const markClassIdByName = new Map<string, string>()
   const inlineGlyphClassIdByKey = new Map<string, string>()
   let workingText = stripComments(rawFeatureText)
@@ -200,6 +201,7 @@ const parseRawFeatureText = (
     glyphClasses.push(glyphClass)
     glyphClassById.set(classId, glyphClass)
     glyphClassIdByName.set(name, classId)
+    glyphClassGlyphsByName.set(name, glyphs)
     inlineGlyphClassIdByKey.set(key, classId)
     return classId
   }
@@ -223,6 +225,7 @@ const parseRawFeatureText = (
     }
     glyphClasses.push(glyphClass)
     glyphClassById.set(classId, glyphClass)
+    glyphClassGlyphsByName.set(className, glyphs)
     workingText = blankRange(
       workingText,
       match.index ?? 0,
@@ -321,6 +324,7 @@ const parseRawFeatureText = (
       id,
       featureOrigin,
       glyphClassIdByName,
+      glyphClassGlyphsByName,
       markClassIdByName,
       lookupIdByName,
       registerInlineGlyphClass
@@ -397,6 +401,7 @@ const parseRawFeatureText = (
         inlineLookupId,
         featureOrigin,
         glyphClassIdByName,
+        glyphClassGlyphsByName,
         markClassIdByName,
         committedLookupIdByName,
         registerInlineGlyphClass

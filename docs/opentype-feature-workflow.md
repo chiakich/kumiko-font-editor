@@ -223,6 +223,7 @@ generated .fea / UI / export policy
 - `substitute` 與 `position` 長關鍵字別名會分類後輸出為標準 `sub` / `pos`
 - multiple substitution，例如 `sub a by a a.alt;`
 - alternate substitution，例如 `sub a from [a.alt a.swash];`
+- class-to-class single substitution，例如 `sub @Lower by @SmallCaps;`，會展開成 single substitution rules
 - 簡單 ligature `sub f i by f_i;`
 - contextual substitution，例如 `sub A' lookup SomeLookup B;`
 - contextual ignore rule，例如 `ignore sub A A' B;`

@@ -180,6 +180,104 @@ describe('OpenType raw FEA GSUB classifier', () => {
     expect(generated).toContain('sub B from [B.alt B.swash];')
   })
 
+  it('expands raw class-to-class substitution into single substitution rules', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          '@Lower = [a b];',
+          '@SmallCaps = [a.sc b.sc];',
+          'feature smcp {',
+          '  sub @Lower by @SmallCaps;',
+          '  sub [c d] by [c.sc d.sc];',
+          '} smcp;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_smcp_0',
+        table: 'GSUB',
+        lookupType: 'singleSubst',
+        rules: [
+          {
+            id: 'lookup_raw_smcp_0_rule_0_0',
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'a' },
+            replacement: 'a.sc',
+          },
+          {
+            id: 'lookup_raw_smcp_0_rule_0_1',
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'b' },
+            replacement: 'b.sc',
+          },
+          {
+            id: 'lookup_raw_smcp_0_rule_1_0',
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'c' },
+            replacement: 'c.sc',
+          },
+          {
+            id: 'lookup_raw_smcp_0_rule_1_1',
+            kind: 'singleSubstitution',
+            target: { kind: 'glyph', glyph: 'd' },
+            replacement: 'd.sc',
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'glyphClass', id: 'glyph_class_raw_Lower' },
+        { kind: 'glyphClass', id: 'glyph_class_raw_SmallCaps' },
+        { kind: 'lookup', id: 'lookup_raw_smcp_0', table: 'GSUB' },
+        { kind: 'feature', id: 'feature_raw_smcp' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('sub a by a.sc;')
+    expect(generated).toContain('sub b by b.sc;')
+    expect(generated).toContain('sub c by c.sc;')
+    expect(generated).toContain('sub d by d.sc;')
+    expect(generated).not.toContain('sub @Lower by @SmallCaps;')
+  })
+
+  it('preserves raw source when class-to-class substitution lengths differ', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          '@Lower = [a b];',
+          '@SmallCaps = [a.sc];',
+          'feature smcp {',
+          '  sub @Lower by @SmallCaps;',
+          '} smcp;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'source',
+      status: 'raw',
+      recordRefs: [],
+      meta: {
+        classifiedIntoModel: false,
+        preserveRawTextInGeneratedFea: true,
+      },
+    })
+    expect(state.lookups).toEqual([])
+    expect(generateFea(state).text).toContain('sub @Lower by @SmallCaps;')
+  })
+
   it('classifies comma-separated raw contextual ignore rules as separate rules', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(

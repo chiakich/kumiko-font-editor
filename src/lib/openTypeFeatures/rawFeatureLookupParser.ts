@@ -7,6 +7,7 @@ import type {
   ValueRecord,
 } from 'src/lib/openTypeFeatures/types'
 import {
+  glyphsFromRawClassToken,
   isInlineGlyphClassToken,
   selectorFromRawMarkedToken,
   selectorFromRawToken,
@@ -197,10 +198,17 @@ const CURSIVE_ANCHOR_PATTERN = '<\\s*anchor\\s+(?:NULL|-?\\d+\\s+-?\\d+)\\s*>'
 
 const makeSelectorContext = (
   glyphClassIdByName: Map<string, string>,
+  glyphClassGlyphsByName?: Map<string, string[]>,
   registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): RawSelectorContext => ({
   glyphClassIdByName,
+  glyphClassGlyphsByName,
   registerInlineGlyphClass,
+})
+
+const makeRuleMeta = (origin: FeatureOrigin, table: 'GSUB' | 'GPOS') => ({
+  origin,
+  provenance: { table },
 })
 
 const parseCursiveAnchor = (value: string) => {
@@ -237,6 +245,7 @@ const parseContextualSubstitutionRule = (
   if (!tokens) return null
   const selectorContext = makeSelectorContext(
     glyphClassIdByName,
+    undefined,
     registerInlineGlyphClass
   )
 
@@ -352,6 +361,7 @@ const parseContextualPositioningRule = (
   if (!tokens) return null
   const selectorContext = makeSelectorContext(
     glyphClassIdByName,
+    undefined,
     registerInlineGlyphClass
   )
 
@@ -452,10 +462,12 @@ const parseSubstitutionRule = (
   ruleId: string,
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
+  glyphClassGlyphsByName: Map<string, string[]>,
   registerInlineGlyphClass?: InlineGlyphClassRegistrar
-): Rule | null => {
+): Rule[] | null => {
   const selectorContext = makeSelectorContext(
     glyphClassIdByName,
+    glyphClassGlyphsByName,
     registerInlineGlyphClass
   )
   const alternateMatch = matchSubstitutionStatement(
@@ -474,16 +486,15 @@ const parseSubstitutionRule = (
       return null
     }
 
-    return {
-      id: ruleId,
-      kind: 'alternateSubstitution',
-      target,
-      alternates,
-      meta: {
-        origin,
-        provenance: { table: 'GSUB' },
+    return [
+      {
+        id: ruleId,
+        kind: 'alternateSubstitution',
+        target,
+        alternates,
+        meta: makeRuleMeta(origin, 'GSUB'),
       },
-    }
+    ]
   }
 
   const match = matchSubstitutionStatement(statement, '(.+?)\\s+by\\s+(.+)')
@@ -496,11 +507,40 @@ const parseSubstitutionRule = (
     !replacement ||
     pattern.length === 0 ||
     replacement.length === 0 ||
+    replacement.some((glyph) => glyph.includes("'"))
+  ) {
+    return null
+  }
+
+  const classTargetGlyphs =
+    pattern.length === 1
+      ? glyphsFromRawClassToken(pattern[0], selectorContext)
+      : null
+  const classReplacementGlyphs =
+    replacement.length === 1
+      ? glyphsFromRawClassToken(replacement[0], selectorContext)
+      : null
+  if (classTargetGlyphs || classReplacementGlyphs) {
+    if (
+      !classTargetGlyphs ||
+      !classReplacementGlyphs ||
+      classTargetGlyphs.length !== classReplacementGlyphs.length
+    ) {
+      return null
+    }
+
+    return classTargetGlyphs.map((glyph, index) => ({
+      id: classTargetGlyphs.length === 1 ? ruleId : `${ruleId}_${index}`,
+      kind: 'singleSubstitution',
+      target: { kind: 'glyph', glyph },
+      replacement: classReplacementGlyphs[index],
+      meta: makeRuleMeta(origin, 'GSUB'),
+    }))
+  }
+
+  if (
     replacement.some(
-      (glyph) =>
-        glyph.startsWith('@') ||
-        glyph.includes("'") ||
-        isInlineGlyphClassToken(glyph)
+      (glyph) => glyph.startsWith('@') || isInlineGlyphClassToken(glyph)
     )
   ) {
     return null
@@ -511,29 +551,27 @@ const parseSubstitutionRule = (
     if (!target) return null
 
     if (replacement.length === 1) {
-      return {
-        id: ruleId,
-        kind: 'singleSubstitution',
-        target,
-        replacement: replacement[0],
-        meta: {
-          origin,
-          provenance: { table: 'GSUB' },
+      return [
+        {
+          id: ruleId,
+          kind: 'singleSubstitution',
+          target,
+          replacement: replacement[0],
+          meta: makeRuleMeta(origin, 'GSUB'),
         },
-      }
+      ]
     }
 
     return target.kind === 'glyph'
-      ? {
-          id: ruleId,
-          kind: 'multipleSubstitution',
-          target: target.glyph,
-          replacement,
-          meta: {
-            origin,
-            provenance: { table: 'GSUB' },
+      ? [
+          {
+            id: ruleId,
+            kind: 'multipleSubstitution',
+            target: target.glyph,
+            replacement,
+            meta: makeRuleMeta(origin, 'GSUB'),
           },
-        }
+        ]
       : null
   }
 
@@ -549,16 +587,15 @@ const parseSubstitutionRule = (
     return null
   }
 
-  return {
-    id: ruleId,
-    kind: 'ligatureSubstitution',
-    components: pattern,
-    replacement: replacement[0],
-    meta: {
-      origin,
-      provenance: { table: 'GSUB' },
+  return [
+    {
+      id: ruleId,
+      kind: 'ligatureSubstitution',
+      components: pattern,
+      replacement: replacement[0],
+      meta: makeRuleMeta(origin, 'GSUB'),
     },
-  }
+  ]
 }
 
 const parseMarkPositioningRule = (
@@ -571,6 +608,7 @@ const parseMarkPositioningRule = (
 ): Rule | null => {
   const selectorContext = makeSelectorContext(
     glyphClassIdByName,
+    undefined,
     registerInlineGlyphClass
   )
   const cursiveMatch = matchPositioningStatement(statement, 'cursive\\s+(.+)')
@@ -685,6 +723,7 @@ const parsePositioningRule = (
 
   const selectorContext = makeSelectorContext(
     glyphClassIdByName,
+    undefined,
     registerInlineGlyphClass
   )
   const parsedLeft = splitFirstGlyphPatternToken(match[1])
@@ -781,6 +820,7 @@ export const parseLookupStatements = (
   idPrefix: string,
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
+  glyphClassGlyphsByName: Map<string, string[]>,
   markClassIdByName: Map<string, string>,
   lookupIdByName: Map<string, string>,
   registerInlineGlyphClass?: InlineGlyphClassRegistrar
@@ -827,32 +867,37 @@ export const parseLookupStatements = (
         lookupIdByName,
         registerInlineGlyphClass
       )
+    const substitutionRules = parseSubstitutionRule(
+      statement,
+      ruleId,
+      origin,
+      glyphClassIdByName,
+      glyphClassGlyphsByName,
+      registerInlineGlyphClass
+    )
     const rule =
-      parseSubstitutionRule(
-        statement,
-        ruleId,
-        origin,
-        glyphClassIdByName,
-        registerInlineGlyphClass
-      ) ??
-      parseMarkPositioningRule(
-        statement,
-        ruleId,
-        origin,
-        glyphClassIdByName,
-        markClassIdByName,
-        registerInlineGlyphClass
-      ) ??
-      parsePositioningRule(
-        statement,
-        ruleId,
-        origin,
-        glyphClassIdByName,
-        registerInlineGlyphClass
-      )
+      substitutionRules === null
+        ? (parseMarkPositioningRule(
+            statement,
+            ruleId,
+            origin,
+            glyphClassIdByName,
+            markClassIdByName,
+            registerInlineGlyphClass
+          ) ??
+          parsePositioningRule(
+            statement,
+            ruleId,
+            origin,
+            glyphClassIdByName,
+            registerInlineGlyphClass
+          ))
+        : null
 
     if (parsedRules) {
       rules.push(...parsedRules)
+    } else if (substitutionRules) {
+      rules.push(...substitutionRules)
     } else if (rule) {
       rules.push(rule)
     } else {

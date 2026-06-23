@@ -9,6 +9,7 @@ export type InlineGlyphClassRegistrar = (glyphs: string[]) => string | null
 
 export interface RawSelectorContext {
   glyphClassIdByName: Map<string, string>
+  glyphClassGlyphsByName?: Map<string, string[]>
   registerInlineGlyphClass?: InlineGlyphClassRegistrar
 }
 
@@ -116,6 +117,19 @@ const parseInlineGlyphClassToken = (token: string) => {
 
 export const isInlineGlyphClassToken = (token: string) =>
   Boolean(parseInlineGlyphClassToken(token))
+
+export const glyphsFromRawClassToken = (
+  token: string,
+  context: RawSelectorContext
+) => {
+  const inlineClass = parseInlineGlyphClassToken(token)
+  if (inlineClass) {
+    return inlineClass.marked ? null : inlineClass.glyphs
+  }
+
+  if (!token.startsWith('@') || token.includes("'")) return null
+  return context.glyphClassGlyphsByName?.get(token) ?? null
+}
 
 export const selectorFromRawToken = (
   token: string,
