@@ -232,7 +232,7 @@ generated .fea / UI / export policy
 - pair positioning 第二 value record，例如 `pos A V <0 0 -80 0> <0 0 -20 0>;`
 - cursive positioning：`pos cursive beh <anchor NULL> <anchor 480 0>;`
 - mark positioning：`pos base`、`pos mark`、`pos ligature`
-- GDEF table block 的 `GlyphClassDef`、`MarkGlyphSetsDef` 與 `LigatureCaretByPos`
+- GDEF table block 的 `GlyphClassDef`、`MarkGlyphSetsDef`、`LigatureCaretByPos` 與 `LigatureCaretByIndex`
 
 後續應該逐步讓使用者貼上的 `.fea` 可以被解析成更完整的 Kumiko model：
 

@@ -288,6 +288,7 @@ export interface GdefState {
 export interface LigatureCaret {
   glyph: string
   carets: number[]
+  format?: 'position' | 'pointIndex'
 }
 
 export interface SourceProvenance {

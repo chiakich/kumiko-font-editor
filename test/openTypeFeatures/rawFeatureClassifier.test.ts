@@ -621,6 +621,7 @@ describe('OpenType raw FEA classifier', () => {
           '  MarkGlyphSetsDef @TopMarks;',
           '  MarkGlyphSetsDef [dotaccent];',
           '  LigatureCaretByPos f_i 250 500;',
+          '  LigatureCaretByIndex f_i 3;',
           '} GDEF;',
         ].join('\n')
       )
@@ -649,7 +650,10 @@ describe('OpenType raw FEA classifier', () => {
           glyphs: ['dotaccent'],
         },
       ],
-      ligatureCarets: [{ glyph: 'f_i', carets: [250, 500] }],
+      ligatureCarets: [
+        { glyph: 'f_i', carets: [250, 500] },
+        { glyph: 'f_i', carets: [3], format: 'pointIndex' },
+      ],
     })
     expect(state.sourceSections[0]?.recordRefs).toEqual(
       expect.arrayContaining([
@@ -667,6 +671,7 @@ describe('OpenType raw FEA classifier', () => {
     expect(generated).toContain('MarkGlyphSetsDef [acutecomb gravecomb];')
     expect(generated).toContain('MarkGlyphSetsDef [dotaccent];')
     expect(generated).toContain('LigatureCaretByPos f_i 250 500;')
+    expect(generated).toContain('LigatureCaretByIndex f_i 3;')
   })
 
   it('classifies raw UseMarkFilteringSet lookup flags', () => {

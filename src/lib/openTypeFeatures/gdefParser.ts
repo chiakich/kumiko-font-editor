@@ -206,7 +206,7 @@ const parseMarkGlyphSets = (
   return sets
 }
 
-const readCaretCoordinate = (
+const readCaretValue = (
   ligGlyphReader: BinaryReader,
   caretValueOffset: number,
   diagnostics: FeatureDiagnostic[],
@@ -220,16 +220,24 @@ const readCaretCoordinate = (
     const coordinate = reader.uint16(2)
     return coordinate === null
       ? null
-      : coordinate > 0x7fff
-        ? coordinate - 0x10000
-        : coordinate
+      : {
+          format: 'position' as const,
+          value: coordinate > 0x7fff ? coordinate - 0x10000 : coordinate,
+        }
+  }
+
+  if (format === 2) {
+    const pointIndex = reader.uint16(2)
+    return pointIndex === null
+      ? null
+      : { format: 'pointIndex' as const, value: pointIndex }
   }
 
   diagnostics.push(
     makeGdefDiagnostic(
       'info',
-      `GDEF ligature caret ${caretIndex} uses point-index format and was preserved as a diagnostic only.`,
-      `ligature-caret-${caretIndex}-point-index`
+      `GDEF ligature caret ${caretIndex} uses unsupported caret value format ${format}.`,
+      `ligature-caret-${caretIndex}-format-${format}-unsupported`
     )
   )
   return null
@@ -267,22 +275,36 @@ const parseLigatureCarets = (
       return null
     }
 
-    const coordinates: number[] = []
+    const positionCarets: number[] = []
+    const pointIndexCarets: number[] = []
     for (let caretIndex = 0; caretIndex < caretCount; caretIndex += 1) {
       const caretValueOffset = ligGlyphReader.uint16(2 + caretIndex * 2)
-      const coordinate =
+      const caretValue =
         caretValueOffset === null
           ? null
-          : readCaretCoordinate(
+          : readCaretValue(
               ligGlyphReader,
               caretValueOffset,
               diagnostics,
               caretIndex
             )
-      if (coordinate !== null) coordinates.push(coordinate)
+      if (caretValue?.format === 'pointIndex') {
+        pointIndexCarets.push(caretValue.value)
+      } else if (caretValue?.format === 'position') {
+        positionCarets.push(caretValue.value)
+      }
     }
 
-    carets.push({ glyph: glyphs[ligIndex], carets: coordinates })
+    if (positionCarets.length > 0) {
+      carets.push({ glyph: glyphs[ligIndex], carets: positionCarets })
+    }
+    if (pointIndexCarets.length > 0) {
+      carets.push({
+        glyph: glyphs[ligIndex],
+        carets: pointIndexCarets,
+        format: 'pointIndex',
+      })
+    }
   }
   return carets
 }

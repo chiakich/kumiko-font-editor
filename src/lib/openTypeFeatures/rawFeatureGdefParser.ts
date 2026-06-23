@@ -95,10 +95,10 @@ const parseGdefStatement = (
   }
 
   const ligatureCaretMatch = statement.match(
-    /^LigatureCaretByPos\s+(\S+)\s+(.+)$/i
+    /^LigatureCaretBy(Pos|Index)\s+(\S+)\s+(.+)$/i
   )
   if (ligatureCaretMatch) {
-    const carets = ligatureCaretMatch[2]
+    const carets = ligatureCaretMatch[3]
       .trim()
       .split(/\s+/)
       .map((value) => (/^-?\d+$/.test(value) ? Number(value) : null))
@@ -106,8 +106,11 @@ const parseGdefStatement = (
     gdef.ligatureCarets = [
       ...(gdef.ligatureCarets ?? []),
       {
-        glyph: ligatureCaretMatch[1],
+        glyph: ligatureCaretMatch[2],
         carets: carets as number[],
+        ...(ligatureCaretMatch[1].toLowerCase() === 'index'
+          ? { format: 'pointIndex' as const }
+          : {}),
       },
     ]
     return true

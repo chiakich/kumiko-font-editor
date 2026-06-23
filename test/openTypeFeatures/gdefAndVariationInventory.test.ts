@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
+import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
 import {
   makeBytes,
   makeSfnt,
@@ -61,7 +62,13 @@ const makeUnsupportedSubtable = () =>
     writeUint16(view, 0, 99)
   })
 
-const makeGdefTable = () =>
+const makeGdefTable = ({
+  caretFormat = 1,
+  caretValue = 300,
+}: {
+  caretFormat?: number
+  caretValue?: number
+} = {}) =>
   makeBytes(64, (view) => {
     writeUint16(view, 0, 1)
     writeUint16(view, 2, 2)
@@ -87,8 +94,8 @@ const makeGdefTable = () =>
     writeUint16(view, 40, 2)
     writeUint16(view, 42, 1)
     writeUint16(view, 44, 4)
-    writeUint16(view, 46, 1)
-    writeUint16(view, 48, 300)
+    writeUint16(view, 46, caretFormat)
+    writeUint16(view, 48, caretValue)
 
     writeUint16(view, 50, 1)
     writeUint16(view, 52, 1)
@@ -136,6 +143,22 @@ describe('GDEF and variation inventory', () => {
         recordRefs: [{ kind: 'gdef', id: 'gdef', table: 'GDEF' }],
       },
     ])
+    expect(state.diagnostics ?? []).toEqual([])
+  })
+
+  it('imports point-index GDEF ligature carets', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        { tag: 'GDEF', data: makeGdefTable({ caretFormat: 2, caretValue: 7 }) },
+      ]),
+      null,
+      ['.notdef', 'A', 'f_i', 'acutecomb', 'componentGlyph']
+    )
+
+    expect(state.gdef?.ligatureCarets).toEqual([
+      { glyph: 'f_i', carets: [7], format: 'pointIndex' },
+    ])
+    expect(generateFea(state).text).toContain('LigatureCaretByIndex f_i 7;')
     expect(state.diagnostics ?? []).toEqual([])
   })
 

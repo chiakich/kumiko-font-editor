@@ -276,7 +276,11 @@ const serializeGdefTable = (
   }
   for (const caret of gdef.ligatureCarets ?? []) {
     if (caret.carets.length > 0) {
-      lines.push(`LigatureCaretByPos ${caret.glyph} ${caret.carets.join(' ')};`)
+      const statement =
+        caret.format === 'pointIndex'
+          ? 'LigatureCaretByIndex'
+          : 'LigatureCaretByPos'
+      lines.push(`${statement} ${caret.glyph} ${caret.carets.join(' ')};`)
     }
   }
   if (lines.length === 0) return
