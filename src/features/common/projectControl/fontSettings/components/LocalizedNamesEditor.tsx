@@ -12,6 +12,7 @@ import {
   Select,
 } from '@chakra-ui/react'
 import { XmarkCircle } from 'iconoir-react'
+import { Fragment } from 'react'
 
 import { getLanguageOptions } from 'src/features/common/projectControl/fontSettings/utils/languages'
 import { useTranslation } from 'react-i18next'
@@ -96,7 +97,7 @@ export function LocalizedNamesEditor({
             </HStack>
             <Grid templateColumns="240px 1fr min-content" gap={2}>
               {entries.map(([language, value]) => (
-                <>
+                <Fragment key={`${nameKey}-${language}`}>
                   <FormControl>
                     <FormLabel fontSize="xs">
                       {t('projectControl.language')}
@@ -141,7 +142,7 @@ export function LocalizedNamesEditor({
                       <XmarkCircle width={20} height={20} aria-hidden="true" />
                     }
                   />
-                </>
+                </Fragment>
               ))}
             </Grid>
           </Box>

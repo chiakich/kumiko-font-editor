@@ -58,6 +58,7 @@ export function getFeatureTable(feature: FeatureRecord) {
 
 export function getLayoutTableSummaries(state: OpenTypeFeaturesState) {
   const tables: OpenTypeTableTag[] = ['GSUB', 'GPOS', 'GDEF']
+  const sourceSections = state.sourceSections ?? []
 
   return tables
     .map((table) => {
@@ -67,7 +68,7 @@ export function getLayoutTableSummaries(state: OpenTypeFeaturesState) {
       const lookupCount = state.lookups.filter(
         (lookup) => lookup.table === table
       ).length
-      const sourceCount = state.sourceSections.filter(
+      const sourceCount = sourceSections.filter(
         (sourceSection) => sourceSection.table === table
       ).length
       const unsupportedCount = state.unsupportedLookups.filter(

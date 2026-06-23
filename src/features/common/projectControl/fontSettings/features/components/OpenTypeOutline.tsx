@@ -34,6 +34,7 @@ export function OpenTypeOutline({
 }: OpenTypeOutlineProps) {
   const { t } = useTranslation()
   const tableSummaries = getLayoutTableSummaries(state)
+  const sourceSections = state.sourceSections ?? []
 
   return (
     <Stack
@@ -56,7 +57,7 @@ export function OpenTypeOutline({
         <OutlineButton
           isSelected={isSourceSelected(selected, 'imported-tables')}
           label={t('projectControl.importedTables')}
-          detail={`${state.sourceSections.filter((section) => section.kind === 'compiled-table').length} ${t('projectControl.sourceSections')}`}
+          detail={`${sourceSections.filter((section) => section.kind === 'compiled-table').length} ${t('projectControl.sourceSections')}`}
           onClick={() => onSelect({ kind: 'source', view: 'imported-tables' })}
         />
       </OutlineSection>
