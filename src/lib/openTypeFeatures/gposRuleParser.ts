@@ -13,16 +13,18 @@ import {
   parseContextPositioningFormat2,
 } from 'src/lib/openTypeFeatures/gposClassContextRuleParser'
 import {
+  parseContextPositioningFormat1,
+  parseContextPositioningFormat3,
+} from 'src/lib/openTypeFeatures/gposContextRuleParser'
+import {
   isEmptyValue,
   readValueRecord,
 } from 'src/lib/openTypeFeatures/gposValueRecordParser'
 import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 import type {
-  ContextInput,
   CursivePositioningRule,
   FeatureDiagnostic,
   GlyphClass,
-  GlyphSelector,
   MarkClass,
   MarkToBaseRule,
   MarkToLigatureRule,
@@ -781,161 +783,6 @@ const parseMarkToLigaturePositioning = (
   return { rules, markClasses }
 }
 
-const parseCoverageSelectorClass = (
-  subtableReader: BinaryReader,
-  glyphOrder: string[],
-  coverageOffset: number,
-  lookup: LayoutLookupInventory,
-  subtableIndex: number,
-  kind: string,
-  index: number,
-  glyphClasses: Map<string, GlyphClass>
-) => {
-  const glyphs = readCoverageGlyphNames(
-    subtableReader,
-    glyphOrder,
-    coverageOffset
-  )
-  if (!glyphs?.length) return null
-  if (glyphs.length === 1) return { kind: 'glyph' as const, glyph: glyphs[0] }
-
-  const classId = makeClassId(
-    lookup.lookupIndex,
-    subtableIndex,
-    `${kind}_${index}`,
-    0
-  )
-  glyphClasses.set(
-    classId,
-    makeImportedGlyphClass(
-      classId,
-      `@GPOS_${lookup.lookupIndex}_${subtableIndex}_${kind}_${index}`,
-      glyphs
-    )
-  )
-  return { kind: 'class' as const, classId }
-}
-
-const parseContextPositioningFormat3 = (
-  subtableReader: BinaryReader,
-  glyphOrder: string[],
-  lookup: LayoutLookupInventory,
-  subtableIndex: number,
-  mode: 'context' | 'chaining'
-): ParsedSubtableResult | null => {
-  const glyphClasses = new Map<string, GlyphClass>()
-  const input: ContextInput[] = []
-  const backtrack: GlyphSelector[] = []
-  const lookahead: GlyphSelector[] = []
-  let cursor = 2
-
-  if (mode === 'chaining') {
-    const backtrackCount = subtableReader.uint16(cursor)
-    if (backtrackCount === null) return null
-    cursor += 2
-    for (let index = 0; index < backtrackCount; index += 1) {
-      const coverageOffset = subtableReader.uint16(cursor)
-      if (coverageOffset === null) return null
-      const selector = parseCoverageSelectorClass(
-        subtableReader,
-        glyphOrder,
-        coverageOffset,
-        lookup,
-        subtableIndex,
-        'backtrack',
-        index,
-        glyphClasses
-      )
-      if (!selector) return null
-      backtrack.unshift(selector)
-      cursor += 2
-    }
-  }
-
-  const inputCount = subtableReader.uint16(cursor)
-  if (inputCount === null) return null
-  cursor += 2
-  for (let index = 0; index < inputCount; index += 1) {
-    const coverageOffset = subtableReader.uint16(cursor)
-    if (coverageOffset === null) return null
-    const selector = parseCoverageSelectorClass(
-      subtableReader,
-      glyphOrder,
-      coverageOffset,
-      lookup,
-      subtableIndex,
-      'input',
-      index,
-      glyphClasses
-    )
-    if (!selector) return null
-    input.push({ selector })
-    cursor += 2
-  }
-
-  if (mode === 'chaining') {
-    const lookaheadCount = subtableReader.uint16(cursor)
-    if (lookaheadCount === null) return null
-    cursor += 2
-    for (let index = 0; index < lookaheadCount; index += 1) {
-      const coverageOffset = subtableReader.uint16(cursor)
-      if (coverageOffset === null) return null
-      const selector = parseCoverageSelectorClass(
-        subtableReader,
-        glyphOrder,
-        coverageOffset,
-        lookup,
-        subtableIndex,
-        'lookahead',
-        index,
-        glyphClasses
-      )
-      if (!selector) return null
-      lookahead.push(selector)
-      cursor += 2
-    }
-  }
-
-  const lookupRecordCount = subtableReader.uint16(cursor)
-  if (lookupRecordCount === null) return null
-  cursor += 2
-  for (let index = 0; index < lookupRecordCount; index += 1) {
-    const sequenceIndex = subtableReader.uint16(cursor)
-    const lookupListIndex = subtableReader.uint16(cursor + 2)
-    if (sequenceIndex === null || lookupListIndex === null) return null
-    const contextInput = input[sequenceIndex]
-    if (!contextInput) return null
-    contextInput.lookupIds = [
-      ...(contextInput.lookupIds ?? []),
-      `lookup_gpos_${lookupListIndex}`,
-    ]
-    cursor += 4
-  }
-
-  return {
-    rules: [
-      {
-        id: makeRuleId(
-          lookup.lookupIndex,
-          subtableIndex,
-          mode === 'context' ? 'context' : 'chainingContext',
-          0
-        ),
-        kind: 'contextualPositioning',
-        mode,
-        backtrack,
-        input,
-        lookahead,
-        meta: {
-          origin: 'imported',
-          provenance: makeProvenance(lookup, subtableIndex),
-        },
-      },
-    ],
-    glyphClasses: Array.from(glyphClasses.values()),
-  }
-}
-
 const withExtensionProvenance = (
   rules: Rule[],
   lookup: LayoutLookupInventory,
@@ -1029,6 +876,15 @@ const parseSupportedSubtable = (
 
   if (lookup.lookupType === 6 && format === 1) {
     return parseMarkToMarkPositioning(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
+    )
+  }
+
+  if (lookup.lookupType === 7 && format === 1) {
+    return parseContextPositioningFormat1(
       subtableReader,
       glyphOrder,
       lookup,

@@ -113,6 +113,25 @@ const makeClassPairPositioningSubtable = () =>
     writeUint16(view, 50, 1)
   })
 
+const makeContextPositioningFormat1Subtable = () =>
+  makeBytes(28, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 22)
+    writeUint16(view, 4, 1)
+    writeUint16(view, 6, 8)
+
+    writeUint16(view, 8, 1)
+    writeUint16(view, 10, 4)
+
+    writeUint16(view, 12, 2)
+    writeUint16(view, 14, 1)
+    writeUint16(view, 16, 2)
+    writeUint16(view, 18, 1)
+    writeUint16(view, 20, 0)
+
+    writeCoverageFormat1(view, 22, [1])
+  })
+
 const makeContextPositioningFormat2Subtable = () =>
   makeBytes(50, (view) => {
     writeUint16(view, 0, 2)
@@ -245,6 +264,57 @@ describe('advanced GPOS reconstruction', () => {
             left: { kind: 'class', classId: 'class_gpos_0_0_left_1' },
             right: { kind: 'class', classId: 'class_gpos_0_0_right_1' },
             firstValue: { xAdvance: -80 },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts ContextPos glyph sequence rules', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GPOS',
+          data: makeGposTable(
+            'kern',
+            7,
+            makeContextPositioningFormat1Subtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'V']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gpos_0',
+        lookupType: 'contextPos',
+        editable: true,
+        rules: [
+          {
+            kind: 'contextualPositioning',
+            mode: 'context',
+            backtrack: [],
+            input: [
+              { selector: { kind: 'glyph', glyph: 'A' } },
+              {
+                selector: { kind: 'glyph', glyph: 'V' },
+                lookupIds: ['lookup_gpos_0'],
+              },
+            ],
+            lookahead: [],
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GPOS',
+                lookupIndex: 0,
+                lookupType: 7,
+                subtableIndex: 0,
+                subtableFormat: 1,
+              },
+            },
           },
         ],
       },
