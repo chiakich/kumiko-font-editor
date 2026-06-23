@@ -113,7 +113,7 @@ const describeBody = (
 }
 
 const describeRange = (reason: RadarReason) =>
-  `目前 ${formatRadarValue(reason.value, reason.format)}，複雜度相近的字常見 ${formatRadarValue(reason.p10, reason.format)}–${formatRadarValue(reason.p90, reason.format)}`
+  `目前 ${formatRadarValue(reason.value, reason.format)}，${reason.basis === 'ruler' ? '固定尺字組' : '複雜度相近的字'}常見 ${formatRadarValue(reason.p10, reason.format)}–${formatRadarValue(reason.p90, reason.format)}`
 
 export const buildRadarAdvice = (reason: RadarReason): RadarAdvice => {
   const { title, action } = describeBody(reason)

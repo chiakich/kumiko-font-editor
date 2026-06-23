@@ -79,11 +79,13 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
     if (!sample) {
       return { ...idleGlyphInsight, showBands, setShowBands }
     }
+    const ruler = analysis?.ruler ?? null
     return {
       status: radar ? 'ready' : isAnalyzing ? 'analyzing' : 'insufficient',
       sample,
       evaluation,
-      baseline: analysis?.baseline ?? null,
+      baseline: ruler?.baseline ?? analysis?.baseline ?? null,
+      ruler,
       showBands,
       setShowBands,
     }

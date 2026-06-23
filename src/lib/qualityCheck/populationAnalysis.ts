@@ -7,6 +7,10 @@ import {
   type StructureBaseline,
 } from 'src/lib/qualityCheck/structureMetrics'
 import {
+  buildStructureRuler,
+  type StructureRuler,
+} from 'src/lib/qualityCheck/structureRuler'
+import {
   computeRadarFromSamples,
   type RadarAnalysis,
 } from 'src/lib/qualityCheck/qualityRadar'
@@ -18,6 +22,7 @@ import {
  */
 export interface PopulationAnalysis {
   baseline: StructureBaseline | null
+  ruler: StructureRuler | null
   radar: RadarAnalysis | null
 }
 
@@ -26,8 +31,10 @@ export const runPopulationAnalysis = (
   semanticEnclosureChars?: ReadonlySet<string>
 ): PopulationAnalysis => {
   const samples = buildFontGeometrySamples(resolvedFont)
+  const ruler = buildStructureRuler(samples, resolvedFont.bodyBox)
   return {
     baseline: buildStructureBaseline(samples, resolvedFont.bodyBox),
+    ruler,
     radar: computeRadarFromSamples(
       samples,
       resolvedFont.bodyBox,
@@ -45,7 +52,7 @@ export const analyzeFontPopulation = (
   semanticEnclosureChars?: ReadonlySet<string>
 ): PopulationAnalysis => {
   if (!fontData) {
-    return { baseline: null, radar: null }
+    return { baseline: null, ruler: null, radar: null }
   }
   return runPopulationAnalysis(
     resolveFontGlyphs(fontData),
