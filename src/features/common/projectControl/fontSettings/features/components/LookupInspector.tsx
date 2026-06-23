@@ -236,8 +236,9 @@ function ProvenanceSummary({ lookup }: { lookup: LookupRecord }) {
   const subtableFormatText = Array.isArray(subtableFormats)
     ? subtableFormats.filter((format) => typeof format === 'number').join(', ')
     : ''
+  const metaBadges = formatLookupMetaBadges(lookup.meta)
 
-  if (!lookup.provenance && !subtableFormatText) {
+  if (!lookup.provenance && !subtableFormatText && metaBadges.length === 0) {
     return null
   }
 
@@ -270,9 +271,34 @@ function ProvenanceSummary({ lookup }: { lookup: LookupRecord }) {
             {t('projectControl.subtableFormats')} {subtableFormatText}
           </Badge>
         ) : null}
+        {metaBadges.map((badge) => (
+          <Badge key={badge} fontFamily="mono" variant="outline">
+            {badge}
+          </Badge>
+        ))}
       </HStack>
     </Stack>
   )
+}
+
+function formatLookupMetaBadges(meta: LookupRecord['meta']) {
+  if (!meta) return []
+
+  return [
+    typeof meta.lookupTypeNumber === 'number'
+      ? `lookup type ${meta.lookupTypeNumber}`
+      : null,
+    typeof meta.lookupFlagNumber === 'number'
+      ? `flag 0x${meta.lookupFlagNumber.toString(16)}`
+      : null,
+    meta.importedFromCompiledLayout === true ? 'compiled layout' : null,
+    meta.extensionLookupUnwrappedForEditing === true
+      ? 'extension wrapper unwrapped'
+      : null,
+    typeof meta.extensionWrapperRebuildPolicy === 'string'
+      ? meta.extensionWrapperRebuildPolicy
+      : null,
+  ].filter((badge): badge is string => Boolean(badge))
 }
 
 function diagnosticsForLookup(

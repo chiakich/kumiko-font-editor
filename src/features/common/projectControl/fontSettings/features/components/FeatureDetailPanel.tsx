@@ -57,6 +57,7 @@ export function FeatureDetailPanel({
       <SourceReferenceSummary
         sourceSectionRecords={featureSourceSectionRecords}
       />
+      <FeatureProvenanceSummary feature={feature} />
 
       <FeatureEntries feature={feature} lookups={state.lookups} />
 
@@ -68,6 +69,30 @@ export function FeatureDetailPanel({
         diagnostics={diagnostics}
         onRuleChange={onRuleChange}
       />
+    </Stack>
+  )
+}
+
+function FeatureProvenanceSummary({ feature }: { feature: FeatureRecord }) {
+  const { t } = useTranslation()
+  const badges = getFeatureProvenanceBadges(feature)
+
+  if (badges.length === 0) {
+    return null
+  }
+
+  return (
+    <Stack spacing={1}>
+      <Text fontSize="xs" color="field.muted">
+        {t('projectControl.importedFrom')}
+      </Text>
+      <HStack wrap="wrap" gap={1}>
+        {badges.map((badge) => (
+          <Badge key={badge} fontFamily="mono" variant="outline">
+            {badge}
+          </Badge>
+        ))}
+      </HStack>
     </Stack>
   )
 }
@@ -135,4 +160,21 @@ function getFeatureLookups(feature: FeatureRecord, lookups: LookupRecord[]) {
     }
   }
   return featureLookups
+}
+
+function getFeatureProvenanceBadges(feature: FeatureRecord) {
+  const { meta } = feature
+  if (!meta) return []
+
+  return [
+    typeof meta.table === 'string' ? meta.table : null,
+    typeof meta.featureIndex === 'number'
+      ? `feature index ${meta.featureIndex}`
+      : null,
+    meta.importedFromCompiledLayout === true ? 'compiled layout' : null,
+    meta.classifiedFromRawFeatureText === true ? 'raw .fea' : null,
+    Array.isArray(meta.mergedCompiledFeatureRecords)
+      ? `merged: ${meta.mergedCompiledFeatureRecords.length}`
+      : null,
+  ].filter((badge): badge is string => Boolean(badge))
 }

@@ -171,7 +171,7 @@ generated .fea / UI / export policy
   - Source panel 會顯示 source sections。
   - Source panel 會把 `sourceSections.recordRefs` 解析成可讀的 feature / lookup / class / diagnostic 摘要，缺失 record 也會標出。
   - Feature detail 與 Lookup inspector 會用同一套 resolver 回看來源 section。
-  - Lookup inspector 會顯示 compiled provenance、subtable format 與回指 source sections。
+  - Feature detail / Lookup inspector 會顯示 compiled provenance、feature / lookup index、subtable format、extension wrapper policy 與回指 source sections。
   - Export policy UI 會列出 raw / rebuild / preserve / drop / review 的 export impact。
   - Workflow overview 會顯示 source / compiled / classified 計數。
   - Binary importer diagnostics（例如 FeatureVariations）會併入 workflow diagnostics 與 export policy warnings。
