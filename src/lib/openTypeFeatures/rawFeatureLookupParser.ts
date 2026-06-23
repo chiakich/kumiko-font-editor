@@ -7,8 +7,15 @@ import type {
   ValueRecord,
 } from 'src/lib/openTypeFeatures/types'
 import {
-  selectorFromMarkedToken,
-  selectorFromToken,
+  isInlineGlyphClassToken,
+  selectorFromRawMarkedToken,
+  selectorFromRawToken,
+  splitFirstGlyphPatternToken,
+  splitGlyphPatternTokens,
+  type InlineGlyphClassRegistrar,
+  type RawSelectorContext,
+} from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
+import {
   splitGlyphList,
   splitStatements,
 } from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
@@ -184,6 +191,14 @@ const parseLigatureComponentAnchors = (
 
 const CURSIVE_ANCHOR_PATTERN = '<\\s*anchor\\s+(?:NULL|-?\\d+\\s+-?\\d+)\\s*>'
 
+const makeSelectorContext = (
+  glyphClassIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
+): RawSelectorContext => ({
+  glyphClassIdByName,
+  registerInlineGlyphClass,
+})
+
 const parseCursiveAnchor = (value: string) => {
   if (/^<\s*anchor\s+NULL\s*>$/i.test(value)) {
     return undefined
@@ -203,7 +218,8 @@ const parseContextualSubstitutionRule = (
   ruleId: string,
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
-  lookupIdByName: Map<string, string>
+  lookupIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): Rule | null => {
   const ignoreMatch = statement.match(
     new RegExp(`^ignore\\s+${SUBSTITUTION_KEYWORD}\\s+(.+)$`, 'i')
@@ -217,7 +233,12 @@ const parseContextualSubstitutionRule = (
     marked: boolean
     selector: GlyphSelector
   }> = []
-  const tokens = context.trim().split(/\s+/).filter(Boolean)
+  const tokens = splitGlyphPatternTokens(context)
+  if (!tokens) return null
+  const selectorContext = makeSelectorContext(
+    glyphClassIdByName,
+    registerInlineGlyphClass
+  )
 
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index]
@@ -231,7 +252,7 @@ const parseContextualSubstitutionRule = (
       continue
     }
 
-    const parsed = selectorFromMarkedToken(token, glyphClassIdByName)
+    const parsed = selectorFromRawMarkedToken(token, selectorContext)
     if (!parsed) return null
     selectorEntries.push({
       lookupIds: [],
@@ -285,7 +306,8 @@ const parseContextualPositioningRule = (
   ruleId: string,
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
-  lookupIdByName: Map<string, string>
+  lookupIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): Rule | null => {
   const ignoreMatch = statement.match(
     new RegExp(`^ignore\\s+${POSITIONING_KEYWORD}\\s+(.+)$`, 'i')
@@ -299,7 +321,12 @@ const parseContextualPositioningRule = (
     marked: boolean
     selector: GlyphSelector
   }> = []
-  const tokens = context.trim().split(/\s+/).filter(Boolean)
+  const tokens = splitGlyphPatternTokens(context)
+  if (!tokens) return null
+  const selectorContext = makeSelectorContext(
+    glyphClassIdByName,
+    registerInlineGlyphClass
+  )
 
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index]
@@ -313,7 +340,7 @@ const parseContextualPositioningRule = (
       continue
     }
 
-    const parsed = selectorFromMarkedToken(token, glyphClassIdByName)
+    const parsed = selectorFromRawMarkedToken(token, selectorContext)
     if (!parsed) return null
     selectorEntries.push({
       lookupIds: [],
@@ -366,8 +393,13 @@ const parseSubstitutionRule = (
   statement: string,
   ruleId: string,
   origin: FeatureOrigin,
-  glyphClassIdByName: Map<string, string>
+  glyphClassIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): Rule | null => {
+  const selectorContext = makeSelectorContext(
+    glyphClassIdByName,
+    registerInlineGlyphClass
+  )
   const alternateMatch = matchSubstitutionStatement(
     statement,
     '(\\S+)\\s+from\\s+\\[([^\\]]+)\\]'
@@ -399,18 +431,25 @@ const parseSubstitutionRule = (
   const match = matchSubstitutionStatement(statement, '(.+?)\\s+by\\s+(.+)')
   if (!match) return null
 
-  const pattern = match[1].trim().split(/\s+/).filter(Boolean)
-  const replacement = match[2].trim().split(/\s+/).filter(Boolean)
+  const pattern = splitGlyphPatternTokens(match[1])
+  const replacement = splitGlyphPatternTokens(match[2])
   if (
+    !pattern ||
+    !replacement ||
     pattern.length === 0 ||
     replacement.length === 0 ||
-    replacement.some((glyph) => glyph.startsWith('@') || glyph.includes("'"))
+    replacement.some(
+      (glyph) =>
+        glyph.startsWith('@') ||
+        glyph.includes("'") ||
+        isInlineGlyphClassToken(glyph)
+    )
   ) {
     return null
   }
 
   if (pattern.length === 1) {
-    const target = selectorFromToken(pattern[0], glyphClassIdByName)
+    const target = selectorFromRawToken(pattern[0], selectorContext)
     if (!target) return null
 
     if (replacement.length === 1) {
@@ -442,7 +481,12 @@ const parseSubstitutionRule = (
 
   if (
     replacement.length !== 1 ||
-    pattern.some((token) => token.startsWith('@') || token.includes("'"))
+    pattern.some(
+      (token) =>
+        token.startsWith('@') ||
+        token.includes("'") ||
+        isInlineGlyphClassToken(token)
+    )
   ) {
     return null
   }
@@ -464,16 +508,26 @@ const parseMarkPositioningRule = (
   ruleId: string,
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
-  markClassIdByName: Map<string, string>
+  markClassIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): Rule | null => {
-  const cursiveMatch = matchPositioningStatement(
-    statement,
-    `cursive\\s+(\\S+)\\s+(${CURSIVE_ANCHOR_PATTERN})\\s+(${CURSIVE_ANCHOR_PATTERN})`
+  const selectorContext = makeSelectorContext(
+    glyphClassIdByName,
+    registerInlineGlyphClass
   )
+  const cursiveMatch = matchPositioningStatement(statement, 'cursive\\s+(.+)')
   if (cursiveMatch) {
-    const glyphs = selectorFromToken(cursiveMatch[1], glyphClassIdByName)
-    const entryAnchor = parseCursiveAnchor(cursiveMatch[2])
-    const exitAnchor = parseCursiveAnchor(cursiveMatch[3])
+    const parsedGlyphs = splitFirstGlyphPatternToken(cursiveMatch[1])
+    const anchorMatch = parsedGlyphs?.rest.match(
+      new RegExp(
+        `^(${CURSIVE_ANCHOR_PATTERN})\\s+(${CURSIVE_ANCHOR_PATTERN})$`,
+        'i'
+      )
+    )
+    if (!parsedGlyphs || !anchorMatch) return null
+    const glyphs = selectorFromRawToken(parsedGlyphs.token, selectorContext)
+    const entryAnchor = parseCursiveAnchor(anchorMatch[1])
+    const exitAnchor = parseCursiveAnchor(anchorMatch[2])
     return glyphs &&
       entryAnchor !== null &&
       exitAnchor !== null &&
@@ -492,13 +546,12 @@ const parseMarkPositioningRule = (
       : null
   }
 
-  const baseMatch = matchPositioningStatement(
-    statement,
-    'base\\s+(\\S+)\\s+(.+)'
-  )
+  const baseMatch = matchPositioningStatement(statement, 'base\\s+(.+)')
   if (baseMatch) {
-    const baseGlyphs = selectorFromToken(baseMatch[1], glyphClassIdByName)
-    const anchors = parseMarkAttachments(baseMatch[2], markClassIdByName)
+    const parsedBase = splitFirstGlyphPatternToken(baseMatch[1])
+    if (!parsedBase) return null
+    const baseGlyphs = selectorFromRawToken(parsedBase.token, selectorContext)
+    const anchors = parseMarkAttachments(parsedBase.rest, markClassIdByName)
     return baseGlyphs && anchors
       ? {
           id: ruleId,
@@ -513,13 +566,12 @@ const parseMarkPositioningRule = (
       : null
   }
 
-  const markMatch = matchPositioningStatement(
-    statement,
-    'mark\\s+(\\S+)\\s+(.+)'
-  )
+  const markMatch = matchPositioningStatement(statement, 'mark\\s+(.+)')
   if (markMatch) {
-    const baseMarks = selectorFromToken(markMatch[1], glyphClassIdByName)
-    const anchors = parseMarkAttachments(markMatch[2], markClassIdByName)
+    const parsedMark = splitFirstGlyphPatternToken(markMatch[1])
+    if (!parsedMark) return null
+    const baseMarks = selectorFromRawToken(parsedMark.token, selectorContext)
+    const anchors = parseMarkAttachments(parsedMark.rest, markClassIdByName)
     return baseMarks && anchors
       ? {
           id: ruleId,
@@ -534,14 +586,16 @@ const parseMarkPositioningRule = (
       : null
   }
 
-  const ligatureMatch = matchPositioningStatement(
-    statement,
-    'ligature\\s+(\\S+)\\s+(.+)'
-  )
+  const ligatureMatch = matchPositioningStatement(statement, 'ligature\\s+(.+)')
   if (ligatureMatch) {
-    const ligatures = selectorFromToken(ligatureMatch[1], glyphClassIdByName)
+    const parsedLigature = splitFirstGlyphPatternToken(ligatureMatch[1])
+    if (!parsedLigature) return null
+    const ligatures = selectorFromRawToken(
+      parsedLigature.token,
+      selectorContext
+    )
     const componentAnchors = parseLigatureComponentAnchors(
-      ligatureMatch[2],
+      parsedLigature.rest,
       markClassIdByName
     )
     return ligatures && componentAnchors
@@ -565,15 +619,23 @@ const parsePositioningRule = (
   statement: string,
   ruleId: string,
   origin: FeatureOrigin,
-  glyphClassIdByName: Map<string, string>
+  glyphClassIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): Rule | null => {
-  const match = matchPositioningStatement(statement, '(\\S+)\\s+(.+)')
+  const match = matchPositioningStatement(statement, '(.+)')
   if (!match) return null
 
-  const left = selectorFromToken(match[1], glyphClassIdByName)
+  const selectorContext = makeSelectorContext(
+    glyphClassIdByName,
+    registerInlineGlyphClass
+  )
+  const parsedLeft = splitFirstGlyphPatternToken(match[1])
+  if (!parsedLeft) return null
+
+  const left = selectorFromRawToken(parsedLeft.token, selectorContext)
   if (!left) return null
 
-  const rest = match[2].trim()
+  const rest = parsedLeft.rest
   const singleValue = parseValueRecord(rest)
   if (singleValue) {
     return {
@@ -588,16 +650,18 @@ const parsePositioningRule = (
     }
   }
 
-  const pairMatch = rest.match(
-    /^(\S+)\s+(-?\d+|<[^>]+>)(?:\s+(-?\d+|<[^>]+>))?$/
+  const parsedRight = splitFirstGlyphPatternToken(rest)
+  if (!parsedRight) return null
+  const pairMatch = parsedRight.rest.match(
+    /^(-?\d+|<[^>]+>)(?:\s+(-?\d+|<[^>]+>))?$/
   )
   if (!pairMatch) return null
 
-  const right = selectorFromToken(pairMatch[1], glyphClassIdByName)
-  const firstValue = parseValueRecord(pairMatch[2])
-  const secondValue = pairMatch[3] ? parseValueRecord(pairMatch[3]) : null
+  const right = selectorFromRawToken(parsedRight.token, selectorContext)
+  const firstValue = parseValueRecord(pairMatch[1])
+  const secondValue = pairMatch[2] ? parseValueRecord(pairMatch[2]) : null
   if (!right || !firstValue) return null
-  if (pairMatch[3] && !secondValue) return null
+  if (pairMatch[2] && !secondValue) return null
 
   return {
     id: ruleId,
@@ -660,7 +724,8 @@ export const parseLookupStatements = (
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
   markClassIdByName: Map<string, string>,
-  lookupIdByName: Map<string, string>
+  lookupIdByName: Map<string, string>,
+  registerInlineGlyphClass?: InlineGlyphClassRegistrar
 ): ParsedLookupStatements => {
   const rules: Rule[] = []
   const unsupportedStatements: string[] = []
@@ -689,24 +754,39 @@ export const parseLookupStatements = (
         ruleId,
         origin,
         glyphClassIdByName,
-        lookupIdByName
+        lookupIdByName,
+        registerInlineGlyphClass
       ) ??
       parseContextualPositioningRule(
         statement,
         ruleId,
         origin,
         glyphClassIdByName,
-        lookupIdByName
+        lookupIdByName,
+        registerInlineGlyphClass
       ) ??
-      parseSubstitutionRule(statement, ruleId, origin, glyphClassIdByName) ??
+      parseSubstitutionRule(
+        statement,
+        ruleId,
+        origin,
+        glyphClassIdByName,
+        registerInlineGlyphClass
+      ) ??
       parseMarkPositioningRule(
         statement,
         ruleId,
         origin,
         glyphClassIdByName,
-        markClassIdByName
+        markClassIdByName,
+        registerInlineGlyphClass
       ) ??
-      parsePositioningRule(statement, ruleId, origin, glyphClassIdByName)
+      parsePositioningRule(
+        statement,
+        ruleId,
+        origin,
+        glyphClassIdByName,
+        registerInlineGlyphClass
+      )
 
     if (rule) {
       rules.push(rule)

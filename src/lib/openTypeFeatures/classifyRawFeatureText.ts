@@ -6,6 +6,7 @@ import {
   partitionLookupCandidates,
   type LookupDependencyCandidate,
 } from 'src/lib/openTypeFeatures/rawFeatureLookupParser'
+import type { InlineGlyphClassRegistrar } from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
 import {
   glyphsForGdefClassToken,
   parseGdefBlock,
@@ -161,7 +162,47 @@ const parseRawFeatureText = (
   const unsupportedStatements: string[] = []
   const glyphClassIdByName = new Map<string, string>()
   const markClassIdByName = new Map<string, string>()
+  const inlineGlyphClassIdByKey = new Map<string, string>()
   let workingText = stripComments(rawFeatureText)
+
+  const registerInlineGlyphClass: InlineGlyphClassRegistrar = (glyphs) => {
+    if (glyphs.length === 0) return null
+
+    const key = glyphs.join(' ')
+    const existingClassId = inlineGlyphClassIdByKey.get(key)
+    if (existingClassId) return existingClassId
+
+    const baseName = `@KumikoRawInline_${toStableIdPart(key)}`
+    let name = baseName
+    let classId = makeGlyphClassId(name)
+    let suffix = 2
+    while (glyphClassById.has(classId) || glyphClassIdByName.has(name)) {
+      const existing = glyphClassById.get(classId)
+      if (existing?.glyphs.join(' ') === key) {
+        inlineGlyphClassIdByKey.set(key, classId)
+        return classId
+      }
+      name = `${baseName}_${suffix}`
+      classId = makeGlyphClassId(name)
+      suffix += 1
+    }
+
+    const glyphClass: GlyphClass = {
+      id: classId,
+      name,
+      glyphs,
+      origin: featureOrigin,
+      meta: {
+        sourceSectionId: RAW_FEATURE_TEXT_SOURCE_ID,
+        classifiedFromRawFeatureText: true,
+      },
+    }
+    glyphClasses.push(glyphClass)
+    glyphClassById.set(classId, glyphClass)
+    glyphClassIdByName.set(name, classId)
+    inlineGlyphClassIdByKey.set(key, classId)
+    return classId
+  }
 
   for (const match of workingText.matchAll(
     /@([A-Za-z0-9_.-]+)\s*=\s*\[([^\]]*)\]\s*;/g
@@ -281,7 +322,8 @@ const parseRawFeatureText = (
       featureOrigin,
       glyphClassIdByName,
       markClassIdByName,
-      lookupIdByName
+      lookupIdByName,
+      registerInlineGlyphClass
     )
     const shape = getLookupShape(parsed.rules)
     if (parsed.unsupportedStatements.length > 0 || !shape) {
@@ -356,7 +398,8 @@ const parseRawFeatureText = (
         featureOrigin,
         glyphClassIdByName,
         markClassIdByName,
-        committedLookupIdByName
+        committedLookupIdByName,
+        registerInlineGlyphClass
       )
       const shape = getLookupShape(parsed.rules)
       if (parsed.unsupportedStatements.length > 0) {

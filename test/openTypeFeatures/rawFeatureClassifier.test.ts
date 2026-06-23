@@ -362,6 +362,176 @@ describe('OpenType raw FEA classifier', () => {
     expect(generated).not.toContain('Unsupported generated rule kind')
   })
 
+  it('promotes inline glyph lists in raw positioning selectors to glyph classes', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'languagesystem latn dflt;',
+          'lookup KernClass {',
+          '  pos [A Aacute] [V W] -80;',
+          '} KernClass;',
+          'lookup ShiftRound {',
+          '  pos [O Q] -20;',
+          '} ShiftRound;',
+          'feature kern {',
+          '  script latn;',
+          '  language dflt;',
+          '  lookup KernClass;',
+          '} kern;',
+          'feature calt {',
+          '  script latn;',
+          '  language dflt;',
+          "  pos [O Q]' lookup ShiftRound [T Y];",
+          "  ignore pos [A Aacute] [O Q]' [V W];",
+          '} calt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.glyphClasses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'glyph_class_raw_KumikoRawInline_A_Aacute',
+          name: '@KumikoRawInline_A_Aacute',
+          glyphs: ['A', 'Aacute'],
+          origin: 'manual',
+        }),
+        expect.objectContaining({
+          id: 'glyph_class_raw_KumikoRawInline_V_W',
+          name: '@KumikoRawInline_V_W',
+          glyphs: ['V', 'W'],
+          origin: 'manual',
+        }),
+        expect.objectContaining({
+          id: 'glyph_class_raw_KumikoRawInline_O_Q',
+          name: '@KumikoRawInline_O_Q',
+          glyphs: ['O', 'Q'],
+          origin: 'manual',
+        }),
+        expect.objectContaining({
+          id: 'glyph_class_raw_KumikoRawInline_T_Y',
+          name: '@KumikoRawInline_T_Y',
+          glyphs: ['T', 'Y'],
+          origin: 'manual',
+        }),
+      ])
+    )
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_KernClass',
+        table: 'GPOS',
+        lookupType: 'pairPos',
+        rules: [
+          {
+            kind: 'pairPositioning',
+            left: {
+              kind: 'class',
+              classId: 'glyph_class_raw_KumikoRawInline_A_Aacute',
+            },
+            right: {
+              kind: 'class',
+              classId: 'glyph_class_raw_KumikoRawInline_V_W',
+            },
+            firstValue: { xAdvance: -80 },
+          },
+        ],
+      },
+      {
+        id: 'lookup_raw_ShiftRound',
+        table: 'GPOS',
+        lookupType: 'singlePos',
+        rules: [
+          {
+            kind: 'singlePositioning',
+            target: {
+              kind: 'class',
+              classId: 'glyph_class_raw_KumikoRawInline_O_Q',
+            },
+            value: { xAdvance: -20 },
+          },
+        ],
+      },
+      {
+        id: 'lookup_raw_calt_1',
+        table: 'GPOS',
+        lookupType: 'chainingContextPos',
+        rules: [
+          {
+            kind: 'contextualPositioning',
+            input: [
+              {
+                selector: {
+                  kind: 'class',
+                  classId: 'glyph_class_raw_KumikoRawInline_O_Q',
+                },
+                lookupIds: ['lookup_raw_ShiftRound'],
+              },
+            ],
+            lookahead: [
+              {
+                kind: 'class',
+                classId: 'glyph_class_raw_KumikoRawInline_T_Y',
+              },
+            ],
+          },
+          {
+            kind: 'contextualPositioning',
+            backtrack: [
+              {
+                kind: 'class',
+                classId: 'glyph_class_raw_KumikoRawInline_A_Aacute',
+              },
+            ],
+            input: [
+              {
+                selector: {
+                  kind: 'class',
+                  classId: 'glyph_class_raw_KumikoRawInline_O_Q',
+                },
+              },
+            ],
+            lookahead: [
+              {
+                kind: 'class',
+                classId: 'glyph_class_raw_KumikoRawInline_V_W',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'glyphClass',
+          id: 'glyph_class_raw_KumikoRawInline_A_Aacute',
+        },
+        { kind: 'glyphClass', id: 'glyph_class_raw_KumikoRawInline_V_W' },
+        { kind: 'glyphClass', id: 'glyph_class_raw_KumikoRawInline_O_Q' },
+        { kind: 'glyphClass', id: 'glyph_class_raw_KumikoRawInline_T_Y' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('@KumikoRawInline_A_Aacute = [A Aacute];')
+    expect(generated).toContain(
+      'pos @KumikoRawInline_A_Aacute @KumikoRawInline_V_W -80;'
+    )
+    expect(generated).toContain('pos @KumikoRawInline_O_Q -20;')
+    expect(generated).toContain(
+      "pos @KumikoRawInline_O_Q' lookup ShiftRound @KumikoRawInline_T_Y;"
+    )
+    expect(generated).toContain(
+      "ignore pos @KumikoRawInline_A_Aacute @KumikoRawInline_O_Q' @KumikoRawInline_V_W;"
+    )
+  })
+
   it('classifies raw pair positioning with second value records', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(
