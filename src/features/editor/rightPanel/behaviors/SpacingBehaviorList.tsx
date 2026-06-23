@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { MinusCircle, PlusCircle } from 'iconoir-react'
+import { useState } from 'react'
 import type {
   SpacingBehaviorDraft,
   SpacingBehaviorRow,
@@ -17,32 +18,16 @@ import { useTranslation } from 'react-i18next'
 
 interface SpacingBehaviorListProps {
   rows: SpacingBehaviorRow[]
-  leftDraftRowIds: string[]
-  rightDraftRowIds: string[]
   currentGlyphId: string
-  onAddLeftDraftRow: () => void
-  onAddRightDraftRow: () => void
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: (row: SpacingBehaviorRow) => void
-  onSplitClassMember: (input: SplitSpacingClassMemberInput) => void
-  onLeftDraftCommitted: (rowId: string) => void
-  onRightDraftCommitted: (rowId: string) => void
-  onOpenPair: (left: string, right: string) => void
 }
 
 export function SpacingBehaviorList({
   rows,
-  leftDraftRowIds,
-  rightDraftRowIds,
   currentGlyphId,
-  onAddLeftDraftRow,
-  onAddRightDraftRow,
   onCommit,
   onDelete,
-  onSplitClassMember,
-  onLeftDraftCommitted,
-  onRightDraftCommitted,
-  onOpenPair,
 }: SpacingBehaviorListProps) {
   const { t } = useTranslation()
 
@@ -64,29 +49,19 @@ export function SpacingBehaviorList({
         title={t('editor.leftSpacing')}
         side="left"
         rows={leftRows}
-        draftRowIds={leftDraftRowIds}
         currentGlyphId={currentGlyphId}
         emptyLabel="No left-side pairs yet."
-        onAddDraftRow={onAddLeftDraftRow}
         onCommit={onCommit}
         onDelete={onDelete}
-        onSplitClassMember={onSplitClassMember}
-        onDraftCommitted={onLeftDraftCommitted}
-        onOpenPair={onOpenPair}
       />
       <SpacingBehaviorGroup
         title={t('editor.rightSpacing')}
         side="right"
         rows={rightRows}
-        draftRowIds={rightDraftRowIds}
         currentGlyphId={currentGlyphId}
         emptyLabel="No right-side pairs yet."
-        onAddDraftRow={onAddRightDraftRow}
         onCommit={onCommit}
         onDelete={onDelete}
-        onSplitClassMember={onSplitClassMember}
-        onDraftCommitted={onRightDraftCommitted}
-        onOpenPair={onOpenPair}
       />
     </Stack>
   )
@@ -96,32 +71,31 @@ interface SpacingBehaviorGroupProps {
   title: string
   side: 'left' | 'right'
   rows: SpacingBehaviorRow[]
-  draftRowIds: string[]
   currentGlyphId: string
   emptyLabel: string
-  onAddDraftRow: () => void
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: (row: SpacingBehaviorRow) => void
-  onSplitClassMember: (input: SplitSpacingClassMemberInput) => void
-  onDraftCommitted: (rowId: string) => void
-  onOpenPair: (left: string, right: string) => void
 }
 
 function SpacingBehaviorGroup({
   title,
   side,
   rows,
-  draftRowIds,
   currentGlyphId,
   emptyLabel,
-  onAddDraftRow,
   onCommit,
   onDelete,
-  onSplitClassMember,
-  onDraftCommitted,
-  onOpenPair,
 }: SpacingBehaviorGroupProps) {
   const { t } = useTranslation()
+  const [draftRowIds, setDraftRowIds] = useState<string[]>([])
+
+  const addDraftRow = () =>
+    setDraftRowIds((rowIds) => [
+      ...rowIds,
+      `${side}-spacing-draft-${Date.now()}`,
+    ])
+  const removeDraftRow = (rowId: string) =>
+    setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
 
   return (
     <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
@@ -146,7 +120,7 @@ function SpacingBehaviorGroup({
               icon={<PlusCircle width={16} height={16} aria-hidden="true" />}
               size="xs"
               variant="ghost"
-              onClick={onAddDraftRow}
+              onClick={addDraftRow}
             />
           </Tooltip>
           <Tooltip label={t('editor.removeTheLastDraftRow')}>
@@ -156,7 +130,7 @@ function SpacingBehaviorGroup({
               size="xs"
               variant="ghost"
               isDisabled={draftRowIds.length === 0}
-              onClick={() => onDraftCommitted(draftRowIds.at(-1) ?? '')}
+              onClick={() => removeDraftRow(draftRowIds.at(-1) ?? '')}
             />
           </Tooltip>
         </HStack>
@@ -175,8 +149,6 @@ function SpacingBehaviorGroup({
           currentGlyphId={currentGlyphId}
           onCommit={onCommit}
           onDelete={() => onDelete(row)}
-          onSplitClassMember={onSplitClassMember}
-          onOpenPair={onOpenPair}
         />
       ))}
       {draftRowIds.map((rowId) => (
@@ -186,23 +158,12 @@ function SpacingBehaviorGroup({
           side={side}
           currentGlyphId={currentGlyphId}
           onCommit={onCommit}
-          onDelete={() => onDraftCommitted(rowId)}
-          onSplitClassMember={onSplitClassMember}
-          onDraftCommitted={() => onDraftCommitted(rowId)}
-          onOpenPair={onOpenPair}
+          onDelete={() => removeDraftRow(rowId)}
+          onDraftCommitted={() => removeDraftRow(rowId)}
         />
       ))}
     </Box>
   )
-}
-
-interface SplitSpacingClassMemberInput {
-  lookupId: string
-  ruleId: string
-  side: 'left' | 'right'
-  glyphId: string
-  counterpartGlyphId: string
-  value: number
 }
 
 function getSpacingRowKey(row: SpacingBehaviorRow) {

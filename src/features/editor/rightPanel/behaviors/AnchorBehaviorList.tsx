@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { MinusCircle, PlusCircle } from 'iconoir-react'
+import { useState } from 'react'
 import type {
   AnchorBehaviorDraft,
   AnchorBehaviorRow,
@@ -17,24 +18,24 @@ import { useTranslation } from 'react-i18next'
 
 interface AnchorBehaviorListProps {
   rows: AnchorBehaviorRow[]
-  draftRowIds: string[]
   currentGlyphId: string
-  onAddDraftRow: () => void
   onCommit: (draft: AnchorBehaviorDraft) => void
   onDelete: (row: AnchorBehaviorRow) => void
-  onDraftCommitted: (rowId: string) => void
 }
 
 export function AnchorBehaviorList({
   rows,
-  draftRowIds,
   currentGlyphId,
-  onAddDraftRow,
   onCommit,
   onDelete,
-  onDraftCommitted,
 }: AnchorBehaviorListProps) {
   const { t } = useTranslation()
+  const [draftRowIds, setDraftRowIds] = useState<string[]>([])
+
+  const addDraftRow = () =>
+    setDraftRowIds((rowIds) => [...rowIds, `anchor-draft-${Date.now()}`])
+  const removeDraftRow = (rowId: string) =>
+    setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
 
   return (
     <Stack spacing={2}>
@@ -52,7 +53,7 @@ export function AnchorBehaviorList({
               icon={<PlusCircle width={17} height={17} aria-hidden="true" />}
               size="xs"
               variant="ghost"
-              onClick={onAddDraftRow}
+              onClick={addDraftRow}
             />
           </Tooltip>
           <Tooltip label={t('editor.removeTheLastDraftRow')}>
@@ -62,7 +63,7 @@ export function AnchorBehaviorList({
               size="xs"
               variant="ghost"
               isDisabled={draftRowIds.length === 0}
-              onClick={() => onDraftCommitted(draftRowIds.at(-1) ?? '')}
+              onClick={() => removeDraftRow(draftRowIds.at(-1) ?? '')}
             />
           </Tooltip>
         </HStack>
@@ -89,8 +90,8 @@ export function AnchorBehaviorList({
             rowId={rowId}
             currentGlyphId={currentGlyphId}
             onCommit={onCommit}
-            onDelete={() => onDraftCommitted(rowId)}
-            onDraftCommitted={() => onDraftCommitted(rowId)}
+            onDelete={() => removeDraftRow(rowId)}
+            onDraftCommitted={() => removeDraftRow(rowId)}
           />
         ))}
       </Box>

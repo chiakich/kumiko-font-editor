@@ -18,16 +18,12 @@ interface LeftPanelContentProps {
   glyphMap: Record<string, GlyphData>
   glyphs: GlyphData[]
   selectedGlyph: GlyphData | null
-  onAddGlyphToEditor: (glyphId: string) => void
-  onBack: () => void
 }
 
 export function LeftPanelContent({
   glyphMap,
   glyphs,
   selectedGlyph,
-  onAddGlyphToEditor,
-  onBack,
 }: LeftPanelContentProps) {
   const fontData = useStore((state) => state.fontData)
   const projectId = useStore((state) => state.projectId)
@@ -115,7 +111,6 @@ export function LeftPanelContent({
         <LeftPanelHeader
           hasSelectedGlyph={Boolean(selectedGlyph)}
           isCjkGlyph={isCjkGlyph}
-          onBack={onBack}
         />
 
         {isCjkGlyph && selectedGlyph ? (
@@ -151,7 +146,6 @@ export function LeftPanelContent({
           glyph={previewGlyph}
           glyphMap={glyphMap}
           targetRect={targetRect}
-          onAddToEditor={onAddGlyphToEditor}
         />
       </Stack>
 

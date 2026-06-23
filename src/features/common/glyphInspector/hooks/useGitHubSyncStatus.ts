@@ -17,7 +17,7 @@ import {
 import { useStore } from 'src/store'
 import { getActiveUfoIdFromArchive } from 'src/features/common/glyphInspector/utils/githubCommitFlowUtils'
 
-const syncReportQueryKey = (projectId: string | null) => [
+export const githubSyncReportQueryKey = (projectId: string | null) => [
   'githubSyncReport',
   projectId,
 ]
@@ -36,7 +36,7 @@ export const useGitHubSyncStatus = (input: {
   >({})
 
   const reportQuery = useQuery({
-    queryKey: syncReportQueryKey(input.projectId),
+    queryKey: githubSyncReportQueryKey(input.projectId),
     enabled: input.enabled && Boolean(input.projectId),
     staleTime: 30_000,
     retry: false,
@@ -94,7 +94,7 @@ export const useGitHubSyncStatus = (input: {
     onSuccess: () => {
       setResolutions({})
       void queryClient.invalidateQueries({
-        queryKey: syncReportQueryKey(input.projectId),
+        queryKey: githubSyncReportQueryKey(input.projectId),
       })
     },
   })

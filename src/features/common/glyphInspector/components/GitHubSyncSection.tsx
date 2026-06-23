@@ -7,13 +7,18 @@ import {
   Spinner,
   Stack,
   Text,
+  useToast,
 } from '@chakra-ui/react'
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type {
   GlyphSyncEntry,
   ProjectSyncReport,
   SyncConflictResolution,
 } from 'src/lib/github/sync'
+import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
+import { useGitHubSyncStatus } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 
 export interface GitHubSyncSectionProps {
   isLoading: boolean
@@ -24,6 +29,67 @@ export interface GitHubSyncSectionProps {
   unresolvedConflictCount: number
   onResolutionChange: (path: string, resolution: SyncConflictResolution) => void
   onApplyRemote: () => void
+}
+
+interface GitHubSyncSectionContainerProps {
+  enabled: boolean
+  projectId: string | null
+  onBlockingSyncConflictsChange: (hasBlockingSyncConflicts: boolean) => void
+}
+
+export function GitHubSyncSectionContainer({
+  enabled,
+  projectId,
+  onBlockingSyncConflictsChange,
+}: GitHubSyncSectionContainerProps) {
+  const toast = useToast()
+  const queryClient = useQueryClient()
+  const syncStatus = useGitHubSyncStatus({ projectId, enabled })
+  const hasBlockingSyncConflicts = Boolean(
+    syncStatus.report && syncStatus.report.conflicts.length > 0
+  )
+
+  useEffect(() => {
+    onBlockingSyncConflictsChange(hasBlockingSyncConflicts)
+  }, [hasBlockingSyncConflicts, onBlockingSyncConflictsChange])
+
+  const handleApplyRemoteSync = async () => {
+    try {
+      const result = await syncStatus.applyRemote()
+      void queryClient.invalidateQueries({
+        queryKey: projectSyncDirtyStatusQueryKey(projectId),
+      })
+      toast({
+        title: '已套用遠端更新',
+        description: `更新了 ${result.appliedCount} 個檔案。`,
+        status: 'success',
+        duration: 3200,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: '套用遠端更新失敗',
+        description:
+          error instanceof Error ? error.message : '目前無法套用遠端更新。',
+        status: 'error',
+        duration: 4200,
+        isClosable: true,
+      })
+    }
+  }
+
+  return (
+    <GitHubSyncSection
+      isLoading={syncStatus.isLoading}
+      errorMessage={syncStatus.errorMessage}
+      report={syncStatus.report}
+      resolutions={syncStatus.resolutions}
+      isApplying={syncStatus.isApplying}
+      unresolvedConflictCount={syncStatus.unresolvedConflictCount}
+      onResolutionChange={syncStatus.setResolution}
+      onApplyRemote={() => void handleApplyRemoteSync()}
+    />
+  )
 }
 
 const shortSha = (sha: string) => sha.slice(0, 7)

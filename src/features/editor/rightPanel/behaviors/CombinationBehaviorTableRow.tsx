@@ -21,6 +21,7 @@ import {
   type CombinationBehaviorRow,
   type CombinationBehaviorType,
 } from 'src/lib/openTypeFeatures'
+import { useOpenGlyphInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
 import { useTranslation } from 'react-i18next'
 
 interface CombinationBehaviorTableRowProps {
@@ -29,7 +30,6 @@ interface CombinationBehaviorTableRowProps {
   onCommit: (draft: CombinationBehaviorDraft) => void
   onDelete: () => void
   onDraftCommitted?: () => void
-  onOpenGlyph: (glyphId: string) => void
 }
 
 export function CombinationBehaviorTableRow({
@@ -38,9 +38,9 @@ export function CombinationBehaviorTableRow({
   onCommit,
   onDelete,
   onDraftCommitted,
-  onOpenGlyph,
 }: CombinationBehaviorTableRowProps) {
   const { t } = useTranslation()
+  const openGlyph = useOpenGlyphInEditor()
 
   const [input, setInput] = useState(row?.input ?? '')
   const [output, setOutput] = useState(row?.output ?? '')
@@ -129,7 +129,7 @@ export function CombinationBehaviorTableRow({
             size="xs"
             variant="ghost"
             isDisabled={!output}
-            onClick={() => onOpenGlyph(output)}
+            onClick={() => openGlyph(output)}
           />
         </Tooltip>
         <Tooltip label={t('editor.deleteBehavior')}>

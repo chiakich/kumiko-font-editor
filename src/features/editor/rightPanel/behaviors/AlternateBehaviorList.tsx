@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { MinusCircle, PlusCircle } from 'iconoir-react'
+import { useState } from 'react'
 import type {
   AlternateBehaviorDraft,
   AlternateBehaviorRow,
@@ -17,26 +18,24 @@ import { useTranslation } from 'react-i18next'
 
 interface AlternateBehaviorListProps {
   rows: AlternateBehaviorRow[]
-  draftRowIds: string[]
   currentGlyphId: string
-  onAddDraftRow: () => void
   onCommit: (draft: AlternateBehaviorDraft) => void
   onDelete: (row: AlternateBehaviorRow) => void
-  onDraftCommitted: (rowId: string) => void
-  onOpenGlyph: (glyphId: string) => void
 }
 
 export function AlternateBehaviorList({
   rows,
-  draftRowIds,
   currentGlyphId,
-  onAddDraftRow,
   onCommit,
   onDelete,
-  onDraftCommitted,
-  onOpenGlyph,
 }: AlternateBehaviorListProps) {
   const { t } = useTranslation()
+  const [draftRowIds, setDraftRowIds] = useState<string[]>([])
+
+  const addDraftRow = () =>
+    setDraftRowIds((rowIds) => [...rowIds, `alternate-draft-${Date.now()}`])
+  const removeDraftRow = (rowId: string) =>
+    setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
 
   return (
     <Stack spacing={2}>
@@ -54,7 +53,7 @@ export function AlternateBehaviorList({
               icon={<PlusCircle width={17} height={17} aria-hidden="true" />}
               size="xs"
               variant="ghost"
-              onClick={onAddDraftRow}
+              onClick={addDraftRow}
             />
           </Tooltip>
           <Tooltip label={t('editor.removeTheLastDraftRow')}>
@@ -64,7 +63,7 @@ export function AlternateBehaviorList({
               size="xs"
               variant="ghost"
               isDisabled={draftRowIds.length === 0}
-              onClick={() => onDraftCommitted(draftRowIds.at(-1) ?? '')}
+              onClick={() => removeDraftRow(draftRowIds.at(-1) ?? '')}
             />
           </Tooltip>
         </HStack>
@@ -83,7 +82,6 @@ export function AlternateBehaviorList({
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
-            onOpenGlyph={onOpenGlyph}
           />
         ))}
         {draftRowIds.map((rowId) => (
@@ -92,9 +90,8 @@ export function AlternateBehaviorList({
             rowId={rowId}
             currentGlyphId={currentGlyphId}
             onCommit={onCommit}
-            onDelete={() => onDraftCommitted(rowId)}
-            onDraftCommitted={() => onDraftCommitted(rowId)}
-            onOpenGlyph={onOpenGlyph}
+            onDelete={() => removeDraftRow(rowId)}
+            onDraftCommitted={() => removeDraftRow(rowId)}
           />
         ))}
       </Box>

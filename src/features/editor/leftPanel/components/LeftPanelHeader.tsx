@@ -1,18 +1,18 @@
 import { Box, Button, Heading, HStack, Text } from '@chakra-ui/react'
+import { useReturnToOverview } from 'src/features/editor/leftPanel/hooks/useReturnToOverview'
 import { useTranslation } from 'react-i18next'
 
 interface LeftPanelHeaderProps {
   hasSelectedGlyph: boolean
   isCjkGlyph: boolean
-  onBack: () => void
 }
 
 export function LeftPanelHeader({
   hasSelectedGlyph,
   isCjkGlyph,
-  onBack,
 }: LeftPanelHeaderProps) {
   const { t } = useTranslation()
+  const returnToOverview = useReturnToOverview()
 
   return (
     <>
@@ -39,7 +39,7 @@ export function LeftPanelHeader({
           </Heading>
         </Box>
 
-        <Button size="sm" variant="ghost" onClick={onBack}>
+        <Button size="sm" variant="ghost" onClick={returnToOverview}>
           {t('editor.backToAllGlyphs')}
         </Button>
       </HStack>

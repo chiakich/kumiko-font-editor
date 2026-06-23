@@ -42,18 +42,6 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const { t } = useTranslation()
   const toast = useToast()
 
-  const [draftRowIds, setDraftRowIds] = useState<string[]>([])
-  const [alternateDraftRowIds, setAlternateDraftRowIds] = useState<string[]>([])
-  const [leftSpacingDraftRowIds, setLeftSpacingDraftRowIds] = useState<
-    string[]
-  >([])
-  const [rightSpacingDraftRowIds, setRightSpacingDraftRowIds] = useState<
-    string[]
-  >([])
-  const [contextualDraftRowIds, setContextualDraftRowIds] = useState<string[]>(
-    []
-  )
-  const [anchorDraftRowIds, setAnchorDraftRowIds] = useState<string[]>([])
   const [unusedGlyphPrompt, setUnusedGlyphPrompt] =
     useState<UnusedGlyphPrompt | null>(null)
   const cancelUnusedGlyphRef = useRef<HTMLButtonElement | null>(null)
@@ -73,9 +61,6 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   )
   const upsertSpacingBehavior = useStore((state) => state.upsertSpacingBehavior)
   const deleteSpacingBehavior = useStore((state) => state.deleteSpacingBehavior)
-  const splitSpacingClassMember = useStore(
-    (state) => state.splitSpacingClassMember
-  )
   const upsertContextualBehavior = useStore(
     (state) => state.upsertContextualBehavior
   )
@@ -84,11 +69,7 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   )
   const upsertAnchorBehavior = useStore((state) => state.upsertAnchorBehavior)
   const deleteAnchorBehavior = useStore((state) => state.deleteAnchorBehavior)
-  const addGlyphToEditor = useStore((state) => state.addGlyphToEditor)
-  const insertGlyphIntoEditor = useStore((state) => state.insertGlyphIntoEditor)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
-  const setSelectedGlyphId = useStore((state) => state.setSelectedGlyphId)
-  const setWorkspaceView = useStore((state) => state.setWorkspaceView)
 
   const combinationRows = useMemo(
     () => (fontData ? deriveGlyphCombinationBehaviors(fontData, glyph.id) : []),
@@ -110,20 +91,6 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
     () => (fontData ? deriveGlyphAnchorBehaviors(fontData, glyph.id) : []),
     [fontData, glyph.id]
   )
-
-  const openGlyph = (glyphId: string) => {
-    if (!fontData?.glyphs[glyphId]) return
-    addGlyphToEditor(glyphId)
-    setSelectedGlyphId(glyphId)
-    setWorkspaceView('editor')
-  }
-
-  const openSpacingPair = (left: string, right: string) => {
-    if (!fontData?.glyphs[left] || !fontData.glyphs[right]) return
-    addGlyphToEditor(left)
-    insertGlyphIntoEditor(right, left)
-    setWorkspaceView('editor')
-  }
 
   const promptUnusedGlyphCleanup = (prompt: UnusedGlyphPrompt) => {
     if (!fontData?.glyphs[prompt.glyphId]) return false
@@ -221,104 +188,33 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
     <>
       <Stack spacing={4}>
         <CombinationBehaviorList
-          draftRowIds={draftRowIds}
           rows={combinationRows}
-          onAddDraftRow={() =>
-            setDraftRowIds((rowIds) => [...rowIds, `draft-${Date.now()}`])
-          }
           onCommit={(draft) => upsertCombinationBehavior(draft)}
           onDelete={deleteCombinationRow}
-          onDraftCommitted={(rowId) =>
-            setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
-          }
-          onOpenGlyph={openGlyph}
         />
         <AlternateBehaviorList
           currentGlyphId={glyph.id}
-          draftRowIds={alternateDraftRowIds}
           rows={alternateRows}
-          onAddDraftRow={() =>
-            setAlternateDraftRowIds((rowIds) => [
-              ...rowIds,
-              `alternate-draft-${Date.now()}`,
-            ])
-          }
           onCommit={(draft) => upsertAlternateBehavior(draft)}
           onDelete={deleteAlternateRow}
-          onDraftCommitted={(rowId) =>
-            setAlternateDraftRowIds((rowIds) =>
-              rowIds.filter((id) => id !== rowId)
-            )
-          }
-          onOpenGlyph={openGlyph}
         />
         <SpacingBehaviorList
           currentGlyphId={glyph.id}
-          leftDraftRowIds={leftSpacingDraftRowIds}
-          rightDraftRowIds={rightSpacingDraftRowIds}
           rows={spacingRows}
-          onAddLeftDraftRow={() =>
-            setLeftSpacingDraftRowIds((rowIds) => [
-              ...rowIds,
-              `left-spacing-draft-${Date.now()}`,
-            ])
-          }
-          onAddRightDraftRow={() =>
-            setRightSpacingDraftRowIds((rowIds) => [
-              ...rowIds,
-              `right-spacing-draft-${Date.now()}`,
-            ])
-          }
           onCommit={(draft) => upsertSpacingBehavior(draft)}
           onDelete={deleteSpacingRow}
-          onSplitClassMember={(input) => splitSpacingClassMember(input)}
-          onLeftDraftCommitted={(rowId) =>
-            setLeftSpacingDraftRowIds((rowIds) =>
-              rowIds.filter((id) => id !== rowId)
-            )
-          }
-          onRightDraftCommitted={(rowId) =>
-            setRightSpacingDraftRowIds((rowIds) =>
-              rowIds.filter((id) => id !== rowId)
-            )
-          }
-          onOpenPair={openSpacingPair}
         />
         <ContextualBehaviorList
           currentGlyphId={glyph.id}
-          draftRowIds={contextualDraftRowIds}
           rows={contextualRows}
-          onAddDraftRow={() =>
-            setContextualDraftRowIds((rowIds) => [
-              ...rowIds,
-              `contextual-draft-${Date.now()}`,
-            ])
-          }
           onCommit={(draft) => upsertContextualBehavior(draft)}
           onDelete={deleteContextualRow}
-          onDraftCommitted={(rowId) =>
-            setContextualDraftRowIds((rowIds) =>
-              rowIds.filter((id) => id !== rowId)
-            )
-          }
         />
         <AnchorBehaviorList
           currentGlyphId={glyph.id}
-          draftRowIds={anchorDraftRowIds}
           rows={anchorRows}
-          onAddDraftRow={() =>
-            setAnchorDraftRowIds((rowIds) => [
-              ...rowIds,
-              `anchor-draft-${Date.now()}`,
-            ])
-          }
           onCommit={(draft) => upsertAnchorBehavior(draft)}
           onDelete={deleteAnchorRow}
-          onDraftCommitted={(rowId) =>
-            setAnchorDraftRowIds((rowIds) =>
-              rowIds.filter((id) => id !== rowId)
-            )
-          }
         />
       </Stack>
 

@@ -26,6 +26,8 @@ import {
   type SpacingBehaviorDraft,
   type SpacingBehaviorRow,
 } from 'src/lib/openTypeFeatures'
+import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import { useStore } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
 interface SpacingBehaviorTableRowProps {
@@ -35,9 +37,7 @@ interface SpacingBehaviorTableRowProps {
   currentGlyphId?: string
   onCommit: (draft: SpacingBehaviorDraft) => void
   onDelete: () => void
-  onSplitClassMember: (input: SplitSpacingClassMemberInput) => void
   onDraftCommitted?: () => void
-  onOpenPair: (left: string, right: string) => void
 }
 
 export function SpacingBehaviorTableRow({
@@ -47,11 +47,10 @@ export function SpacingBehaviorTableRow({
   currentGlyphId = '',
   onCommit,
   onDelete,
-  onSplitClassMember,
   onDraftCommitted,
-  onOpenPair,
 }: SpacingBehaviorTableRowProps) {
   const { t } = useTranslation()
+  const openSpacingPair = useOpenSpacingPairInEditor()
 
   const [editableGlyph, setEditableGlyph] = useState(
     getInitialEditableGlyph(row, side)
@@ -146,7 +145,7 @@ export function SpacingBehaviorTableRow({
               size="xs"
               variant="ghost"
               isDisabled={!left || !right}
-              onClick={() => onOpenPair(left, right)}
+              onClick={() => openSpacingPair(left, right)}
             >
               {t('editor.edit')}
             </Button>
@@ -245,8 +244,6 @@ export function SpacingBehaviorTableRow({
             left={left}
             right={right}
             value={Number.isFinite(numericValue) ? numericValue : row.value}
-            onOpenPair={onOpenPair}
-            onSplitClassMember={onSplitClassMember}
           />
         </Collapse>
       ) : null}
@@ -282,15 +279,6 @@ function FixedGlyphCell({ label }: { label: string }) {
       </Text>
     </Box>
   )
-}
-
-interface SplitSpacingClassMemberInput {
-  lookupId: string
-  ruleId: string
-  side: 'left' | 'right'
-  glyphId: string
-  counterpartGlyphId: string
-  value: number
 }
 
 function PairLabel({
@@ -353,15 +341,11 @@ function ClassMembersPanel({
   left,
   right,
   value,
-  onOpenPair,
-  onSplitClassMember,
 }: {
   row: SpacingBehaviorRow
   left: string
   right: string
   value: number
-  onOpenPair: (left: string, right: string) => void
-  onSplitClassMember: (input: SplitSpacingClassMemberInput) => void
 }) {
   return (
     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
@@ -372,8 +356,6 @@ function ClassMembersPanel({
         counterpartGlyphId={right}
         row={row}
         value={value}
-        onOpenPair={onOpenPair}
-        onSplitClassMember={onSplitClassMember}
       />
       <ClassMemberList
         title={row.rightLabel ?? right}
@@ -382,8 +364,6 @@ function ClassMembersPanel({
         counterpartGlyphId={left}
         row={row}
         value={value}
-        onOpenPair={onOpenPair}
-        onSplitClassMember={onSplitClassMember}
       />
     </SimpleGrid>
   )
@@ -396,8 +376,6 @@ function ClassMemberList({
   counterpartGlyphId,
   row,
   value,
-  onOpenPair,
-  onSplitClassMember,
 }: {
   title: string
   side: 'left' | 'right'
@@ -405,10 +383,12 @@ function ClassMemberList({
   counterpartGlyphId: string
   row: SpacingBehaviorRow
   value: number
-  onOpenPair: (left: string, right: string) => void
-  onSplitClassMember: (input: SplitSpacingClassMemberInput) => void
 }) {
   const { t } = useTranslation()
+  const openSpacingPair = useOpenSpacingPairInEditor()
+  const splitSpacingClassMember = useStore(
+    (state) => state.splitSpacingClassMember
+  )
 
   return (
     <Box borderWidth="1px" borderColor="field.line" bg="field.panelMuted">
@@ -435,7 +415,7 @@ function ClassMemberList({
                   icon={<ArrowLeftTag width={13} height={13} />}
                   size="xs"
                   variant="ghost"
-                  onClick={() => onOpenPair(pairLeft, pairRight)}
+                  onClick={() => openSpacingPair(pairLeft, pairRight)}
                 />
               </Tooltip>
               {row.scope === 'classPair' ? (
@@ -446,7 +426,7 @@ function ClassMemberList({
                     size="xs"
                     variant="ghost"
                     onClick={() =>
-                      onSplitClassMember({
+                      splitSpacingClassMember({
                         lookupId: row.lookupId,
                         ruleId: row.ruleId,
                         side,

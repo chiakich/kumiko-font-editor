@@ -14,7 +14,6 @@ import { setPendingEditorViewportRect } from 'src/features/editor/pendingEditorV
 import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
-import { OverviewCustomFilterModal } from 'src/features/fontOverview/components/OverviewCustomFilterModal'
 import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
 import { OverviewRightPanel } from 'src/features/fontOverview/components/OverviewRightPanel'
 import { OverviewSidebar } from 'src/features/fontOverview/components/OverviewSidebar'
@@ -63,25 +62,12 @@ export function FontOverviewScreen() {
     glyphIds: string[]
     sectionId: string
   } | null>(null)
-  const [editingCustomFilterId, setEditingCustomFilterId] = useState<
-    string | null
-  >(null)
-  const [isCreatingCustomFilter, setIsCreatingCustomFilter] = useState(false)
   const currentSearchQuery = useStore((state) => state.currentSearchQuery)
   const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
   const overviewSearchOptions = useStore((state) => state.overviewSearchOptions)
   const setSearchQuery = useStore((state) => state.setSearchQuery)
   const setOverviewSearchOptions = useStore(
     (state) => state.setOverviewSearchOptions
-  )
-  const addOverviewCustomFilter = useStore(
-    (state) => state.addOverviewCustomFilter
-  )
-  const updateOverviewCustomFilter = useStore(
-    (state) => state.updateOverviewCustomFilter
-  )
-  const deleteOverviewCustomFilter = useStore(
-    (state) => state.deleteOverviewCustomFilter
   )
   const filteredGlyphList = useStore((state) => state.filteredGlyphList)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
@@ -137,12 +123,6 @@ export function FontOverviewScreen() {
 
   const selectedGlyph =
     overviewGlyphs.find((glyph) => glyph.id === selectedGlyphId) ?? null
-  const editingCustomFilter =
-    overviewCustomFilters.find(
-      (filter) => filter.id === editingCustomFilterId
-    ) ?? null
-  const isCustomFilterModalOpen =
-    isCreatingCustomFilter || editingCustomFilter !== null
   const overviewGridZoom = useMemo(
     () => buildOverviewGridZoomLayout(overviewGridSizePx),
     [overviewGridSizePx]
@@ -324,21 +304,6 @@ export function FontOverviewScreen() {
       )
     }
   }
-
-  const handleOpenCreateCustomFilter = useCallback(() => {
-    setEditingCustomFilterId(null)
-    setIsCreatingCustomFilter(true)
-  }, [])
-
-  const handleOpenEditCustomFilter = useCallback((filterId: string) => {
-    setIsCreatingCustomFilter(false)
-    setEditingCustomFilterId(filterId)
-  }, [])
-
-  const handleCloseCustomFilterModal = useCallback(() => {
-    setIsCreatingCustomFilter(false)
-    setEditingCustomFilterId(null)
-  }, [])
 
   const applyOverviewGridSizePx = useCallback(
     (nextSizePx: number) => {
@@ -526,8 +491,6 @@ export function FontOverviewScreen() {
             treeNodes={treeNodes}
             visibleGlyphCount={overviewGlyphs.length}
             onCloseProject={closeProject}
-            onCreateCustomFilter={handleOpenCreateCustomFilter}
-            onEditCustomFilter={handleOpenEditCustomFilter}
             onSearchQueryChange={setSearchQuery}
             onSearchOptionsChange={setOverviewSearchOptions}
             onSectionSelect={handleSectionSelect}
@@ -578,15 +541,6 @@ export function FontOverviewScreen() {
         onInputChange={setGlyphInputValue}
         onSubmitGlyphNames={addGlyphNames}
         onSubmitManualInput={() => void addGlyphsFromInput()}
-      />
-
-      <OverviewCustomFilterModal
-        filter={editingCustomFilter}
-        isOpen={isCustomFilterModalOpen}
-        onClose={handleCloseCustomFilterModal}
-        onCreateFilter={addOverviewCustomFilter}
-        onDeleteFilter={deleteOverviewCustomFilter}
-        onUpdateFilter={updateOverviewCustomFilter}
       />
     </>
   )

@@ -11,16 +11,16 @@ import {
 import { NavArrowDown, NavArrowRight, Plus, Settings } from 'iconoir-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { OverviewCustomFilterModal } from 'src/features/fontOverview/components/OverviewCustomFilterModal'
 import {
   customOverviewFilterNodeIdToFilterId,
   type GlyphOverviewTreeNode,
 } from 'src/lib/glyph/glyphOverview'
+import { useStore } from 'src/store'
 
 interface OverviewTreeNavProps {
   nodes: GlyphOverviewTreeNode[]
   selectedSectionId: string
-  onCreateCustomFilter: () => void
-  onEditCustomFilter: (filterId: string) => void
   onSectionSelect: (sectionId: string) => void
 }
 
@@ -241,14 +241,45 @@ function OverviewTreeBranch({
 export function OverviewTreeNav({
   nodes,
   selectedSectionId,
-  onCreateCustomFilter,
-  onEditCustomFilter,
   onSectionSelect,
 }: OverviewTreeNavProps) {
   const { t } = useTranslation()
   const [expandedIds, setExpandedIds] = useState(DEFAULT_EXPANDED_NODE_IDS)
+  const [editingCustomFilterId, setEditingCustomFilterId] = useState<
+    string | null
+  >(null)
+  const [isCreatingCustomFilter, setIsCreatingCustomFilter] = useState(false)
+  const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
+  const addOverviewCustomFilter = useStore(
+    (state) => state.addOverviewCustomFilter
+  )
+  const updateOverviewCustomFilter = useStore(
+    (state) => state.updateOverviewCustomFilter
+  )
+  const deleteOverviewCustomFilter = useStore(
+    (state) => state.deleteOverviewCustomFilter
+  )
+
+  const editingCustomFilter =
+    overviewCustomFilters.find(
+      (filter) => filter.id === editingCustomFilterId
+    ) ?? null
+  const isCustomFilterModalOpen =
+    isCreatingCustomFilter || editingCustomFilter !== null
   const handleToggle = (nodeId: string) => {
     setExpandedIds((current) => getNextExpandedIds(current, nodeId))
+  }
+  const handleOpenCreateCustomFilter = () => {
+    setEditingCustomFilterId(null)
+    setIsCreatingCustomFilter(true)
+  }
+  const handleOpenEditCustomFilter = (filterId: string) => {
+    setIsCreatingCustomFilter(false)
+    setEditingCustomFilterId(filterId)
+  }
+  const handleCloseCustomFilterModal = () => {
+    setIsCreatingCustomFilter(false)
+    setEditingCustomFilterId(null)
   }
   const createCustomFilterLabel = t('fontOverview.customFilter.createTitle')
   const editCustomFilterLabel = t('fontOverview.customFilter.editTitle')
@@ -261,23 +292,33 @@ export function OverviewTreeNav({
   }
 
   return (
-    <VStack align="stretch" spacing={1}>
-      {nodes.map((node) => (
-        <OverviewTreeBranch
-          key={node.id}
-          createCustomFilterLabel={createCustomFilterLabel}
-          depth={0}
-          editCustomFilterLabel={editCustomFilterLabel}
-          expandedIds={expandedIds}
-          node={node}
-          onCreateCustomFilter={onCreateCustomFilter}
-          onEditCustomFilter={onEditCustomFilter}
-          selectedSectionId={selectedSectionId}
-          onSectionSelect={onSectionSelect}
-          onToggle={handleToggle}
-          translateNodeLabel={translateNodeLabel}
-        />
-      ))}
-    </VStack>
+    <>
+      <VStack align="stretch" spacing={1}>
+        {nodes.map((node) => (
+          <OverviewTreeBranch
+            key={node.id}
+            createCustomFilterLabel={createCustomFilterLabel}
+            depth={0}
+            editCustomFilterLabel={editCustomFilterLabel}
+            expandedIds={expandedIds}
+            node={node}
+            onCreateCustomFilter={handleOpenCreateCustomFilter}
+            onEditCustomFilter={handleOpenEditCustomFilter}
+            selectedSectionId={selectedSectionId}
+            onSectionSelect={onSectionSelect}
+            onToggle={handleToggle}
+            translateNodeLabel={translateNodeLabel}
+          />
+        ))}
+      </VStack>
+      <OverviewCustomFilterModal
+        filter={editingCustomFilter}
+        isOpen={isCustomFilterModalOpen}
+        onClose={handleCloseCustomFilterModal}
+        onCreateFilter={addOverviewCustomFilter}
+        onDeleteFilter={deleteOverviewCustomFilter}
+        onUpdateFilter={updateOverviewCustomFilter}
+      />
+    </>
   )
 }

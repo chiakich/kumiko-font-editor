@@ -35,7 +35,7 @@ import {
   resolveGitHubBranchSelection,
 } from 'src/features/common/glyphInspector/utils/githubCommitFlowUtils'
 import type { GitHubCommitModalProps } from 'src/features/common/glyphInspector/components/GitHubCommitModal'
-import { useGitHubSyncStatus } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
+import { githubSyncReportQueryKey } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
 import { useTranslation } from 'react-i18next'
 
@@ -107,6 +107,8 @@ export const useGitHubCommitFlow = ({
   const overviewGridState = useStore((state) => state.overviewGridState)
   const gitHubModal = useDisclosure()
   const [isPreparingGitHubCommit, setIsPreparingGitHubCommit] = useState(false)
+  const [hasBlockingSyncConflicts, setHasBlockingSyncConflicts] =
+    useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
     useState<ScopedForkStatusOverride>({
       repoFullName: null,
@@ -159,15 +161,6 @@ export const useGitHubCommitFlow = ({
   const createCommitMutation = useCreateGitHubCommitMutation()
   const mergeUpstreamMutation = useMergeGitHubUpstreamMutation()
   const githubForkStatus = forkStatusOverride ?? forkStatusQuery.data ?? null
-  const syncStatus = useGitHubSyncStatus({
-    projectId,
-    enabled: gitHubModal.isOpen && hasGitHubSource,
-  })
-  const refetchSyncReport = syncStatus.refetch
-  const hasBlockingSyncConflicts = Boolean(
-    syncStatus.report && syncStatus.report.conflicts.length > 0
-  )
-
   const loadGitHubForkStatus = async (branchName?: string) => {
     if (!githubRepoFullName) {
       return null
@@ -507,7 +500,9 @@ export const useGitHubCommitFlow = ({
       })
       markDraftSaved()
       markLocalSaved()
-      void refetchSyncReport()
+      void queryClient.invalidateQueries({
+        queryKey: githubSyncReportQueryKey(projectId),
+      })
       void queryClient.invalidateQueries({
         queryKey: projectSyncDirtyStatusQueryKey(projectId),
       })
@@ -592,33 +587,13 @@ export const useGitHubCommitFlow = ({
     }
   }
 
-  const handleApplyRemoteSync = async () => {
-    try {
-      const result = await syncStatus.applyRemote()
-      void queryClient.invalidateQueries({
-        queryKey: projectSyncDirtyStatusQueryKey(projectId),
-      })
-      toast({
-        title: '已套用遠端更新',
-        description: `更新了 ${result.appliedCount} 個檔案。`,
-        status: 'success',
-        duration: 3200,
-        isClosable: true,
-      })
-    } catch (error) {
-      toast({
-        title: '套用遠端更新失敗',
-        description: getErrorMessage(error, '目前無法套用遠端更新。'),
-        status: 'error',
-        duration: 4200,
-        isClosable: true,
-      })
-    }
-  }
-
   const modalProps: GitHubCommitModalProps = {
     isOpen: gitHubModal.isOpen,
-    onClose: gitHubModal.onClose,
+    onClose: () => {
+      setHasBlockingSyncConflicts(false)
+      gitHubModal.onClose()
+    },
+    projectId,
     githubViewer,
     githubForkStatus,
     isLoggingOutGitHub: logoutMutation.isPending,
@@ -666,16 +641,8 @@ export const useGitHubCommitFlow = ({
     },
     onMergeUpstream: () => void handleMergeGitHubUpstream(),
     onCreateCommit: () => void handleCreateGitHubCommit(),
-    sync: {
-      isLoading: syncStatus.isLoading,
-      errorMessage: syncStatus.errorMessage,
-      report: syncStatus.report,
-      resolutions: syncStatus.resolutions,
-      isApplying: syncStatus.isApplying,
-      unresolvedConflictCount: syncStatus.unresolvedConflictCount,
-      onResolutionChange: syncStatus.setResolution,
-      onApplyRemote: () => void handleApplyRemoteSync(),
-    },
+    isSyncEnabled: gitHubModal.isOpen && hasGitHubSource,
+    onBlockingSyncConflictsChange: setHasBlockingSyncConflicts,
     hasBlockingSyncConflicts,
   }
 

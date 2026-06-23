@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react'
 import { MinusCircle, PlusCircle } from 'iconoir-react'
+import { useState } from 'react'
 import type {
   CombinationBehaviorDraft,
   CombinationBehaviorRow,
@@ -17,24 +18,22 @@ import { useTranslation } from 'react-i18next'
 
 interface CombinationBehaviorListProps {
   rows: CombinationBehaviorRow[]
-  draftRowIds: string[]
-  onAddDraftRow: () => void
   onCommit: (draft: CombinationBehaviorDraft) => void
   onDelete: (row: CombinationBehaviorRow) => void
-  onDraftCommitted: (rowId: string) => void
-  onOpenGlyph: (glyphId: string) => void
 }
 
 export function CombinationBehaviorList({
   rows,
-  draftRowIds,
-  onAddDraftRow,
   onCommit,
   onDelete,
-  onDraftCommitted,
-  onOpenGlyph,
 }: CombinationBehaviorListProps) {
   const { t } = useTranslation()
+  const [draftRowIds, setDraftRowIds] = useState<string[]>([])
+
+  const addDraftRow = () =>
+    setDraftRowIds((rowIds) => [...rowIds, `draft-${Date.now()}`])
+  const removeDraftRow = (rowId: string) =>
+    setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
 
   return (
     <Stack spacing={2}>
@@ -52,7 +51,7 @@ export function CombinationBehaviorList({
               icon={<PlusCircle width={17} height={17} aria-hidden="true" />}
               size="xs"
               variant="ghost"
-              onClick={onAddDraftRow}
+              onClick={addDraftRow}
             />
           </Tooltip>
           <Tooltip label={t('editor.removeTheLastDraftRow')}>
@@ -62,7 +61,7 @@ export function CombinationBehaviorList({
               size="xs"
               variant="ghost"
               isDisabled={draftRowIds.length === 0}
-              onClick={() => onDraftCommitted(draftRowIds.at(-1) ?? '')}
+              onClick={() => removeDraftRow(draftRowIds.at(-1) ?? '')}
             />
           </Tooltip>
         </HStack>
@@ -81,7 +80,6 @@ export function CombinationBehaviorList({
             row={row}
             onCommit={onCommit}
             onDelete={() => onDelete(row)}
-            onOpenGlyph={onOpenGlyph}
           />
         ))}
         {draftRowIds.map((rowId) => (
@@ -89,9 +87,8 @@ export function CombinationBehaviorList({
             key={rowId}
             rowId={rowId}
             onCommit={onCommit}
-            onDelete={() => onDraftCommitted(rowId)}
-            onDraftCommitted={() => onDraftCommitted(rowId)}
-            onOpenGlyph={onOpenGlyph}
+            onDelete={() => removeDraftRow(rowId)}
+            onDraftCommitted={() => removeDraftRow(rowId)}
           />
         ))}
       </Box>

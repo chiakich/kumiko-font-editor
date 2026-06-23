@@ -21,16 +21,14 @@ import {
 } from '@chakra-ui/react'
 import type { GitHubForkStatus, GitHubViewer } from 'src/lib/github/githubAuth'
 import { GitHubRepoCard } from 'src/features/common/glyphInspector/components/GitHubRepoCard'
-import {
-  GitHubSyncSection,
-  type GitHubSyncSectionProps,
-} from 'src/features/common/glyphInspector/components/GitHubSyncSection'
+import { GitHubSyncSectionContainer } from 'src/features/common/glyphInspector/components/GitHubSyncSection'
 import type { QualitySummary } from 'src/lib/qualityCheck/qualityLint'
 import { useTranslation } from 'react-i18next'
 
 export interface GitHubCommitModalProps {
   isOpen: boolean
   onClose: () => void
+  projectId: string | null
   githubViewer: GitHubViewer | null
   githubForkStatus: GitHubForkStatus | null
   isLoggingOutGitHub: boolean
@@ -53,7 +51,8 @@ export interface GitHubCommitModalProps {
   onOpenCompare: () => void
   onMergeUpstream: () => void
   onCreateCommit: () => void
-  sync: GitHubSyncSectionProps
+  isSyncEnabled: boolean
+  onBlockingSyncConflictsChange: (hasBlockingSyncConflicts: boolean) => void
   hasBlockingSyncConflicts: boolean
   qualitySummary?: QualitySummary
   onOpenQualityCheck?: () => void
@@ -62,6 +61,7 @@ export interface GitHubCommitModalProps {
 export function GitHubCommitModal({
   isOpen,
   onClose,
+  projectId,
   githubViewer,
   githubForkStatus,
   isLoggingOutGitHub,
@@ -84,7 +84,8 @@ export function GitHubCommitModal({
   onOpenCompare,
   onMergeUpstream,
   onCreateCommit,
-  sync,
+  isSyncEnabled,
+  onBlockingSyncConflictsChange,
   hasBlockingSyncConflicts,
   qualitySummary,
   onOpenQualityCheck,
@@ -173,7 +174,11 @@ export function GitHubCommitModal({
               </HStack>
             </Box>
 
-            <GitHubSyncSection {...sync} />
+            <GitHubSyncSectionContainer
+              enabled={isSyncEnabled}
+              projectId={projectId}
+              onBlockingSyncConflictsChange={onBlockingSyncConflictsChange}
+            />
 
             {qualitySummary ? (
               <QualitySummaryCard

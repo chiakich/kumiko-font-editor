@@ -21,6 +21,7 @@ import {
   type AlternateBehaviorRow,
   type AlternateBehaviorType,
 } from 'src/lib/openTypeFeatures'
+import { useOpenGlyphInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
 import { useTranslation } from 'react-i18next'
 
 interface AlternateBehaviorTableRowProps {
@@ -30,7 +31,6 @@ interface AlternateBehaviorTableRowProps {
   onCommit: (draft: AlternateBehaviorDraft) => void
   onDelete: () => void
   onDraftCommitted?: () => void
-  onOpenGlyph: (glyphId: string) => void
 }
 
 export function AlternateBehaviorTableRow({
@@ -40,9 +40,9 @@ export function AlternateBehaviorTableRow({
   onCommit,
   onDelete,
   onDraftCommitted,
-  onOpenGlyph,
 }: AlternateBehaviorTableRowProps) {
   const { t } = useTranslation()
+  const openGlyph = useOpenGlyphInEditor()
 
   const [source, setSource] = useState(row?.source ?? currentGlyphId)
   const [alternate, setAlternate] = useState(
@@ -135,7 +135,7 @@ export function AlternateBehaviorTableRow({
             size="xs"
             variant="ghost"
             isDisabled={!alternate}
-            onClick={() => onOpenGlyph(alternate)}
+            onClick={() => openGlyph(alternate)}
           />
         </Tooltip>
         <Tooltip label={t('editor.deleteBehavior')}>

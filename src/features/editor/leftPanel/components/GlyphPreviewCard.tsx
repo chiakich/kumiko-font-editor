@@ -1,23 +1,22 @@
 import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react'
 import { GlyphReadonlyReference } from 'src/features/editor/leftPanel/components/GlyphReadonlyReference'
 import type { Rect } from 'src/lib/components/componentAssembly'
-import type { GlyphData } from 'src/store'
+import { useStore, type GlyphData } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
 interface GlyphPreviewCardProps {
   glyph: GlyphData | null
   glyphMap: Record<string, GlyphData>
   targetRect?: Rect | null
-  onAddToEditor: (glyphId: string) => void
 }
 
 export function GlyphPreviewCard({
   glyph,
   glyphMap,
   targetRect,
-  onAddToEditor,
 }: GlyphPreviewCardProps) {
   const { t } = useTranslation()
+  const addGlyphToEditor = useStore((state) => state.addGlyphToEditor)
 
   if (!glyph) {
     return null
@@ -43,7 +42,7 @@ export function GlyphPreviewCard({
           <Button
             size="xs"
             variant="outline"
-            onClick={() => onAddToEditor(glyph.id)}
+            onClick={() => addGlyphToEditor(glyph.id)}
           >
             {t('editor.addToEditor')}
           </Button>
