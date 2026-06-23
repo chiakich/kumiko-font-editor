@@ -52,6 +52,33 @@ const makeGposTable = (
   return bytes
 }
 
+const writeCoverageFormat1 = (
+  view: DataView,
+  offset: number,
+  glyphIds: number[]
+) => {
+  writeUint16(view, offset, 1)
+  writeUint16(view, offset + 2, glyphIds.length)
+  glyphIds.forEach((glyphId, index) => {
+    writeUint16(view, offset + 4 + index * 2, glyphId)
+  })
+}
+
+const writeClassDefFormat2 = (
+  view: DataView,
+  offset: number,
+  ranges: Array<{ startGlyphId: number; endGlyphId: number; classId: number }>
+) => {
+  writeUint16(view, offset, 2)
+  writeUint16(view, offset + 2, ranges.length)
+  ranges.forEach((range, index) => {
+    const rangeOffset = offset + 4 + index * 6
+    writeUint16(view, rangeOffset, range.startGlyphId)
+    writeUint16(view, rangeOffset + 2, range.endGlyphId)
+    writeUint16(view, rangeOffset + 4, range.classId)
+  })
+}
+
 const makeClassPairPositioningSubtable = () =>
   makeBytes(52, (view) => {
     writeUint16(view, 0, 2)
@@ -84,6 +111,68 @@ const makeClassPairPositioningSubtable = () =>
     writeUint16(view, 46, 2)
     writeUint16(view, 48, 1)
     writeUint16(view, 50, 1)
+  })
+
+const makeContextPositioningFormat2Subtable = () =>
+  makeBytes(50, (view) => {
+    writeUint16(view, 0, 2)
+    writeUint16(view, 2, 26)
+    writeUint16(view, 4, 34)
+    writeUint16(view, 6, 2)
+    writeUint16(view, 8, 0)
+    writeUint16(view, 10, 12)
+
+    writeUint16(view, 12, 1)
+    writeUint16(view, 14, 4)
+
+    writeUint16(view, 16, 2)
+    writeUint16(view, 18, 1)
+    writeUint16(view, 20, 2)
+    writeUint16(view, 22, 1)
+    writeUint16(view, 24, 0)
+
+    writeCoverageFormat1(view, 26, [1, 2])
+    writeClassDefFormat2(view, 34, [
+      { startGlyphId: 1, endGlyphId: 2, classId: 1 },
+      { startGlyphId: 3, endGlyphId: 4, classId: 2 },
+    ])
+  })
+
+const makeChainingContextPositioningFormat2Subtable = () =>
+  makeBytes(82, (view) => {
+    writeUint16(view, 0, 2)
+    writeUint16(view, 2, 38)
+    writeUint16(view, 4, 46)
+    writeUint16(view, 6, 56)
+    writeUint16(view, 8, 72)
+    writeUint16(view, 10, 2)
+    writeUint16(view, 12, 0)
+    writeUint16(view, 14, 16)
+
+    writeUint16(view, 16, 1)
+    writeUint16(view, 18, 4)
+
+    writeUint16(view, 20, 1)
+    writeUint16(view, 22, 1)
+    writeUint16(view, 24, 2)
+    writeUint16(view, 26, 2)
+    writeUint16(view, 28, 1)
+    writeUint16(view, 30, 1)
+    writeUint16(view, 32, 1)
+    writeUint16(view, 34, 1)
+    writeUint16(view, 36, 0)
+
+    writeCoverageFormat1(view, 38, [1, 2])
+    writeClassDefFormat2(view, 46, [
+      { startGlyphId: 5, endGlyphId: 6, classId: 1 },
+    ])
+    writeClassDefFormat2(view, 56, [
+      { startGlyphId: 1, endGlyphId: 2, classId: 1 },
+      { startGlyphId: 3, endGlyphId: 4, classId: 2 },
+    ])
+    writeClassDefFormat2(view, 72, [
+      { startGlyphId: 7, endGlyphId: 8, classId: 1 },
+    ])
   })
 
 const makeMarkToBaseSubtable = () =>
@@ -156,6 +245,174 @@ describe('advanced GPOS reconstruction', () => {
             left: { kind: 'class', classId: 'class_gpos_0_0_left_1' },
             right: { kind: 'class', classId: 'class_gpos_0_0_right_1' },
             firstValue: { xAdvance: -80 },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts ContextPos class-based rules', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GPOS',
+          data: makeGposTable(
+            'kern',
+            7,
+            makeContextPositioningFormat2Subtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'Aacute', 'V', 'W']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.glyphClasses).toMatchObject([
+      {
+        id: 'class_gpos_0_0_input_0_1',
+        name: '@GPOS_0_0_input_0_class_1',
+        glyphs: ['A', 'Aacute'],
+        origin: 'imported',
+      },
+      {
+        id: 'class_gpos_0_0_input_1_2',
+        name: '@GPOS_0_0_input_1_class_2',
+        glyphs: ['V', 'W'],
+        origin: 'imported',
+      },
+    ])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gpos_0',
+        lookupType: 'contextPos',
+        editable: true,
+        rules: [
+          {
+            kind: 'contextualPositioning',
+            mode: 'context',
+            backtrack: [],
+            input: [
+              {
+                selector: {
+                  kind: 'class',
+                  classId: 'class_gpos_0_0_input_0_1',
+                },
+              },
+              {
+                selector: {
+                  kind: 'class',
+                  classId: 'class_gpos_0_0_input_1_2',
+                },
+                lookupIds: ['lookup_gpos_0'],
+              },
+            ],
+            lookahead: [],
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GPOS',
+                lookupIndex: 0,
+                lookupType: 7,
+                subtableIndex: 0,
+                subtableFormat: 2,
+              },
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it('extracts ChainingContextPos class-based rules', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GPOS',
+          data: makeGposTable(
+            'kern',
+            8,
+            makeChainingContextPositioningFormat2Subtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'Aacute', 'V', 'W', 'X', 'X.alt', 'Y', 'Y.alt']
+    )
+
+    expect(state.unsupportedLookups).toEqual([])
+    expect(state.glyphClasses).toMatchObject([
+      {
+        id: 'class_gpos_0_0_input_0_1',
+        name: '@GPOS_0_0_input_0_class_1',
+        glyphs: ['A', 'Aacute'],
+        origin: 'imported',
+      },
+      {
+        id: 'class_gpos_0_0_backtrack_0_1',
+        name: '@GPOS_0_0_backtrack_0_class_1',
+        glyphs: ['X', 'X.alt'],
+        origin: 'imported',
+      },
+      {
+        id: 'class_gpos_0_0_input_1_2',
+        name: '@GPOS_0_0_input_1_class_2',
+        glyphs: ['V', 'W'],
+        origin: 'imported',
+      },
+      {
+        id: 'class_gpos_0_0_lookahead_0_1',
+        name: '@GPOS_0_0_lookahead_0_class_1',
+        glyphs: ['Y', 'Y.alt'],
+        origin: 'imported',
+      },
+    ])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_gpos_0',
+        lookupType: 'chainingContextPos',
+        editable: true,
+        rules: [
+          {
+            kind: 'contextualPositioning',
+            mode: 'chaining',
+            backtrack: [
+              {
+                kind: 'class',
+                classId: 'class_gpos_0_0_backtrack_0_1',
+              },
+            ],
+            input: [
+              {
+                selector: {
+                  kind: 'class',
+                  classId: 'class_gpos_0_0_input_0_1',
+                },
+              },
+              {
+                selector: {
+                  kind: 'class',
+                  classId: 'class_gpos_0_0_input_1_2',
+                },
+                lookupIds: ['lookup_gpos_0'],
+              },
+            ],
+            lookahead: [
+              {
+                kind: 'class',
+                classId: 'class_gpos_0_0_lookahead_0_1',
+              },
+            ],
+            meta: {
+              origin: 'imported',
+              provenance: {
+                table: 'GPOS',
+                lookupIndex: 0,
+                lookupType: 8,
+                subtableIndex: 0,
+                subtableFormat: 2,
+              },
+            },
           },
         ],
       },

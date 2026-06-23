@@ -193,6 +193,9 @@ generated .fea / UI / export policy
 - GPOS partial reconstruction guard
   - 同一個 GPOS lookup 只要有任一 subtable 不能重建成 editable rules，整個 lookup 會標為 `unsupportedLookups`。
   - 這避免 rebuild layout tables 時只輸出部分 subtable 而靜默丟掉原始 positioning 行為。
+- GPOS contextual parser
+  - `GPOS type 7 format 2` / `type 8 format 2` 會讀取 class-based context / chaining context positioning rules，並把 class definition 提升成 imported glyph classes。
+  - `GPOS type 7 format 3` / `type 8 format 3` 會讀取 coverage arrays 與 positioning lookup records。
 - generated FEA contextual round-trip
   - nested lookup blocks 會在引用它們的 contextual lookup 前輸出，避免 fontTools forward-reference error。
   - 沒有 lookup record 的 contextual substitution 會輸出成 `ignore sub ...;`。

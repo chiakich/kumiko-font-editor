@@ -9,6 +9,10 @@ import {
   resolveGlyphNames,
 } from 'src/lib/openTypeFeatures/gposBinaryStructures'
 import {
+  parseChainingContextPositioningFormat2,
+  parseContextPositioningFormat2,
+} from 'src/lib/openTypeFeatures/gposClassContextRuleParser'
+import {
   isEmptyValue,
   readValueRecord,
 } from 'src/lib/openTypeFeatures/gposValueRecordParser'
@@ -1021,6 +1025,15 @@ const parseSupportedSubtable = (
     )
   }
 
+  if (lookup.lookupType === 7 && format === 2) {
+    return parseContextPositioningFormat2(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
+    )
+  }
+
   if (lookup.lookupType === 7 && format === 3) {
     return parseContextPositioningFormat3(
       subtableReader,
@@ -1028,6 +1041,15 @@ const parseSupportedSubtable = (
       lookup,
       subtableIndex,
       'context'
+    )
+  }
+
+  if (lookup.lookupType === 8 && format === 2) {
+    return parseChainingContextPositioningFormat2(
+      subtableReader,
+      glyphOrder,
+      lookup,
+      subtableIndex
     )
   }
 
