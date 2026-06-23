@@ -169,6 +169,7 @@ generated .fea / UI / export policy
 - UI 初步接線
   - Font Features raw source editor 會更新 source section 並嘗試分類。
   - Source panel 會顯示 source sections。
+  - Lookup inspector 會顯示 compiled provenance、subtable format 與回指 source sections。
   - Workflow overview 會顯示 source / compiled / classified 計數。
 - 測試覆蓋
   - raw source section 建立。

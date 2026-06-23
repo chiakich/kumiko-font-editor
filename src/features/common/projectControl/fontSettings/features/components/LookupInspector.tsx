@@ -9,6 +9,7 @@ import {
 import { useMemo, useState } from 'react'
 import type {
   FeatureDiagnostic,
+  FeatureSourceSection,
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
@@ -67,6 +68,7 @@ export function LookupInspector({
           <LookupDetails
             lookup={selectedLookup}
             diagnostics={diagnostics}
+            sourceSections={state.sourceSections}
             onRuleChange={onRuleChange}
           />
         ) : null}
@@ -122,15 +124,18 @@ function LookupList({
 interface LookupDetailsProps {
   lookup: LookupRecord
   diagnostics: FeatureDiagnostic[]
+  sourceSections: FeatureSourceSection[]
   onRuleChange: (lookupId: string, rule: Rule) => void
 }
 
 function LookupDetails({
   lookup,
   diagnostics,
+  sourceSections,
   onRuleChange,
 }: LookupDetailsProps) {
   const lookupDiagnostics = diagnosticsForLookup(diagnostics, lookup.id)
+  const lookupSourceSections = sourceSectionsForLookup(sourceSections, lookup)
 
   return (
     <Stack spacing={3} borderWidth="1px" borderRadius="sm" p={3}>
@@ -147,6 +152,7 @@ function LookupDetails({
       </HStack>
       <LookupFlags lookup={lookup} />
       <ProvenanceSummary lookup={lookup} />
+      <SourceReferenceSummary sourceSections={lookupSourceSections} />
       {lookupDiagnostics.length > 0 ? (
         <Stack spacing={1}>
           {lookupDiagnostics.map((diagnostic) => (
@@ -216,20 +222,74 @@ function LookupFlags({ lookup }: { lookup: LookupRecord }) {
 
 function ProvenanceSummary({ lookup }: { lookup: LookupRecord }) {
   const { t } = useTranslation()
+  const subtableFormats = lookup.meta?.subtableFormats
+  const subtableFormatText = Array.isArray(subtableFormats)
+    ? subtableFormats.filter((format) => typeof format === 'number').join(', ')
+    : ''
 
-  if (!lookup.provenance) {
+  if (!lookup.provenance && !subtableFormatText) {
     return null
   }
 
   return (
-    <Text fontSize="xs" color="field.muted">
-      {t('projectControl.importedFrom')}
-      {lookup.provenance.table}
-      {lookup.provenance.lookupIndex === undefined
-        ? ''
-        : ` lookup ${lookup.provenance.lookupIndex}`}
-      {lookup.provenance.featureTag ? ` / ${lookup.provenance.featureTag}` : ''}
-    </Text>
+    <Stack spacing={1}>
+      <Text fontSize="xs" color="field.muted">
+        {t('projectControl.importedFrom')}
+      </Text>
+      <HStack wrap="wrap">
+        {lookup.provenance?.table ? (
+          <Badge>{lookup.provenance.table}</Badge>
+        ) : null}
+        {lookup.provenance?.featureTag ? (
+          <Badge fontFamily="mono">{lookup.provenance.featureTag}</Badge>
+        ) : null}
+        {lookup.provenance?.lookupIndex === undefined ? null : (
+          <Badge>lookup {lookup.provenance.lookupIndex}</Badge>
+        )}
+        {lookup.provenance?.lookupType === undefined ? null : (
+          <Badge>type {lookup.provenance.lookupType}</Badge>
+        )}
+        {lookup.provenance?.subtableIndex === undefined ? null : (
+          <Badge>subtable {lookup.provenance.subtableIndex}</Badge>
+        )}
+        {lookup.provenance?.subtableFormat === undefined ? null : (
+          <Badge>format {lookup.provenance.subtableFormat}</Badge>
+        )}
+        {subtableFormatText ? (
+          <Badge>
+            {t('projectControl.subtableFormats')} {subtableFormatText}
+          </Badge>
+        ) : null}
+      </HStack>
+    </Stack>
+  )
+}
+
+function SourceReferenceSummary({
+  sourceSections,
+}: {
+  sourceSections: FeatureSourceSection[]
+}) {
+  const { t } = useTranslation()
+
+  if (sourceSections.length === 0) {
+    return null
+  }
+
+  return (
+    <Stack spacing={1}>
+      <Text fontSize="xs" color="field.muted">
+        {t('projectControl.sourceSections')}
+      </Text>
+      <HStack wrap="wrap">
+        {sourceSections.map((section) => (
+          <Badge key={section.id} variant="outline">
+            {section.table ? `${section.table} ` : ''}
+            {section.status}
+          </Badge>
+        ))}
+      </HStack>
+    </Stack>
   )
 }
 
@@ -241,5 +301,19 @@ function diagnosticsForLookup(
     (diagnostic) =>
       diagnostic.target.kind === 'lookup' &&
       diagnostic.target.lookupId === lookupId
+  )
+}
+
+function sourceSectionsForLookup(
+  sourceSections: FeatureSourceSection[],
+  lookup: LookupRecord
+) {
+  return sourceSections.filter((section) =>
+    section.recordRefs.some(
+      (ref) =>
+        ref.kind === 'lookup' &&
+        ref.id === lookup.id &&
+        (!ref.table || ref.table === lookup.table)
+    )
   )
 }
