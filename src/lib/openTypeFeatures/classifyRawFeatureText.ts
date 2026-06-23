@@ -10,6 +10,7 @@ import type {
   LookupFlagIR,
   LookupOrigin,
   LookupRecord,
+  MarkClass,
   OpenTypeFeaturesState,
   Rule,
   ValueRecord,
@@ -33,6 +34,7 @@ interface ParsedLookup {
 interface ParsedRawFeatureText {
   languageSystems: LanguageSystem[]
   glyphClasses: GlyphClass[]
+  markClasses: MarkClass[]
   lookups: LookupRecord[]
   features: FeatureRecord[]
   unsupportedStatements: string[]
@@ -105,6 +107,9 @@ const makeLanguageSystemId = (script: string, language: string) =>
 const makeGlyphClassId = (name: string) =>
   `glyph_class_raw_${toStableIdPart(name.replace(/^@/, ''))}`
 
+const makeMarkClassId = (name: string) =>
+  `mark_class_raw_${toStableIdPart(name.replace(/^@/, ''))}`
+
 const selectorFromToken = (
   token: string,
   glyphClassIdByName: Map<string, string>
@@ -156,6 +161,53 @@ const parseLookupFlagStatement = (statement: string): LookupFlagIR | null => {
     ignoreLigatures: /\bIgnoreLigatures\b/i.test(value) || undefined,
     ignoreMarks: /\bIgnoreMarks\b/i.test(value) || undefined,
   }
+}
+
+const parseMarkAttachments = (
+  body: string,
+  markClassIdByName: Map<string, string>
+) => {
+  const anchors: Record<string, { x: number; y: number }> = {}
+  let rest = body.trim()
+
+  while (rest) {
+    const match = rest.match(
+      /^<\s*anchor\s+(-?\d+)\s+(-?\d+)\s*>\s+mark\s+(@[A-Za-z_][A-Za-z0-9_.-]*)\s*/i
+    )
+    if (!match) return null
+
+    const markClassId = markClassIdByName.get(match[3])
+    if (!markClassId) return null
+
+    anchors[markClassId] = {
+      x: Number(match[1]),
+      y: Number(match[2]),
+    }
+    rest = rest.slice(match[0].length).trim()
+  }
+
+  return Object.keys(anchors).length > 0 ? anchors : null
+}
+
+const parseLigatureComponentAnchors = (
+  body: string,
+  markClassIdByName: Map<string, string>
+) => {
+  const components = body
+    .split(/\s+ligComponent\s+/i)
+    .map((component) => component.trim())
+    .filter(Boolean)
+  if (components.length === 0) return null
+
+  const componentAnchors = components.map((component) =>
+    parseMarkAttachments(component, markClassIdByName)
+  )
+  return componentAnchors.every(
+    (anchors): anchors is Record<string, { x: number; y: number }> =>
+      Boolean(anchors)
+  )
+    ? componentAnchors
+    : null
 }
 
 const parseContextualSubstitutionRule = (
@@ -283,6 +335,73 @@ const parseSubstitutionRule = (
   }
 }
 
+const parseMarkPositioningRule = (
+  statement: string,
+  ruleId: string,
+  origin: FeatureOrigin,
+  glyphClassIdByName: Map<string, string>,
+  markClassIdByName: Map<string, string>
+): Rule | null => {
+  const baseMatch = statement.match(/^pos\s+base\s+(\S+)\s+(.+)$/i)
+  if (baseMatch) {
+    const baseGlyphs = selectorFromToken(baseMatch[1], glyphClassIdByName)
+    const anchors = parseMarkAttachments(baseMatch[2], markClassIdByName)
+    return baseGlyphs && anchors
+      ? {
+          id: ruleId,
+          kind: 'markToBase',
+          baseGlyphs,
+          anchors,
+          meta: {
+            origin,
+            provenance: { table: 'GPOS' },
+          },
+        }
+      : null
+  }
+
+  const markMatch = statement.match(/^pos\s+mark\s+(\S+)\s+(.+)$/i)
+  if (markMatch) {
+    const baseMarks = selectorFromToken(markMatch[1], glyphClassIdByName)
+    const anchors = parseMarkAttachments(markMatch[2], markClassIdByName)
+    return baseMarks && anchors
+      ? {
+          id: ruleId,
+          kind: 'markToMark',
+          baseMarks,
+          anchors,
+          meta: {
+            origin,
+            provenance: { table: 'GPOS' },
+          },
+        }
+      : null
+  }
+
+  const ligatureMatch = statement.match(/^pos\s+ligature\s+(\S+)\s+(.+)$/i)
+  if (ligatureMatch) {
+    const ligatures = selectorFromToken(ligatureMatch[1], glyphClassIdByName)
+    const componentAnchors = parseLigatureComponentAnchors(
+      ligatureMatch[2],
+      markClassIdByName
+    )
+    return ligatures && componentAnchors
+      ? {
+          id: ruleId,
+          kind: 'markToLigature',
+          ligatures,
+          componentAnchors,
+          meta: {
+            origin,
+            provenance: { table: 'GPOS' },
+          },
+        }
+      : null
+  }
+
+  return null
+}
+
 const parsePositioningRule = (
   statement: string,
   ruleId: string,
@@ -342,13 +461,19 @@ const getLookupShape = (rules: Rule[]) => {
     contextualSubstitution: 'chainingContextSubst',
     singlePositioning: 'singlePos',
     pairPositioning: 'pairPos',
+    markToBase: 'markToBasePos',
+    markToMark: 'markToMarkPos',
+    markToLigature: 'markToLigaturePos',
   }
   const lookupType = lookupTypeByRuleKind[firstRule.kind]
   if (!lookupType) return null
 
   const table: LookupRecord['table'] =
     firstRule.kind === 'singlePositioning' ||
-    firstRule.kind === 'pairPositioning'
+    firstRule.kind === 'pairPositioning' ||
+    firstRule.kind === 'markToBase' ||
+    firstRule.kind === 'markToMark' ||
+    firstRule.kind === 'markToLigature'
       ? 'GPOS'
       : 'GSUB'
   const allSameShape = rules.every(
@@ -364,6 +489,7 @@ const parseLookupStatements = (
   idPrefix: string,
   origin: FeatureOrigin,
   glyphClassIdByName: Map<string, string>,
+  markClassIdByName: Map<string, string>,
   lookupIdByName: Map<string, string>
 ) => {
   const rules: Rule[] = []
@@ -387,6 +513,13 @@ const parseLookupStatements = (
         lookupIdByName
       ) ??
       parseSubstitutionRule(statement, ruleId, origin, glyphClassIdByName) ??
+      parseMarkPositioningRule(
+        statement,
+        ruleId,
+        origin,
+        glyphClassIdByName,
+        markClassIdByName
+      ) ??
       parsePositioningRule(statement, ruleId, origin, glyphClassIdByName)
 
     if (rule) {
@@ -473,11 +606,13 @@ const parseRawFeatureText = (
   const featureOrigin = getFeatureOrigin(sourceOrigin)
   const lookupOrigin = getLookupOrigin(sourceOrigin)
   const glyphClasses: GlyphClass[] = []
+  const markClassById = new Map<string, MarkClass>()
   const lookups: LookupRecord[] = []
   const features: FeatureRecord[] = []
   const languageSystems = new Map<string, LanguageSystem>()
   const unsupportedStatements: string[] = []
   const glyphClassIdByName = new Map<string, string>()
+  const markClassIdByName = new Map<string, string>()
   let workingText = stripComments(rawFeatureText)
 
   for (const match of workingText.matchAll(
@@ -497,6 +632,34 @@ const parseRawFeatureText = (
         classifiedFromRawFeatureText: true,
       },
     })
+    workingText = blankRange(
+      workingText,
+      match.index ?? 0,
+      (match.index ?? 0) + match[0].length
+    )
+  }
+
+  for (const match of workingText.matchAll(
+    /\bmarkClass\s+(\S+)\s+<\s*anchor\s+(-?\d+)\s+(-?\d+)\s*>\s+(@[A-Za-z_][A-Za-z0-9_.-]*)\s*;/g
+  )) {
+    const glyph = match[1]
+    const className = match[4]
+    const classId = makeMarkClassId(className)
+    markClassIdByName.set(className, classId)
+    const existing = markClassById.get(classId)
+    const markClass: MarkClass = existing ?? {
+      id: classId,
+      name: className,
+      marks: [],
+    }
+    markClass.marks.push({
+      glyph,
+      anchor: {
+        x: Number(match[2]),
+        y: Number(match[3]),
+      },
+    })
+    markClassById.set(classId, markClass)
     workingText = blankRange(
       workingText,
       match.index ?? 0,
@@ -544,6 +707,7 @@ const parseRawFeatureText = (
       id,
       featureOrigin,
       glyphClassIdByName,
+      markClassIdByName,
       lookupIdByName
     )
     const shape = getLookupShape(parsed.rules)
@@ -616,6 +780,7 @@ const parseRawFeatureText = (
         inlineLookupId,
         featureOrigin,
         glyphClassIdByName,
+        markClassIdByName,
         committedLookupIdByName
       )
       const shape = getLookupShape(parsed.rules)
@@ -672,6 +837,7 @@ const parseRawFeatureText = (
   return {
     languageSystems: [...languageSystems.values()],
     glyphClasses,
+    markClasses: [...markClassById.values()],
     lookups,
     features,
     unsupportedStatements,
@@ -680,7 +846,7 @@ const parseRawFeatureText = (
 
 const recordIdsFor = (
   state: OpenTypeFeaturesState,
-  kind: 'languageSystem' | 'feature' | 'lookup' | 'glyphClass'
+  kind: 'languageSystem' | 'feature' | 'lookup' | 'glyphClass' | 'markClass'
 ) =>
   new Set(
     (state.sourceSections ?? [])
@@ -696,6 +862,7 @@ const removePreviousRawFeatureTextClassification = (
   const featureIds = recordIdsFor(state, 'feature')
   const lookupIds = recordIdsFor(state, 'lookup')
   const glyphClassIds = recordIdsFor(state, 'glyphClass')
+  const markClassIds = recordIdsFor(state, 'markClass')
 
   return {
     ...state,
@@ -706,6 +873,9 @@ const removePreviousRawFeatureTextClassification = (
     lookups: state.lookups.filter((lookup) => !lookupIds.has(lookup.id)),
     glyphClasses: state.glyphClasses.filter(
       (glyphClass) => !glyphClassIds.has(glyphClass.id)
+    ),
+    markClasses: state.markClasses.filter(
+      (markClass) => !markClassIds.has(markClass.id)
     ),
     diagnostics: (state.diagnostics ?? []).filter(
       (diagnostic) => !diagnostic.id.startsWith(RAW_FEATURE_DIAGNOSTIC_PREFIX)
@@ -744,6 +914,7 @@ export const classifyRawFeatureTextSource = (
     (parsed.features.length > 0 ||
       parsed.lookups.length > 0 ||
       parsed.glyphClasses.length > 0 ||
+      parsed.markClasses.length > 0 ||
       parsed.languageSystems.length > 0)
 
   if (!canCommitToModel) {
@@ -785,6 +956,10 @@ export const classifyRawFeatureTextSource = (
       kind: 'glyphClass' as const,
       id: glyphClass.id,
     })),
+    ...parsed.markClasses.map((markClass) => ({
+      kind: 'markClass' as const,
+      id: markClass.id,
+    })),
     ...parsed.lookups.map((lookup) => ({
       kind: 'lookup' as const,
       id: lookup.id,
@@ -803,6 +978,7 @@ export const classifyRawFeatureTextSource = (
       parsed.languageSystems
     ),
     glyphClasses: mergeById(baseState.glyphClasses, parsed.glyphClasses),
+    markClasses: mergeById(baseState.markClasses, parsed.markClasses),
     lookups: mergeById(baseState.lookups, parsed.lookups),
     features: mergeById(baseState.features, parsed.features),
     sourceSections: sourceSections.map((section) =>
@@ -819,6 +995,7 @@ export const classifyRawFeatureTextSource = (
               parsedFeatureCount: parsed.features.length,
               parsedLookupCount: parsed.lookups.length,
               parsedGlyphClassCount: parsed.glyphClasses.length,
+              parsedMarkClassCount: parsed.markClasses.length,
               parsedLanguageSystemCount: parsed.languageSystems.length,
             },
           }

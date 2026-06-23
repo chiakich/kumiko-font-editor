@@ -427,6 +427,134 @@ describe('OpenType FEA source maps', () => {
     expect(generated).toContain("ignore sub C C' D;")
   })
 
+  it('classifies raw mark classes and mark positioning lookup blocks', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'languagesystem latn dflt;',
+          'markClass acutecomb <anchor 0 520> @TOP;',
+          'markClass gravecomb <anchor 10 510> @TOP;',
+          'lookup MarkBase {',
+          '  pos base A <anchor 300 700> mark @TOP;',
+          '} MarkBase;',
+          'lookup MarkLigature {',
+          '  pos ligature f_i <anchor 200 700> mark @TOP ligComponent <anchor 420 700> mark @TOP;',
+          '} MarkLigature;',
+          'lookup MarkMark {',
+          '  pos mark acutecomb <anchor 0 720> mark @TOP;',
+          '} MarkMark;',
+          'feature mark {',
+          '  script latn;',
+          '  language dflt;',
+          '  lookup MarkBase;',
+          '  lookup MarkLigature;',
+          '} mark;',
+          'feature mkmk {',
+          '  script latn;',
+          '  language dflt;',
+          '  lookup MarkMark;',
+          '} mkmk;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.markClasses).toEqual([
+      {
+        id: 'mark_class_raw_TOP',
+        name: '@TOP',
+        marks: [
+          { glyph: 'acutecomb', anchor: { x: 0, y: 520 } },
+          { glyph: 'gravecomb', anchor: { x: 10, y: 510 } },
+        ],
+      },
+    ])
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_MarkBase',
+        table: 'GPOS',
+        lookupType: 'markToBasePos',
+        rules: [
+          {
+            kind: 'markToBase',
+            baseGlyphs: { kind: 'glyph', glyph: 'A' },
+            anchors: {
+              mark_class_raw_TOP: { x: 300, y: 700 },
+            },
+          },
+        ],
+      },
+      {
+        id: 'lookup_raw_MarkLigature',
+        table: 'GPOS',
+        lookupType: 'markToLigaturePos',
+        rules: [
+          {
+            kind: 'markToLigature',
+            ligatures: { kind: 'glyph', glyph: 'f_i' },
+            componentAnchors: [
+              { mark_class_raw_TOP: { x: 200, y: 700 } },
+              { mark_class_raw_TOP: { x: 420, y: 700 } },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'lookup_raw_MarkMark',
+        table: 'GPOS',
+        lookupType: 'markToMarkPos',
+        rules: [
+          {
+            kind: 'markToMark',
+            baseMarks: { kind: 'glyph', glyph: 'acutecomb' },
+            anchors: {
+              mark_class_raw_TOP: { x: 0, y: 720 },
+            },
+          },
+        ],
+      },
+    ])
+    expect(state.features).toMatchObject([
+      {
+        tag: 'mark',
+        entries: [
+          {
+            lookupIds: ['lookup_raw_MarkBase', 'lookup_raw_MarkLigature'],
+          },
+        ],
+      },
+      {
+        tag: 'mkmk',
+        entries: [
+          {
+            lookupIds: ['lookup_raw_MarkMark'],
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'markClass', id: 'mark_class_raw_TOP' },
+        { kind: 'lookup', id: 'lookup_raw_MarkBase', table: 'GPOS' },
+        { kind: 'lookup', id: 'lookup_raw_MarkLigature', table: 'GPOS' },
+        { kind: 'lookup', id: 'lookup_raw_MarkMark', table: 'GPOS' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('markClass acutecomb <anchor 0 520> @TOP;')
+    expect(generated).toContain('pos base A <anchor 300 700> mark @TOP;')
+    expect(generated).toContain(
+      'pos ligature f_i <anchor 200 700> mark @TOP ligComponent <anchor 420 700> mark @TOP;'
+    )
+    expect(generated).toContain('pos mark acutecomb <anchor 0 720> mark @TOP;')
+  })
+
   it('preserves unsupported raw .fea source instead of partially committing it', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(
