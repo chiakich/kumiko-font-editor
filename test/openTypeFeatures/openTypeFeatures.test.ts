@@ -599,6 +599,77 @@ describe('OpenType FEA source maps', () => {
     expect(generated).toContain('LigatureCaretByPos f_i 250 500;')
   })
 
+  it('classifies raw UseMarkFilteringSet lookup flags', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          '@Marks = [acutecomb gravecomb];',
+          'lookup FilteredSub {',
+          '  lookupflag IgnoreMarks UseMarkFilteringSet @Marks;',
+          '  sub A by A.alt;',
+          '} FilteredSub;',
+          'feature salt {',
+          '  lookup FilteredSub;',
+          '} salt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_FilteredSub',
+        lookupFlag: {
+          ignoreMarks: true,
+          useMarkFilteringSet: true,
+        },
+        markFilteringSetClassId: 'glyph_class_raw_Marks',
+      },
+    ])
+    expect(generateFea(state).text).toContain(
+      'lookupflag IgnoreMarks UseMarkFilteringSet @Marks;'
+    )
+  })
+
+  it('preserves MarkAttachmentType lookup flags until the IR can represent them', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          '@Marks = [acutecomb gravecomb];',
+          'feature salt {',
+          '  lookupflag MarkAttachmentType @Marks;',
+          '  sub A by A.alt;',
+          '} salt;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'source',
+      status: 'raw',
+      recordRefs: [],
+      meta: {
+        classifiedIntoModel: false,
+        preserveRawTextInGeneratedFea: true,
+      },
+    })
+    expect(state.lookups).toEqual([])
+    expect(
+      state.diagnostics?.some(
+        (diagnostic) =>
+          diagnostic.id ===
+          'feature-diagnostic-warning-raw-fea-parser-unsupported-statements'
+      )
+    ).toBe(true)
+  })
+
   it('preserves unsupported raw .fea source instead of partially committing it', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(
