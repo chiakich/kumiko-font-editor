@@ -173,6 +173,19 @@ const ruleToNode = (
         componentMarks,
       }
     }
+    case 'cursivePositioning':
+      return rule.entryAnchor || rule.exitAnchor
+        ? {
+            kind: 'CursivePositioning',
+            ruleId: rule.id,
+            glyphs: rule.glyphs,
+            entryAnchor: rule.entryAnchor,
+            exitAnchor: rule.exitAnchor,
+          }
+        : {
+            kind: 'Comment',
+            value: `Cannot serialize rule ${rule.id}: cursive positioning rule has no entry or exit anchor`,
+          }
     default:
       return {
         kind: 'Comment',

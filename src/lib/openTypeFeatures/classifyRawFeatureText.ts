@@ -268,6 +268,22 @@ const parseLigatureComponentAnchors = (
     : null
 }
 
+const CURSIVE_ANCHOR_PATTERN = '<\\s*anchor\\s+(?:NULL|-?\\d+\\s+-?\\d+)\\s*>'
+
+const parseCursiveAnchor = (value: string) => {
+  if (/^<\s*anchor\s+NULL\s*>$/i.test(value)) {
+    return undefined
+  }
+
+  const match = value.match(/^<\s*anchor\s+(-?\d+)\s+(-?\d+)\s*>$/i)
+  return match
+    ? {
+        x: Number(match[1]),
+        y: Number(match[2]),
+      }
+    : null
+}
+
 const parseContextualSubstitutionRule = (
   statement: string,
   ruleId: string,
@@ -449,6 +465,34 @@ const parseMarkPositioningRule = (
   glyphClassIdByName: Map<string, string>,
   markClassIdByName: Map<string, string>
 ): Rule | null => {
+  const cursiveMatch = statement.match(
+    new RegExp(
+      `^pos\\s+cursive\\s+(\\S+)\\s+(${CURSIVE_ANCHOR_PATTERN})\\s+(${CURSIVE_ANCHOR_PATTERN})$`,
+      'i'
+    )
+  )
+  if (cursiveMatch) {
+    const glyphs = selectorFromToken(cursiveMatch[1], glyphClassIdByName)
+    const entryAnchor = parseCursiveAnchor(cursiveMatch[2])
+    const exitAnchor = parseCursiveAnchor(cursiveMatch[3])
+    return glyphs &&
+      entryAnchor !== null &&
+      exitAnchor !== null &&
+      (entryAnchor || exitAnchor)
+      ? {
+          id: ruleId,
+          kind: 'cursivePositioning',
+          glyphs,
+          entryAnchor,
+          exitAnchor,
+          meta: {
+            origin,
+            provenance: { table: 'GPOS' },
+          },
+        }
+      : null
+  }
+
   const baseMatch = statement.match(/^pos\s+base\s+(\S+)\s+(.+)$/i)
   if (baseMatch) {
     const baseGlyphs = selectorFromToken(baseMatch[1], glyphClassIdByName)
@@ -570,6 +614,7 @@ const getLookupShape = (rules: Rule[]) => {
     contextualSubstitution: 'chainingContextSubst',
     singlePositioning: 'singlePos',
     pairPositioning: 'pairPos',
+    cursivePositioning: 'cursivePos',
     markToBase: 'markToBasePos',
     markToMark: 'markToMarkPos',
     markToLigature: 'markToLigaturePos',
@@ -580,6 +625,7 @@ const getLookupShape = (rules: Rule[]) => {
   const table: LookupRecord['table'] =
     firstRule.kind === 'singlePositioning' ||
     firstRule.kind === 'pairPositioning' ||
+    firstRule.kind === 'cursivePositioning' ||
     firstRule.kind === 'markToBase' ||
     firstRule.kind === 'markToMark' ||
     firstRule.kind === 'markToLigature'

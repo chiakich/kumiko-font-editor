@@ -120,6 +120,14 @@ export interface MarkToLigatureNode {
   componentMarks: MarkAttachment[][]
 }
 
+export interface CursivePositioningNode {
+  kind: 'CursivePositioning'
+  ruleId?: string
+  glyphs: GlyphSelector
+  entryAnchor?: { x: number; y: number }
+  exitAnchor?: { x: number; y: number }
+}
+
 export type FeaNode =
   | LanguageSystemNode
   | GlyphClassNode
@@ -136,6 +144,7 @@ export type FeaNode =
   | MarkToBaseNode
   | MarkToMarkNode
   | MarkToLigatureNode
+  | CursivePositioningNode
   | RawNode
   | CommentNode
 

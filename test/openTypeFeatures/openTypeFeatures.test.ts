@@ -637,6 +637,68 @@ describe('OpenType FEA source maps', () => {
     expect(generated).toContain('pos mark acutecomb <anchor 0 720> mark @TOP;')
   })
 
+  it('classifies and serializes raw cursive positioning lookup blocks', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          'languagesystem arab dflt;',
+          'lookup JoinCursive {',
+          '  pos cursive beh.init <anchor NULL> <anchor 480 0>;',
+          '  pos cursive beh.medi <anchor 20 0> <anchor 480 0>;',
+          '} JoinCursive;',
+          'feature curs {',
+          '  script arab;',
+          '  language dflt;',
+          '  lookup JoinCursive;',
+          '} curs;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.lookups).toMatchObject([
+      {
+        id: 'lookup_raw_JoinCursive',
+        table: 'GPOS',
+        lookupType: 'cursivePos',
+        rules: [
+          {
+            kind: 'cursivePositioning',
+            glyphs: { kind: 'glyph', glyph: 'beh.init' },
+            entryAnchor: undefined,
+            exitAnchor: { x: 480, y: 0 },
+          },
+          {
+            kind: 'cursivePositioning',
+            glyphs: { kind: 'glyph', glyph: 'beh.medi' },
+            entryAnchor: { x: 20, y: 0 },
+            exitAnchor: { x: 480, y: 0 },
+          },
+        ],
+      },
+    ])
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'lookup', id: 'lookup_raw_JoinCursive', table: 'GPOS' },
+        { kind: 'feature', id: 'feature_raw_curs' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain(
+      'pos cursive beh.init <anchor NULL> <anchor 480 0>;'
+    )
+    expect(generated).toContain(
+      'pos cursive beh.medi <anchor 20 0> <anchor 480 0>;'
+    )
+    expect(generated).not.toContain('Unsupported generated rule kind')
+  })
+
   it('classifies raw GDEF table glyph classes and ligature carets', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(

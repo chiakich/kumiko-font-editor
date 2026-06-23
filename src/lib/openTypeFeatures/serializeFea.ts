@@ -9,6 +9,7 @@ import {
   formatGlyphSelector,
   formatLookupFlags,
   formatMarkAttachment,
+  formatNullableAnchor,
   formatValueRecord,
 } from 'src/lib/openTypeFeatures/feaFormat'
 
@@ -291,6 +292,22 @@ const serializeMarkToLigature = (
   recordRuleSource(context, node.ruleId, lineStart, lineStart)
 }
 
+const serializeCursivePositioning = (
+  node: Extract<FeaNode, { kind: 'CursivePositioning' }>,
+  context: SerializeContext,
+  indent: string
+) => {
+  if (node.ruleId) {
+    pushLine(context, `${indent}# kumiko-rule-id: ${node.ruleId}`)
+  }
+  const lineStart = context.lines.length + 1
+  pushLine(
+    context,
+    `${indent}pos cursive ${formatSelector(context, node.glyphs)} ${formatNullableAnchor(node.entryAnchor)} ${formatNullableAnchor(node.exitAnchor)};`
+  )
+  recordRuleSource(context, node.ruleId, lineStart, lineStart)
+}
+
 function serializeNode(
   node: FeaNode,
   context: SerializeContext,
@@ -354,6 +371,9 @@ function serializeNode(
       return
     case 'MarkToLigature':
       serializeMarkToLigature(node, context, indent)
+      return
+    case 'CursivePositioning':
+      serializeCursivePositioning(node, context, indent)
       return
     case 'Raw':
       node.value.split(/\r?\n/).forEach((line) => pushLine(context, line))

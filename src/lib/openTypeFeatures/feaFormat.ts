@@ -12,6 +12,10 @@ export const formatGlyphList = (glyphs: string[]) => `[${glyphs.join(' ')}]`
 export const formatAnchor = (anchor: { x: number; y: number }) =>
   `<anchor ${Math.round(anchor.x)} ${Math.round(anchor.y)}>`
 
+export const formatNullableAnchor = (
+  anchor: { x: number; y: number } | undefined
+) => (anchor ? formatAnchor(anchor) : '<anchor NULL>')
+
 export const formatMarkAttachment = (attachment: {
   markClassName: string
   anchor: { x: number; y: number }
