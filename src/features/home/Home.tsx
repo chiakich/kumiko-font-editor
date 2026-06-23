@@ -1,4 +1,5 @@
 import { Box, Divider, Grid, VStack } from '@chakra-ui/react'
+import { DesignspaceImportChoiceModal } from 'src/features/home/components/DesignspaceImportChoiceModal'
 import { GitHubImportCard } from 'src/features/home/components/GitHubImportCard'
 import { HomeHeader } from 'src/features/home/components/HomeHeader'
 import { LocalImportCard } from 'src/features/home/components/LocalImportCard'
@@ -16,6 +17,8 @@ export function Home() {
     folderInputRef,
     fileInputRef,
     pendingGitHubImport,
+    pendingGitHubDesignspaceImport,
+    pendingLocalDesignspaceImport,
     projects,
     setGithubRefInput,
     setGithubRepoInput,
@@ -23,6 +26,10 @@ export function Home() {
     showGitHubRefInput,
     handleCancelPendingGitHubImport,
     handleConfirmPendingGitHubImport,
+    handleCancelGitHubDesignspaceImport,
+    handleConfirmGitHubDesignspaceImport,
+    handleCancelLocalDesignspaceImport,
+    handleConfirmLocalDesignspaceImport,
     handleRenameProject,
     handleDeleteProject,
     handleLocalDragEnter,
@@ -54,6 +61,22 @@ export function Home() {
         isLoading={isLoadingGitHub}
         onCancel={handleCancelPendingGitHubImport}
         onConfirm={handleConfirmPendingGitHubImport}
+      />
+      <DesignspaceImportChoiceModal
+        candidates={pendingLocalDesignspaceImport?.candidates ?? []}
+        isLoading={isLoadingLocal}
+        isOpen={Boolean(pendingLocalDesignspaceImport)}
+        onCancel={handleCancelLocalDesignspaceImport}
+        onConfirm={handleConfirmLocalDesignspaceImport}
+      />
+      <DesignspaceImportChoiceModal
+        candidates={
+          pendingGitHubDesignspaceImport?.prepared.designspaceCandidates ?? []
+        }
+        isLoading={isLoadingGitHub}
+        isOpen={Boolean(pendingGitHubDesignspaceImport)}
+        onCancel={handleCancelGitHubDesignspaceImport}
+        onConfirm={handleConfirmGitHubDesignspaceImport}
       />
 
       <Box

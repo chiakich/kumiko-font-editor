@@ -38,6 +38,7 @@ export interface DesignspaceAxis {
 export interface DesignspaceSource {
   filename: string
   name: string
+  layer?: string
   styleName?: string
   location: Record<string, number>
 }
@@ -109,12 +110,14 @@ export const parseDesignspace = (
       )
     }
     const filename = source.getAttribute('filename') ?? ''
+    const layer = source.getAttribute('layer') ?? undefined
     return {
       filename,
       name:
         source.getAttribute('name') ??
         source.getAttribute('stylename') ??
         filename,
+      ...(layer ? { layer } : {}),
       styleName: source.getAttribute('stylename') ?? undefined,
       location,
     }
@@ -179,6 +182,7 @@ export interface DesignspaceSourceOut {
   filename: string
   name: string
   location: Record<string, number>
+  layer?: string
   familyName?: string
   styleName?: string
 }
@@ -217,8 +221,11 @@ export const serializeDesignspace = (
         )
         .join('\n')
       const isDefault = sameLocation(source.location, defaultLocation)
+      const layerAttr = source.layer
+        ? ` layer="${escapeXmlAttr(source.layer)}"`
+        : ''
       return [
-        `    <source filename="${escapeXmlAttr(source.filename)}" name="${escapeXmlAttr(source.name)}" stylename="${escapeXmlAttr(source.styleName ?? source.name)}">`,
+        `    <source filename="${escapeXmlAttr(source.filename)}" name="${escapeXmlAttr(source.name)}" stylename="${escapeXmlAttr(source.styleName ?? source.name)}"${layerAttr}>`,
         ...(source.familyName
           ? [
               `      <familyname>${escapeXmlAttr(source.familyName)}</familyname>`,

@@ -288,6 +288,11 @@ export const buildUiActions = (set: ImmerSet) => ({
       markUiStateDirty(state)
     }),
 
+  setDesignspaceScrubbing: (isScrubbing: boolean) =>
+    set((state) => {
+      state.isDesignspaceScrubbing = isScrubbing
+    }),
+
   setOverviewGrouping: (groupBy: GlobalState['overviewGroupBy']) =>
     set((state) => {
       state.overviewGroupBy = groupBy

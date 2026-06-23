@@ -13,6 +13,7 @@ import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import { useGitHubCommitFlow } from 'src/features/common/glyphInspector/hooks/useGitHubCommitFlow'
 import { useProjectSyncDirtyStatus } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
 import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
+import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
 import { buildQualityReport } from 'src/lib/qualityCheck/qualityLint'
 import {
   parseNumberInput,
@@ -27,6 +28,10 @@ export function useRightPanelModel() {
   const selectedNodeIds = useStore((state) => state.selectedNodeIds)
   const selectedSegment = useStore((state) => state.selectedSegment)
   const fontData = useStore((state) => state.fontData)
+  const editLocation = useStore((state) => state.editLocation)
+  const isDesignspaceScrubbing = useStore(
+    (state) => state.isDesignspaceScrubbing
+  )
   const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
   const isDirty = useStore((state) => state.isDirty)
@@ -92,6 +97,9 @@ export function useRightPanelModel() {
 
   const glyph =
     selectedGlyphId && fontData ? fontData.glyphs[selectedGlyphId] : null
+  const isInterpolatedPreview =
+    isDesignspaceScrubbing ||
+    isInterpolatedGlyphLocation(fontData, glyph, editLocation)
   const activeLayer = getGlyphLayer(glyph ?? undefined, selectedLayerId)
   const displayedMetrics =
     glyph && previewGlyphMetrics?.glyphId === glyph.id
@@ -134,7 +142,7 @@ export function useRightPanelModel() {
   })
 
   const handleCoordinateChange = (axis: 'x' | 'y', value: string) => {
-    if (!glyph || !nodeRef || !selectedNode) {
+    if (isInterpolatedPreview || !glyph || !nodeRef || !selectedNode) {
       return
     }
 
@@ -145,7 +153,7 @@ export function useRightPanelModel() {
   }
 
   const handleNodeTypeChange = (type: NodeType) => {
-    if (!glyph || !nodeRef) {
+    if (isInterpolatedPreview || !glyph || !nodeRef) {
       return
     }
 
@@ -156,7 +164,7 @@ export function useRightPanelModel() {
     field: 'lsb' | 'rsb' | 'width',
     value: string
   ) => {
-    if (!glyph || value.trim() === '') {
+    if (isInterpolatedPreview || !glyph || value.trim() === '') {
       return
     }
 
@@ -166,7 +174,12 @@ export function useRightPanelModel() {
   }
 
   const handleConvertSelectedSegment = () => {
-    if (!glyph || !selectedSegment || selectedSegment.type !== 'line') {
+    if (
+      isInterpolatedPreview ||
+      !glyph ||
+      !selectedSegment ||
+      selectedSegment.type !== 'line'
+    ) {
       return
     }
 
@@ -185,7 +198,7 @@ export function useRightPanelModel() {
       newPos: { x: number; y: number }
     }>
   ) => {
-    if (!glyph || updates.length === 0) {
+    if (isInterpolatedPreview || !glyph || updates.length === 0) {
       return
     }
 
@@ -196,7 +209,7 @@ export function useRightPanelModel() {
     operation: PathBooleanOperation,
     pathIds: string[]
   ) => {
-    if (!glyph || pathIds.length < 2) {
+    if (isInterpolatedPreview || !glyph || pathIds.length < 2) {
       return
     }
 
@@ -253,6 +266,7 @@ export function useRightPanelModel() {
     hasGitHubSource,
     hasLocalChanges,
     isDirty,
+    isInterpolatedPreview,
     isEndpointNode,
     isOnCurveNode,
     nodeRef,

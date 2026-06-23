@@ -1,10 +1,17 @@
 import { VarPackedPath } from 'src/font/VarPackedPath'
 import {
+  findSourceIdAtLocation,
+  getGlyphMasterLayerForSource,
+  isInterpolatedGlyphLocation,
+} from 'src/font/designspaceLocation'
+import { interpolateGlyphLayer } from 'src/font/glyphInterpolation'
+import {
   getEffectiveNodeType,
   getGlyphLayer,
   getNodeSegmentType,
   isOffCurveNode,
   type FontData,
+  type GlyphLayerData,
   type PathData,
 } from 'src/store'
 import type {
@@ -33,11 +40,18 @@ export interface LayerGeometryCacheEntry {
 
 interface BuildPositionedGlyphsOptions {
   activeToolId: ToolId
+  editLocation: Record<string, number>
   editorActiveGlyphIndex: number
   editorGlyphIds: string[]
   fontData: FontData | null
   selectedLayerId: string | null
   layerGeometryCache: Map<string, LayerGeometryCacheEntry>
+}
+
+interface ResolvedLayer {
+  layer: GlyphLayerData
+  cacheKey: string
+  isInterpolated: boolean
 }
 
 const pruneStaleLayerGeometryCache = (
@@ -76,10 +90,59 @@ const pathDataToVarPackedPath = (paths: PathData[]) => {
   return VarPackedPath.fromUnpackedContours(contours)
 }
 
+const resolveGlyphLayerForLocation = (
+  fontData: FontData,
+  glyphId: string,
+  selectedLayerId: string | null,
+  editLocation: Record<string, number>
+): ResolvedLayer | null => {
+  const glyph = fontData.glyphs[glyphId]
+  if (!glyph) {
+    return null
+  }
+
+  if (isInterpolatedGlyphLocation(fontData, glyph, editLocation)) {
+    const result = interpolateGlyphLayer({
+      glyph,
+      axes: fontData.axes,
+      sources: fontData.sources,
+      location: editLocation,
+    })
+    if (!result.layer) {
+      return result.baseLayer
+        ? {
+            layer: result.baseLayer,
+            cacheKey: `${glyphId}:interpolation-fallback:${result.baseLayer.id}:${JSON.stringify(editLocation)}`,
+            isInterpolated: true,
+          }
+        : null
+    }
+    return {
+      layer: result.layer,
+      cacheKey: `${glyphId}:interpolated:${JSON.stringify(editLocation)}`,
+      isInterpolated: true,
+    }
+  }
+
+  const sourceId = findSourceIdAtLocation(fontData, editLocation)
+  if (sourceId) {
+    const layer = getGlyphMasterLayerForSource(glyph, sourceId)
+    return layer
+      ? { layer, cacheKey: `${glyphId}:${layer.id}`, isInterpolated: false }
+      : null
+  }
+
+  const layer = getGlyphLayer(glyph, selectedLayerId)
+  return layer
+    ? { layer, cacheKey: `${glyphId}:${layer.id}`, isInterpolated: false }
+    : null
+}
+
 const buildComponentPath2D = (
   componentGlyphId: string,
   fontData: FontData,
   selectedLayerId: string | null,
+  editLocation: Record<string, number>,
   layerGeometryCache: Map<string, LayerGeometryCacheEntry>,
   depth = 0,
   visited = new Set<string>()
@@ -89,17 +152,25 @@ const buildComponentPath2D = (
   }
 
   const sourceGlyph = fontData.glyphs[componentGlyphId]
-  const sourceLayer = getGlyphLayer(sourceGlyph, selectedLayerId)
+  const resolvedLayer = resolveGlyphLayerForLocation(
+    fontData,
+    componentGlyphId,
+    selectedLayerId,
+    editLocation
+  )
+  const sourceLayer = resolvedLayer?.layer
   if (!sourceGlyph || !sourceLayer) {
     return undefined
   }
 
   const nextVisited = new Set(visited)
   nextVisited.add(componentGlyphId)
-  const sourceCacheKey = `${componentGlyphId}:${sourceLayer.id}`
+  const sourceCacheKey = resolvedLayer.cacheKey
   const sourceCachedGeometry = layerGeometryCache.get(sourceCacheKey)
   const sourceVarPath =
-    sourceCachedGeometry && sourceCachedGeometry.layerRef === sourceLayer
+    !resolvedLayer.isInterpolated &&
+    sourceCachedGeometry &&
+    sourceCachedGeometry.layerRef === sourceLayer
       ? sourceCachedGeometry.varPath
       : pathDataToVarPackedPath(sourceLayer.paths)
   const combinedPath = new Path2D(sourceVarPath.toSVGPath())
@@ -109,6 +180,7 @@ const buildComponentPath2D = (
       componentRef.glyphId,
       fontData,
       selectedLayerId,
+      editLocation,
       layerGeometryCache,
       depth + 1,
       nextVisited
@@ -135,6 +207,7 @@ const buildComponentPath2D = (
 
 export const buildPositionedGlyphs = ({
   activeToolId,
+  editLocation,
   editorActiveGlyphIndex,
   editorGlyphIds,
   fontData,
@@ -163,7 +236,13 @@ export const buildPositionedGlyphs = ({
   return glyphRuns
     .map((run) => {
       const glyph = fontData.glyphs[run.glyphId]
-      const activeLayer = getGlyphLayer(glyph, selectedLayerId)
+      const resolvedLayer = resolveGlyphLayerForLocation(
+        fontData,
+        run.glyphId,
+        selectedLayerId,
+        editLocation
+      )
+      const activeLayer = resolvedLayer?.layer
       if (!glyph || !activeLayer) {
         return null
       }
@@ -174,14 +253,18 @@ export const buildPositionedGlyphs = ({
       )
       cursorX += kerningWithPrevious
 
-      const cacheKey = `${glyph.id}:${activeLayer.id}`
+      const cacheKey = resolvedLayer.cacheKey
       const cachedGeometry = layerGeometryCache.get(cacheKey)
       let pointRefs: Array<{ pathId: string; nodeId: string }>
       let varPath: InstanceType<typeof VarPackedPath>
       let components: ComponentData[]
       let guidelines: GuidelineData[]
 
-      if (cachedGeometry && cachedGeometry.layerRef === activeLayer) {
+      if (
+        !resolvedLayer.isInterpolated &&
+        cachedGeometry &&
+        cachedGeometry.layerRef === activeLayer
+      ) {
         pointRefs = cachedGeometry.pointRefs
         varPath = cachedGeometry.varPath
         components = cachedGeometry.components
@@ -200,6 +283,7 @@ export const buildPositionedGlyphs = ({
             componentRef.glyphId,
             fontData,
             selectedLayerId,
+            editLocation,
             layerGeometryCache
           )
           if (!basePath2d) {
@@ -239,15 +323,17 @@ export const buildPositionedGlyphs = ({
           locked: guide.locked,
         }))
 
-        layerGeometryCache.set(cacheKey, {
-          glyphId: glyph.id,
-          layerId: activeLayer.id,
-          layerRef: activeLayer,
-          pointRefs,
-          varPath,
-          components,
-          guidelines,
-        })
+        if (!resolvedLayer.isInterpolated) {
+          layerGeometryCache.set(cacheKey, {
+            glyphId: glyph.id,
+            layerId: activeLayer.id,
+            layerRef: activeLayer,
+            pointRefs,
+            varPath,
+            components,
+            guidelines,
+          })
+        }
       }
 
       const positionedGlyph: PositionedGlyph = {
@@ -267,11 +353,12 @@ export const buildPositionedGlyphs = ({
         displayCharacter: getGlyphUnicodeChar(glyph) ?? glyph.name ?? glyph.id,
         x: cursorX,
         y: 0,
-        pointRefs,
+        pointRefs: resolvedLayer.isInterpolated ? [] : pointRefs,
         sourceGlyphIds: run.sourceGlyphIds,
         sourceStartIndex: run.sourceStartIndex,
         sourceLength: run.sourceLength,
         isEditing:
+          !resolvedLayer.isInterpolated &&
           activeToolId !== 'text' &&
           run.sourceStartIndex <= editorActiveGlyphIndex &&
           editorActiveGlyphIndex < run.sourceStartIndex + run.sourceLength,

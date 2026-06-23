@@ -13,6 +13,7 @@ import type {
   ProjectRoundTripFormat,
 } from 'src/lib/project/projectFormats'
 import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
+import { findSourceIdAtLocation } from 'src/font/designspaceLocation'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import { getProjectGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
@@ -115,17 +116,29 @@ export const buildProjectActions = (
         (firstMasterLayerId ||
           (firstGlyph ? getActiveLayerId(firstGlyph) : null) ||
           null)
-      // Multi-master: when the selected layer is a font source, treat it as the
-      // active master so the switcher highlights it.
-      state.activeMasterId =
-        projectUiState?.activeMasterId &&
-        hotFontData.sources?.[projectUiState.activeMasterId]
+      const storedEditLocation = projectUiState?.editLocation ?? null
+      // Multi-master: editLocation is the source of truth. A saved location may
+      // be between masters, in which case activeMasterId stays null.
+      state.activeMasterId = storedEditLocation
+        ? findSourceIdAtLocation(hotFontData, storedEditLocation)
+        : projectUiState?.activeMasterId &&
+            hotFontData.sources?.[projectUiState.activeMasterId]
           ? projectUiState.activeMasterId
           : null
       state.activeMasterId =
-        state.selectedLayerId && hotFontData.sources?.[state.selectedLayerId]
+        !storedEditLocation &&
+        state.selectedLayerId &&
+        hotFontData.sources?.[state.selectedLayerId]
           ? state.selectedLayerId
           : state.activeMasterId
+      const activeSource = state.activeMasterId
+        ? hotFontData.sources?.[state.activeMasterId]
+        : null
+      state.editLocation = storedEditLocation
+        ? { ...storedEditLocation }
+        : activeSource
+          ? { ...activeSource.location }
+          : {}
       syncFilteredGlyphList(state)
 
       for (const glyph of Object.values(hotFontData.glyphs)) {
@@ -325,6 +338,8 @@ export const buildProjectActions = (
       state.selectedNodeIds = []
       state.selectedSegment = null
       state.selectedLayerId = null
+      state.activeMasterId = null
+      state.editLocation = {}
       state.workspaceView = 'overview'
       state.overviewGroupBy = 'script'
       state.overviewSectionId = 'all'
@@ -504,6 +519,9 @@ export const buildProjectActions = (
           if (state.activeMasterId && removedSet.has(state.activeMasterId)) {
             state.activeMasterId = Object.keys(nextSources)[0] ?? null
             state.selectedLayerId = state.activeMasterId
+            state.editLocation = state.activeMasterId
+              ? { ...nextSources[state.activeMasterId].location }
+              : {}
           }
         }
       }

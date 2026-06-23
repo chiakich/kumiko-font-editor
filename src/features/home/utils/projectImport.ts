@@ -5,8 +5,11 @@ import {
 } from 'src/lib/project/projectRepository'
 import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
 import {
+  buildWorkspaceEntriesFromFiles,
   importUfoWorkspace,
+  listDesignspaceCandidates,
   type ImportedUfoWorkspace,
+  type DesignspaceCandidate,
 } from 'src/lib/fontFormats/adapters/ufo'
 import {
   importGlyphsFile,
@@ -31,6 +34,11 @@ const BINARY_FONT_EXTENSIONS = new Set(['ttf', 'otf', 'woff', 'woff2'])
 
 const hasFolderEntries = (files: File[]) =>
   files.some((file) => file.webkitRelativePath.includes('/'))
+
+const getProjectTitleFromFiles = (files: File[]) => {
+  const path = files[0]?.webkitRelativePath || files[0]?.name || 'Untitled'
+  return path.replace(/\\/g, '/').split('/')[0] ?? 'Untitled'
+}
 
 export const isSingleBinaryFontImport = (files: File[]) => {
   if (hasFolderEntries(files) || files.length !== 1) {
@@ -125,7 +133,8 @@ export const saveImportedUfoWorkspaceAsProject = async (
 }
 
 export const importLocalProjectFiles = async (
-  selectedFiles: File[]
+  selectedFiles: File[],
+  options: { designspacePath?: string | null } = {}
 ): Promise<ImportedKumikoProject | null> => {
   if (selectedFiles.length === 0) {
     return null
@@ -170,6 +179,26 @@ export const importLocalProjectFiles = async (
     return saveImportedGlyphsProject(imported, imported.title)
   }
 
-  const importedUfo = await importUfoWorkspace(selectedFiles)
+  const importedUfo = await importUfoWorkspace(selectedFiles, {
+    designspacePath: options.designspacePath,
+  })
   return saveImportedUfoWorkspaceAsProject(importedUfo)
+}
+
+export const listLocalUfoDesignspaceCandidates = async (
+  selectedFiles: File[]
+): Promise<DesignspaceCandidate[]> => {
+  if (
+    selectedFiles.length === 0 ||
+    isSingleBinaryFontImport(selectedFiles) ||
+    isSingleGlyphsFileImport(selectedFiles) ||
+    isGlyphsPackageImport(selectedFiles)
+  ) {
+    return []
+  }
+
+  const entries = await buildWorkspaceEntriesFromFiles(selectedFiles)
+  return listDesignspaceCandidates(entries, {
+    sourceFolderName: getProjectTitleFromFiles(selectedFiles),
+  })
 }

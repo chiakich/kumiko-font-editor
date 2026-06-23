@@ -42,6 +42,7 @@ export function useAutoDraftSave() {
   const selectedLayerId = useStore((state) => state.selectedLayerId)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
+  const editLocation = useStore((state) => state.editLocation)
   const overviewSectionId = useStore((state) => state.overviewSectionId)
   const overviewTopGlyphId = useStore((state) => state.overviewTopGlyphId)
   const overviewGridState = useStore((state) => state.overviewGridState)
@@ -77,6 +78,7 @@ export function useAutoDraftSave() {
           activeMasterId,
           deletedGlyphIds,
           dirtyGlyphIds,
+          editLocation,
           fontData,
           glyphEditTimes,
           markDraftSaved,
@@ -105,6 +107,7 @@ export function useAutoDraftSave() {
   }, [
     deletedGlyphIds,
     dirtyGlyphIds,
+    editLocation,
     fontData,
     glyphEditTimes,
     isDirty,

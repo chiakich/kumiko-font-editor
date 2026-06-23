@@ -63,6 +63,14 @@ export class PointerTool extends BaseTool {
     | undefined
 
   handleHover(event: ToolEvent): void {
+    if (!this.sceneModel.canEdit) {
+      this.sceneController.setHoverSelection(new Set())
+      this.sceneController.setHoverPathHit(undefined)
+      this.setCursor()
+      this.canvasController.requestUpdate()
+      return
+    }
+
     this.updateSelectionTransformBounds()
     const transformHandle = getTransformHandleAtPoint(
       this.localPoint(event),
@@ -105,6 +113,13 @@ export class PointerTool extends BaseTool {
     initialEvent: ToolEvent
   ): Promise<void> {
     initialEvent.preventDefault()
+    if (!this.sceneModel.canEdit) {
+      eventStream.done()
+      this.sceneController.setSelection(new Set())
+      this.sceneController.setSelectedPathHit(undefined)
+      this.canvasController.requestUpdate()
+      return
+    }
 
     const point = this.localPoint(initialEvent)
     const transformHandle = getTransformHandleAtPoint(

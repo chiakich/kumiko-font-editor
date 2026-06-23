@@ -130,6 +130,7 @@ const initialState = {
   selectedLayerId: 'default',
   activeMasterId: null,
   editLocation: {},
+  isDesignspaceScrubbing: false,
   selectedNodeIds: [],
   selectedSegment: null,
   referenceFontName: null,
@@ -171,6 +172,12 @@ export const useStore = create<GlobalState>()(
       // undo step (mirrors setSelectedLayerId).
       setActiveMasterId: (id: string | null) => {
         buildGlyphActions(set).setActiveMasterId(id, () =>
+          useStore.temporal.getState().clear()
+        )
+      },
+
+      setEditLocation: (location: Record<string, number>) => {
+        buildGlyphActions(set).setEditLocation(location, () =>
           useStore.temporal.getState().clear()
         )
       },

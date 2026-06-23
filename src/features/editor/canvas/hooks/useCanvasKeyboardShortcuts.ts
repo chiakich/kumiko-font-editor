@@ -5,6 +5,7 @@ import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 interface UseCanvasKeyboardShortcutsOptions {
   activeEditorGlyphId: string | null
   activeToolId: ToolId
+  canEdit: boolean
   deleteSelectedNodes: (glyphId: string, nodeIds: string[]) => void
   fontData: FontData | null
   getPreviousPenSelection: () => string | null
@@ -46,6 +47,7 @@ const isTypingTarget = (target: EventTarget | null, activeToolId: ToolId) => {
 export function useCanvasKeyboardShortcuts({
   activeEditorGlyphId,
   activeToolId,
+  canEdit,
   deleteSelectedNodes,
   fontData,
   getPreviousPenSelection,
@@ -72,7 +74,7 @@ export function useCanvasKeyboardShortcuts({
       : null
 
     const selectAllGlyphNodes = () => {
-      if (activeToolId === 'text' || !activeLayer) {
+      if (!canEdit || activeToolId === 'text' || !activeLayer) {
         return
       }
 
@@ -84,7 +86,7 @@ export function useCanvasKeyboardShortcuts({
     }
 
     const nudgeSelectedNodes = (dx: number, dy: number) => {
-      if (activeToolId === 'text') {
+      if (!canEdit || activeToolId === 'text') {
         return
       }
       if (
@@ -148,18 +150,19 @@ export function useCanvasKeyboardShortcuts({
         } else if (event.key === 'c' || event.key === 'C') {
           event.preventDefault()
           void onCopySelection()
-        } else if (event.key === 'x' || event.key === 'X') {
+        } else if (canEdit && (event.key === 'x' || event.key === 'X')) {
           event.preventDefault()
           void onCutSelection()
-        } else if (event.key === 'v' || event.key === 'V') {
+        } else if (canEdit && (event.key === 'v' || event.key === 'V')) {
           event.preventDefault()
           void onPasteSelection()
-        } else if (event.key === 'a' || event.key === 'A') {
+        } else if (canEdit && (event.key === 'a' || event.key === 'A')) {
           event.preventDefault()
           event.stopPropagation()
           selectAllGlyphNodes()
         }
       } else if (
+        canEdit &&
         (event.key === 'Backspace' || event.key === 'Delete') &&
         activeEditorGlyphId &&
         selectedNodeIds.length > 0
@@ -237,6 +240,7 @@ export function useCanvasKeyboardShortcuts({
   }, [
     activeEditorGlyphId,
     activeToolId,
+    canEdit,
     deleteSelectedNodes,
     fontData,
     getPreviousPenSelection,

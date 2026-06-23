@@ -413,6 +413,8 @@ export interface GlobalState {
   // Current position in design space. master switch snaps it to source.location;
   // variable font (Phase 1) generalises it to any continuous location.
   editLocation: Record<string, number>
+  // Transient UI state while a variable-axis slider is actively being scrubbed.
+  isDesignspaceScrubbing: boolean
   // Reference font for tracing (loaded font held in lib/referenceFont; here we
   // keep only serialisable UI state). referenceFontChar overrides the character
   // shown; when null the editing glyph's own character is used.
@@ -500,6 +502,8 @@ export interface GlobalState {
   setSelectedSegment: (segment: SelectedSegmentState | null) => void
   setSelectedLayerId: (id: string | null) => void
   setActiveMasterId: (id: string | null) => void
+  setEditLocation: (location: Record<string, number>) => void
+  setDesignspaceScrubbing: (isScrubbing: boolean) => void
   createBackupLayer: (glyphId: string) => void
   createGlyphMasterLayer: (glyphId: string, masterId: string) => void
   duplicateLayer: (glyphId: string, layerId: string) => void

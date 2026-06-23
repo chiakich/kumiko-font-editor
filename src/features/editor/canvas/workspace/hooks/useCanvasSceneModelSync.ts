@@ -45,6 +45,7 @@ interface CanvasSceneModelSyncOptions {
   activeToolId: ToolId
   canvasControllerRef: RefObject<CanvasController | null>
   canvasSize: { width: number; height: number }
+  canEdit: boolean
   componentGhostPaths: PathData[] | null
   componentTargetRect: {
     xMin: number
@@ -73,6 +74,7 @@ export function useCanvasSceneModelSync({
   activeToolId,
   canvasControllerRef,
   canvasSize,
+  canEdit,
   componentGhostPaths,
   componentTargetRect,
   didCenterInitialGlyphRef,
@@ -223,22 +225,26 @@ export function useCanvasSceneModelSync({
     }
     sceneController.sceneModel.lineMetricsHorizontalLayout =
       fontData?.lineMetricsHorizontalLayout
-    const selectionPointIds = new Set(
-      selectedNodeIds.flatMap((selectedNodeId) => {
-        const pointRefs = positionedGlyph?.pointRefs ?? []
-        const pointIndex = pointRefs.findIndex(
-          (pointRef) =>
-            `${pointRef.pathId}:${pointRef.nodeId}` === selectedNodeId
+    const selectionPointIds = canEdit
+      ? new Set(
+          selectedNodeIds.flatMap((selectedNodeId) => {
+            const pointRefs = positionedGlyph?.pointRefs ?? []
+            const pointIndex = pointRefs.findIndex(
+              (pointRef) =>
+                `${pointRef.pathId}:${pointRef.nodeId}` === selectedNodeId
+            )
+            return pointIndex >= 0 ? [`point/${pointIndex}`] : []
+          })
         )
-        return pointIndex >= 0 ? [`point/${pointIndex}`] : []
-      })
-    )
+      : new Set<string>()
     sceneController.sceneModel.selection = selectionPointIds
     sceneController.selection = selectionPointIds
+    sceneController.sceneModel.canEdit = canEdit
 
     controller.requestUpdate()
   }, [
     activeToolId,
+    canEdit,
     canvasControllerRef,
     editorTextCursorIndex,
     fontData,

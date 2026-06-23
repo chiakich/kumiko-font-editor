@@ -12,6 +12,7 @@ export interface KumikoProjectUiState {
   selectedGlyphId?: string | null
   selectedLayerId?: string | null
   activeMasterId?: string | null
+  editLocation?: Record<string, number> | null
   overviewSectionId?: string | null
   overviewTopGlyphId?: string | null
   overviewGridState?: unknown | null

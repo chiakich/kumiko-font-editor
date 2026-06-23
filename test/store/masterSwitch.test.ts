@@ -54,6 +54,19 @@ const twoMasterGlyph = (): GlyphData => ({
 const fontData = (): FontData => ({
   glyphs: { A: twoMasterGlyph() },
   glyphOrder: ['A'],
+  axes: {
+    axes: [
+      {
+        name: 'Weight',
+        label: 'Weight',
+        tag: 'wght',
+        minValue: 0,
+        defaultValue: 0,
+        maxValue: 100,
+      },
+    ],
+    mappings: [],
+  },
   sources: {
     Light: { id: 'Light', name: 'Light', location: { Weight: 0 } },
     Bold: { id: 'Bold', name: 'Bold', location: { Weight: 100 } },
@@ -78,6 +91,22 @@ describe('setActiveMasterId convergence', () => {
     expect(state.activeMasterId).toBe('Bold')
     expect(state.selectedLayerId).toBe('Bold')
     expect(state.editLocation).toEqual({ Weight: 100 })
+    expect(state.fontData?.glyphs.A.activeLayerId).toBe('Bold')
+  })
+
+  it('setting an intermediate editLocation enters read-only instance mode', () => {
+    useStore.getState().loadProjectState('p', 'P', fontData())
+    useStore.getState().setEditLocation({ Weight: 50 })
+
+    let state = useStore.getState()
+    expect(state.activeMasterId).toBeNull()
+    expect(state.selectedLayerId).toBe('Light')
+    expect(state.editLocation).toEqual({ Weight: 50 })
+
+    useStore.getState().setEditLocation({ Weight: 100 })
+    state = useStore.getState()
+    expect(state.activeMasterId).toBe('Bold')
+    expect(state.selectedLayerId).toBe('Bold')
     expect(state.fontData?.glyphs.A.activeLayerId).toBe('Bold')
   })
 

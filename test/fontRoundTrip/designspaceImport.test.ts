@@ -10,8 +10,11 @@ import {
 } from 'src/lib/fontFormats/designspace'
 import {
   buildMultiMasterFontData,
+  importUfoWorkspaceEntries,
+  listDesignspaceCandidates,
   resolveSourceRefs,
   resolveDefaultSourceRef,
+  type UfoWorkspaceEntry,
 } from 'src/lib/fontFormats/ufoFormat'
 import { getGlyphLayer } from 'src/store/glyphLayer'
 import type {
@@ -81,6 +84,52 @@ const glyphRecord = (
   updatedAt: 0,
 })
 
+const EMPTY_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict/></plist>`
+
+const contentsPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict><key>A</key><string>A.glif</string></dict></plist>`
+
+const layercontentsPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+  <array>
+    <array>
+      <string>public.default</string>
+      <string>glyphs</string>
+    </array>
+    <array>
+      <string>support.crossbar</string>
+      <string>glyphs.support.crossbar</string>
+    </array>
+  </array>
+</plist>`
+
+const glif = (
+  x: number,
+  width: number
+) => `<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="A" format="2">
+  <unicode hex="0041"/>
+  <advance width="${width}"/>
+  <outline>
+    <contour>
+      <point x="${x}" y="0" type="move"/>
+      <point x="${x + 100}" y="0" type="line"/>
+    </contour>
+  </outline>
+</glyph>`
+
+const ufoEntries = (
+  ufoId: string,
+  x: number,
+  width: number
+): UfoWorkspaceEntry[] => [
+  { relativePath: `${ufoId}/metainfo.plist`, text: EMPTY_PLIST },
+  { relativePath: `${ufoId}/fontinfo.plist`, text: EMPTY_PLIST },
+  { relativePath: `${ufoId}/glyphs/contents.plist`, text: contentsPlist },
+  { relativePath: `${ufoId}/glyphs/A.glif`, text: glif(x, width) },
+]
+
 describe('parseDesignspace', () => {
   it('parses axes and sources with locations', () => {
     const ds = parseDesignspace(DESIGNSPACE)
@@ -96,6 +145,27 @@ describe('parseDesignspace', () => {
     expect(ds.sources[1].location).toEqual({ Weight: 100 })
   })
 
+  it('parses source layer attributes', () => {
+    const ds = parseDesignspace(`<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis name="Weight" tag="wght" minimum="0" default="0" maximum="100"/>
+  </axes>
+  <sources>
+    <source filename="Light.ufo" stylename="Light" layer="support.crossbar">
+      <location><dimension name="Weight" xvalue="50"/></location>
+    </source>
+  </sources>
+</designspace>`)
+
+    expect(ds.sources[0]).toMatchObject({
+      filename: 'Light.ufo',
+      name: 'Light',
+      layer: 'support.crossbar',
+      location: { Weight: 50 },
+    })
+  })
+
   it('converts axes to FontAxes', () => {
     const axes = designspaceToFontAxes(parseDesignspace(DESIGNSPACE))
     expect(axes.axes[0]).toMatchObject({
@@ -105,6 +175,168 @@ describe('parseDesignspace', () => {
       defaultValue: 0,
       maxValue: 100,
     })
+  })
+})
+
+describe('designspace import choice', () => {
+  it('recommends the project-named designspace over incomplete test variants', () => {
+    const entries: UfoWorkspaceEntry[] = [
+      ...[
+        'MutatorSansLightCondensed.ufo',
+        'MutatorSansBoldCondensed.ufo',
+        'MutatorSansLightWide.ufo',
+        'MutatorSansBoldWide.ufo',
+      ].map((ufoId) => ({
+        relativePath: `${ufoId}/metainfo.plist`,
+        text: EMPTY_PLIST,
+      })),
+      {
+        relativePath: 'MutatorSans_missing.designspace',
+        text: `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wdth" name="width" minimum="0" maximum="1000" default="0"/>
+    <axis tag="wght" name="weight" minimum="0" maximum="1000" default="0"/>
+  </axes>
+  <sources>
+    <source filename="MutatorSansLightCondensed.ufo"><location><dimension name="width" xvalue="0"/><dimension name="weight" xvalue="0"/></location></source>
+    <source filename="MissingMaster.ufo"><location><dimension name="width" xvalue="1000"/><dimension name="weight" xvalue="1000"/></location></source>
+  </sources>
+</designspace>`,
+      },
+      {
+        relativePath: 'MutatorSans-weight-only.designspace',
+        text: `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wght" name="weight" minimum="0" maximum="1000" default="0"/>
+  </axes>
+  <sources>
+    <source filename="MutatorSansLightCondensed.ufo"><location><dimension name="weight" xvalue="0"/></location></source>
+    <source filename="MutatorSansBoldCondensed.ufo"><location><dimension name="weight" xvalue="1000"/></location></source>
+  </sources>
+</designspace>`,
+      },
+      {
+        relativePath: 'MutatorSans.designspace',
+        text: `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis tag="wdth" name="width" minimum="0" maximum="1000" default="0"/>
+    <axis tag="wght" name="weight" minimum="0" maximum="1000" default="0"/>
+  </axes>
+  <sources>
+    <source filename="MutatorSansLightCondensed.ufo"><location><dimension name="width" xvalue="0"/><dimension name="weight" xvalue="0"/></location></source>
+    <source filename="MutatorSansBoldCondensed.ufo"><location><dimension name="width" xvalue="0"/><dimension name="weight" xvalue="1000"/></location></source>
+    <source filename="MutatorSansLightWide.ufo"><location><dimension name="width" xvalue="1000"/><dimension name="weight" xvalue="0"/></location></source>
+    <source filename="MutatorSansBoldWide.ufo"><location><dimension name="width" xvalue="1000"/><dimension name="weight" xvalue="1000"/></location></source>
+  </sources>
+</designspace>`,
+      },
+    ]
+
+    const candidates = listDesignspaceCandidates(entries, {
+      sourceFolderName: 'LettError/mutatorSans',
+    })
+
+    expect(candidates[0]).toMatchObject({
+      relativePath: 'MutatorSans.designspace',
+      recommended: true,
+      missingSourceCount: 0,
+    })
+    expect(
+      candidates.find(
+        (candidate) =>
+          candidate.relativePath === 'MutatorSans_missing.designspace'
+      )?.missingSourceCount
+    ).toBe(1)
+  })
+
+  it('imports the explicitly selected designspace path', async () => {
+    const entries: UfoWorkspaceEntry[] = [
+      ...ufoEntries('Light.ufo', 10, 500),
+      ...ufoEntries('Bold.ufo', 80, 700),
+      {
+        relativePath: 'Alpha.designspace',
+        text: DESIGNSPACE.replaceAll('Weight', 'Alpha'),
+      },
+      {
+        relativePath: 'Beta.designspace',
+        text: DESIGNSPACE.replaceAll('Weight', 'Beta'),
+      },
+    ]
+
+    const imported = await importUfoWorkspaceEntries(entries, {
+      title: 'Choice Test',
+      sourceFolderName: 'Choice Test',
+      designspacePath: 'Beta.designspace',
+    })
+
+    expect(imported.fontData.axes?.axes[0].name).toBe('Beta')
+    expect(imported.projectSourceData.ufo?.designspacePath).toBe(
+      'Beta.designspace'
+    )
+  })
+
+  it('imports designspace sources from named UFO layers', async () => {
+    const entries: UfoWorkspaceEntry[] = [
+      ...ufoEntries('Light.ufo', 10, 500),
+      {
+        relativePath: 'Light.ufo/layercontents.plist',
+        text: layercontentsPlist,
+      },
+      {
+        relativePath: 'Light.ufo/glyphs.support.crossbar/contents.plist',
+        text: contentsPlist,
+      },
+      {
+        relativePath: 'Light.ufo/glyphs.support.crossbar/A.glif',
+        text: glif(40, 560),
+      },
+      ...ufoEntries('Bold.ufo', 80, 700),
+      {
+        relativePath: 'Layered.designspace',
+        text: `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis name="Weight" tag="wght" minimum="0" default="0" maximum="100"/>
+  </axes>
+  <sources>
+    <source filename="Light.ufo" stylename="Light">
+      <location><dimension name="Weight" xvalue="0"/></location>
+    </source>
+    <source filename="Light.ufo" stylename="Light" layer="support.crossbar">
+      <location><dimension name="Weight" xvalue="50"/></location>
+    </source>
+    <source filename="Bold.ufo" stylename="Bold">
+      <location><dimension name="Weight" xvalue="100"/></location>
+    </source>
+  </sources>
+</designspace>`,
+      },
+    ]
+
+    const imported = await importUfoWorkspaceEntries(entries, {
+      title: 'Layered',
+      sourceFolderName: 'Layered',
+      designspacePath: 'Layered.designspace',
+    })
+
+    const glyph = imported.fontData.glyphs.A
+    const supportLayerId = 'Light · support.crossbar'
+    expect(Object.keys(imported.fontData.sources ?? {})).toEqual([
+      'Light',
+      supportLayerId,
+      'Bold',
+    ])
+    expect(glyph.layers?.Light?.paths[0].nodes[1].x).toBe(110)
+    expect(glyph.layers?.[supportLayerId]?.paths[0].nodes[1].x).toBe(140)
+    expect(glyph.layers?.[supportLayerId].sourceData?.ufo?.layerId).toBe(
+      'support.crossbar'
+    )
+    expect(glyph.layers?.[supportLayerId].sourceData?.ufo?.glyphDir).toBe(
+      'glyphs.support.crossbar'
+    )
   })
 })
 
@@ -229,6 +461,54 @@ describe('resolveSourceRefs (save-path routing)', () => {
         location: { Weight: 100 },
         ufoId: 'sources/Bold.ufo',
         layerId: 'public.default',
+      },
+    ])
+  })
+
+  it('maps designspace source layers to the named UFO layer', () => {
+    const refs = resolveSourceRefs(
+      [
+        {
+          ...metadata('Light.ufo'),
+          layers: [
+            { layerId: 'public.default', glyphDir: 'glyphs' },
+            {
+              layerId: 'support.crossbar',
+              glyphDir: 'glyphs.support.crossbar',
+            },
+          ],
+        },
+      ],
+      parseDesignspace(`<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis name="Weight" tag="wght" minimum="0" default="0" maximum="100"/>
+  </axes>
+  <sources>
+    <source filename="Light.ufo" stylename="Light">
+      <location><dimension name="Weight" xvalue="0"/></location>
+    </source>
+    <source filename="Light.ufo" stylename="Light" layer="support.crossbar">
+      <location><dimension name="Weight" xvalue="50"/></location>
+    </source>
+  </sources>
+</designspace>`)
+    )
+
+    expect(refs).toEqual([
+      {
+        sourceId: 'Light',
+        name: 'Light',
+        location: { Weight: 0 },
+        ufoId: 'Light.ufo',
+        layerId: 'public.default',
+      },
+      {
+        sourceId: 'Light · support.crossbar',
+        name: 'Light · support.crossbar',
+        location: { Weight: 50 },
+        ufoId: 'Light.ufo',
+        layerId: 'support.crossbar',
       },
     ])
   })

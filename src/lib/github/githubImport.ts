@@ -1,7 +1,12 @@
 import { unzipSync } from 'fflate'
 import {
   importUfoWorkspaceEntries,
+  isDesignspaceFile,
   isRelevantUfoTextFile,
+  listDesignspaceCandidates,
+  type DesignspaceCandidate,
+  type ImportedUfoWorkspace,
+  type UfoImportSourceOptions,
   type UfoWorkspaceEntry,
 } from 'src/lib/fontFormats/adapters/ufo'
 import type { UfoGithubSource } from 'src/lib/fontFormats/ufoTypes'
@@ -70,7 +75,10 @@ const collectUfoEntriesFromZip = (zipBuffer: Uint8Array) => {
         ? normalizedPath.slice(archiveRoot.length + 1)
         : normalizedPath
 
-    if (!isRelevantUfoTextFile(relativePath)) {
+    if (
+      !isRelevantUfoTextFile(relativePath) &&
+      !isDesignspaceFile(relativePath)
+    ) {
       continue
     }
 
@@ -146,6 +154,12 @@ export interface GitHubArchiveSnapshot {
   commitSha: string | null
 }
 
+export interface PreparedGitHubUfoImport {
+  ufoEntries: UfoWorkspaceEntry[]
+  importOptions: UfoImportSourceOptions
+  designspaceCandidates: DesignspaceCandidate[]
+}
+
 export const fetchGitHubArchiveSnapshot = async (input: {
   repo: string
   ref?: string
@@ -184,10 +198,10 @@ export const fetchGitHubArchiveSnapshot = async (input: {
   }
 }
 
-export const importGitHubUfoRepo = async (input: {
+export const prepareGitHubUfoImport = async (input: {
   repo: string
   ref?: string
-}) => {
+}): Promise<PreparedGitHubUfoImport> => {
   const parsed = parseGitHubRepoInput(input.repo)
   const publicRepoMetadata = await fetchPublicRepoMetadata(
     parsed.owner,
@@ -227,10 +241,38 @@ export const importGitHubUfoRepo = async (input: {
     commitSha: snapshot.commitSha,
   }
 
-  return importUfoWorkspaceEntries(ufoEntries, {
+  const importOptions: UfoImportSourceOptions = {
     title: repoMetadata.title,
     sourceFolderName: `${parsed.owner}/${parsed.repo}`,
     sourceType: 'github',
     githubSource,
+  }
+
+  return {
+    ufoEntries,
+    importOptions,
+    designspaceCandidates: listDesignspaceCandidates(ufoEntries, {
+      sourceFolderName: importOptions.sourceFolderName,
+    }),
+  }
+}
+
+export const importPreparedGitHubUfoRepo = (
+  prepared: PreparedGitHubUfoImport,
+  options: { designspacePath?: string | null } = {}
+): Promise<ImportedUfoWorkspace> =>
+  importUfoWorkspaceEntries(prepared.ufoEntries, {
+    ...prepared.importOptions,
+    designspacePath: options.designspacePath,
   })
+
+export const importGitHubUfoRepo = async (
+  input: {
+    repo: string
+    ref?: string
+  },
+  options: { designspacePath?: string | null } = {}
+) => {
+  const prepared = await prepareGitHubUfoImport(input)
+  return importPreparedGitHubUfoRepo(prepared, options)
 }

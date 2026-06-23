@@ -7,6 +7,7 @@ type MetricField = 'lsb' | 'rsb' | 'width'
 
 interface MetricsCardProps {
   displayedMetrics: GlyphMetrics | null | undefined
+  isReadOnly?: boolean
   onMetricsChange: (field: MetricField, value: string) => void
 }
 
@@ -20,6 +21,7 @@ const formatMetrics = (metrics: GlyphMetrics | null | undefined) => ({
 
 export function MetricsCard({
   displayedMetrics,
+  isReadOnly = false,
   onMetricsChange,
 }: MetricsCardProps) {
   const { t } = useTranslation()
@@ -46,7 +48,7 @@ export function MetricsCard({
       [field]: value,
     }))
 
-    if (value.trim() !== '') {
+    if (!isReadOnly && value.trim() !== '') {
       onMetricsChange(field, value)
     }
   }
@@ -76,6 +78,7 @@ export function MetricsCard({
               size="sm"
               type="number"
               value={draftMetrics[field]}
+              isDisabled={isReadOnly}
               onFocus={() => setFocusedField(field)}
               onBlur={() => handleBlur(field)}
               onChange={(event) =>

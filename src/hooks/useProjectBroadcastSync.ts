@@ -108,6 +108,7 @@ export function useProjectBroadcastSync() {
           selectedGlyphId: state.selectedGlyphId,
           selectedLayerId: state.selectedLayerId,
           activeMasterId: state.activeMasterId,
+          editLocation: state.editLocation,
           overviewSectionId: state.overviewSectionId,
           overviewTopGlyphId: state.overviewTopGlyphId,
           overviewGridState: state.overviewGridState,

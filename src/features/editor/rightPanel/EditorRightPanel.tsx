@@ -17,6 +17,7 @@ import { SlidingTabList } from 'src/features/common/SlidingTabList'
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
 import { FontQualityCheckModal } from 'src/features/common/qualityCheck/QualityCheckModal'
+import { DesignspaceLocationControl } from 'src/features/editor/canvas/workspace/components/DesignspaceLocationControl'
 import { GlyphInsightCard } from 'src/features/editor/rightPanel/components/GlyphInsightCard'
 import { MetricsCard } from 'src/features/editor/rightPanel/components/MetricsCard'
 import { LayerListCard } from 'src/features/editor/rightPanel/components/LayerListCard'
@@ -100,6 +101,8 @@ export function EditorRightPanel() {
                     onSelectLayer={panel.selectLayer}
                   />
 
+                  <DesignspaceLocationControl />
+
                   <NodeInspectorCard
                     effectiveNodeType={panel.effectiveNodeType}
                     isEndpointNode={panel.isEndpointNode}
@@ -116,6 +119,7 @@ export function EditorRightPanel() {
 
                   <MetricsCard
                     displayedMetrics={panel.displayedMetrics}
+                    isReadOnly={panel.isInterpolatedPreview}
                     onMetricsChange={panel.handleMetricsChange}
                   />
 

@@ -7,6 +7,7 @@ interface BuildCurrentDraftFlushInputOptions {
   activeMasterId: string | null
   deletedGlyphIds: string[]
   dirtyGlyphIds: string[]
+  editLocation: Record<string, number>
   fontData: FontData
   glyphEditTimes: GlyphEditTimes
   markDraftSaved: FlushPendingDraftInput['markDraftSaved']
@@ -26,6 +27,7 @@ export type CurrentDraftFlushState = Pick<
   | 'activeMasterId'
   | 'deletedGlyphIds'
   | 'dirtyGlyphIds'
+  | 'editLocation'
   | 'fontData'
   | 'glyphEditTimes'
   | 'overviewGridState'
@@ -42,6 +44,7 @@ export const buildCurrentDraftFlushInput = ({
   activeMasterId,
   deletedGlyphIds,
   dirtyGlyphIds,
+  editLocation,
   fontData,
   glyphEditTimes,
   markDraftSaved,
@@ -64,6 +67,7 @@ export const buildCurrentDraftFlushInput = ({
     selectedGlyphId,
     selectedLayerId,
     activeMasterId,
+    editLocation,
     overviewSectionId,
     overviewTopGlyphId,
     overviewGridState,

@@ -12,6 +12,7 @@ import type {
   OnCurveNodeType,
 } from 'src/store/types'
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
+import { findSourceIdAtLocation } from 'src/font/designspaceLocation'
 import {
   createBackupLayer,
   deleteBackupLayer,
@@ -366,6 +367,30 @@ export const buildGlyphActions = (set: ImmerSet) => ({
         state.selectedSegment = null
         if (state.selectedGlyphId) {
           setGlyphActiveLayer(state.fontData?.glyphs[state.selectedGlyphId], id)
+        }
+      }
+      markUiStateDirty(state)
+      clearTemporal()
+    }),
+
+  setEditLocation: (
+    location: Record<string, number>,
+    clearTemporal: () => void
+  ) =>
+    set((state) => {
+      const nextLocation = { ...location }
+      const sourceId = findSourceIdAtLocation(state.fontData, nextLocation)
+      state.editLocation = nextLocation
+      state.activeMasterId = sourceId
+      state.selectedNodeIds = []
+      state.selectedSegment = null
+      if (sourceId) {
+        state.selectedLayerId = sourceId
+        if (state.selectedGlyphId) {
+          setGlyphActiveLayer(
+            state.fontData?.glyphs[state.selectedGlyphId],
+            sourceId
+          )
         }
       }
       markUiStateDirty(state)

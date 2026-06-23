@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react'
-import { importGitHubUfoRepo } from 'src/lib/github/githubImport'
+import {
+  importPreparedGitHubUfoRepo,
+  prepareGitHubUfoImport,
+  type PreparedGitHubUfoImport,
+} from 'src/lib/github/githubImport'
 import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
 import {
   clearGitHubUrlParams,
@@ -45,24 +49,62 @@ export const useGitHubImport = (input: {
   )
   const [pendingGitHubImport, setPendingGitHubImport] =
     useState<PendingGitHubImport | null>(initialGitHubImportRequest)
+  const [pendingGitHubDesignspaceImport, setPendingGitHubDesignspaceImport] =
+    useState<{
+      prepared: PreparedGitHubUfoImport
+      clearUrlParamsOnImport: boolean
+    } | null>(null)
+
+  const finishPreparedGitHubImport = useCallback(
+    async (
+      prepared: PreparedGitHubUfoImport,
+      options: {
+        designspacePath?: string | null
+        clearUrlParamsOnImport?: boolean
+      } = {}
+    ) => {
+      const importedUfoProject = await importPreparedGitHubUfoRepo(prepared, {
+        designspacePath: options.designspacePath,
+      })
+      const importedProject =
+        await saveImportedUfoWorkspaceAsProject(importedUfoProject)
+      input.onProjectSummarySaved(importedProject.summary)
+      await input.onProjectImported(importedProject)
+      if (options.clearUrlParamsOnImport) {
+        clearGitHubUrlParams()
+      }
+    },
+    [input]
+  )
 
   const importGitHubProject = useCallback(
-    async (request: { repo: string; ref: string; errorLabel: string }) => {
+    async (request: {
+      repo: string
+      ref: string
+      errorLabel: string
+      clearUrlParamsOnImport?: boolean
+    }) => {
       if (!request.repo.trim() || isLoadingGitHub) {
         return
       }
 
       setIsLoadingGitHub(true)
       try {
-        const importedUfoProject = await importGitHubUfoRepo({
+        const prepared = await prepareGitHubUfoImport({
           repo: request.repo,
           ref: request.ref,
         })
-        const importedProject =
-          await saveImportedUfoWorkspaceAsProject(importedUfoProject)
-        input.onProjectSummarySaved(importedProject.summary)
-        await input.onProjectImported(importedProject)
-        clearGitHubUrlParams()
+        if (prepared.designspaceCandidates.length > 1) {
+          setPendingGitHubDesignspaceImport({
+            prepared,
+            clearUrlParamsOnImport: Boolean(request.clearUrlParamsOnImport),
+          })
+          return
+        }
+
+        await finishPreparedGitHubImport(prepared, {
+          clearUrlParamsOnImport: request.clearUrlParamsOnImport,
+        })
       } catch (error: unknown) {
         console.error(error)
         alert(`${request.errorLabel}: ${getErrorMessage(error)}`)
@@ -70,7 +112,7 @@ export const useGitHubImport = (input: {
         setIsLoadingGitHub(false)
       }
     },
-    [input, isLoadingGitHub]
+    [finishPreparedGitHubImport, isLoadingGitHub]
   )
 
   const handleGitHubImport = async () => {
@@ -82,6 +124,7 @@ export const useGitHubImport = (input: {
       repo: githubRepoInput,
       ref: githubRefInput,
       errorLabel: '讀取 GitHub 專案失敗',
+      clearUrlParamsOnImport: false,
     })
   }
 
@@ -101,7 +144,38 @@ export const useGitHubImport = (input: {
       repo,
       ref,
       errorLabel: '載入 GitHub 專案失敗',
+      clearUrlParamsOnImport: true,
     })
+  }
+
+  const handleCancelGitHubDesignspaceImport = () => {
+    if (pendingGitHubDesignspaceImport?.clearUrlParamsOnImport) {
+      clearGitHubUrlParams()
+    }
+    setPendingGitHubDesignspaceImport(null)
+  }
+
+  const handleConfirmGitHubDesignspaceImport = async (
+    designspacePath: string
+  ) => {
+    const pending = pendingGitHubDesignspaceImport
+    if (!pending || isLoadingGitHub) {
+      return
+    }
+
+    setPendingGitHubDesignspaceImport(null)
+    setIsLoadingGitHub(true)
+    try {
+      await finishPreparedGitHubImport(pending.prepared, {
+        designspacePath,
+        clearUrlParamsOnImport: pending.clearUrlParamsOnImport,
+      })
+    } catch (error: unknown) {
+      console.error(error)
+      alert(`讀取 GitHub 專案失敗: ${getErrorMessage(error)}`)
+    } finally {
+      setIsLoadingGitHub(false)
+    }
   }
 
   return {
@@ -109,12 +183,15 @@ export const useGitHubImport = (input: {
     githubRepoInput,
     isLoadingGitHub,
     pendingGitHubImport,
+    pendingGitHubDesignspaceImport,
     setGithubRefInput: setGitHubRefInput,
     setGithubRepoInput: setGitHubRepoInput,
     setShowGitHubRefInput,
     showGitHubRefInput,
     handleCancelPendingGitHubImport,
     handleConfirmPendingGitHubImport,
+    handleCancelGitHubDesignspaceImport,
+    handleConfirmGitHubDesignspaceImport,
     handleGitHubImport,
   }
 }

@@ -23,6 +23,7 @@ import { useCanvasClipboard } from 'src/features/editor/canvas/hooks/useCanvasCl
 import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
 import { useReferenceFontRestoration } from 'src/features/editor/canvas/workspace/hooks/useReferenceFontRestoration'
 import { useCanvasSceneModelSync } from 'src/features/editor/canvas/workspace/hooks/useCanvasSceneModelSync'
+import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import type { GlyphData } from 'src/store'
@@ -58,6 +59,10 @@ export function CanvasWorkspace() {
     (state) => state.editorActiveGlyphIndex
   )
   const selectedLayerId = useStore((state) => state.selectedLayerId)
+  const editLocation = useStore((state) => state.editLocation)
+  const isDesignspaceScrubbing = useStore(
+    (state) => state.isDesignspaceScrubbing
+  )
   const selectedNodeIds = useStore((state) => state.selectedNodeIds)
   const selectedSegment = useStore((state) => state.selectedSegment)
   const clearPreviewGlyphMetrics = useStore(
@@ -98,6 +103,15 @@ export function CanvasWorkspace() {
   const updateNodePositions = useStore((state) => state.updateNodePositions)
   const activeEditorGlyphId =
     editorGlyphIds[editorActiveGlyphIndex] ?? selectedGlyphId ?? null
+  const activeEditorGlyph = activeEditorGlyphId
+    ? (fontData?.glyphs[activeEditorGlyphId] ?? null)
+    : null
+  const isInterpolatedPreview = useMemo(
+    () =>
+      isInterpolatedGlyphLocation(fontData, activeEditorGlyph, editLocation),
+    [activeEditorGlyph, editLocation, fontData]
+  )
+  const isReadOnlyPreview = isDesignspaceScrubbing || isInterpolatedPreview
 
   const pastStatesLength = useTemporalStore((state) => state.pastStates.length)
   const futureStatesLength = useTemporalStore(
@@ -144,12 +158,14 @@ export function CanvasWorkspace() {
         activeToolId,
         editorActiveGlyphIndex,
         editorGlyphIds,
+        editLocation,
         fontData,
         selectedLayerId,
         layerGeometryCache,
       }),
     [
       activeToolId,
+      editLocation,
       editorActiveGlyphIndex,
       editorGlyphIds,
       fontData,
@@ -157,6 +173,14 @@ export function CanvasWorkspace() {
       selectedLayerId,
     ]
   )
+
+  useEffect(() => {
+    if (!isReadOnlyPreview) {
+      return
+    }
+    setSelectedNodeIds([])
+    setSelectedSegment(null)
+  }, [isReadOnlyPreview, setSelectedNodeIds, setSelectedSegment])
 
   const {
     compositionOverlayStyle,
@@ -411,6 +435,7 @@ export function CanvasWorkspace() {
     fontData,
     getCursorX,
     hideActiveLayer,
+    canEdit: !isReadOnlyPreview,
     positionedGlyph,
     positionedGlyphs,
     referenceFontChar,
@@ -505,7 +530,11 @@ export function CanvasWorkspace() {
     }
 
     const handleCanvasContextMenu = (event: MouseEvent) => {
-      if (activeToolId === 'text' || !activeEditorGlyphId) {
+      if (
+        activeToolId === 'text' ||
+        !activeEditorGlyphId ||
+        isReadOnlyPreview
+      ) {
         setContextMenu(null)
         return
       }
@@ -536,11 +565,12 @@ export function CanvasWorkspace() {
       window.removeEventListener('click', closeContextMenu)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [activeEditorGlyphId, activeToolId])
+  }, [activeEditorGlyphId, activeToolId, isReadOnlyPreview])
 
   useCanvasKeyboardShortcuts({
     activeEditorGlyphId,
     activeToolId,
+    canEdit: !isReadOnlyPreview,
     deleteSelectedNodes,
     fontData,
     getPreviousPenSelection,

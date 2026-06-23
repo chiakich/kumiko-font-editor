@@ -1,12 +1,17 @@
 export {
   importUfoWorkspace,
   importUfoWorkspaceEntries,
+  buildWorkspaceEntriesFromFiles,
   isUfoBackgroundLayer,
+  isDesignspaceFile,
   isRelevantUfoTextFile,
+  listDesignspaceCandidates,
   pathToUfoContour,
   pickDefaultLayer,
   serializeGlifRecord,
   serializeXmlPlist,
+  type DesignspaceCandidate,
   type ImportedUfoWorkspace,
+  type UfoImportSourceOptions,
   type UfoWorkspaceEntry,
 } from 'src/lib/fontFormats/ufoFormat'

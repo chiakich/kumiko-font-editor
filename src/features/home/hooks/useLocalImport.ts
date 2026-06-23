@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { importLocalProjectFiles } from 'src/features/home/utils/projectImport'
+import {
+  importLocalProjectFiles,
+  listLocalUfoDesignspaceCandidates,
+} from 'src/features/home/utils/projectImport'
 import type { LoadedKumikoProject } from 'src/features/home/hooks/useProjectList'
 import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
+import type { DesignspaceCandidate } from 'src/lib/fontFormats/adapters/ufo'
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '未知錯誤'
@@ -15,6 +19,11 @@ export const useLocalImport = (input: {
   const localDragDepthRef = useRef(0)
   const [isDraggingLocal, setIsDraggingLocal] = useState(false)
   const [isLoadingLocal, setIsLoadingLocal] = useState(false)
+  const [pendingLocalDesignspaceImport, setPendingLocalDesignspaceImport] =
+    useState<{
+      files: File[]
+      candidates: DesignspaceCandidate[]
+    } | null>(null)
 
   useEffect(() => {
     if (!folderInputRef.current) {
@@ -24,8 +33,24 @@ export const useLocalImport = (input: {
     folderInputRef.current.setAttribute('directory', '')
   }, [])
 
-  const importFiles = async (selectedFiles: File[]) => {
-    const importedProject = await importLocalProjectFiles(selectedFiles)
+  const importFiles = async (
+    selectedFiles: File[],
+    options: { designspacePath?: string | null } = {}
+  ) => {
+    if (!options.designspacePath) {
+      const candidates = await listLocalUfoDesignspaceCandidates(selectedFiles)
+      if (candidates.length > 1) {
+        setPendingLocalDesignspaceImport({
+          files: selectedFiles,
+          candidates,
+        })
+        return
+      }
+    }
+
+    const importedProject = await importLocalProjectFiles(selectedFiles, {
+      designspacePath: options.designspacePath,
+    })
     if (!importedProject) {
       return
     }
@@ -62,6 +87,30 @@ export const useLocalImport = (input: {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     await handleFolderUpload(event)
+  }
+
+  const handleCancelLocalDesignspaceImport = () => {
+    setPendingLocalDesignspaceImport(null)
+  }
+
+  const handleConfirmLocalDesignspaceImport = async (
+    designspacePath: string
+  ) => {
+    const pending = pendingLocalDesignspaceImport
+    if (!pending || isLoadingLocal) {
+      return
+    }
+
+    setPendingLocalDesignspaceImport(null)
+    setIsLoadingLocal(true)
+    try {
+      await importFiles(pending.files, { designspacePath })
+    } catch (error: unknown) {
+      console.error(error)
+      alert(`讀取本地專案失敗: ${getErrorMessage(error)}`)
+    } finally {
+      setIsLoadingLocal(false)
+    }
   }
 
   const getFilesFromDataTransfer = async (
@@ -165,6 +214,9 @@ export const useLocalImport = (input: {
     fileInputRef,
     isDraggingLocal,
     isLoadingLocal,
+    pendingLocalDesignspaceImport,
+    handleCancelLocalDesignspaceImport,
+    handleConfirmLocalDesignspaceImport,
     handleFolderUpload,
     handleFileUpload,
     handleDropUpload,
