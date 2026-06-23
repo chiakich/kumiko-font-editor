@@ -111,10 +111,12 @@ export {
   needsOpenTypeFeatureCompilationForBinaryExport,
 } from 'src/lib/openTypeFeatures/exportPolicy'
 export { deriveOpenTypeImportExportSummary } from 'src/lib/openTypeFeatures/importExportSummary'
+export { deriveOpenTypeSourceSectionRecords } from 'src/lib/openTypeFeatures/sourceSectionRecords'
 export type * from 'src/lib/openTypeFeatures/feaAst'
 export type * from 'src/lib/openTypeFeatures/harfbuzzTypes'
 export type * from 'src/lib/openTypeFeatures/compilerTypes'
 export type * from 'src/lib/openTypeFeatures/exportPolicy'
 export type * from 'src/lib/openTypeFeatures/importExportSummary'
+export type * from 'src/lib/openTypeFeatures/sourceSectionRecords'
 export type * from 'src/lib/openTypeFeatures/behaviorFacade'
 export type * from 'src/lib/openTypeFeatures/types'

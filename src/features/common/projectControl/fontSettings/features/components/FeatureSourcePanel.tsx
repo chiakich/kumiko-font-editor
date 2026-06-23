@@ -9,9 +9,11 @@ import {
   Text,
   Textarea,
 } from '@chakra-ui/react'
-import type {
-  FeatureSourceSection,
-  OpenTypeFeaturesState,
+import {
+  deriveOpenTypeSourceSectionRecords,
+  type OpenTypeFeaturesState,
+  type SourceSectionRecordGroup,
+  type SourceSectionRecordSummary,
 } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
@@ -27,7 +29,7 @@ export function FeatureSourcePanel({
   onRawFeatureTextChange,
 }: FeatureSourcePanelProps) {
   const { t } = useTranslation()
-  const sourceSections = state.sourceSections ?? []
+  const sourceSectionRecords = deriveOpenTypeSourceSectionRecords(state)
 
   return (
     <Stack spacing={4}>
@@ -55,14 +57,14 @@ export function FeatureSourcePanel({
         <Text fontSize="xs" color="field.muted">
           {t('projectControl.sourceSections')}
         </Text>
-        {sourceSections.length > 0 ? (
+        {sourceSectionRecords.length > 0 ? (
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-            {sourceSections.map((section) => (
+            {sourceSectionRecords.map((sectionRecords) => (
               <SourceSectionCard
-                key={section.id}
+                key={sectionRecords.section.id}
                 recordsLabel={t('projectControl.records')}
                 recordRefsLabel={t('projectControl.sourceRecordRefs')}
-                section={section}
+                sectionRecords={sectionRecords}
               />
             ))}
           </SimpleGrid>
@@ -95,15 +97,16 @@ export function FeatureSourcePanel({
 function SourceSectionCard({
   recordRefsLabel,
   recordsLabel,
-  section,
+  sectionRecords,
 }: {
   recordRefsLabel: string
   recordsLabel: string
-  section: FeatureSourceSection
+  sectionRecords: SourceSectionRecordGroup
 }) {
-  const visibleRecordRefs = section.recordRefs.slice(0, 10)
+  const { section, records } = sectionRecords
+  const visibleRecords = records.slice(0, 10)
   const hiddenRecordRefCount = Math.max(
-    section.recordRefs.length - visibleRecordRefs.length,
+    records.length - visibleRecords.length,
     0
   )
 
@@ -126,21 +129,24 @@ function SourceSectionCard({
         <Badge variant="subtle">{section.preservationPolicy}</Badge>
       </HStack>
       <Text fontSize="xs" color="field.muted">
-        {section.recordRefs.length} {recordsLabel}
+        {sectionRecords.resolvedCount} / {section.recordRefs.length}{' '}
+        {recordsLabel}
       </Text>
-      {section.recordRefs.length > 0 ? (
+      {records.length > 0 ? (
         <Stack spacing={1}>
           <Text fontSize="xs" color="field.muted">
             {recordRefsLabel}
           </Text>
           <HStack wrap="wrap" gap={1}>
-            {visibleRecordRefs.map((ref, index) => (
+            {visibleRecords.map((record, index) => (
               <Badge
-                key={`${ref.kind}-${ref.id}-${index}`}
+                key={`${record.kind}-${record.id}-${index}`}
+                colorScheme={record.status === 'missing' ? 'red' : undefined}
                 fontFamily="mono"
+                title={record.detail}
                 variant="outline"
               >
-                {formatRecordRef(ref)}
+                {formatRecordSummary(record)}
               </Badge>
             ))}
             {hiddenRecordRefCount > 0 ? (
@@ -153,5 +159,5 @@ function SourceSectionCard({
   )
 }
 
-const formatRecordRef = (ref: FeatureSourceSection['recordRefs'][number]) =>
-  `${ref.kind}${ref.table ? ` ${ref.table}` : ''}: ${ref.id}`
+const formatRecordSummary = (record: SourceSectionRecordSummary) =>
+  `${record.kind}${record.table ? ` ${record.table}` : ''}: ${record.label}`
