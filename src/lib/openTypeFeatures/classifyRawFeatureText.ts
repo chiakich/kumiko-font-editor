@@ -4,6 +4,7 @@ import type {
   FeatureDiagnostic,
   FeatureOrigin,
   FeatureRecord,
+  GdefState,
   GlyphClass,
   GlyphSelector,
   LanguageSystem,
@@ -35,6 +36,7 @@ interface ParsedRawFeatureText {
   languageSystems: LanguageSystem[]
   glyphClasses: GlyphClass[]
   markClasses: MarkClass[]
+  gdef: GdefState | null
   lookups: LookupRecord[]
   features: FeatureRecord[]
   unsupportedStatements: string[]
@@ -550,6 +552,17 @@ const collectNamedBlocks = (text: string, blockName: 'feature' | 'lookup') =>
     })
   )
 
+const collectGdefBlocks = (text: string) =>
+  [...text.matchAll(/\btable\s+GDEF\s*\{([\s\S]*?)\}\s*GDEF\s*;/g)].map(
+    (match): Omit<BlockMatch, 'name'> & { name: 'GDEF' } => ({
+      body: match[1],
+      end: (match.index ?? 0) + match[0].length,
+      name: 'GDEF',
+      raw: match[0],
+      start: match.index ?? 0,
+    })
+  )
+
 const referencedLookupIdsForRules = (rules: Rule[]) =>
   rules.flatMap((rule) =>
     rule.kind === 'contextualSubstitution'
@@ -581,6 +594,88 @@ const partitionLookupCandidates = (candidates: LookupCandidate[]) => {
   }
 }
 
+const glyphsForGdefClassToken = (
+  token: string,
+  glyphClassIdByName: Map<string, string>,
+  glyphClassById: Map<string, GlyphClass>
+) => {
+  const trimmed = token.trim()
+  if (!trimmed) return []
+  if (trimmed.startsWith('@')) {
+    const classId = glyphClassIdByName.get(trimmed)
+    return classId ? (glyphClassById.get(classId)?.glyphs ?? null) : null
+  }
+  const bracketMatch = trimmed.match(/^\[([^\]]*)\]$/)
+  return bracketMatch ? splitGlyphList(bracketMatch[1]) : [trimmed]
+}
+
+const parseGdefStatement = (
+  statement: string,
+  glyphClassIdByName: Map<string, string>,
+  glyphClassById: Map<string, GlyphClass>,
+  gdef: GdefState
+) => {
+  const glyphClassDefMatch = statement.match(/^GlyphClassDef\s+(.+)$/i)
+  if (glyphClassDefMatch) {
+    const parts = glyphClassDefMatch[1].split(',').map((part) => part.trim())
+    if (parts.length !== 4) return false
+    const [base, ligature, mark, component] = parts.map((part) =>
+      glyphsForGdefClassToken(part, glyphClassIdByName, glyphClassById)
+    )
+    if (!base || !ligature || !mark || !component) return false
+    gdef.glyphClasses = {
+      ...(base.length > 0 ? { base } : {}),
+      ...(ligature.length > 0 ? { ligature } : {}),
+      ...(mark.length > 0 ? { mark } : {}),
+      ...(component.length > 0 ? { component } : {}),
+    }
+    return true
+  }
+
+  const ligatureCaretMatch = statement.match(
+    /^LigatureCaretByPos\s+(\S+)\s+(.+)$/i
+  )
+  if (ligatureCaretMatch) {
+    const carets = ligatureCaretMatch[2]
+      .trim()
+      .split(/\s+/)
+      .map((value) => (/^-?\d+$/.test(value) ? Number(value) : null))
+    if (carets.some((value) => value === null)) return false
+    gdef.ligatureCarets = [
+      ...(gdef.ligatureCarets ?? []),
+      {
+        glyph: ligatureCaretMatch[1],
+        carets: carets as number[],
+      },
+    ]
+    return true
+  }
+
+  return false
+}
+
+const parseGdefBlock = (
+  body: string,
+  glyphClassIdByName: Map<string, string>,
+  glyphClassById: Map<string, GlyphClass>
+) => {
+  const gdef: GdefState = {}
+  const unsupportedStatements: string[] = []
+
+  for (const statement of splitStatements(body)) {
+    if (
+      !parseGdefStatement(statement, glyphClassIdByName, glyphClassById, gdef)
+    ) {
+      unsupportedStatements.push(statement)
+    }
+  }
+
+  const hasGdef =
+    Boolean(gdef.glyphClasses) || Boolean(gdef.ligatureCarets?.length)
+
+  return { gdef: hasGdef ? gdef : null, unsupportedStatements }
+}
+
 const toLookupRecord = (
   lookup: ParsedLookup,
   origin: LookupOrigin
@@ -606,7 +701,9 @@ const parseRawFeatureText = (
   const featureOrigin = getFeatureOrigin(sourceOrigin)
   const lookupOrigin = getLookupOrigin(sourceOrigin)
   const glyphClasses: GlyphClass[] = []
+  const glyphClassById = new Map<string, GlyphClass>()
   const markClassById = new Map<string, MarkClass>()
+  let gdef: GdefState | null = null
   const lookups: LookupRecord[] = []
   const features: FeatureRecord[] = []
   const languageSystems = new Map<string, LanguageSystem>()
@@ -632,11 +729,26 @@ const parseRawFeatureText = (
         classifiedFromRawFeatureText: true,
       },
     })
+    glyphClassById.set(classId, glyphClasses.at(-1)!)
     workingText = blankRange(
       workingText,
       match.index ?? 0,
       (match.index ?? 0) + match[0].length
     )
+  }
+
+  for (const block of collectGdefBlocks(workingText)) {
+    const parsed = parseGdefBlock(
+      block.body,
+      glyphClassIdByName,
+      glyphClassById
+    )
+    if (parsed.unsupportedStatements.length > 0 || !parsed.gdef) {
+      unsupportedStatements.push(block.raw.trim())
+    } else {
+      gdef = parsed.gdef
+    }
+    workingText = blankRange(workingText, block.start, block.end)
   }
 
   for (const match of workingText.matchAll(
@@ -838,6 +950,7 @@ const parseRawFeatureText = (
     languageSystems: [...languageSystems.values()],
     glyphClasses,
     markClasses: [...markClassById.values()],
+    gdef,
     lookups,
     features,
     unsupportedStatements,
@@ -846,7 +959,13 @@ const parseRawFeatureText = (
 
 const recordIdsFor = (
   state: OpenTypeFeaturesState,
-  kind: 'languageSystem' | 'feature' | 'lookup' | 'glyphClass' | 'markClass'
+  kind:
+    | 'languageSystem'
+    | 'feature'
+    | 'lookup'
+    | 'glyphClass'
+    | 'markClass'
+    | 'gdef'
 ) =>
   new Set(
     (state.sourceSections ?? [])
@@ -863,6 +982,7 @@ const removePreviousRawFeatureTextClassification = (
   const lookupIds = recordIdsFor(state, 'lookup')
   const glyphClassIds = recordIdsFor(state, 'glyphClass')
   const markClassIds = recordIdsFor(state, 'markClass')
+  const hasRawGdef = recordIdsFor(state, 'gdef').has('gdef')
 
   return {
     ...state,
@@ -877,6 +997,7 @@ const removePreviousRawFeatureTextClassification = (
     markClasses: state.markClasses.filter(
       (markClass) => !markClassIds.has(markClass.id)
     ),
+    gdef: hasRawGdef ? null : state.gdef,
     diagnostics: (state.diagnostics ?? []).filter(
       (diagnostic) => !diagnostic.id.startsWith(RAW_FEATURE_DIAGNOSTIC_PREFIX)
     ),
@@ -915,6 +1036,7 @@ export const classifyRawFeatureTextSource = (
       parsed.lookups.length > 0 ||
       parsed.glyphClasses.length > 0 ||
       parsed.markClasses.length > 0 ||
+      Boolean(parsed.gdef) ||
       parsed.languageSystems.length > 0)
 
   if (!canCommitToModel) {
@@ -960,6 +1082,7 @@ export const classifyRawFeatureTextSource = (
       kind: 'markClass' as const,
       id: markClass.id,
     })),
+    ...(parsed.gdef ? [{ kind: 'gdef' as const, id: 'gdef' }] : []),
     ...parsed.lookups.map((lookup) => ({
       kind: 'lookup' as const,
       id: lookup.id,
@@ -979,6 +1102,7 @@ export const classifyRawFeatureTextSource = (
     ),
     glyphClasses: mergeById(baseState.glyphClasses, parsed.glyphClasses),
     markClasses: mergeById(baseState.markClasses, parsed.markClasses),
+    gdef: parsed.gdef ?? baseState.gdef,
     lookups: mergeById(baseState.lookups, parsed.lookups),
     features: mergeById(baseState.features, parsed.features),
     sourceSections: sourceSections.map((section) =>
@@ -996,6 +1120,7 @@ export const classifyRawFeatureTextSource = (
               parsedLookupCount: parsed.lookups.length,
               parsedGlyphClassCount: parsed.glyphClasses.length,
               parsedMarkClassCount: parsed.markClasses.length,
+              parsedGdef: Boolean(parsed.gdef),
               parsedLanguageSystemCount: parsed.languageSystems.length,
             },
           }

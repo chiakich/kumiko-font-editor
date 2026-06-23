@@ -1,4 +1,5 @@
 import type {
+  GdefState,
   GlyphSelector,
   LookupFlagIR,
   ValueRecord,
@@ -27,6 +28,11 @@ export interface MarkClassNode {
   glyph: string
   anchor: { x: number; y: number }
   className: string
+}
+
+export interface GdefTableNode {
+  kind: 'GdefTable'
+  gdef: GdefState
 }
 
 export interface LookupFlagNode {
@@ -117,6 +123,7 @@ export type FeaNode =
   | LanguageSystemNode
   | GlyphClassNode
   | MarkClassNode
+  | GdefTableNode
   | LookupFlagNode
   | LookupBlockNode
   | FeatureBlockNode

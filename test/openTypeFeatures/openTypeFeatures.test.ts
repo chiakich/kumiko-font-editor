@@ -555,6 +555,50 @@ describe('OpenType FEA source maps', () => {
     expect(generated).toContain('pos mark acutecomb <anchor 0 720> mark @TOP;')
   })
 
+  it('classifies raw GDEF table glyph classes and ligature carets', () => {
+    const state = classifyRawFeatureTextSource(
+      setRawFeatureTextSource(
+        createEmptyOpenTypeFeaturesState(),
+        [
+          '@Bases = [A B];',
+          '@Ligatures = [f_i];',
+          '@Marks = [acutecomb];',
+          'table GDEF {',
+          '  GlyphClassDef @Bases, @Ligatures, @Marks, ;',
+          '  LigatureCaretByPos f_i 250 500;',
+          '} GDEF;',
+        ].join('\n')
+      )
+    )
+
+    expect(state.sourceSections[0]).toMatchObject({
+      id: 'source_raw_feature_text',
+      stage: 'classified',
+      status: 'classified',
+    })
+    expect(state.gdef).toEqual({
+      glyphClasses: {
+        base: ['A', 'B'],
+        ligature: ['f_i'],
+        mark: ['acutecomb'],
+      },
+      ligatureCarets: [{ glyph: 'f_i', carets: [250, 500] }],
+    })
+    expect(state.sourceSections[0]?.recordRefs).toEqual(
+      expect.arrayContaining([
+        { kind: 'glyphClass', id: 'glyph_class_raw_Bases' },
+        { kind: 'glyphClass', id: 'glyph_class_raw_Ligatures' },
+        { kind: 'glyphClass', id: 'glyph_class_raw_Marks' },
+        { kind: 'gdef', id: 'gdef' },
+      ])
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('table GDEF {')
+    expect(generated).toContain('GlyphClassDef [A B], [f_i], [acutecomb], ;')
+    expect(generated).toContain('LigatureCaretByPos f_i 250 500;')
+  })
+
   it('preserves unsupported raw .fea source instead of partially committing it', () => {
     const state = classifyRawFeatureTextSource(
       setRawFeatureTextSource(

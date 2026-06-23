@@ -387,6 +387,14 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
         className: markClass.name,
       }))
     ),
+    ...(state.gdef
+      ? [
+          {
+            kind: 'GdefTable' as const,
+            gdef: state.gdef,
+          },
+        ]
+      : []),
     ...orderedLookups.map((lookup) =>
       lookupToBlock(
         lookup,

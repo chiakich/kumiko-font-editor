@@ -216,6 +216,36 @@ const serializeMarkToBase = (
   recordRuleSource(context, node.ruleId, lineStart, lineStart)
 }
 
+const formatGdefGlyphClass = (glyphs: string[] | undefined) =>
+  glyphs && glyphs.length > 0 ? formatGlyphList(glyphs) : ''
+
+const serializeGdefTable = (
+  node: Extract<FeaNode, { kind: 'GdefTable' }>,
+  context: SerializeContext,
+  indent: string
+) => {
+  const { gdef } = node
+  const lines: string[] = []
+  if (gdef.glyphClasses) {
+    const { base, ligature, mark, component } = gdef.glyphClasses
+    lines.push(
+      `GlyphClassDef ${formatGdefGlyphClass(base)}, ${formatGdefGlyphClass(ligature)}, ${formatGdefGlyphClass(mark)}, ${formatGdefGlyphClass(component)};`
+    )
+  }
+  for (const caret of gdef.ligatureCarets ?? []) {
+    if (caret.carets.length > 0) {
+      lines.push(`LigatureCaretByPos ${caret.glyph} ${caret.carets.join(' ')};`)
+    }
+  }
+  if (lines.length === 0) return
+
+  pushLine(context, `${indent}table GDEF {`)
+  for (const line of lines) {
+    pushLine(context, `${indent}  ${line}`)
+  }
+  pushLine(context, `${indent}} GDEF;`)
+}
+
 const serializeMarkToMark = (
   node: Extract<FeaNode, { kind: 'MarkToMark' }>,
   context: SerializeContext,
@@ -280,6 +310,9 @@ function serializeNode(
         context,
         `${indent}markClass ${node.glyph} ${formatAnchor(node.anchor)} ${node.className};`
       )
+      return
+    case 'GdefTable':
+      serializeGdefTable(node, context, indent)
       return
     case 'LookupFlag':
       pushLine(
