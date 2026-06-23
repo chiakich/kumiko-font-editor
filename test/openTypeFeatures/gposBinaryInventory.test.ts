@@ -74,6 +74,17 @@ describe('GPOS binary inventory', () => {
         lookupType: 'extensionPos',
         editable: true,
         origin: 'imported',
+        meta: {
+          extensionLookupUnwrappedForEditing: true,
+          extensionWrapperRebuildPolicy: 'rebuild-equivalent-rules',
+        },
+        diagnostics: [
+          {
+            id: 'feature-diagnostic-info-gpos-parser-lookup-0-extension-wrapper-rebuild',
+            severity: 'info',
+            message: expect.stringContaining('ExtensionPos wrapper'),
+          },
+        ],
         rules: [
           {
             kind: 'singlePositioning',
@@ -94,6 +105,19 @@ describe('GPOS binary inventory', () => {
         ],
       },
     ])
+    expect(state.sourceSections[0]).toMatchObject({
+      meta: {
+        extensionLookupCount: 1,
+        extensionLookupIds: ['lookup_gpos_0'],
+      },
+      recordRefs: expect.arrayContaining([
+        {
+          kind: 'diagnostic',
+          id: 'feature-diagnostic-info-gpos-parser-lookup-0-extension-wrapper-rebuild',
+          table: 'GPOS',
+        },
+      ]),
+    })
   })
 
   it('preserves partially reconstructed GPOS lookups as unsupported', () => {

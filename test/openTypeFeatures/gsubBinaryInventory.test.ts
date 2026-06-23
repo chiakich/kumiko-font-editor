@@ -265,6 +265,17 @@ describe('GSUB binary inventory', () => {
         lookupType: 'extensionSubst',
         editable: true,
         origin: 'imported',
+        meta: {
+          extensionLookupUnwrappedForEditing: true,
+          extensionWrapperRebuildPolicy: 'rebuild-equivalent-rules',
+        },
+        diagnostics: [
+          {
+            id: 'feature-diagnostic-info-gsub-parser-lookup-0-extension-wrapper-rebuild',
+            severity: 'info',
+            message: expect.stringContaining('ExtensionSubst wrapper'),
+          },
+        ],
         rules: [
           {
             kind: 'singleSubstitution',
@@ -284,6 +295,19 @@ describe('GSUB binary inventory', () => {
         ],
       },
     ])
+    expect(state.sourceSections[0]).toMatchObject({
+      meta: {
+        extensionLookupCount: 1,
+        extensionLookupIds: ['lookup_gsub_0'],
+      },
+      recordRefs: expect.arrayContaining([
+        {
+          kind: 'diagnostic',
+          id: 'feature-diagnostic-info-gsub-parser-lookup-0-extension-wrapper-rebuild',
+          table: 'GSUB',
+        },
+      ]),
+    })
   })
 
   it('extracts editable GSUB ContextSubst glyph sequence rules', () => {

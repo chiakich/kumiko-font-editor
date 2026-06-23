@@ -950,6 +950,17 @@ const withExtensionProvenance = (
     },
   }))
 
+const makeExtensionWrapperDiagnostic = (
+  lookup: LayoutLookupInventory,
+  lookupId: string
+) =>
+  makeParserDiagnostic(
+    'info',
+    `GPOS lookup ${lookup.lookupIndex} was reconstructed from an ExtensionPos wrapper. Rebuild exports equivalent editable rules and may not preserve the extension wrapper shape.`,
+    `lookup-${lookup.lookupIndex}-extension-wrapper-rebuild`,
+    lookupId
+  )
+
 const parseSupportedSubtable = (
   subtableReader: BinaryReader,
   glyphOrder: string[],
@@ -1190,6 +1201,10 @@ export const parseGposLookupRules = (
     for (const markClass of parsedSubtable.markClasses ?? []) {
       markClasses.set(markClass.id, markClass)
     }
+  }
+
+  if (lookup.lookupType === 9 && rules.length > 0) {
+    diagnostics.push(makeExtensionWrapperDiagnostic(lookup, lookupId))
   }
 
   return {

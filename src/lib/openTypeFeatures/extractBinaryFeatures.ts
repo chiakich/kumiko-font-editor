@@ -105,6 +105,9 @@ const getLookupTypeName = (table: 'GSUB' | 'GPOS', lookupType: number) =>
     ? (GSUB_LOOKUP_TYPES[lookupType] ?? 'extensionSubst')
     : (GPOS_LOOKUP_TYPES[lookupType] ?? 'extensionPos')
 
+const isExtensionLookupType = (table: 'GSUB' | 'GPOS', lookupType: number) =>
+  table === 'GSUB' ? lookupType === 7 : lookupType === 9
+
 const makeLookupId = (table: 'GSUB' | 'GPOS', lookupIndex: number) =>
   `lookup_${table.toLowerCase()}_${lookupIndex}`
 
@@ -223,6 +226,8 @@ const toLookupRecord = (
   const { lookup, parseResult } = parsedLookup
   const lookupId = makeLookupId(table, lookup.lookupIndex)
   const isEditable = Boolean(parseResult && !parseResult.unsupportedReason)
+  const extensionLookupUnwrappedForEditing =
+    isEditable && isExtensionLookupType(table, lookup.lookupType)
   const readonlyDiagnostic: FeatureDiagnostic = {
     id: `feature-diagnostic-warning-${table}-lookup-${lookup.lookupIndex}-readonly`,
     severity: 'warning',
@@ -254,6 +259,12 @@ const toLookupRecord = (
       lookupFlagNumber: lookup.lookupFlag,
       subtableFormats: lookup.subtableFormats,
       reconstructedEditableRules: isEditable,
+      ...(extensionLookupUnwrappedForEditing
+        ? {
+            extensionLookupUnwrappedForEditing: true,
+            extensionWrapperRebuildPolicy: 'rebuild-equivalent-rules',
+          }
+        : {}),
     },
     diagnostics: isEditable
       ? (parseResult?.diagnostics ?? [])
@@ -369,6 +380,13 @@ const toCompiledLayoutSourceSections = (
     const lookupIds = state.lookups
       .filter((lookup) => lookup.table === inventory.table)
       .map((lookup) => lookup.id)
+    const extensionLookupIds = state.lookups
+      .filter(
+        (lookup) =>
+          lookup.table === inventory.table &&
+          lookup.meta?.extensionLookupUnwrappedForEditing === true
+      )
+      .map((lookup) => lookup.id)
     const lookupIdSet = new Set(lookupIds)
     const unsupportedLookupIds = state.unsupportedLookups
       .filter((lookup) => lookup.table === inventory.table)
@@ -403,6 +421,8 @@ const toCompiledLayoutSourceSections = (
           languageCount: inventory.languages.length,
           featureVariationsPresent:
             inventory.featureVariationsOffset !== undefined,
+          extensionLookupCount: extensionLookupIds.length,
+          ...(extensionLookupIds.length > 0 ? { extensionLookupIds } : {}),
         },
       })
     )

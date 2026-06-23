@@ -535,6 +535,17 @@ const withExtensionProvenance = (
     },
   }))
 
+const makeExtensionWrapperDiagnostic = (
+  lookup: LayoutLookupInventory,
+  lookupId: string
+) =>
+  makeParserDiagnostic(
+    'info',
+    `GSUB lookup ${lookup.lookupIndex} was reconstructed from an ExtensionSubst wrapper. Rebuild exports equivalent editable rules and may not preserve the extension wrapper shape.`,
+    `lookup-${lookup.lookupIndex}-extension-wrapper-rebuild`,
+    lookupId
+  )
+
 const parseExtensionSubstitution = (
   subtableReader: BinaryReader,
   glyphOrder: string[],
@@ -658,6 +669,10 @@ export const parseGsubLookupRules = (
     for (const glyphClass of parsedSubtable.glyphClasses ?? []) {
       glyphClasses.set(glyphClass.id, glyphClass)
     }
+  }
+
+  if (lookup.lookupType === 7 && rules.length > 0) {
+    diagnostics.push(makeExtensionWrapperDiagnostic(lookup, lookupId))
   }
 
   return {

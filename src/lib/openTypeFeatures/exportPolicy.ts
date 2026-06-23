@@ -14,6 +14,7 @@ export type OpenTypeExportWarningCode =
   | 'compiler-runtime-not-configured'
   | 'unsupported-lookups'
   | 'feature-variations'
+  | 'extension-wrapper-rebuild'
   | 'preserve-ignores-edits'
   | 'rebuild-replaces-tables'
   | 'drop-unsupported-requires-confirmation'
@@ -228,6 +229,38 @@ const getFeatureVariationWarning = (
   }
 }
 
+const getExtensionWrapperLookups = (state: OpenTypeFeaturesState) =>
+  state.lookups.filter(
+    (lookup) =>
+      lookup.editable &&
+      lookup.meta?.extensionLookupUnwrappedForEditing === true
+  )
+
+const getExtensionWrapperWarning = (
+  state: OpenTypeFeaturesState
+): OpenTypeExportWarning | null => {
+  const extensionLookups = getExtensionWrapperLookups(state)
+  if (
+    extensionLookups.length === 0 ||
+    state.exportPolicy === 'preserve-compiled-layout-tables'
+  ) {
+    return null
+  }
+
+  return {
+    id: 'open-type-export-extension-wrapper-rebuild',
+    code: 'extension-wrapper-rebuild',
+    severity: 'warning',
+    title: 'Extension lookup wrappers may change',
+    message:
+      'Imported extension lookups were unwrapped into editable rules. Rebuilding layout tables can preserve behavior, but generated FEA does not guarantee the original ExtensionSubst/ExtensionPos wrapper shape.',
+    details: extensionLookups.map(
+      (lookup) =>
+        `${lookup.table} lookup ${lookup.provenance?.lookupIndex ?? lookup.id}: ${lookup.lookupType}`
+    ),
+  }
+}
+
 const getDropUnsupportedWarning = (
   state: OpenTypeFeaturesState
 ): OpenTypeExportWarning | null => {
@@ -264,6 +297,7 @@ export const deriveOpenTypeExportWarnings = (
     getPreservePolicyWarning(state.exportPolicy, hasEdits),
     getRebuildPolicyWarning(state, hasEdits),
     getUnsupportedWarning(state),
+    getExtensionWrapperWarning(state),
     getFeatureVariationWarning(state, options.diagnostics),
     getDropUnsupportedWarning(state),
   ].filter((warning): warning is OpenTypeExportWarning => Boolean(warning))
@@ -285,6 +319,7 @@ function getSourceImpactItem(
   section: FeatureSourceSection
 ): OpenTypeExportImpactItem {
   const linkedRecords = section.recordRefs.length
+  const extensionDetail = getExtensionWrapperImpactDetail(section)
 
   if (section.status === 'raw') {
     return {
@@ -325,7 +360,7 @@ function getSourceImpactItem(
       sourceId: section.id,
       table: section.table,
       title: section.title,
-      detail: `Compiled source has unsupported records and needs review before rebuild. ${linkedRecords} linked records.`,
+      detail: `Compiled source has unsupported records and needs review before rebuild. ${linkedRecords} linked records.${extensionDetail}`,
       status: 'review',
       statusLabel: 'Review',
     }
@@ -337,10 +372,22 @@ function getSourceImpactItem(
     sourceId: section.id,
     table: section.table,
     title: section.title,
-    detail: `Classified source is rebuilt from the Kumiko feature model. ${linkedRecords} linked records.`,
+    detail: `Classified source is rebuilt from the Kumiko feature model. ${linkedRecords} linked records.${extensionDetail}`,
     status: 'rebuild',
     statusLabel: 'Rebuild',
   }
+}
+
+function getExtensionWrapperImpactDetail(section: FeatureSourceSection) {
+  const extensionLookupCount =
+    typeof section.meta?.extensionLookupCount === 'number'
+      ? section.meta.extensionLookupCount
+      : 0
+  if (extensionLookupCount <= 0) return ''
+
+  return ` ${extensionLookupCount} extension lookup wrapper${
+    extensionLookupCount === 1 ? '' : 's'
+  } may be emitted as equivalent regular lookup rules.`
 }
 
 function getUnsupportedLookupImpactItem(

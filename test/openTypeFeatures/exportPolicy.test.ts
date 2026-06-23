@@ -111,6 +111,85 @@ describe('OpenType binary export compiler gate', () => {
     ).toBe(false)
   })
 
+  it('warns when rebuilding editable extension lookup wrappers', () => {
+    const state = {
+      ...createEmptyOpenTypeFeaturesState(),
+      lookups: [
+        {
+          id: 'lookup_gsub_0',
+          name: 'GSUB_lookup_0',
+          table: 'GSUB' as const,
+          lookupType: 'extensionSubst' as const,
+          lookupFlag: {},
+          rules: [],
+          editable: true,
+          origin: 'imported' as const,
+          provenance: {
+            table: 'GSUB' as const,
+            lookupIndex: 0,
+            lookupType: 7,
+          },
+          meta: {
+            extensionLookupUnwrappedForEditing: true,
+            extensionWrapperRebuildPolicy: 'rebuild-equivalent-rules',
+          },
+        },
+      ],
+      sourceSections: [
+        {
+          id: 'source_compiled_gsub',
+          title: 'GSUB compiled table',
+          kind: 'compiled-table' as const,
+          origin: 'binary-import' as const,
+          format: 'opentype-layout-table' as const,
+          stage: 'classified' as const,
+          status: 'classified' as const,
+          table: 'GSUB' as const,
+          recordRefs: [
+            { kind: 'lookup' as const, id: 'lookup_gsub_0', table: 'GSUB' },
+          ],
+          preservationPolicy: 'editable-rebuild' as const,
+          meta: {
+            extensionLookupCount: 1,
+            extensionLookupIds: ['lookup_gsub_0'],
+          },
+        },
+      ],
+    }
+
+    const rebuildWarnings = deriveOpenTypeExportWarnings(state, {
+      compilerRuntimeStatus: createCompilerRuntimeStatus(),
+      diagnostics: [],
+    })
+    expect(
+      rebuildWarnings.find(
+        (warning) => warning.code === 'extension-wrapper-rebuild'
+      )
+    ).toMatchObject({
+      severity: 'warning',
+      details: ['GSUB lookup 0: extensionSubst'],
+    })
+    expect(deriveOpenTypeExportImpactItems(state)[0]?.detail).toContain(
+      '1 extension lookup wrapper may be emitted as equivalent regular lookup rules.'
+    )
+
+    const preserveWarnings = deriveOpenTypeExportWarnings(
+      {
+        ...state,
+        exportPolicy: 'preserve-compiled-layout-tables',
+      },
+      {
+        compilerRuntimeStatus: createCompilerRuntimeStatus(),
+        diagnostics: [],
+      }
+    )
+    expect(
+      preserveWarnings.some(
+        (warning) => warning.code === 'extension-wrapper-rebuild'
+      )
+    ).toBe(false)
+  })
+
   it('marks drop-unsupported rebuilds as requiring explicit confirmation', () => {
     const warnings = deriveOpenTypeExportWarnings(
       {
