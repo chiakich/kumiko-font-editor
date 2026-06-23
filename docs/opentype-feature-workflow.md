@@ -100,7 +100,7 @@ Kumiko 的目標比較接近 Glyphs 的做法：
 
 `test_glyphs/FiraCode-Regular.otf` 是很好的測試案例。
 
-它的 coding ligature 主要在 GSUB `calt`，而且大量使用 `GSUB type 6 format 3` chaining contextual substitution。這種資料低階可以讀，也可以用 TTX 看到，但目前 Kumiko 的 parser 還不能把它安全轉成 editable contextual rules。
+它的 coding ligature 主要在 GSUB `calt`，而且大量使用 `GSUB type 6 format 3` chaining contextual substitution。這種資料低階可以讀，也可以用 TTX 看到；Kumiko 目前已能把這批 `calt` lookup 重建成 editable contextual rules，所以 Fira Code 適合作為 contextual parser 的長期 regression。
 
 接手註記：`test_glyphs/FiraCode-Regular.otf` 是本機 regression fixture，但 `test_glyphs` 目前仍在 `.gitignore` 中，所以 `test/openTypeFeatures/firaCodeRegression.test.ts` 會在 fixture 存在時執行、缺少 fixture 時 skip。synthetic binary fixture 仍保留，用來在 CI 鎖定 `GSUB type 6 format 3` 的資料形狀。
 
@@ -111,7 +111,7 @@ Kumiko 的目標比較接近 Glyphs 的做法：
 - 目前 Fira Code regression：fixture 存在時，`calt` 的 124 個 `GSUB type 6 format 3` lookup 會重建成 552 條 editable contextual rules，`unsupportedLookups` 為 0
 - 目前 generated FEA regression：fixture 存在時，Fira Code 反組譯後的 generated `.fea` 可以交給 fontTools 編譯
 - 目前 behavior regression：committed synthetic `KumikoOpenTypeStress.otf` 會比較原始 fixture 與 generated FEA rebuild 後的 HarfBuzz shaping 結果
-- 目標：逐步支援 format 3 contextual substitution，讓 `calt` 規則能被分類、檢視、生成合理 `.fea`
+- 目標：持續用 Fira Code 鎖住 format 3 contextual substitution regression，並逐步擴充更多 contextual / class-based / preservation 相關 lookup 形狀
 
 ## 目前資料流
 
