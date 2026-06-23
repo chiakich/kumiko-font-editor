@@ -66,6 +66,7 @@ export function OpenTypeDocumentWorkspace({
     <Stack spacing={4}>
       <WorkspaceHeader
         badges={getSelectionBadges(selection, selectedFeature)}
+        description={getSelectionDescription(selection, t)}
         title={getSelectionTitle(selection, selectedFeature, t)}
       />
       <SelectionView
@@ -225,6 +226,41 @@ function getSelectionTitle(
     'export-policy': t('projectControl.exportPolicy'),
     diagnostics: t('projectControl.diagnostics'),
     suggestions: t('projectControl.suggestions'),
+  }[selection.view]
+}
+
+function getSelectionDescription(
+  selection: OpenTypeWorkbenchSelection,
+  t: (key: string) => string
+) {
+  if (selection.kind === 'source') {
+    return selection.view === 'raw-fea'
+      ? t('projectControl.openTypeDescriptionRawFea')
+      : t('projectControl.openTypeDescriptionImportedTables')
+  }
+
+  if (selection.kind === 'prefix') {
+    return {
+      languagesystems: t('projectControl.openTypeDescriptionLanguageSystems'),
+      'glyph-classes': t('projectControl.openTypeDescriptionGlyphClasses'),
+      'mark-classes': t('projectControl.openTypeDescriptionMarkClasses'),
+      gdef: t('projectControl.openTypeDescriptionGdef'),
+    }[selection.view]
+  }
+
+  if (selection.kind === 'feature') {
+    return t('projectControl.openTypeDescriptionFeature')
+  }
+
+  if (selection.kind === 'table') {
+    return t('projectControl.openTypeDescriptionTable')
+  }
+
+  return {
+    'generated-fea': t('projectControl.openTypeDescriptionGeneratedFea'),
+    'export-policy': t('projectControl.openTypeDescriptionExportPolicy'),
+    diagnostics: t('projectControl.openTypeDescriptionDiagnostics'),
+    suggestions: t('projectControl.openTypeDescriptionSuggestions'),
   }[selection.view]
 }
 

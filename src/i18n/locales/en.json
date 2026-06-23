@@ -429,8 +429,80 @@
     "export": "Export",
     "exportBehaviorIsExplicitBecauseCompiling": "Export behavior is explicit because compiling generated FEA may replace existing compiled GSUB, GPOS, or GDEF tables.",
     "exportImpact": "Export impact",
+    "exportImpactSource": {
+      "drop": "This source is not rebuilt by the selected policy.",
+      "preserve": "Imported compiled source is preserved with the existing layout tables.",
+      "raw": "Raw feature source remains in generated FEA.",
+      "rebuild": "Classified source is rebuilt from the Kumiko feature model.",
+      "review": "Compiled source needs preservation review before rebuild."
+    },
+    "exportImpactStatus": {
+      "drop": "Drop",
+      "preserve": "Preserve",
+      "raw": "Raw FEA",
+      "rebuild": "Rebuild",
+      "review": "Review"
+    },
+    "exportImpactUnsupported": {
+      "drop": "Unsupported lookup is intentionally dropped on rebuild.",
+      "preserve": "Unsupported lookup is preserved with compiled layout tables.",
+      "raw": "Unsupported lookup remains raw source material.",
+      "rebuild": "Unsupported lookup cannot be rebuilt by the managed model.",
+      "review": "Choose preserve or explicit drop before binary export."
+    },
     "exportInstances": "Export instances",
+    "exportMode": {
+      "drop-unsupported-and-rebuild": {
+        "description": "Compile the managed feature model and intentionally omit unsupported imported lookups.",
+        "label": "Drop unsupported + rebuild"
+      },
+      "preserve-compiled-layout-tables": {
+        "description": "Keep imported compiled layout tables. Kumiko behavior edits are not compiled into binary export in this mode.",
+        "label": "Preserve"
+      },
+      "rebuild-managed-layout-tables": {
+        "description": "Compile editable Kumiko OpenType behaviors into managed layout tables.",
+        "label": "Rebuild managed"
+      }
+    },
     "exportPolicy": "Export policy",
+    "exportPolicyDropUnsupported": "Drop unsupported and rebuild",
+    "exportPolicyPreserveCompiled": "Preserve compiled layout tables",
+    "exportPolicyRebuildManaged": "Rebuild managed layout tables",
+    "exportWarning": {
+      "compiler-runtime-not-configured": {
+        "message": "Binary font export cannot include current Kumiko OpenType feature edits until an offline feature compiler runtime is configured. Export UFO ZIP or preserve compiled tables to continue without compiling generated FEA.",
+        "title": "Feature compilation is not configured"
+      },
+      "drop-unsupported-requires-confirmation": {
+        "message": "Unsupported lookups will be removed when layout tables are rebuilt. This should require explicit user confirmation before compiler integration is enabled.",
+        "title": "Unsupported lookups will be dropped"
+      },
+      "extension-wrapper-rebuild": {
+        "message": "Imported extension lookups were unwrapped into editable rules. Rebuilding layout tables can preserve behavior, but generated FEA does not guarantee the original ExtensionSubst/ExtensionPos wrapper shape.",
+        "title": "Extension lookup wrappers may change"
+      },
+      "feature-variations": {
+        "message": "Imported FeatureVariations table data is preserved as compiled source material but is not reconstructed into editable rules. Rebuilding layout tables may omit it.",
+        "title": "FeatureVariations require preservation"
+      },
+      "preserve-ignores-edits": {
+        "message": "Compiled OpenType layout tables will be preserved, so current Kumiko feature edits are not included in the exported font.",
+        "title": "Feature edits will not be exported"
+      },
+      "rebuild-replaces-tables": {
+        "message": "OpenType layout tables will be rebuilt from Kumiko's feature model. Existing compiled layout data may be replaced.",
+        "title": "Layout tables may be rebuilt"
+      },
+      "unsupported-lookups": {
+        "message": "Some imported OpenType lookups are not editable or not representable. Rebuilding layout tables may remove them.",
+        "title": "Unsupported OpenType lookups exist"
+      },
+      "validation-errors": {
+        "message": "Validation errors must be fixed before feature compilation or export can run.",
+        "title": "OpenType feature state has errors"
+      }
+    },
     "featureCodeIsOrganizedByScript": "Feature code is organized by script/language entries and the lookups they reference.",
     "featureCodeLookups": "Feature code lookups",
     "featureBlock": "Feature block",
@@ -478,6 +550,7 @@
     "lookups": "lookups",
     "markClasses": "Mark Classes",
     "markGlyphSets": "Mark glyph sets",
+    "more": "more",
     "name": "Name",
     "noCanonicalOpentypeFeaturesYetScan": "No canonical OpenType features yet. Scan suggestions to create rules from glyph names.",
     "noFeatureDiagnostics": "No feature diagnostics.",
@@ -500,6 +573,18 @@
     "openSettings": "Open Settings",
     "opentypeExportPolicy": "OpenType export policy",
     "opentypeSettings": "OpenType settings",
+    "openTypeDescriptionDiagnostics": "Review import, classification, validation, and export warnings for the OpenType layout data.",
+    "openTypeDescriptionExportPolicy": "Choose whether binary export preserves existing compiled tables or rebuilds layout tables from Kumiko records.",
+    "openTypeDescriptionFeature": "Inspect the generated feature block and source references for this feature tag.",
+    "openTypeDescriptionGdef": "Inspect GDEF classes, mark glyph sets, ligature carets, and their source records.",
+    "openTypeDescriptionGeneratedFea": "Read-only build output used by the feature compiler when layout tables are rebuilt.",
+    "openTypeDescriptionGlyphClasses": "Shared glyph classes used by generated FEA and reconstructed lookup rules.",
+    "openTypeDescriptionImportedTables": "Compiled GSUB, GPOS, and GDEF sources imported from binary fonts and mapped back to Kumiko records.",
+    "openTypeDescriptionLanguageSystems": "Language system declarations that scope feature blocks in generated FEA.",
+    "openTypeDescriptionMarkClasses": "Mark classes and anchors used by mark positioning rules.",
+    "openTypeDescriptionRawFea": "Source-level feature text imported from UFO or entered manually.",
+    "openTypeDescriptionSuggestions": "Auto-generated OpenType rules that can be accepted into the managed feature model.",
+    "openTypeDescriptionTable": "Lookup inventory and source references grouped by OpenType layout table.",
     "outlineType": "Outline type",
     "rawFeatureText": "Raw .fea source",
     "rawFeatureTextHelp": "Stored in openTypeFeatures.rawFeatureText, inserted into Kumiko generated FEA, and compiled when binary export rebuilds OpenType layout tables.",

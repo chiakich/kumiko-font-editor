@@ -21,6 +21,7 @@ import {
   deriveOpenTypeExportWarnings,
 } from 'src/lib/openTypeFeatures'
 import { ExportImpactSummary } from 'src/features/common/projectControl/fontSettings/features/components/ExportImpactSummary'
+import type { TFunction } from 'i18next'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -30,11 +31,11 @@ interface ExportPolicyControlProps {
   onChange: (policy: ExportPolicy) => void
 }
 
-const POLICY_LABELS: Record<ExportPolicy, string> = {
-  'rebuild-managed-layout-tables': 'Rebuild managed layout tables',
-  'preserve-compiled-layout-tables': 'Preserve compiled layout tables',
-  'drop-unsupported-and-rebuild': 'Drop unsupported and rebuild',
-}
+const EXPORT_POLICIES: ExportPolicy[] = [
+  'rebuild-managed-layout-tables',
+  'preserve-compiled-layout-tables',
+  'drop-unsupported-and-rebuild',
+]
 
 type AlertStatus = 'error' | 'warning' | 'info'
 
@@ -82,9 +83,9 @@ export function ExportPolicyControl({
           value={state.exportPolicy}
           onChange={(event) => onChange(event.target.value as ExportPolicy)}
         >
-          {Object.entries(POLICY_LABELS).map(([policy, label]) => (
+          {EXPORT_POLICIES.map((policy) => (
             <option key={policy} value={policy}>
-              {label}
+              {getExportPolicyLabel(policy, t)}
             </option>
           ))}
         </Select>
@@ -94,33 +95,74 @@ export function ExportPolicyControl({
       </Text>
       <ExportImpactSummary items={impactItems} />
       {warnings.map((warning) => (
-        <Alert
-          key={warning.id}
-          status={getAlertStatus(warning.severity)}
-          alignItems="flex-start"
-          borderRadius="sm"
-        >
-          <AlertIcon mt={1} />
-          <Stack spacing={0}>
-            <AlertTitle fontSize="sm">{warning.title}</AlertTitle>
-            <AlertDescription fontSize="sm">{warning.message}</AlertDescription>
-            {warning.details && warning.details.length > 0 && (
-              <Stack as="ul" spacing={1} mt={2} pl={4}>
-                {warning.details.slice(0, 8).map((detail) => (
-                  <Text key={detail} as="li" fontSize="sm">
-                    {detail}
-                  </Text>
-                ))}
-                {warning.details.length > 8 && (
-                  <Text as="li" fontSize="sm">
-                    +{warning.details.length - 8} more
-                  </Text>
-                )}
-              </Stack>
-            )}
-          </Stack>
-        </Alert>
+        <ExportWarningAlert key={warning.id} warning={warning} t={t} />
       ))}
     </Stack>
   )
+}
+
+function ExportWarningAlert({
+  t,
+  warning,
+}: {
+  t: TFunction
+  warning: OpenTypeExportWarning
+}) {
+  const translatedWarning = translateExportWarning(warning, t)
+
+  return (
+    <Alert
+      status={getAlertStatus(warning.severity)}
+      alignItems="flex-start"
+      borderRadius="sm"
+    >
+      <AlertIcon mt={1} />
+      <Stack spacing={0}>
+        <AlertTitle fontSize="sm">{translatedWarning.title}</AlertTitle>
+        <AlertDescription fontSize="sm">
+          {translatedWarning.message}
+        </AlertDescription>
+        {warning.details && warning.details.length > 0 && (
+          <Stack as="ul" spacing={1} mt={2} pl={4}>
+            {warning.details.slice(0, 8).map((detail) => (
+              <Text key={detail} as="li" fontSize="sm">
+                {detail}
+              </Text>
+            ))}
+            {warning.details.length > 8 && (
+              <Text as="li" fontSize="sm">
+                +{warning.details.length - 8} {t('projectControl.more')}
+              </Text>
+            )}
+          </Stack>
+        )}
+      </Stack>
+    </Alert>
+  )
+}
+
+function getExportPolicyLabel(policy: ExportPolicy, t: TFunction) {
+  return {
+    'rebuild-managed-layout-tables': t(
+      'projectControl.exportPolicyRebuildManaged'
+    ),
+    'preserve-compiled-layout-tables': t(
+      'projectControl.exportPolicyPreserveCompiled'
+    ),
+    'drop-unsupported-and-rebuild': t(
+      'projectControl.exportPolicyDropUnsupported'
+    ),
+  }[policy]
+}
+
+function translateExportWarning(warning: OpenTypeExportWarning, t: TFunction) {
+  const keyPrefix = `projectControl.exportWarning.${warning.code}`
+
+  return {
+    title: t(`${keyPrefix}.title`, { defaultValue: warning.title }),
+    message: t(`${keyPrefix}.message`, {
+      count: warning.details?.length ?? 0,
+      defaultValue: warning.message,
+    }),
+  }
 }

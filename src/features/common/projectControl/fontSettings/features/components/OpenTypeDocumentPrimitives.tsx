@@ -4,16 +4,23 @@ import type { SourceSectionRecordGroup } from 'src/lib/openTypeFeatures'
 
 export function WorkspaceHeader({
   badges,
+  description,
   title,
 }: {
   badges: string[]
+  description: string
   title: string
 }) {
   return (
     <HStack justify="space-between" align="flex-start" gap={3}>
-      <Text fontSize="lg" fontWeight="900">
-        {title}
-      </Text>
+      <Stack spacing={1} minW={0}>
+        <Text fontSize="lg" fontWeight="900">
+          {title}
+        </Text>
+        <Text fontSize="sm" color="field.muted">
+          {description}
+        </Text>
+      </Stack>
       <HStack wrap="wrap" justify="flex-end" gap={1}>
         {badges.map((badge) => (
           <Text

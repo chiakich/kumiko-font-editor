@@ -26,7 +26,7 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
           </Text>
         </Stack>
         <Badge colorScheme="cyan" flexShrink={0}>
-          {summary.exportModeLabel}
+          {t(`projectControl.exportMode.${state.exportPolicy}.label`)}
         </Badge>
       </HStack>
 
@@ -85,7 +85,7 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
       </SimpleGrid>
 
       <Text fontSize="sm" color="field.muted">
-        {summary.exportModeDescription}
+        {t(`projectControl.exportMode.${state.exportPolicy}.description`)}
       </Text>
     </Stack>
   )

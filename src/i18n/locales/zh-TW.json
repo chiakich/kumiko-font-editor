@@ -427,10 +427,82 @@
     "editableLookups": "Editable lookups",
     "errors": "errors",
     "export": "匯出",
-    "exportBehaviorIsExplicitBecauseCompiling": "Export behavior is explicit because compiling generated FEA may replace existing compiled GSUB, GPOS, or GDEF tables.",
+    "exportBehaviorIsExplicitBecauseCompiling": "匯出行為需要明確選擇，因為編譯 generated FEA 可能會取代既有的 GSUB、GPOS 或 GDEF compiled tables。",
     "exportImpact": "匯出影響",
+    "exportImpactSource": {
+      "drop": "這段來源不會由目前策略重建。",
+      "preserve": "匯入的 compiled source 會隨既有 layout tables 一起保留。",
+      "raw": "Raw feature source 會保留在 generated FEA 中。",
+      "rebuild": "已分類來源會從 Kumiko feature model 重建。",
+      "review": "Compiled source 在 rebuild 前需要保留策略審查。"
+    },
+    "exportImpactStatus": {
+      "drop": "丟棄",
+      "preserve": "保留",
+      "raw": "Raw FEA",
+      "rebuild": "重建",
+      "review": "審查"
+    },
+    "exportImpactUnsupported": {
+      "drop": "不支援的 lookup 會在 rebuild 時明確丟棄。",
+      "preserve": "不支援的 lookup 會隨 compiled layout tables 一起保留。",
+      "raw": "不支援的 lookup 仍保留為 raw source material。",
+      "rebuild": "不支援的 lookup 無法由 managed model 重建。",
+      "review": "Binary export 前需要選擇保留或明確丟棄。"
+    },
     "exportInstances": "Export instances",
+    "exportMode": {
+      "drop-unsupported-and-rebuild": {
+        "description": "編譯 managed feature model，並明確省略不支援的 imported lookups。",
+        "label": "丟棄不支援項目並重建"
+      },
+      "preserve-compiled-layout-tables": {
+        "description": "保留匯入的 compiled layout tables。這個模式不會把 Kumiko 行為編輯編譯進 binary export。",
+        "label": "保留"
+      },
+      "rebuild-managed-layout-tables": {
+        "description": "將可編輯的 Kumiko OpenType behaviors 編譯成 managed layout tables。",
+        "label": "重建 managed tables"
+      }
+    },
     "exportPolicy": "匯出策略",
+    "exportPolicyDropUnsupported": "丟棄不支援項目並重建",
+    "exportPolicyPreserveCompiled": "保留 compiled layout tables",
+    "exportPolicyRebuildManaged": "重建 managed layout tables",
+    "exportWarning": {
+      "compiler-runtime-not-configured": {
+        "message": "尚未設定離線 feature compiler runtime，因此 binary font export 目前無法包含 Kumiko OpenType feature edits。可先匯出 UFO ZIP，或選擇保留 compiled tables。",
+        "title": "Feature 編譯尚未設定"
+      },
+      "drop-unsupported-requires-confirmation": {
+        "message": "重建 layout tables 時會移除不支援的 lookups。啟用 compiler integration 前應要求使用者明確確認。",
+        "title": "不支援的 lookups 會被丟棄"
+      },
+      "extension-wrapper-rebuild": {
+        "message": "匯入的 extension lookups 已展開成可編輯 rules。Rebuild 可以保留行為，但 generated FEA 不保證維持原本的 ExtensionSubst/ExtensionPos wrapper 形狀。",
+        "title": "Extension lookup wrappers 可能改變"
+      },
+      "feature-variations": {
+        "message": "匯入的 FeatureVariations table data 會作為 compiled source material 保留，但目前不會重建成可編輯 rules。Rebuild layout tables 可能會省略這些資料。",
+        "title": "FeatureVariations 需要保留"
+      },
+      "preserve-ignores-edits": {
+        "message": "Compiled OpenType layout tables 會被保留，因此目前的 Kumiko feature edits 不會包含在匯出的字型中。",
+        "title": "Feature edits 不會被匯出"
+      },
+      "rebuild-replaces-tables": {
+        "message": "OpenType layout tables 會從 Kumiko feature model 重建，既有 compiled layout data 可能會被取代。",
+        "title": "Layout tables 可能被重建"
+      },
+      "unsupported-lookups": {
+        "message": "部分匯入的 OpenType lookups 目前不可編輯或無法表示。Rebuild layout tables 可能會移除它們。",
+        "title": "存在不支援的 OpenType lookups"
+      },
+      "validation-errors": {
+        "message": "必須先修正驗證錯誤，才能執行 feature compilation 或 export。",
+        "title": "OpenType feature state 有錯誤"
+      }
+    },
     "featureCodeIsOrganizedByScript": "Feature code is organized by script/language entries and the lookups they reference.",
     "featureCodeLookups": "Feature code lookups",
     "featureBlock": "Feature block",
@@ -453,7 +525,7 @@
     "ignore": "Ignore",
     "importedFrom": "Imported from",
     "importedTables": "匯入 tables",
-    "importedTablesAreTreatedAsPreserved": "Imported tables are treated as preserved source material. Kumiko behavior edits are tracked separately and compiled according to the selected export policy.",
+    "importedTablesAreTreatedAsPreserved": "匯入的 tables 會被視為需要保留的 source material。Kumiko behavior edits 會分開追蹤，並依選定匯出策略編譯。",
     "inactive": "inactive",
     "italicAngle": "Italic angle",
     "label": "Label",
@@ -478,6 +550,7 @@
     "lookups": "lookups",
     "markClasses": "Mark Classes",
     "markGlyphSets": "Mark glyph sets",
+    "more": "更多",
     "name": "Name",
     "noCanonicalOpentypeFeaturesYetScan": "No canonical OpenType features yet. Scan suggestions to create rules from glyph names.",
     "noFeatureDiagnostics": "No feature diagnostics.",
@@ -498,8 +571,20 @@
     "openFontSettings": "開啟 Font Settings",
     "openGitHubCommit": "開啟 GitHub commit modal",
     "openSettings": "開啟設定",
-    "opentypeExportPolicy": "OpenType export policy",
+    "opentypeExportPolicy": "OpenType 匯出策略",
     "opentypeSettings": "OpenType settings",
+    "openTypeDescriptionDiagnostics": "檢視 OpenType layout data 在匯入、分類、驗證與匯出審查時產生的 warnings 和 errors。",
+    "openTypeDescriptionExportPolicy": "選擇 binary export 要保留既有 compiled tables，或從 Kumiko records 重建 layout tables。",
+    "openTypeDescriptionFeature": "檢視這個 feature tag 的 generated feature block 與來源 references。",
+    "openTypeDescriptionGdef": "檢視 GDEF classes、mark glyph sets、ligature carets 與來源 records。",
+    "openTypeDescriptionGeneratedFea": "Feature compiler rebuild layout tables 時使用的唯讀 build output。",
+    "openTypeDescriptionGlyphClasses": "Generated FEA 與 reconstructed lookup rules 共用的 glyph classes。",
+    "openTypeDescriptionImportedTables": "從 binary fonts 匯入的 compiled GSUB、GPOS、GDEF sources，以及它們對應到 Kumiko records 的關係。",
+    "openTypeDescriptionLanguageSystems": "用來決定 generated FEA feature blocks 範圍的 language system declarations。",
+    "openTypeDescriptionMarkClasses": "Mark positioning rules 使用的 mark classes 與 anchors。",
+    "openTypeDescriptionRawFea": "從 UFO 匯入或手動輸入的 source-level feature text。",
+    "openTypeDescriptionSuggestions": "可以接受進 managed feature model 的自動產生 OpenType rules。",
+    "openTypeDescriptionTable": "依 OpenType layout table 分組的 lookup inventory 與來源 references。",
     "outlineType": "Outline type",
     "rawFeatureText": "Raw .fea source",
     "rawFeatureTextHelp": "儲存在 openTypeFeatures.rawFeatureText，會插入 Kumiko generated FEA，並在 binary export 選擇 rebuild 時被編譯。",
