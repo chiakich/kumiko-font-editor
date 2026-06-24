@@ -129,6 +129,27 @@ describe('interpolateGlyphLayer', () => {
     expect(result.issues.map((issue) => issue.code)).toContain('path-count')
   })
 
+  it('reports guideline mismatches without blocking interpolation', () => {
+    const mismatchedGuidelines = {
+      ...layer('Bold', 700, 200, 700),
+      guidelines: [],
+    }
+
+    const result = interpolateGlyphLayer({
+      glyph: glyph(mismatchedGuidelines),
+      axes,
+      sources,
+      location: { Weight: 50 },
+    })
+
+    expect(result.layer).not.toBeNull()
+    expect(result.issues.map((issue) => issue.code)).toContain(
+      'guideline-count'
+    )
+    expect(result.layer?.metrics.width).toBeCloseTo(600)
+    expect(result.layer?.paths[0].nodes[1].x).toBeCloseTo(150)
+  })
+
   it('falls back to a sparse sub-model when a source layer is missing', () => {
     const sparseGlyph = glyph()
     delete sparseGlyph.layers?.Bold

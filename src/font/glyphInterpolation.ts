@@ -143,11 +143,14 @@ const layerToInterpolatableValue = (
       const anchor = anchors.get(baseAnchor.name) ?? baseAnchor
       return { x: anchor.x, y: anchor.y }
     }),
-    guidelines: layer.guidelines.map((guide) => ({
-      x: guide.x,
-      y: guide.y,
-      angle: guide.angle,
-    })),
+    guidelines: baseLayer.guidelines.map((baseGuide, index) => {
+      const guide = layer.guidelines[index] ?? baseGuide
+      return {
+        x: guide.x,
+        y: guide.y,
+        angle: guide.angle,
+      }
+    }),
   }
 }
 

@@ -249,7 +249,7 @@ export const checkGlyphInterpolationCompatibility = (
     checkPaths(base.paths, layer, structuralIssues)
     checkComponents(base.componentRefs, layer, structuralIssues)
     checkAnchors(base.anchors, layer, structuralIssues)
-    checkGuidelines(base.guidelines, layer, structuralIssues)
+    checkGuidelines(base.guidelines, layer, issues)
   }
 
   return {
