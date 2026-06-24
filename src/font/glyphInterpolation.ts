@@ -1,5 +1,9 @@
 import { DiscreteVariationModel } from 'src/font/fontra-ported/discrete-variation-model'
-import { locationsMatch } from 'src/font/designspaceLocation'
+import {
+  getActiveBracketLayerForSource,
+  getOrderedGlyphLayers,
+  locationsMatch,
+} from 'src/font/designspaceLocation'
 import {
   makeDefaultLocation,
   mapAxesFromUserSpaceToSourceSpace,
@@ -67,15 +71,38 @@ const getMasterLayerForSource = (
       (layer.associatedMasterId === sourceId || layer.id === sourceId)
   )
 
+const getBraceLayerEntries = (glyph: GlyphData): SourceLayerEntry[] =>
+  getOrderedGlyphLayers(glyph)
+    .filter(
+      (layer) =>
+        layer.type === 'brace' &&
+        layer.braceLocation &&
+        Object.keys(layer.braceLocation).length > 0
+    )
+    .map((layer) => ({
+      sourceId: `brace:${layer.id}`,
+      source: {
+        id: `brace:${layer.id}`,
+        name: layer.name || layer.id,
+        location: layer.braceLocation ?? {},
+      },
+      layer,
+    }))
+
 const getSourceLayerEntries = (
   glyph: GlyphData,
-  sources: Record<string, FontSource> | undefined
-): SourceLayerEntry[] =>
-  Object.entries(sources ?? {}).map(([sourceId, source]) => ({
+  sources: Record<string, FontSource> | undefined,
+  location: Record<string, number>
+): SourceLayerEntry[] => [
+  ...Object.entries(sources ?? {}).map(([sourceId, source]) => ({
     sourceId,
     source,
-    layer: getMasterLayerForSource(glyph, sourceId),
-  }))
+    layer:
+      getActiveBracketLayerForSource(glyph, sourceId, location) ??
+      getMasterLayerForSource(glyph, sourceId),
+  })),
+  ...getBraceLayerEntries(glyph),
+]
 
 const chooseBaseLayer = (
   entries: SourceLayerEntry[],
@@ -212,7 +239,7 @@ export const interpolateGlyphLayer = ({
   layerName = 'Interpolated',
 }: InterpolateGlyphLayerOptions): GlyphInterpolationResult => {
   const axisList = axes?.axes ?? []
-  const entries = getSourceLayerEntries(glyph, sources)
+  const entries = getSourceLayerEntries(glyph, sources, location)
   const baseLayer = chooseBaseLayer(entries, axisList)
   const layers = entries.map((entry) => entry.layer)
   const compatibility = checkGlyphInterpolationCompatibility(layers)

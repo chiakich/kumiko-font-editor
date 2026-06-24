@@ -1,4 +1,9 @@
-import type { FontAxis, FontData, GlyphData } from 'src/store/types'
+import type {
+  FontAxis,
+  FontData,
+  GlyphData,
+  GlyphLayerData,
+} from 'src/store/types'
 
 const axisValue = (location: Record<string, number>, axis: FontAxis) =>
   location[axis.name] ?? axis.defaultValue
@@ -44,6 +49,66 @@ export const getGlyphMasterLayerForSource = (
   )
 }
 
+export const getOrderedGlyphLayers = (glyph: GlyphData) => {
+  const layers = glyph.layers ?? {}
+  const seen = new Set<string>()
+  const ordered: GlyphLayerData[] = []
+  for (const layerId of glyph.layerOrder ?? []) {
+    const layer = layers[layerId]
+    if (layer) {
+      seen.add(layerId)
+      ordered.push(layer)
+    }
+  }
+  for (const [layerId, layer] of Object.entries(layers)) {
+    if (!seen.has(layerId)) {
+      ordered.push(layer)
+    }
+  }
+  return ordered
+}
+
+export const bracketLayerApplies = (
+  layer: GlyphLayerData,
+  location: Record<string, number>
+) => {
+  const rules = layer.bracketAxisRules
+  if (!rules || Object.keys(rules).length === 0) {
+    return false
+  }
+
+  return Object.entries(rules).every(([axisName, rule]) => {
+    const value = location[axisName]
+    if (value === undefined) {
+      return false
+    }
+    return (
+      (rule.min === undefined || value >= rule.min) &&
+      (rule.max === undefined || value <= rule.max)
+    )
+  })
+}
+
+export const getActiveBracketLayerForSource = (
+  glyph: GlyphData | null | undefined,
+  sourceId: string | null | undefined,
+  location: Record<string, number>
+): GlyphLayerData | null => {
+  if (!glyph || !sourceId) {
+    return null
+  }
+  return (
+    getOrderedGlyphLayers(glyph)
+      .filter(
+        (layer) =>
+          layer.type === 'bracket' &&
+          layer.associatedMasterId === sourceId &&
+          bracketLayerApplies(layer, location)
+      )
+      .at(-1) ?? null
+  )
+}
+
 export const isInterpolatedGlyphLocation = (
   fontData: FontData | null | undefined,
   glyph: GlyphData | null | undefined,
@@ -57,6 +122,10 @@ export const isInterpolatedGlyphLocation = (
 
   const sourceId = findSourceIdAtLocation(fontData, location)
   if (!sourceId) {
+    return true
+  }
+
+  if (getActiveBracketLayerForSource(glyph, sourceId, location)) {
     return true
   }
 

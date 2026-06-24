@@ -144,6 +144,62 @@ describe('interpolateGlyphLayer', () => {
     expect(result.layer?.paths[0].nodes[1].x).toBeCloseTo(100)
     expect(result.issues.map((issue) => issue.code)).toContain('missing-layer')
   })
+
+  it('uses brace layers as glyph-specific interpolation sources', () => {
+    const glyphWithBrace = glyph()
+    glyphWithBrace.layers = {
+      ...glyphWithBrace.layers,
+      brace: {
+        ...layer('brace', 650, 180, 650),
+        type: 'brace',
+        associatedMasterId: 'Light',
+        braceLocation: { Weight: 50 },
+      },
+    }
+    glyphWithBrace.layerOrder = ['Light', 'Bold', 'brace']
+
+    const result = interpolateGlyphLayer({
+      glyph: glyphWithBrace,
+      axes,
+      sources,
+      location: { Weight: 50 },
+    })
+
+    expect(result.issues).toEqual([])
+    expect(result.layer?.metrics.width).toBeCloseTo(650)
+    expect(result.layer?.paths[0].nodes[1].x).toBeCloseTo(180)
+  })
+
+  it('uses bracket layers when their axis rules match', () => {
+    const glyphWithBracket = glyph()
+    glyphWithBracket.layers = {
+      ...glyphWithBracket.layers,
+      bracket: {
+        ...layer('bracket', 900, 300, 900),
+        type: 'bracket',
+        associatedMasterId: 'Bold',
+        bracketAxisRules: { Weight: { min: 80, max: 100 } },
+      },
+    }
+    glyphWithBracket.layerOrder = ['Light', 'Bold', 'bracket']
+
+    const inactive = interpolateGlyphLayer({
+      glyph: glyphWithBracket,
+      axes,
+      sources,
+      location: { Weight: 50 },
+    })
+    const active = interpolateGlyphLayer({
+      glyph: glyphWithBracket,
+      axes,
+      sources,
+      location: { Weight: 100 },
+    })
+
+    expect(inactive.layer?.metrics.width).toBeCloseTo(600)
+    expect(active.layer?.metrics.width).toBeCloseTo(900)
+    expect(active.layer?.paths[0].nodes[1].x).toBeCloseTo(300)
+  })
 })
 
 describe('bakeGlyphStaticInstance', () => {
@@ -230,5 +286,28 @@ describe('isInterpolatedGlyphLocation', () => {
     expect(
       isInterpolatedGlyphLocation(data, glyphWithSupport, { Weight: 50 })
     ).toBe(false)
+  })
+
+  it('treats active bracket layers at source locations as preview', () => {
+    const glyphWithBracket = glyph()
+    glyphWithBracket.layers = {
+      ...glyphWithBracket.layers,
+      bracket: {
+        ...layer('bracket', 900, 300, 900),
+        type: 'bracket',
+        associatedMasterId: 'Bold',
+        bracketAxisRules: { Weight: { min: 80, max: 100 } },
+      },
+    }
+    glyphWithBracket.layerOrder = ['Light', 'Bold', 'bracket']
+    const data: FontData = {
+      glyphs: { A: glyphWithBracket },
+      axes,
+      sources,
+    }
+
+    expect(
+      isInterpolatedGlyphLocation(data, glyphWithBracket, { Weight: 100 })
+    ).toBe(true)
   })
 })
