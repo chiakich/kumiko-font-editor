@@ -20,11 +20,17 @@ from fontTools.ttLib import TTFont
 def kumiko_test_inspect(path):
     font = TTFont(path)
     feature_tags = []
+    gsub_feature_variations = False
     if "GSUB" in font and font["GSUB"].table.FeatureList:
         feature_tags = sorted(
             {record.FeatureTag for record in font["GSUB"].table.FeatureList.FeatureRecord}
         )
-    return {"tables": sorted(font.keys()), "features": feature_tags}
+        gsub_feature_variations = getattr(font["GSUB"].table, "FeatureVariations", None) is not None
+    return {
+        "tables": sorted(font.keys()),
+        "features": feature_tags,
+        "gsubFeatureVariations": gsub_feature_variations,
+    }
 `
 
 const FEATURE_TEXT = `feature ss01 {
@@ -79,7 +85,11 @@ const buildPlainFont = (): ArrayBuffer => {
   return font.toArrayBuffer()
 }
 
-const buildMasterFont = (weight: number, styleName: string): ArrayBuffer => {
+const buildMasterFont = (
+  weight: number,
+  styleName: string,
+  options: { includeBracketAlternate?: boolean } = {}
+): ArrayBuffer => {
   const glyphs = [
     new opentype.Glyph({
       name: '.notdef',
@@ -93,6 +103,15 @@ const buildMasterFont = (weight: number, styleName: string): ArrayBuffer => {
       path: rectPath(50, 300 + weight, 700),
     }),
   ]
+  if (options.includeBracketAlternate) {
+    glyphs.push(
+      new opentype.Glyph({
+        name: 'A.bracket.bracket',
+        advanceWidth: 800,
+        path: rectPath(90, 620, 700),
+      })
+    )
+  }
   const font = new opentype.Font({
     familyName: 'KumikoVariableTest',
     styleName,
@@ -115,6 +134,7 @@ const inspect = (pyodide: PyodideAPI, path: string) => {
     return proxy.toJs({ dict_converter: Object.fromEntries }) as {
       tables: string[]
       features: string[]
+      gsubFeatureVariations: boolean
     }
   } finally {
     proxy.destroy?.()
@@ -287,5 +307,65 @@ describe('fontTools FEA compile runtime', () => {
     expect(built.tables).toContain('fvar')
     expect(built.tables).toContain('CFF2')
     expect(built.tables).toContain('HVAR')
+  })
+
+  it('builds FeatureVariations from designspace bracket rules', () => {
+    pyodide.FS.writeFile(
+      '/tmp/bracket-light.otf',
+      new Uint8Array(
+        buildMasterFont(0, 'Light', { includeBracketAlternate: true })
+      )
+    )
+    pyodide.FS.writeFile(
+      '/tmp/bracket-bold.otf',
+      new Uint8Array(
+        buildMasterFont(100, 'Bold', { includeBracketAlternate: true })
+      )
+    )
+    pyodide.FS.writeFile(
+      '/tmp/bracket.designspace',
+      `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="4.1">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="0" maximum="100" default="0"/>
+  </axes>
+  <sources>
+    <source filename="bracket-light.otf" name="Light" stylename="Light">
+      <info copy="1"/>
+      <location><dimension name="Weight" xvalue="0"/></location>
+    </source>
+    <source filename="bracket-bold.otf" name="Bold" stylename="Bold">
+      <location><dimension name="Weight" xvalue="100"/></location>
+    </source>
+  </sources>
+  <rules processing="last">
+    <rule name="A.bracket">
+      <conditionset>
+        <condition name="Weight" minimum="80" maximum="100"/>
+      </conditionset>
+      <sub name="A" with="A.bracket.bracket"/>
+    </rule>
+  </rules>
+</designspace>`
+    )
+
+    const result = pyodide.runPython(
+      `kumiko_build_variable_font('/tmp/bracket.designspace', '/tmp/bracket-out.otf')`
+    ) as {
+      toJs: (o?: { dict_converter?: typeof Object.fromEntries }) => unknown
+      destroy?: () => void
+    }
+    const built = result.toJs({ dict_converter: Object.fromEntries }) as {
+      ok: boolean
+      message: string
+      tables: string[]
+    }
+    result.destroy?.()
+
+    expect(built.ok, built.message).toBe(true)
+    const inspected = inspect(pyodide, '/tmp/bracket-out.otf')
+    expect(inspected.tables).toContain('GSUB')
+    expect(inspected.features).toContain('rclt')
+    expect(inspected.gsubFeatureVariations).toBe(true)
   })
 })

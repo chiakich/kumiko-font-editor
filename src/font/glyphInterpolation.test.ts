@@ -200,6 +200,31 @@ describe('interpolateGlyphLayer', () => {
     expect(active.layer?.metrics.width).toBeCloseTo(900)
     expect(active.layer?.paths[0].nodes[1].x).toBeCloseTo(300)
   })
+
+  it('can ignore bracket layers for base variable masters', () => {
+    const glyphWithBracket = glyph()
+    glyphWithBracket.layers = {
+      ...glyphWithBracket.layers,
+      bracket: {
+        ...layer('bracket', 900, 300, 900),
+        type: 'bracket',
+        associatedMasterId: 'Bold',
+        bracketAxisRules: { Weight: { min: 80, max: 100 } },
+      },
+    }
+    glyphWithBracket.layerOrder = ['Light', 'Bold', 'bracket']
+
+    const result = interpolateGlyphLayer({
+      glyph: glyphWithBracket,
+      axes,
+      sources,
+      location: { Weight: 100 },
+      includeBracketLayers: false,
+    })
+
+    expect(result.layer?.metrics.width).toBeCloseTo(700)
+    expect(result.layer?.paths[0].nodes[1].x).toBeCloseTo(200)
+  })
 })
 
 describe('bakeGlyphStaticInstance', () => {

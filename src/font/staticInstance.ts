@@ -73,6 +73,7 @@ export const bakeGlyphStaticInstance = (input: {
     'export' | 'id' | 'location' | 'name' | 'styleName'
   >
   layerId?: string
+  includeBracketLayers?: boolean
 }): StaticInstanceBakeResult => {
   const layerId = input.layerId ?? STATIC_INSTANCE_LAYER_ID
   const layerName = input.instance.styleName || input.instance.name || layerId
@@ -96,6 +97,7 @@ export const bakeGlyphStaticInstance = (input: {
     location: input.instance.location,
     layerId,
     layerName,
+    includeBracketLayers: input.includeBracketLayers,
   })
 
   if (!result.layer) {
@@ -131,12 +133,14 @@ export const bakeStaticInstanceGlyphs = (input: {
   fontData: Pick<FontData, 'axes' | 'sources'>
   glyphs: GlyphData[]
   instance: FontExportInstance
+  includeBracketLayers?: boolean
 }): StaticInstanceBakeListResult => {
   const baked = input.glyphs.map((glyph) =>
     bakeGlyphStaticInstance({
       fontData: input.fontData,
       glyph,
       instance: input.instance,
+      includeBracketLayers: input.includeBracketLayers,
     })
   )
   return {

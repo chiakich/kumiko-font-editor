@@ -59,6 +59,7 @@ export interface InterpolateGlyphLayerOptions {
   location: Record<string, number>
   layerId?: string
   layerName?: string
+  includeBracketLayers?: boolean
 }
 
 const getMasterLayerForSource = (
@@ -92,14 +93,16 @@ const getBraceLayerEntries = (glyph: GlyphData): SourceLayerEntry[] =>
 const getSourceLayerEntries = (
   glyph: GlyphData,
   sources: Record<string, FontSource> | undefined,
-  location: Record<string, number>
+  location: Record<string, number>,
+  includeBracketLayers = true
 ): SourceLayerEntry[] => [
   ...Object.entries(sources ?? {}).map(([sourceId, source]) => ({
     sourceId,
     source,
     layer:
-      getActiveBracketLayerForSource(glyph, sourceId, location) ??
-      getMasterLayerForSource(glyph, sourceId),
+      (includeBracketLayers
+        ? getActiveBracketLayerForSource(glyph, sourceId, location)
+        : null) ?? getMasterLayerForSource(glyph, sourceId),
   })),
   ...getBraceLayerEntries(glyph),
 ]
@@ -237,9 +240,15 @@ export const interpolateGlyphLayer = ({
   location,
   layerId = `${glyph.id}:interpolated`,
   layerName = 'Interpolated',
+  includeBracketLayers = true,
 }: InterpolateGlyphLayerOptions): GlyphInterpolationResult => {
   const axisList = axes?.axes ?? []
-  const entries = getSourceLayerEntries(glyph, sources, location)
+  const entries = getSourceLayerEntries(
+    glyph,
+    sources,
+    location,
+    includeBracketLayers
+  )
   const baseLayer = chooseBaseLayer(entries, axisList)
   const layers = entries.map((entry) => entry.layer)
   const compatibility = checkGlyphInterpolationCompatibility(layers)
