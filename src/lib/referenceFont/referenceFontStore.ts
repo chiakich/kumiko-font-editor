@@ -9,6 +9,7 @@ interface LoadedReferenceFont {
   name: string
   font: opentype.Font
   unitsPerEm: number
+  fontBytes: ArrayBuffer
 }
 
 let loaded: LoadedReferenceFont | null = null
@@ -28,7 +29,7 @@ export function loadReferenceFontFromBytes(
     (familyNames ? Object.values(familyNames)[0] : undefined) ??
     fallbackName ??
     'Reference'
-  loaded = { name, font, unitsPerEm: font.unitsPerEm }
+  loaded = { name, font, unitsPerEm: font.unitsPerEm, fontBytes: buffer }
   return name
 }
 
@@ -38,6 +39,10 @@ export function clearReferenceFont(): void {
 
 export function hasReferenceFont(): boolean {
   return loaded !== null
+}
+
+export function getReferenceFontBytes(): ArrayBuffer | null {
+  return loaded?.fontBytes.slice(0) ?? null
 }
 
 // Build a fill Path2D for `char`, scaled to `targetUnitsPerEm` and expressed in

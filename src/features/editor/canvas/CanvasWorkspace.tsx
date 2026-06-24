@@ -95,6 +95,9 @@ export function CanvasWorkspace() {
     (state) => state.setReferenceFontVisible
   )
   const setReferenceFontChar = useStore((state) => state.setReferenceFontChar)
+  const clearReferenceFontResidual = useStore(
+    (state) => state.clearReferenceFontResidual
+  )
   const addGlyphs = useStore((state) => state.addGlyphs)
   const visibleBackdropLayerIds = useStore(
     (state) => state.visibleBackdropLayerIds
@@ -379,6 +382,7 @@ export function CanvasWorkspace() {
 
   useReferenceFontRestoration({
     projectId,
+    clearReferenceFontResidual,
     setReferenceFontChar,
     setReferenceFontName,
     setReferenceFontVisible,

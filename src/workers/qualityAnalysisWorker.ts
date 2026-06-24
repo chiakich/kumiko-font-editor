@@ -2,6 +2,7 @@ import { runPopulationAnalysis } from 'src/lib/qualityCheck/populationAnalysis'
 import { getDefaultRadarReferenceData } from 'src/lib/qualityCheck/radarReferenceData'
 import { getEnclosureCharacterSet } from 'src/lib/qualityCheck/semanticStructure'
 import type { ResolvedFont } from 'src/lib/qualityCheck/resolvedGlyph'
+import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
 
 /**
  * 母體幾何分析 Worker：接收主執行緒已解析好的純資料字形，
@@ -14,6 +15,7 @@ interface AnalyzeMessage {
   payload: {
     requestId: number
     resolvedFont: ResolvedFont
+    referenceData?: RadarReferenceData | null
   }
 }
 
@@ -22,18 +24,20 @@ self.onmessage = async (event: MessageEvent<AnalyzeMessage>) => {
     return
   }
 
-  const { requestId, resolvedFont } = event.data.payload
+  const { requestId, resolvedFont, referenceData } = event.data.payload
   const post = (self as DedicatedWorkerGlobalScope).postMessage.bind(self)
 
   try {
-    const [enclosureChars, referenceData] = await Promise.all([
+    const [enclosureChars, resolvedReferenceData] = await Promise.all([
       getEnclosureCharacterSet(),
-      getDefaultRadarReferenceData(),
+      referenceData === undefined
+        ? getDefaultRadarReferenceData()
+        : Promise.resolve(referenceData),
     ])
     const analysis = runPopulationAnalysis(
       resolvedFont,
       enclosureChars,
-      referenceData
+      resolvedReferenceData
     )
     post({ type: 'analysis-success', payload: { requestId, analysis } })
   } catch (error) {

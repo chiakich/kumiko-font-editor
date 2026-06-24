@@ -4,6 +4,7 @@ import {
   Button,
   HStack,
   Heading,
+  IconButton,
   Input,
   Menu,
   MenuButton,
@@ -11,10 +12,13 @@ import {
   MenuList,
   Stack,
   Text,
+  Tooltip,
+  useDisclosure,
 } from '@chakra-ui/react'
-import { EyeClosed, EyeSolid } from 'iconoir-react'
+import { EyeClosed, EyeSolid, Settings } from 'iconoir-react'
 import { useState, type KeyboardEvent, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ReferenceFontSettingsModal } from 'src/features/editor/rightPanel/components/ReferenceFontSettingsModal'
 import { useStore, type GlyphLayerData } from 'src/store'
 
 interface LayerListCardProps {
@@ -66,6 +70,7 @@ export function LayerListCard({
   onSelectLayer,
 }: LayerListCardProps) {
   const { t } = useTranslation()
+  const referenceFontSettings = useDisclosure()
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const createBackupLayer = useStore((state) => state.createBackupLayer)
@@ -297,8 +302,24 @@ export function LayerListCard({
               ? `${t('editor.referenceFont')} · ${referenceFontName}`
               : t('editor.referenceFont')}
           </Text>
+          <Tooltip label={t('editor.referenceFontSettings')}>
+            <IconButton
+              size="xs"
+              variant="ghost"
+              aria-label={t('editor.referenceFontSettings')}
+              icon={<Settings width={16} height={16} />}
+              onClick={(event) => {
+                event.stopPropagation()
+                referenceFontSettings.onOpen()
+              }}
+            />
+          </Tooltip>
         </HStack>
       </Stack>
+      <ReferenceFontSettingsModal
+        isOpen={referenceFontSettings.isOpen}
+        onClose={referenceFontSettings.onClose}
+      />
     </Box>
   )
 }

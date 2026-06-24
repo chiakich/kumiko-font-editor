@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FontData } from 'src/store'
 import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
 import type { PopulationAnalysis } from 'src/lib/qualityCheck/populationAnalysis'
+import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
 
 interface AnalysisSuccessMessage {
   type: 'analysis-success'
@@ -35,10 +36,21 @@ let nextRequestId = 0
  * 同一份 fontData 快照只解析、傳輸、計算一次，所有 hook 共用同一個
  * promise，避免重複的主執行緒 resolve + structured clone 卡頓。
  */
-const analysisCache = new WeakMap<FontData, Promise<PopulationAnalysis>>()
+const analysisCache = new WeakMap<
+  FontData,
+  Map<RadarReferenceData | null | undefined, Promise<PopulationAnalysis>>
+>()
 
-const requestAnalysis = (fontData: FontData): Promise<PopulationAnalysis> => {
-  const cached = analysisCache.get(fontData)
+const requestAnalysis = (
+  fontData: FontData,
+  referenceData?: RadarReferenceData | null
+): Promise<PopulationAnalysis> => {
+  let cacheByReferenceData = analysisCache.get(fontData)
+  if (!cacheByReferenceData) {
+    cacheByReferenceData = new Map()
+    analysisCache.set(fontData, cacheByReferenceData)
+  }
+  const cached = cacheByReferenceData.get(referenceData)
   if (cached) {
     return cached
   }
@@ -54,17 +66,21 @@ const requestAnalysis = (fontData: FontData): Promise<PopulationAnalysis> => {
       if (event.data.type === 'analysis-success') {
         resolve(event.data.payload.analysis)
       } else {
-        analysisCache.delete(fontData)
+        cacheByReferenceData.delete(referenceData)
         reject(new Error(event.data.payload.message))
       }
     }
     worker.addEventListener('message', handleMessage)
     worker.postMessage({
       type: 'analyze',
-      payload: { requestId, resolvedFont: resolveFontGlyphs(fontData) },
+      payload: {
+        requestId,
+        resolvedFont: resolveFontGlyphs(fontData),
+        referenceData,
+      },
     })
   })
-  analysisCache.set(fontData, promise)
+  cacheByReferenceData.set(referenceData, promise)
   return promise
 }
 
@@ -88,7 +104,8 @@ interface WorkerResult {
 
 export const useQualityAnalysis = (
   fontData: FontData | null | undefined,
-  enabled: boolean
+  enabled: boolean,
+  referenceData?: RadarReferenceData | null
 ): QualityAnalysisState => {
   // 唯一的 setState 在 worker 回應（非同步）；analyzing 狀態純由衍生取得，
   // 不在 effect 內同步 setState，避免 cascading render。
@@ -105,7 +122,7 @@ export const useQualityAnalysis = (
 
     // effect 已被新一輪取代（fontData 變動）時丟棄過期結果
     let cancelled = false
-    requestAnalysis(fontData).then(
+    requestAnalysis(fontData, referenceData).then(
       (analysis) => {
         if (!cancelled) {
           setResult({ source: fontData, analysis, error: null })
@@ -121,7 +138,7 @@ export const useQualityAnalysis = (
     return () => {
       cancelled = true
     }
-  }, [enabled, fontData])
+  }, [enabled, fontData, referenceData])
 
   const ready = enabled && Boolean(fontData)
   if (!ready) {

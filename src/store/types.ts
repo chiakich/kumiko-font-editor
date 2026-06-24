@@ -5,6 +5,7 @@ import type {
 import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
 import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
 import type {
   OverviewCustomFilter,
   OverviewSearchField,
@@ -373,6 +374,18 @@ export interface PersistenceQueueState {
   lastError: string | null
 }
 
+export type ReferenceFontResidualStatus =
+  | 'idle'
+  | 'computing'
+  | 'ready'
+  | 'error'
+
+export interface ReferenceFontResidualSummary {
+  source: string
+  sampleCount: number
+  entryCount: number
+}
+
 export interface GlobalState {
   fontData: FontData | null
   projectId: string | null
@@ -424,6 +437,11 @@ export interface GlobalState {
   referenceFontName: string | null
   referenceFontVisible: boolean
   referenceFontChar: string | null
+  referenceFontResidualEnabled: boolean
+  referenceFontResidualStatus: ReferenceFontResidualStatus
+  referenceFontResidualData: RadarReferenceData | null
+  referenceFontResidualError: string | null
+  referenceFontResidualSummary: ReferenceFontResidualSummary | null
   // Non-active glyph layers shown as a faint backdrop behind the editing layer.
   // This can include master layers when a backup layer is selected.
   visibleBackdropLayerIds: string[]
@@ -518,6 +536,13 @@ export interface GlobalState {
   setReferenceFontName: (name: string | null) => void
   setReferenceFontVisible: (visible: boolean) => void
   setReferenceFontChar: (char: string | null) => void
+  setReferenceFontResidualComputing: () => void
+  setReferenceFontResidualReady: (
+    data: RadarReferenceData,
+    summary: ReferenceFontResidualSummary
+  ) => void
+  setReferenceFontResidualError: (message: string) => void
+  clearReferenceFontResidual: () => void
   toggleBackdropLayer: (layerId: string) => void
   toggleActiveLayerHidden: () => void
   updateViewport: (zoom: number, panX: number, panY: number) => void

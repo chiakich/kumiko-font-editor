@@ -4,6 +4,7 @@
  */
 import type { StateCreator } from 'zustand'
 import type { GlobalState, GlyphMetrics, PathData } from 'src/store/types'
+import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
 import {
   clampEditorActiveGlyphIndex,
   clampEditorCursorIndex,
@@ -146,6 +147,45 @@ export const buildUiActions = (set: ImmerSet) => ({
   setReferenceFontChar: (char: string | null) =>
     set((state) => {
       state.referenceFontChar = char
+    }),
+
+  setReferenceFontResidualComputing: () =>
+    set((state) => {
+      state.referenceFontResidualEnabled = false
+      state.referenceFontResidualStatus = 'computing'
+      state.referenceFontResidualData = null
+      state.referenceFontResidualError = null
+      state.referenceFontResidualSummary = null
+    }),
+
+  setReferenceFontResidualReady: (
+    data: RadarReferenceData,
+    summary: NonNullable<GlobalState['referenceFontResidualSummary']>
+  ) =>
+    set((state) => {
+      state.referenceFontResidualEnabled = true
+      state.referenceFontResidualStatus = 'ready'
+      state.referenceFontResidualData = data
+      state.referenceFontResidualError = null
+      state.referenceFontResidualSummary = summary
+    }),
+
+  setReferenceFontResidualError: (message: string) =>
+    set((state) => {
+      state.referenceFontResidualEnabled = false
+      state.referenceFontResidualStatus = 'error'
+      state.referenceFontResidualData = null
+      state.referenceFontResidualError = message
+      state.referenceFontResidualSummary = null
+    }),
+
+  clearReferenceFontResidual: () =>
+    set((state) => {
+      state.referenceFontResidualEnabled = false
+      state.referenceFontResidualStatus = 'idle'
+      state.referenceFontResidualData = null
+      state.referenceFontResidualError = null
+      state.referenceFontResidualSummary = null
     }),
 
   toggleBackdropLayer: (layerId: string) =>

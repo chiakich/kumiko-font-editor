@@ -1,6 +1,7 @@
 {
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "done": "Done"
   },
   "editor": {
     "addAlternate": "Add alternate",
@@ -103,7 +104,16 @@
     "referenceFont": "Reference font",
     "referenceFontCharOverride": "Character override",
     "referenceFontCharOverridePlaceholder": "Same as this glyph",
+    "referenceFontCurrent": "Current reference font",
+    "referenceFontNoFontLoaded": "No reference font loaded.",
     "referenceFontLoadFailed": "Could not read this font file.",
+    "referenceFontReplace": "Replace reference font",
+    "referenceFontResidualBuildFailed": "Could not build CJK suggestion data from this reference font.",
+    "referenceFontResidualDescription": "This analyzes the loaded CJK reference font in the background and uses only each Han character's width, height, and centroid residual relative to similarly complex characters. It will not make your glyphs match the reference font's outlines.",
+    "referenceFontResidualNoFont": "No usable reference font is loaded.",
+    "referenceFontResidualReady": "Built CJK suggestion data from {{count}} reference characters.",
+    "referenceFontResidualUse": "Use this reference font for CJK auto-suggestions",
+    "referenceFontSettings": "Reference font settings",
     "referenceFontVisible": "Show reference",
     "loadReferenceFont": "Load reference font…",
     "clearReferenceFont": "Remove",

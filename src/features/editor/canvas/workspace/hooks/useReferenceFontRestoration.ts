@@ -7,6 +7,7 @@ import {
 
 interface ReferenceFontRestorationOptions {
   projectId: string | null
+  clearReferenceFontResidual: () => void
   setReferenceFontChar: (char: string | null) => void
   setReferenceFontName: (name: string | null) => void
   setReferenceFontVisible: (visible: boolean) => void
@@ -14,6 +15,7 @@ interface ReferenceFontRestorationOptions {
 
 export function useReferenceFontRestoration({
   projectId,
+  clearReferenceFontResidual,
   setReferenceFontChar,
   setReferenceFontName,
   setReferenceFontVisible,
@@ -33,6 +35,7 @@ export function useReferenceFontRestoration({
             record.fontBytes,
             record.fontName
           )
+          clearReferenceFontResidual()
           setReferenceFontName(name)
           setReferenceFontVisible(true)
           setReferenceFontChar(null)
@@ -42,6 +45,7 @@ export function useReferenceFontRestoration({
         }
       }
       clearReferenceFont()
+      clearReferenceFontResidual()
       setReferenceFontName(null)
       setReferenceFontVisible(false)
       setReferenceFontChar(null)
@@ -52,6 +56,7 @@ export function useReferenceFontRestoration({
     }
   }, [
     projectId,
+    clearReferenceFontResidual,
     setReferenceFontChar,
     setReferenceFontName,
     setReferenceFontVisible,

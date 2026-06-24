@@ -28,6 +28,12 @@ const useDebouncedValue = <T,>(value: T, delayMs: number): T => {
 
 export function GlyphInsightProvider({ children }: { children: ReactNode }) {
   const fontData = useStore((state) => state.fontData)
+  const referenceData = useStore((state) =>
+    state.referenceFontResidualEnabled &&
+    state.referenceFontResidualStatus === 'ready'
+      ? (state.referenceFontResidualData ?? undefined)
+      : undefined
+  )
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const editorGlyphIds = useStore((state) => state.editorGlyphIds)
   const editorActiveGlyphIndex = useStore(
@@ -40,7 +46,11 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
 
   // 母體基準刻意落後編輯 2 秒：尺不該跟著正在改的筆跳動
   const baselineFontData = useDebouncedValue(fontData, POPULATION_REFRESH_MS)
-  const { analysis, isAnalyzing } = useQualityAnalysis(baselineFontData, true)
+  const { analysis, isAnalyzing } = useQualityAnalysis(
+    baselineFontData,
+    true,
+    referenceData
+  )
 
   const liveFontData = useDebouncedValue(fontData, LIVE_SAMPLE_MS)
   const sample = useMemo(() => {
