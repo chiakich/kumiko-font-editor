@@ -30,6 +30,7 @@ export type FontExportFormat =
   | 'glyphs2'
   | 'glyphs3'
   | 'glyphspackage'
+  | 'variable-otf'
   | 'ttf'
   | 'otf'
   | 'woff'
@@ -48,6 +49,7 @@ interface ExportFontModalProps {
   openTypeWarnings?: OpenTypeExportWarning[]
   glyphsWarnings?: GlyphsExportWarning[]
   exportInstances?: FontExportInstance[]
+  canExportVariableFont?: boolean
   // Source format of the open project; gates the .glyphspackage round-trip option.
   sourceFormat?: ProjectSourceFormat | null
   onClose: () => void
@@ -60,6 +62,7 @@ const exportOptions: Array<{
   description: string
   // When set, only show this option for the matching project source format.
   sourceFormat?: ProjectSourceFormat
+  requiresVariableFont?: boolean
 }> = [
   {
     format: 'zip',
@@ -81,6 +84,13 @@ const exportOptions: Array<{
     label: 'Glyphs Package (ZIP)',
     description: '回存 .glyphspackage 內容，打包成 ZIP。',
     sourceFormat: 'glyphspackage',
+  },
+  {
+    format: 'variable-otf',
+    label: 'Variable OTF',
+    description:
+      '使用 fontTools 建立含 fvar/CFF2 variation tables 的可變字型。',
+    requiresVariableFont: true,
   },
   {
     format: 'ttf',
@@ -236,6 +246,7 @@ export function ExportFontModal({
   openTypeWarnings = [],
   glyphsWarnings = [],
   exportInstances = [],
+  canExportVariableFont = false,
   sourceFormat = null,
   onClose,
   onExport,
@@ -243,7 +254,9 @@ export function ExportFontModal({
   const { t } = useTranslation()
 
   const visibleOptions = exportOptions.filter(
-    (option) => !option.sourceFormat || option.sourceFormat === sourceFormat
+    (option) =>
+      (!option.sourceFormat || option.sourceFormat === sourceFormat) &&
+      (!option.requiresVariableFont || canExportVariableFont)
   )
   const exportableInstances = useMemo(
     () => exportInstances.filter((instance) => instance.export !== false),

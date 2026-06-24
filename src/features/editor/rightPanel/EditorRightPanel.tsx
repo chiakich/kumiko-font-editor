@@ -157,6 +157,7 @@ export function EditorRightPanel() {
         openTypeWarnings={fontExport.openTypeExportWarnings}
         glyphsWarnings={fontExport.glyphsExportWarnings}
         exportInstances={fontExport.exportInstances}
+        canExportVariableFont={fontExport.canExportVariableFont}
         sourceFormat={fontExport.sourceFormat}
         onClose={exportModal.onClose}
         onExport={(format, options) =>

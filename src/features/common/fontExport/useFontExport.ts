@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import {
   exportCanonicalProjectAsBinary,
   exportCanonicalProjectInstanceAsBinary,
+  exportCanonicalProjectAsVariableOtf,
 } from 'src/lib/fontFormats/canonicalBinaryExport'
 import { exportUfoAsZipBlob } from 'src/lib/fontFormats/ufoZipExportClient'
 import {
@@ -57,6 +58,9 @@ const binaryFormats = new Set<FontExportFormat>(['ttf', 'otf', 'woff', 'woff2'])
 const isBinaryFormat = (
   format: FontExportFormat
 ): format is BinaryFontExportFormat => binaryFormats.has(format)
+
+const needsFeatureCompileRuntime = (format: FontExportFormat) =>
+  isBinaryFormat(format) || format === 'variable-otf'
 
 const sanitizeFileStem = (value: string, fallback: string) => {
   const sanitized = value
@@ -145,6 +149,10 @@ export function useFontExport() {
     persistenceStatus !== 'error' &&
     !hasBlockingOpenTypeWarnings
   )
+  const canExportVariableFont = Boolean(
+    fontData?.axes?.axes.length &&
+    Object.keys(fontData.sources ?? {}).length > 1
+  )
   const loadingText = ufoExportProgress
     ? ufoExportProgress.phase === 'zip'
       ? `壓縮中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
@@ -202,10 +210,12 @@ export function useFontExport() {
       const selectedGlyphs3Formats = selectedFormats.filter(
         (format) => format === 'glyphs3' || format === 'glyphspackage'
       )
-      const selectedBinaryFormats = selectedFormats.filter(isBinaryFormat)
+      const selectedFeatureCompiledFormats = selectedFormats.filter(
+        needsFeatureCompileRuntime
+      )
       if (
         fontData.openTypeFeatures &&
-        selectedBinaryFormats.length > 0 &&
+        selectedFeatureCompiledFormats.length > 0 &&
         needsOpenTypeFeatureCompilationForBinaryExport(
           fontData.openTypeFeatures,
           {
@@ -300,6 +310,17 @@ export function useFontExport() {
           }
 
           return assets
+        }
+
+        if (format === 'variable-otf') {
+          return [
+            {
+              blob: await exportCanonicalProjectAsVariableOtf({ projectId }),
+              fileName: `${baseFileName}-Variable.otf`,
+              label: 'Variable OTF',
+              totalGlyphs: null,
+            },
+          ]
         }
 
         if (format === 'zip') {
@@ -406,6 +427,7 @@ export function useFontExport() {
     openTypeExportWarnings,
     glyphsExportWarnings,
     exportInstances: fontData?.exportInstances ?? [],
+    canExportVariableFont,
     isExporting,
     loadingText,
     ufoExportProgress,

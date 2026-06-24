@@ -2,6 +2,7 @@ import { loadPyodide, version as pyodideVersion } from 'pyodide'
 import type { PyodideAPI } from 'pyodide'
 import { makeDiagnostic } from 'src/lib/openTypeFeatures/diagnostics'
 import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
+import { FONTTOOLS_VARIABLE_FONT_PYTHON } from 'src/lib/fontFormats/fontToolsVariableFontPython'
 import type {
   CompileOptions,
   CompileResult,
@@ -18,6 +19,13 @@ interface PythonCompileResult {
   ok: boolean
   message: string
   rawCompilerOutput?: string
+}
+
+interface PythonVariableFontResult {
+  ok: boolean
+  message: string
+  rawCompilerOutput?: string
+  tables?: string[]
 }
 
 interface PyProxyLike {
@@ -49,6 +57,29 @@ const toPythonCompileResult = (value: unknown): PythonCompileResult => {
   }
 }
 
+const toPythonVariableFontResult = (
+  value: unknown
+): PythonVariableFontResult => {
+  const result = value as Partial<PythonVariableFontResult>
+
+  return {
+    ok: result.ok === true,
+    message:
+      typeof result.message === 'string'
+        ? result.message
+        : 'fontTools returned an unknown variable font result.',
+    rawCompilerOutput:
+      typeof result.rawCompilerOutput === 'string'
+        ? result.rawCompilerOutput
+        : undefined,
+    tables: Array.isArray(result.tables)
+      ? result.tables.filter(
+          (table): table is string => typeof table === 'string'
+        )
+      : undefined,
+  }
+}
+
 const runPythonCompile = (
   pyodide: PyodideAPI,
   inputPath: string,
@@ -64,6 +95,26 @@ const runPythonCompile = (
 
   try {
     return toPythonCompileResult(
+      resultProxy.toJs({ dict_converter: Object.fromEntries })
+    )
+  } finally {
+    resultProxy.destroy?.()
+  }
+}
+
+const runPythonVariableBuild = (
+  pyodide: PyodideAPI,
+  designspacePath: string,
+  outputPath: string
+) => {
+  const resultProxy = pyodide.runPython(
+    `kumiko_build_variable_font(${JSON.stringify(
+      designspacePath
+    )}, ${JSON.stringify(outputPath)})`
+  ) as PyProxyLike
+
+  try {
+    return toPythonVariableFontResult(
       resultProxy.toJs({ dict_converter: Object.fromEntries })
     )
   } finally {
@@ -87,8 +138,47 @@ const loadFontToolsRuntime = async (): Promise<FontToolsRuntime> => {
 
   await pyodide.loadPackage('fonttools')
   pyodide.runPython(FONTTOOLS_COMPILER_PYTHON)
+  pyodide.runPython(FONTTOOLS_VARIABLE_FONT_PYTHON)
 
   return { pyodide }
+}
+
+export const buildVariableFontWithFontToolsRuntime = async (input: {
+  designspaceText: string
+  masters: Array<{ fileName: string; fontBuffer: ArrayBuffer }>
+}): Promise<{ fontBuffer: ArrayBuffer; tables?: string[] }> => {
+  const { pyodide } = await getFontToolsRuntime()
+  const nonce = `${Date.now()}_${Math.random().toString(36).slice(2)}`
+  const designspacePath = `/tmp/kumiko_variable_${nonce}.designspace`
+  const outputPath = `/tmp/kumiko_variable_${nonce}.otf`
+  const masterPaths = input.masters.map((master) => `/tmp/${master.fileName}`)
+
+  try {
+    pyodide.FS.writeFile(designspacePath, input.designspaceText)
+    input.masters.forEach((master, index) => {
+      pyodide.FS.writeFile(
+        masterPaths[index],
+        new Uint8Array(master.fontBuffer)
+      )
+    })
+
+    const result = runPythonVariableBuild(pyodide, designspacePath, outputPath)
+    if (!result.ok) {
+      throw Object.assign(new Error(result.message), {
+        rawCompilerOutput: result.rawCompilerOutput,
+      })
+    }
+
+    const output = pyodide.FS.readFile(outputPath)
+    return {
+      fontBuffer: toArrayBuffer(output),
+      tables: result.tables,
+    }
+  } finally {
+    cleanFile(pyodide, designspacePath)
+    cleanFile(pyodide, outputPath)
+    masterPaths.forEach((path) => cleanFile(pyodide, path))
+  }
 }
 
 export const getFontToolsRuntime = () => {

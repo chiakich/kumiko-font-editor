@@ -3,6 +3,7 @@ import { loadPyodide, type PyodideAPI } from 'pyodide'
 import opentype from 'opentype.js'
 
 import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
+import { FONTTOOLS_VARIABLE_FONT_PYTHON } from 'src/lib/fontFormats/fontToolsVariableFontPython'
 
 // Exercises the real fontTools FEA compiler the worker runs
 // (FONTTOOLS_COMPILER_PYTHON + kumiko_compile_fea), driven through pyodide in
@@ -36,12 +37,12 @@ const REPLACEMENT_FEATURE_TEXT = `feature ss02 {
 } ss02;
 `
 
-const rectPath = (x: number, w: number) => {
+const rectPath = (x: number, w: number, h = 700) => {
   const path = new opentype.Path()
   path.moveTo(x, 0)
   path.lineTo(x + w, 0)
-  path.lineTo(x + w, 700)
-  path.lineTo(x, 700)
+  path.lineTo(x + w, h)
+  path.lineTo(x, h)
   path.close()
   return path
 }
@@ -78,6 +79,31 @@ const buildPlainFont = (): ArrayBuffer => {
   return font.toArrayBuffer()
 }
 
+const buildMasterFont = (weight: number, styleName: string): ArrayBuffer => {
+  const glyphs = [
+    new opentype.Glyph({
+      name: '.notdef',
+      advanceWidth: 600,
+      path: new opentype.Path(),
+    }),
+    new opentype.Glyph({
+      name: 'A',
+      unicode: 0x41,
+      advanceWidth: 500 + weight,
+      path: rectPath(50, 300 + weight, 700),
+    }),
+  ]
+  const font = new opentype.Font({
+    familyName: 'KumikoVariableTest',
+    styleName,
+    unitsPerEm: 1000,
+    ascender: 800,
+    descender: -200,
+    glyphs,
+  })
+  return font.toArrayBuffer()
+}
+
 const inspect = (pyodide: PyodideAPI, path: string) => {
   const proxy = pyodide.runPython(
     `kumiko_test_inspect(${JSON.stringify(path)})`
@@ -102,6 +128,7 @@ describe('fontTools FEA compile runtime', () => {
     pyodide = await loadPyodide()
     await pyodide.loadPackage('fonttools')
     pyodide.runPython(FONTTOOLS_COMPILER_PYTHON)
+    pyodide.runPython(FONTTOOLS_VARIABLE_FONT_PYTHON)
     pyodide.runPython(TEST_INSPECT_PYTHON)
   }, 180000)
 
@@ -213,5 +240,52 @@ describe('fontTools FEA compile runtime', () => {
     result.destroy?.()
     expect(compiled.ok).toBe(false)
     expect(compiled.message.length).toBeGreaterThan(0)
+  })
+
+  it('builds a variable OTF from CFF masters and a designspace', () => {
+    pyodide.FS.writeFile(
+      '/tmp/var-light.otf',
+      new Uint8Array(buildMasterFont(0, 'Light'))
+    )
+    pyodide.FS.writeFile(
+      '/tmp/var-bold.otf',
+      new Uint8Array(buildMasterFont(100, 'Bold'))
+    )
+    pyodide.FS.writeFile(
+      '/tmp/var.designspace',
+      `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="4.1">
+  <axes>
+    <axis tag="wght" name="Weight" minimum="0" maximum="100" default="0"/>
+  </axes>
+  <sources>
+    <source filename="var-light.otf" name="Light" stylename="Light">
+      <info copy="1"/>
+      <location><dimension name="Weight" xvalue="0"/></location>
+    </source>
+    <source filename="var-bold.otf" name="Bold" stylename="Bold">
+      <location><dimension name="Weight" xvalue="100"/></location>
+    </source>
+  </sources>
+</designspace>`
+    )
+
+    const result = pyodide.runPython(
+      `kumiko_build_variable_font('/tmp/var.designspace', '/tmp/var-out.otf')`
+    ) as {
+      toJs: (o?: { dict_converter?: typeof Object.fromEntries }) => unknown
+      destroy?: () => void
+    }
+    const built = result.toJs({ dict_converter: Object.fromEntries }) as {
+      ok: boolean
+      message: string
+      tables: string[]
+    }
+    result.destroy?.()
+
+    expect(built.ok, built.message).toBe(true)
+    expect(built.tables).toContain('fvar')
+    expect(built.tables).toContain('CFF2')
+    expect(built.tables).toContain('HVAR')
   })
 })
