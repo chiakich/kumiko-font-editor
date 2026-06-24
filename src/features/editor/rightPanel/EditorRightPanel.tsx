@@ -19,6 +19,7 @@ import { ProjectControlActions } from 'src/features/common/projectControl/Projec
 import { FontQualityCheckModal } from 'src/features/common/qualityCheck/QualityCheckModal'
 import { DesignspaceLocationControl } from 'src/features/editor/canvas/workspace/components/DesignspaceLocationControl'
 import { GlyphInsightCard } from 'src/features/editor/rightPanel/components/GlyphInsightCard'
+import { InterpolationDiagnosticsCard } from 'src/features/editor/rightPanel/components/InterpolationDiagnosticsCard'
 import { MetricsCard } from 'src/features/editor/rightPanel/components/MetricsCard'
 import { LayerListCard } from 'src/features/editor/rightPanel/components/LayerListCard'
 import { NodeInspectorCard } from 'src/features/editor/rightPanel/components/NodeInspectorCard'
@@ -102,6 +103,10 @@ export function EditorRightPanel() {
                   />
 
                   <DesignspaceLocationControl />
+
+                  <InterpolationDiagnosticsCard
+                    diagnostics={panel.interpolationDiagnostics}
+                  />
 
                   <NodeInspectorCard
                     effectiveNodeType={panel.effectiveNodeType}

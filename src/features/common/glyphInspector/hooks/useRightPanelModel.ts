@@ -15,11 +15,21 @@ import { useGitHubCommitFlow } from 'src/features/common/glyphInspector/hooks/us
 import { useProjectSyncDirtyStatus } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
 import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
 import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
+import { interpolateGlyphLayer } from 'src/font/glyphInterpolation'
+import type { GlyphCompatibilityIssue } from 'src/font/glyphCompatibility'
 import { buildQualityReport } from 'src/lib/qualityCheck/qualityLint'
 import {
   parseNumberInput,
   parseSelectedNode,
 } from 'src/features/common/glyphInspector/utils/utils'
+
+export interface InterpolationDiagnostics {
+  issues: GlyphCompatibilityIssue[]
+  modelErrors: Array<{ message: string; type?: string }>
+  canInterpolate: boolean
+  isFallback: boolean
+  baseLayerName: string | null
+}
 
 export function useRightPanelModel() {
   const toast = useToast()
@@ -99,9 +109,54 @@ export function useRightPanelModel() {
 
   const glyph =
     selectedGlyphId && fontData ? fontData.glyphs[selectedGlyphId] : null
-  const isInterpolatedPreview =
-    isDesignspaceScrubbing ||
-    isInterpolatedGlyphLocation(fontData, glyph, editLocation)
+  const isInterpolatedLocation = isInterpolatedGlyphLocation(
+    fontData,
+    glyph,
+    editLocation
+  )
+  const isInterpolatedPreview = isDesignspaceScrubbing || isInterpolatedLocation
+  const interpolationDiagnostics =
+    useMemo<InterpolationDiagnostics | null>(() => {
+      const axes = fontData?.axes
+      const sources = fontData?.sources
+      if (
+        !glyph ||
+        !axes?.axes.length ||
+        Object.keys(sources ?? {}).length <= 1
+      ) {
+        return null
+      }
+
+      const result = interpolateGlyphLayer({
+        glyph,
+        axes,
+        sources,
+        location: editLocation,
+      })
+      const hasDiagnostics =
+        result.issues.length > 0 ||
+        result.modelErrors.length > 0 ||
+        !result.layer
+
+      if (!hasDiagnostics) {
+        return null
+      }
+
+      return {
+        issues: result.issues,
+        modelErrors: result.modelErrors,
+        canInterpolate: Boolean(result.layer),
+        isFallback:
+          isInterpolatedLocation && !result.layer && Boolean(result.baseLayer),
+        baseLayerName: result.baseLayer?.name ?? result.baseLayer?.id ?? null,
+      }
+    }, [
+      editLocation,
+      fontData?.axes,
+      fontData?.sources,
+      glyph,
+      isInterpolatedLocation,
+    ])
   const activeLayer = getGlyphLayer(glyph ?? undefined, selectedLayerId)
   const displayedMetrics =
     glyph && previewGlyphMetrics?.glyphId === glyph.id
@@ -275,6 +330,7 @@ export function useRightPanelModel() {
     commitQualityReport,
     hasGitHubSource,
     hasLocalChanges,
+    interpolationDiagnostics,
     isDirty,
     isInterpolatedPreview,
     isEndpointNode,
