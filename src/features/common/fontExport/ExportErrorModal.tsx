@@ -20,7 +20,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { Copy } from 'iconoir-react'
-import { useMemo } from 'react'
+import { useMemo, type WheelEvent } from 'react'
 import {
   formatFontExportErrorReport,
   type FontExportErrorReport,
@@ -69,6 +69,41 @@ const diagnosticColor = (severity: FeatureDiagnostic['severity']) => {
   return 'blue'
 }
 
+const WHEEL_DELTA_LINE = 1
+const WHEEL_DELTA_PAGE = 2
+
+const getWheelDeltaY = (event: WheelEvent<HTMLTextAreaElement>) => {
+  if (event.deltaMode === WHEEL_DELTA_LINE) {
+    return event.deltaY * 16
+  }
+  if (event.deltaMode === WHEEL_DELTA_PAGE) {
+    return event.deltaY * event.currentTarget.clientHeight
+  }
+  return event.deltaY
+}
+
+const handleDetailWheel = (event: WheelEvent<HTMLTextAreaElement>) => {
+  const target = event.currentTarget
+  const maxScrollTop = target.scrollHeight - target.clientHeight
+
+  if (maxScrollTop <= 0) {
+    return
+  }
+
+  const nextScrollTop = Math.max(
+    0,
+    Math.min(maxScrollTop, target.scrollTop + getWheelDeltaY(event))
+  )
+
+  if (nextScrollTop === target.scrollTop) {
+    return
+  }
+
+  target.scrollTop = nextScrollTop
+  event.preventDefault()
+  event.stopPropagation()
+}
+
 function DetailBlock({ label, text }: { label: string; text: string }) {
   const rows = Math.min(12, Math.max(4, text.split('\n').length))
 
@@ -86,6 +121,7 @@ function DetailBlock({ label, text }: { label: string; text: string }) {
         p={3}
         maxH="260px"
         overflowY="auto"
+        overscrollBehavior="contain"
         resize="vertical"
         bg="field.panelMuted"
         borderWidth="1px"
@@ -93,6 +129,7 @@ function DetailBlock({ label, text }: { label: string; text: string }) {
         fontFamily="mono"
         fontSize="xs"
         lineHeight="1.45"
+        onWheelCapture={handleDetailWheel}
       />
     </Stack>
   )
