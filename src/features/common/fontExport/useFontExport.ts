@@ -8,8 +8,11 @@ import {
 } from 'src/lib/fontFormats/canonicalBinaryExport'
 import { exportUfoAsZipBlob } from 'src/lib/fontFormats/ufoZipExportClient'
 import {
+  createEmptyOpenTypeFeaturesState,
   createCompilerRuntimeStatus,
+  createFontFingerprint,
   deriveOpenTypeExportWarnings,
+  type ExportPolicy,
   hasBlockingExportWarnings,
   hasManagedFeatureEdits,
   mergeFeatureDiagnostics,
@@ -123,6 +126,7 @@ export function useFontExport() {
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
+  const updateFontSettings = useStore((state) => state.updateFontSettings)
   const compilerRuntimeStatus = useMemo(() => createCompilerRuntimeStatus(), [])
   const openTypeExportWarnings = useMemo(
     () =>
@@ -164,6 +168,23 @@ export function useFontExport() {
       ? `壓縮中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
       : `匯出中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
     : '匯出中...'
+  const exportPolicy =
+    fontData?.openTypeFeatures?.exportPolicy ?? 'rebuild-managed-layout-tables'
+
+  const setExportPolicy = (policy: ExportPolicy) => {
+    if (!fontData) {
+      return
+    }
+    const openTypeFeatures =
+      fontData.openTypeFeatures ??
+      createEmptyOpenTypeFeaturesState(createFontFingerprint(fontData))
+    updateFontSettings({
+      openTypeFeatures: {
+        ...openTypeFeatures,
+        exportPolicy: policy,
+      },
+    })
+  }
 
   const exportFont = async (
     formats: FontExportFormat[],
@@ -436,6 +457,8 @@ export function useFontExport() {
     glyphsExportWarnings,
     exportInstances: fontData?.exportInstances ?? [],
     canExportVariableFont,
+    exportPolicy,
+    setExportPolicy,
     exportErrorReport,
     closeExportErrorReport: () => setExportErrorReport(null),
     isExporting,

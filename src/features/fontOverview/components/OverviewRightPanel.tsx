@@ -130,11 +130,13 @@ export function OverviewRightPanel({
         glyphsWarnings={fontExport.glyphsExportWarnings}
         exportInstances={fontExport.exportInstances}
         canExportVariableFont={fontExport.canExportVariableFont}
+        exportPolicy={fontExport.exportPolicy}
         sourceFormat={fontExport.sourceFormat}
         onClose={exportModal.onClose}
         onExport={(format, options) =>
           void fontExport.exportFont(format, options)
         }
+        onExportPolicyChange={fontExport.setExportPolicy}
       />
       <ExportErrorModal
         report={fontExport.exportErrorReport}

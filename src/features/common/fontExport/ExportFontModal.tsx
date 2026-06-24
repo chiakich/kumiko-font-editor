@@ -6,6 +6,8 @@ import {
   Button,
   Checkbox,
   Divider,
+  FormControl,
+  FormLabel,
   HStack,
   Modal,
   ModalBody,
@@ -14,12 +16,16 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Select,
   Stack,
   Text,
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import type { GlyphsExportWarning } from 'src/lib/fontFormats/glyphsExport'
-import type { OpenTypeExportWarning } from 'src/lib/openTypeFeatures'
+import type {
+  ExportPolicy,
+  OpenTypeExportWarning,
+} from 'src/lib/openTypeFeatures'
 import { requiresDropUnsupportedConfirmation } from 'src/lib/openTypeFeatures/exportPolicy'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
 import type { FontExportInstance } from 'src/store'
@@ -50,10 +56,12 @@ interface ExportFontModalProps {
   glyphsWarnings?: GlyphsExportWarning[]
   exportInstances?: FontExportInstance[]
   canExportVariableFont?: boolean
+  exportPolicy?: ExportPolicy | null
   // Source format of the open project; gates the .glyphspackage round-trip option.
   sourceFormat?: ProjectSourceFormat | null
   onClose: () => void
   onExport: (formats: FontExportFormat[], options?: FontExportOptions) => void
+  onExportPolicyChange?: (policy: ExportPolicy) => void
 }
 
 const exportOptions: Array<{
@@ -142,8 +150,32 @@ const exportOptionGroups: Array<{
 ]
 
 const binaryFormats = new Set<FontExportFormat>(['ttf', 'otf', 'woff', 'woff2'])
+const fontOutputFormats = new Set<FontExportFormat>([
+  'variable-otf',
+  'ttf',
+  'otf',
+  'woff',
+  'woff2',
+])
 
 const isBinaryFormat = (format: FontExportFormat) => binaryFormats.has(format)
+const isFontOutputFormat = (format: FontExportFormat) =>
+  fontOutputFormats.has(format)
+
+const exportPolicies: Array<{ value: ExportPolicy; label: string }> = [
+  {
+    value: 'rebuild-managed-layout-tables',
+    label: '重建 editable features',
+  },
+  {
+    value: 'preserve-compiled-layout-tables',
+    label: '保留已編譯 layout tables',
+  },
+  {
+    value: 'drop-unsupported-and-rebuild',
+    label: '丟棄不支援 lookup 並重建',
+  },
+]
 
 type ExportWarningSeverity = OpenTypeExportWarning['severity']
 
@@ -274,9 +306,11 @@ export function ExportFontModal({
   glyphsWarnings = [],
   exportInstances = [],
   canExportVariableFont = false,
+  exportPolicy = null,
   sourceFormat = null,
   onClose,
   onExport,
+  onExportPolicyChange,
 }: ExportFontModalProps) {
   const { t } = useTranslation()
 
@@ -306,6 +340,7 @@ export function ExportFontModal({
   const needsDropUnsupportedConfirmation =
     requiresDropUnsupportedConfirmation(openTypeWarnings)
   const hasSelectedBinaryFormat = selectedFormats.some(isBinaryFormat)
+  const hasSelectedFontOutputFormat = selectedFormats.some(isFontOutputFormat)
   const selectedInstanceIds = exportableInstances
     .map((instance) => instance.id)
     .filter((instanceId) => !excludedInstanceIds.includes(instanceId))
@@ -420,6 +455,33 @@ export function ExportFontModal({
                 </Stack>
               </Stack>
             ))}
+            {hasSelectedFontOutputFormat && exportPolicy ? (
+              <>
+                <Divider />
+                <FormControl>
+                  <FormLabel fontSize="sm">OpenType features</FormLabel>
+                  <Select
+                    size="sm"
+                    value={exportPolicy}
+                    isDisabled={
+                      !canExport || isExporting || !onExportPolicyChange
+                    }
+                    onChange={(event) =>
+                      onExportPolicyChange?.(event.target.value as ExportPolicy)
+                    }
+                  >
+                    {exportPolicies.map((policy) => (
+                      <option key={policy.value} value={policy.value}>
+                        {policy.label}
+                      </option>
+                    ))}
+                  </Select>
+                  <Text mt={1.5} fontSize="xs" color="field.muted">
+                    此設定會套用到目前專案的字型檔匯出；工作檔匯出不受影響。
+                  </Text>
+                </FormControl>
+              </>
+            ) : null}
             {hasSelectedBinaryFormat && exportableInstances.length > 0 && (
               <>
                 <Divider />
