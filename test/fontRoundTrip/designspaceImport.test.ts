@@ -5,6 +5,7 @@ import { Window } from 'happy-dom'
 import { strFromU8, unzipSync } from 'fflate'
 import {
   parseDesignspace,
+  designspaceToExportInstances,
   designspaceToFontAxes,
   serializeDesignspace,
 } from 'src/lib/fontFormats/designspace'
@@ -174,6 +175,38 @@ describe('parseDesignspace', () => {
       minValue: 0,
       defaultValue: 0,
       maxValue: 100,
+    })
+  })
+
+  it('parses named instances into export instances', () => {
+    const ds = parseDesignspace(`<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="5.0">
+  <axes>
+    <axis name="Weight" tag="wght" minimum="0" default="0" maximum="100"/>
+  </axes>
+  <sources/>
+  <instances>
+    <instance name="Family Regular" familyname="Family" stylename="Regular" filename="Family-Regular.ufo">
+      <location><dimension name="Weight" xvalue="40"/></location>
+    </instance>
+  </instances>
+</designspace>`)
+
+    expect(ds.instances?.[0]).toMatchObject({
+      name: 'Family Regular',
+      familyName: 'Family',
+      styleName: 'Regular',
+      fileName: 'Family-Regular.ufo',
+      location: { Weight: 40 },
+    })
+    expect(designspaceToExportInstances(ds)[0]).toMatchObject({
+      id: 'instance-family-regular',
+      name: 'Family Regular',
+      familyName: 'Family',
+      styleName: 'Regular',
+      fileName: 'Family-Regular.ufo',
+      location: { Weight: 40 },
+      export: true,
     })
   })
 })
@@ -358,6 +391,45 @@ describe('buildMultiMasterFontData', () => {
     expect(fontData.axes?.axes[0].tag).toBe('wght')
   })
 
+  it('copies designspace instances into export instances', () => {
+    const designspace = parseDesignspace(`<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="4.1">
+  <axes>
+    <axis name="Weight" tag="wght" minimum="0" default="0" maximum="100"/>
+  </axes>
+  <sources>
+    <source filename="sources/Light.ufo" name="Light" stylename="Light">
+      <location><dimension name="Weight" xvalue="0"/></location>
+    </source>
+    <source filename="sources/Bold.ufo" name="Bold" stylename="Bold">
+      <location><dimension name="Weight" xvalue="100"/></location>
+    </source>
+  </sources>
+  <instances>
+    <instance familyname="Fam" stylename="Medium" filename="Fam-Medium.otf">
+      <location><dimension name="Weight" xvalue="50"/></location>
+    </instance>
+  </instances>
+</designspace>`)
+
+    const fontData = buildMultiMasterFontData(
+      [metadata('sources/Light.ufo'), metadata('sources/Bold.ufo')],
+      [
+        glyphRecord('sources/Light.ufo', 10, 500),
+        glyphRecord('sources/Bold.ufo', 80, 700),
+      ],
+      designspace
+    )
+
+    expect(fontData.exportInstances?.[0]).toMatchObject({
+      name: 'Fam Medium',
+      familyName: 'Fam',
+      styleName: 'Medium',
+      fileName: 'Fam-Medium.otf',
+      location: { Weight: 50 },
+    })
+  })
+
   it('builds one master layer per source with that source content', () => {
     const glyph = build().glyphs.A
     expect(glyph.activeLayerId).toBe('Light')
@@ -536,7 +608,19 @@ describe('serializeDesignspace round-trip', () => {
         filename: `${source.name}.ufo`,
         name: source.name,
         location: source.location,
-      }))
+      })),
+      [],
+      [
+        {
+          id: 'instance-medium',
+          name: 'Fam Medium',
+          familyName: 'Fam',
+          styleName: 'Medium',
+          location: { Weight: 50 },
+          export: true,
+          fileName: 'Fam-Medium.otf',
+        },
+      ]
     )
     const reparsed = parseDesignspace(xml)
     expect(reparsed.axes[0]).toMatchObject({
@@ -550,6 +634,13 @@ describe('serializeDesignspace round-trip', () => {
       { Weight: 0 },
       { Weight: 100 },
     ])
+    expect(reparsed.instances?.[0]).toMatchObject({
+      name: 'Fam Medium',
+      familyName: 'Fam',
+      styleName: 'Medium',
+      fileName: 'Fam-Medium.otf',
+      location: { Weight: 50 },
+    })
   })
 })
 

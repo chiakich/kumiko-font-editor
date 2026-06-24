@@ -15,6 +15,7 @@ import {
 } from 'src/store'
 import {
   designspaceDefaultLocation,
+  designspaceToExportInstances,
   designspaceToFontAxes,
   parseDesignspace,
   type Designspace,
@@ -1305,6 +1306,7 @@ export const buildMultiMasterFontData = (
     glyphs,
     axes: designspaceToFontAxes(designspace),
     sources,
+    exportInstances: designspaceToExportInstances(designspace),
   }
 }
 

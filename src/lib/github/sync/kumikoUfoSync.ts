@@ -940,7 +940,8 @@ export const buildKumikoUfoExportManifest = async (
           text: serializeDesignspace(
             project.axes,
             designspaceSources,
-            designspaceRules
+            designspaceRules,
+            project.exportInstances ?? []
           ),
         }
       : null

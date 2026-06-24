@@ -1,4 +1,4 @@
-import type { FontAxes } from 'src/store'
+import type { FontAxes, FontExportInstance } from 'src/store'
 
 const escapeXmlAttr = (value: string) =>
   value
@@ -43,9 +43,21 @@ export interface DesignspaceSource {
   location: Record<string, number>
 }
 
+export interface DesignspaceInstance {
+  name?: string
+  familyName?: string
+  styleName?: string
+  fileName?: string
+  postScriptFontName?: string
+  styleMapFamilyName?: string
+  styleMapStyleName?: string
+  location: Record<string, number>
+}
+
 export interface Designspace {
   axes: DesignspaceAxis[]
   sources: DesignspaceSource[]
+  instances?: DesignspaceInstance[]
   rules?: DesignspaceRule[]
 }
 
@@ -61,6 +73,30 @@ const toNumber = (value: string | null | undefined, fallback = 0): number => {
   }
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const childText = (element: Element, selector: string): string | undefined =>
+  element.querySelector(selector)?.textContent?.trim() || undefined
+
+const attrOrChildText = (element: Element, attr: string, selector: string) =>
+  element.getAttribute(attr) ?? childText(element, selector)
+
+const parseLocation = (element: Element): Record<string, number> => {
+  const location: Record<string, number> = {}
+  for (const dimension of Array.from(
+    element.querySelectorAll('location > dimension')
+  )) {
+    const name = dimension.getAttribute('name')
+    if (!name) {
+      continue
+    }
+    location[name] = toNumber(
+      dimension.getAttribute('xvalue') ??
+        dimension.getAttribute('uservalue') ??
+        dimension.getAttribute('value')
+    )
+  }
+  return location
 }
 
 export const parseDesignspace = (
@@ -95,20 +131,7 @@ export const parseDesignspace = (
   const sources: DesignspaceSource[] = Array.from(
     document.querySelectorAll('sources > source')
   ).map((source) => {
-    const location: Record<string, number> = {}
-    for (const dimension of Array.from(
-      source.querySelectorAll('location > dimension')
-    )) {
-      const name = dimension.getAttribute('name')
-      if (!name) {
-        continue
-      }
-      location[name] = toNumber(
-        dimension.getAttribute('xvalue') ??
-          dimension.getAttribute('uservalue') ??
-          dimension.getAttribute('value')
-      )
-    }
+    const location = parseLocation(source)
     const filename = source.getAttribute('filename') ?? ''
     const layer = source.getAttribute('layer') ?? undefined
     return {
@@ -122,6 +145,25 @@ export const parseDesignspace = (
       location,
     }
   })
+
+  const instances: DesignspaceInstance[] = Array.from(
+    document.querySelectorAll('instances > instance')
+  ).map((instance) => ({
+    name: instance.getAttribute('name') ?? undefined,
+    familyName: attrOrChildText(instance, 'familyname', 'familyname'),
+    styleName: attrOrChildText(instance, 'stylename', 'stylename'),
+    fileName: instance.getAttribute('filename') ?? undefined,
+    postScriptFontName:
+      attrOrChildText(instance, 'postscriptfontname', 'postscriptfontname') ??
+      undefined,
+    styleMapFamilyName:
+      attrOrChildText(instance, 'stylemapfamilyname', 'stylemapfamilyname') ??
+      undefined,
+    styleMapStyleName:
+      attrOrChildText(instance, 'stylemapstylename', 'stylemapstylename') ??
+      undefined,
+    location: parseLocation(instance),
+  }))
 
   const rules: DesignspaceRule[] = Array.from(
     document.querySelectorAll('rules > rule')
@@ -155,7 +197,12 @@ export const parseDesignspace = (
     }
   })
 
-  return { axes, sources, ...(rules.length > 0 ? { rules } : {}) }
+  return {
+    axes,
+    sources,
+    ...(instances.length > 0 ? { instances } : {}),
+    ...(rules.length > 0 ? { rules } : {}),
+  }
 }
 
 export const designspaceToFontAxes = (designspace: Designspace): FontAxes => ({
@@ -170,6 +217,57 @@ export const designspaceToFontAxes = (designspace: Designspace): FontAxes => ({
   })),
   mappings: [],
 })
+
+const instanceId = (instance: DesignspaceInstance, index: number) => {
+  const label =
+    instance.name ??
+    [instance.familyName, instance.styleName].filter(Boolean).join(' ') ??
+    ''
+  const slug = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug ? `instance-${slug}` : `instance-${index + 1}`
+}
+
+export const designspaceToExportInstances = (
+  designspace: Designspace
+): FontExportInstance[] =>
+  (designspace.instances ?? []).map((instance, index) => {
+    const styleName =
+      instance.styleName || instance.name || `Instance ${index + 1}`
+    const name =
+      instance.name ??
+      [instance.familyName, styleName].filter(Boolean).join(' ') ??
+      styleName
+    return {
+      id: instanceId(instance, index),
+      name,
+      styleName,
+      location: instance.location,
+      export: true,
+      ...(instance.fileName ? { fileName: instance.fileName } : {}),
+      ...(instance.familyName ? { familyName: instance.familyName } : {}),
+      ...(instance.postScriptFontName ||
+      instance.styleMapFamilyName ||
+      instance.styleMapStyleName
+        ? {
+            customData: {
+              ...(instance.postScriptFontName
+                ? { postScriptFontName: instance.postScriptFontName }
+                : {}),
+              ...(instance.styleMapFamilyName
+                ? { styleMapFamilyName: instance.styleMapFamilyName }
+                : {}),
+              ...(instance.styleMapStyleName
+                ? { styleMapStyleName: instance.styleMapStyleName }
+                : {}),
+            },
+          }
+        : {}),
+    }
+  })
 
 // The design-space point where every axis is at its default — the default source
 // sits here.
@@ -192,7 +290,8 @@ export interface DesignspaceSourceOut {
 export const serializeDesignspace = (
   axes: FontAxes | undefined,
   sources: DesignspaceSourceOut[],
-  rules: DesignspaceRule[] = []
+  rules: DesignspaceRule[] = [],
+  instances: FontExportInstance[] = []
 ): string => {
   const axisEntries = axes?.axes ?? []
   const defaultLocation = Object.fromEntries(
@@ -240,6 +339,37 @@ export const serializeDesignspace = (
     })
     .join('\n')
 
+  const instancesXml = instances
+    .filter((instance) => instance.export !== false)
+    .map((instance) => {
+      const dimensions = Object.entries(instance.location)
+        .map(
+          ([name, value]) =>
+            `      <dimension name="${escapeXmlAttr(name)}" xvalue="${value}"/>`
+        )
+        .join('\n')
+      const nameAttr = instance.name
+        ? ` name="${escapeXmlAttr(instance.name)}"`
+        : ''
+      const familyAttr = instance.familyName
+        ? ` familyname="${escapeXmlAttr(instance.familyName)}"`
+        : ''
+      const styleAttr = ` stylename="${escapeXmlAttr(
+        instance.styleName || instance.name || instance.id
+      )}"`
+      const fileAttr = instance.fileName
+        ? ` filename="${escapeXmlAttr(instance.fileName)}"`
+        : ''
+      return [
+        `    <instance${nameAttr}${familyAttr}${styleAttr}${fileAttr}>`,
+        '      <location>',
+        dimensions,
+        '      </location>',
+        '    </instance>',
+      ].join('\n')
+    })
+    .join('\n')
+
   const rulesXml = rules
     .map((rule) => {
       const conditions = Object.entries(rule.conditions)
@@ -281,6 +411,7 @@ ${axesXml}
   <sources>
 ${sourcesXml}
   </sources>
+${instancesXml ? `  <instances>\n${instancesXml}\n  </instances>\n` : ''}
 ${rulesXml ? `  <rules processing="last">\n${rulesXml}\n  </rules>\n` : ''}</designspace>
 `
 }
