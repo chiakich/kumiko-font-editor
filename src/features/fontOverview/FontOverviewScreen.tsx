@@ -39,6 +39,7 @@ import { useOverviewSections } from 'src/features/fontOverview/hooks/useOverview
 import { useOverviewSelection } from 'src/features/fontOverview/hooks/useOverviewSelection'
 import {
   collectOverviewGeometryGlyphIds,
+  collectUnloadedOverviewGeometryGlyphIds,
   OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY,
 } from 'src/features/fontOverview/utils/overviewGeometryWindow'
 import {
@@ -195,6 +196,14 @@ export function FontOverviewScreen() {
       endIndex: 0,
     })
   }, [activeSection.glyphs, activeSection.id, overviewPreviewWindow])
+  const unloadedOverviewPreviewGlyphIds = useMemo(
+    () =>
+      collectUnloadedOverviewGeometryGlyphIds(
+        overviewPreviewGlyphIds,
+        glyphMap
+      ),
+    [glyphMap, overviewPreviewGlyphIds]
+  )
   const overviewGlyphPreviews = useOverviewGlyphPreviews({
     activeMasterId,
     glyphEditTimes,
@@ -241,14 +250,16 @@ export function FontOverviewScreen() {
         return
       }
       const pendingLoads: Promise<GlyphData[]>[] = []
-      const missingGlyphIds = [...new Set(glyphIds)].filter((glyphId) => {
-        const glyph = currentGlyphMap[glyphId]
+      const missingGlyphIds = collectUnloadedOverviewGeometryGlyphIds(
+        [...new Set(glyphIds)],
+        currentGlyphMap
+      ).filter((glyphId) => {
         const pendingLoad = loadingGlyphGeometryPromisesRef.current.get(glyphId)
         if (pendingLoad) {
           pendingLoads.push(pendingLoad)
           return false
         }
-        return glyph && !isGlyphGeometryLoaded(glyph)
+        return true
       })
       const loadPromises = [...new Set(pendingLoads)]
 
@@ -298,6 +309,23 @@ export function FontOverviewScreen() {
     },
     [hydrateGlyphGeometry]
   )
+
+  useEffect(() => {
+    if (unloadedOverviewPreviewGlyphIds.length === 0) {
+      return
+    }
+
+    overviewGeometryRequestIdRef.current += 1
+    const requestId = overviewGeometryRequestIdRef.current
+    void ensureGlyphGeometryLoaded(overviewPreviewGlyphIds, {
+      maxLoadedGlyphs: OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY,
+      shouldHydrate: () => overviewGeometryRequestIdRef.current === requestId,
+    })
+  }, [
+    ensureGlyphGeometryLoaded,
+    overviewPreviewGlyphIds,
+    unloadedOverviewPreviewGlyphIds,
+  ])
 
   const handleRangeChange = useCallback(
     (range: ListRange) => {
