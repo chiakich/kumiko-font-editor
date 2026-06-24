@@ -14,7 +14,6 @@ import {
   ModalCloseButton,
   ModalContent,
   ModalFooter,
-  ModalHeader,
   ModalOverlay,
   Select,
   Stack,
@@ -463,10 +462,12 @@ export function ExportFontModal({
                 whiteSpace="normal"
                 variant="unstyled"
                 p={3}
-                borderWidth="1px"
                 borderRadius="md"
-                borderColor={isSelected ? 'field.accent' : 'field.line'}
                 bg={isSelected ? 'field.panelMuted' : 'transparent'}
+                _hover={{ bg: 'field.panelMuted' }}
+                _focusVisible={{
+                  boxShadow: '0 0 0 2px var(--chakra-colors-field-accent)',
+                }}
                 isDisabled={!canExport || isExporting}
                 onClick={() => toggleFormat(option.format)}
               >
@@ -597,8 +598,9 @@ export function ExportFontModal({
     <Modal isOpen={isOpen} onClose={closeModal} size="3xl">
       <ModalOverlay />
       <ModalContent maxH="86vh" overflow="hidden">
+        <ModalCloseButton zIndex={2} />
         <Tabs
-          variant="unstyled"
+          variant="enclosed"
           size="sm"
           display="flex"
           flexDirection="column"
@@ -608,23 +610,32 @@ export function ExportFontModal({
           index={activeExportTabIndex}
           onChange={setActiveExportTabIndex}
         >
-          <ModalHeader>{t('fontExport.exportFont')}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody overflowY="auto" flex={1} minH={0}>
-            <Stack spacing={4}>
-              <SlidingTabList
-                activeIndex={activeExportTabIndex}
-                labels={exportTabLabels}
-                layoutGroupId="font-export-modal-tabs"
-              />
-              <TabPanels>
-                {visibleOptionGroups.map((group) => (
-                  <TabPanel key={group.id} p={0}>
-                    {renderGroupPanel(group)}
-                  </TabPanel>
-                ))}
-              </TabPanels>
-            </Stack>
+          <HStack
+            align="center"
+            justify="space-between"
+            gap={4}
+            px={6}
+            pt={5}
+            pb={3}
+            pr={14}
+          >
+            <Text as="h2" fontSize="xl" fontWeight="900">
+              {t('fontExport.exportFont')}
+            </Text>
+            <SlidingTabList
+              activeIndex={activeExportTabIndex}
+              labels={exportTabLabels}
+              layoutGroupId="font-export-modal-tabs"
+            />
+          </HStack>
+          <ModalBody pb={5} overflowY="auto" flex={1} minH={0}>
+            <TabPanels>
+              {visibleOptionGroups.map((group) => (
+                <TabPanel key={group.id} p={0}>
+                  {renderGroupPanel(group)}
+                </TabPanel>
+              ))}
+            </TabPanels>
           </ModalBody>
           <ModalFooter>
             <Button
