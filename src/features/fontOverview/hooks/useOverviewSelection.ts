@@ -134,47 +134,53 @@ export function useOverviewSelection({
     ]
   )
 
+  const deleteGlyphIds = useCallback(
+    async (glyphIds: string[]) => {
+      const uniqueGlyphIds = [...new Set(glyphIds)]
+      if (uniqueGlyphIds.length === 0) {
+        return
+      }
+
+      try {
+        for (const glyphId of uniqueGlyphIds) {
+          deleteGlyph(glyphId)
+        }
+        await flushCurrentDraft()
+        selectGlyphs([], null)
+        selectionAnchorGlyphIdRef.current = null
+        toast({
+          title: t('fontOverview.selection.deletedToastTitle'),
+          description: t('fontOverview.selection.deletedToastDescription', {
+            count: uniqueGlyphIds.length,
+          }),
+          status: 'success',
+          duration: 2200,
+          isClosable: true,
+        })
+      } catch (error) {
+        toast({
+          title: '刪除後儲存失敗',
+          description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
+          status: 'error',
+          duration: 3600,
+          isClosable: true,
+        })
+        console.warn('Flush after glyph selection deletion failed.', error)
+      }
+    },
+    [deleteGlyph, flushCurrentDraft, selectGlyphs, t, toast]
+  )
+
   const handleDeleteSelectedGlyphs = useCallback(async () => {
     if (selectedGlyphIdList.length === 0) {
       return
     }
 
-    try {
-      for (const glyphId of selectedGlyphIdList) {
-        deleteGlyph(glyphId)
-      }
-      await flushCurrentDraft()
-      selectGlyphs([], null)
-      selectionAnchorGlyphIdRef.current = null
-      toast({
-        title: t('fontOverview.selection.deletedToastTitle'),
-        description: t('fontOverview.selection.deletedToastDescription', {
-          count: selectedGlyphIdList.length,
-        }),
-        status: 'success',
-        duration: 2200,
-        isClosable: true,
-      })
-    } catch (error) {
-      toast({
-        title: '刪除後儲存失敗',
-        description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
-        status: 'error',
-        duration: 3600,
-        isClosable: true,
-      })
-      console.warn('Flush after glyph selection deletion failed.', error)
-    }
-  }, [
-    deleteGlyph,
-    flushCurrentDraft,
-    selectGlyphs,
-    selectedGlyphIdList,
-    t,
-    toast,
-  ])
+    await deleteGlyphIds(selectedGlyphIdList)
+  }, [deleteGlyphIds, selectedGlyphIdList])
 
   return {
+    deleteGlyphIds,
     handleDeleteSelectedGlyphs,
     handleGlyphSelect,
     overviewSelectedGlyphIds,

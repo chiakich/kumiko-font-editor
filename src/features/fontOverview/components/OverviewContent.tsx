@@ -51,6 +51,7 @@ interface OverviewContentProps {
   canZoomIn: boolean
   canZoomOut: boolean
   onEnterEditor: (glyphId: string) => void
+  onOpenGlyphContextMenu: (glyphId: string, event: MouseEvent) => void
   onOpenAddGlyphModal: () => void
   onGridStateChange: (state: GridStateSnapshot) => void
   onZoomSizeInputBlur: () => void
@@ -76,6 +77,7 @@ export function OverviewContent({
   canZoomIn,
   canZoomOut,
   onEnterEditor,
+  onOpenGlyphContextMenu,
   onOpenAddGlyphModal,
   onGridStateChange,
   onZoomSizeInputBlur,
@@ -275,6 +277,7 @@ export function OverviewContent({
                         isSelected={selectedGlyphIds.has(glyph.id)}
                         isTransitioning={transitioningGlyphId === glyph.id}
                         onEnterEditor={onEnterEditor}
+                        onOpenContextMenu={onOpenGlyphContextMenu}
                         onSelectGlyph={onSelectGlyph}
                       />
                     )

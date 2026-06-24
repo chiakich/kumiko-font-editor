@@ -1,10 +1,19 @@
-import { Grid, GridItem } from '@chakra-ui/react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Grid, GridItem, useToast } from '@chakra-ui/react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react'
 import { flushSync } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 import type { ListRange } from 'react-virtuoso'
-import { useStore, type GlyphData } from 'src/store'
+import { useStore, type GlyphData, type KumikoColor } from 'src/store'
 import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+import { areKumikoColorsEqual } from 'src/lib/color/kumikoColor'
 import {
   buildGlyphPreviewData,
   buildGlyphPreviewFontRect,
@@ -14,6 +23,10 @@ import { setPendingEditorViewportRect } from 'src/features/editor/pendingEditorV
 import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
+import {
+  OverviewGlyphContextMenu,
+  type OverviewGlyphContextMenuColor,
+} from 'src/features/fontOverview/components/OverviewGlyphContextMenu/OverviewGlyphContextMenu'
 import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
 import { OverviewRightPanel } from 'src/features/fontOverview/components/OverviewRightPanel'
 import { OverviewSidebar } from 'src/features/fontOverview/components/OverviewSidebar'
@@ -44,8 +57,15 @@ import {
 
 const OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS = 250
 
+const isTypingShortcutTarget = (target: EventTarget | null) =>
+  target instanceof HTMLInputElement ||
+  target instanceof HTMLTextAreaElement ||
+  (target instanceof HTMLElement && target.isContentEditable)
+
 export function FontOverviewScreen() {
   useHistoryShortcuts()
+  const { t } = useTranslation()
+  const toast = useToast()
 
   const [overviewGridSizePx, setOverviewGridSizePx] = useState(
     DEFAULT_OVERVIEW_GRID_SIZE_PX
@@ -62,6 +82,13 @@ export function FontOverviewScreen() {
     glyphIds: string[]
     sectionId: string
   } | null>(null)
+  const [glyphContextMenu, setGlyphContextMenu] = useState<{
+    glyphIds: string[]
+    insertAfterGlyphId: string
+    x: number
+    y: number
+  } | null>(null)
+  const [glyphClipboard, setGlyphClipboard] = useState<GlyphData[]>([])
   const currentSearchQuery = useStore((state) => state.currentSearchQuery)
   const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
   const overviewSearchOptions = useStore((state) => state.overviewSearchOptions)
@@ -79,6 +106,8 @@ export function FontOverviewScreen() {
   const selectedSectionId = useStore((state) => state.overviewSectionId)
   const setOverviewSectionId = useStore((state) => state.setOverviewSectionId)
   const hydrateGlyphGeometry = useStore((state) => state.hydrateGlyphGeometry)
+  const pasteGlyphCopies = useStore((state) => state.pasteGlyphCopies)
+  const setGlyphColor = useStore((state) => state.setGlyphColor)
   const activeMasterId = useStore((state) => state.activeMasterId)
   const loadingGlyphGeometryPromisesRef = useRef(
     new Map<string, Promise<GlyphData[]>>()
@@ -109,6 +138,7 @@ export function FontOverviewScreen() {
     savePendingGridState,
   } = useOverviewGridPersistence({ activeGlyphs: activeSection.glyphs })
   const {
+    deleteGlyphIds,
     handleDeleteSelectedGlyphs,
     handleGlyphSelect,
     overviewSelectedGlyphIds,
@@ -123,13 +153,39 @@ export function FontOverviewScreen() {
 
   const selectedGlyph =
     overviewGlyphs.find((glyph) => glyph.id === selectedGlyphId) ?? null
+  const glyphMap = useMemo(() => fontData?.glyphs ?? {}, [fontData?.glyphs])
+  const selectedActiveGlyphIds = useMemo(
+    () =>
+      activeSection.glyphs
+        .map((glyph) => glyph.id)
+        .filter((glyphId) => selectedGlyphIdSet.has(glyphId)),
+    [activeSection.glyphs, selectedGlyphIdSet]
+  )
+  const glyphContextMenuGlyphs = useMemo(
+    () =>
+      glyphContextMenu?.glyphIds
+        .map((glyphId) => glyphMap[glyphId])
+        .filter((glyph): glyph is GlyphData => Boolean(glyph)) ?? [],
+    [glyphContextMenu, glyphMap]
+  )
+  const glyphContextMenuColor = useMemo<OverviewGlyphContextMenuColor>(() => {
+    if (glyphContextMenuGlyphs.length === 0) {
+      return null
+    }
+
+    const firstColor = glyphContextMenuGlyphs[0].color ?? null
+    return glyphContextMenuGlyphs.every((glyph) =>
+      areKumikoColorsEqual(glyph.color, firstColor)
+    )
+      ? firstColor
+      : 'mixed'
+  }, [glyphContextMenuGlyphs])
   const overviewGridZoom = useMemo(
     () => buildOverviewGridZoomLayout(overviewGridSizePx),
     [overviewGridSizePx]
   )
   const canZoomIn = overviewGridSizePx < MAX_OVERVIEW_GRID_SIZE_PX
   const canZoomOut = overviewGridSizePx > MIN_OVERVIEW_GRID_SIZE_PX
-  const glyphMap = useMemo(() => fontData?.glyphs ?? {}, [fontData?.glyphs])
   const overviewPreviewGlyphIds = useMemo(() => {
     if (overviewPreviewWindow?.sectionId === activeSection.id) {
       return overviewPreviewWindow.glyphIds
@@ -395,6 +451,179 @@ export function FontOverviewScreen() {
     stepOverviewGridSize(-1)
   }, [stepOverviewGridSize])
 
+  const closeGlyphContextMenu = useCallback(() => {
+    setGlyphContextMenu(null)
+  }, [])
+
+  const getContextActionGlyphIds = useCallback(
+    (glyphId: string) => {
+      if (!selectedGlyphIdSet.has(glyphId)) {
+        return [glyphId]
+      }
+
+      return selectedActiveGlyphIds.length > 0
+        ? selectedActiveGlyphIds
+        : [glyphId]
+    },
+    [selectedActiveGlyphIds, selectedGlyphIdSet]
+  )
+
+  const handleOpenGlyphContextMenu = useCallback(
+    (glyphId: string, event: MouseEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+
+      const glyphIds = getContextActionGlyphIds(glyphId)
+      if (!selectedGlyphIdSet.has(glyphId)) {
+        selectGlyphsWithAnchor([glyphId], glyphId)
+      }
+      setGlyphContextMenu({
+        glyphIds,
+        insertAfterGlyphId: glyphId,
+        x: event.clientX,
+        y: event.clientY,
+      })
+    },
+    [getContextActionGlyphIds, selectGlyphsWithAnchor, selectedGlyphIdSet]
+  )
+
+  const copyGlyphsToOverviewClipboard = useCallback(
+    async (glyphIds: string[]) => {
+      const uniqueGlyphIds = [...new Set(glyphIds)]
+      if (uniqueGlyphIds.length === 0) {
+        return
+      }
+
+      try {
+        await ensureGlyphGeometryLoaded(uniqueGlyphIds)
+        const latestGlyphMap = useStore.getState().fontData?.glyphs ?? {}
+        const copiedGlyphs = uniqueGlyphIds
+          .map((glyphId) => latestGlyphMap[glyphId])
+          .filter((glyph): glyph is GlyphData => Boolean(glyph))
+          .map((glyph) => structuredClone(glyph))
+        setGlyphClipboard(copiedGlyphs)
+        toast({
+          title: t('fontOverview.glyphContext.copiedToastTitle'),
+          description: t('fontOverview.glyphContext.copiedToastDescription', {
+            count: copiedGlyphs.length,
+          }),
+          status: 'success',
+          duration: 1800,
+          isClosable: true,
+        })
+      } catch (error) {
+        console.warn('Copying overview glyphs failed.', error)
+      }
+    },
+    [ensureGlyphGeometryLoaded, t, toast]
+  )
+
+  const pasteOverviewClipboard = useCallback(
+    (afterGlyphId?: string | null) => {
+      if (glyphClipboard.length === 0) {
+        return
+      }
+
+      const pastedGlyphIds = pasteGlyphCopies(glyphClipboard, { afterGlyphId })
+      if (pastedGlyphIds.length > 0) {
+        selectAddedGlyphs(pastedGlyphIds)
+        toast({
+          title: t('fontOverview.glyphContext.pastedToastTitle'),
+          description: t('fontOverview.glyphContext.pastedToastDescription', {
+            count: pastedGlyphIds.length,
+          }),
+          status: 'success',
+          duration: 2200,
+          isClosable: true,
+        })
+      }
+    },
+    [glyphClipboard, pasteGlyphCopies, selectAddedGlyphs, t, toast]
+  )
+
+  const handleCopyContextGlyphs = useCallback(async () => {
+    const glyphIds = glyphContextMenu?.glyphIds ?? []
+    if (glyphIds.length === 0) {
+      closeGlyphContextMenu()
+      return
+    }
+
+    await copyGlyphsToOverviewClipboard(glyphIds)
+    closeGlyphContextMenu()
+  }, [closeGlyphContextMenu, copyGlyphsToOverviewClipboard, glyphContextMenu])
+
+  const handlePasteContextGlyphs = useCallback(() => {
+    if (glyphClipboard.length === 0) {
+      closeGlyphContextMenu()
+      return
+    }
+
+    pasteOverviewClipboard(glyphContextMenu?.insertAfterGlyphId)
+    closeGlyphContextMenu()
+  }, [
+    closeGlyphContextMenu,
+    glyphClipboard,
+    glyphContextMenu,
+    pasteOverviewClipboard,
+  ])
+
+  const handleSetContextGlyphColor = useCallback(
+    (color: KumikoColor | null) => {
+      const glyphIds = glyphContextMenu?.glyphIds ?? []
+      for (const glyphId of glyphIds) {
+        setGlyphColor(glyphId, color)
+      }
+      closeGlyphContextMenu()
+    },
+    [closeGlyphContextMenu, glyphContextMenu, setGlyphColor]
+  )
+
+  const handleDeleteContextGlyphs = useCallback(() => {
+    const glyphIds = glyphContextMenu?.glyphIds ?? []
+    closeGlyphContextMenu()
+    void deleteGlyphIds(glyphIds)
+  }, [closeGlyphContextMenu, deleteGlyphIds, glyphContextMenu])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!event.metaKey && !event.ctrlKey) {
+        return
+      }
+      if (isTypingShortcutTarget(event.target)) {
+        return
+      }
+
+      const key = event.key.toLowerCase()
+      if (key !== 'c' && key !== 'v') {
+        return
+      }
+
+      event.preventDefault()
+      if (key === 'c') {
+        const glyphIds =
+          selectedActiveGlyphIds.length > 0
+            ? selectedActiveGlyphIds
+            : selectedGlyphId
+              ? [selectedGlyphId]
+              : []
+        void copyGlyphsToOverviewClipboard(glyphIds)
+        return
+      }
+
+      pasteOverviewClipboard(selectedActiveGlyphIds.at(-1) ?? selectedGlyphId)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [
+    copyGlyphsToOverviewClipboard,
+    pasteOverviewClipboard,
+    selectedActiveGlyphIds,
+    selectedGlyphId,
+  ])
+
   const handleEnterEditor = useCallback(
     async (glyphId: string) => {
       savePendingGridState()
@@ -513,6 +742,7 @@ export function FontOverviewScreen() {
             canZoomIn={canZoomIn}
             canZoomOut={canZoomOut}
             onEnterEditor={handleEnterEditor}
+            onOpenGlyphContextMenu={handleOpenGlyphContextMenu}
             onOpenAddGlyphModal={openAddGlyphModal}
             onGridStateChange={handleGridStateChange}
             onZoomSizeInputBlur={handleOverviewGridSizeInputBlur}
@@ -542,6 +772,18 @@ export function FontOverviewScreen() {
         onSubmitGlyphNames={addGlyphNames}
         onSubmitManualInput={() => void addGlyphsFromInput()}
       />
+      {glyphContextMenu ? (
+        <OverviewGlyphContextMenu
+          canPaste={glyphClipboard.length > 0}
+          position={{ x: glyphContextMenu.x, y: glyphContextMenu.y }}
+          selectedColor={glyphContextMenuColor}
+          onClose={closeGlyphContextMenu}
+          onCopy={() => void handleCopyContextGlyphs()}
+          onDelete={handleDeleteContextGlyphs}
+          onPaste={handlePasteContextGlyphs}
+          onSetColor={handleSetContextGlyphColor}
+        />
+      ) : null}
     </>
   )
 }

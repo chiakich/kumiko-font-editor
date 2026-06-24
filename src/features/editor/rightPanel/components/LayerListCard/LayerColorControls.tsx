@@ -132,10 +132,10 @@ export function LayerColorContextMenu({
         borderRadius="6px"
         boxShadow="0 12px 32px rgba(15, 23, 42, 0.18)"
         left={`${position.x}px`}
-        minW="174px"
         p="10px"
         position="fixed"
         top={`${position.y}px`}
+        w="160px"
         zIndex="popover"
         onContextMenu={(event) => event.preventDefault()}
         onPointerDown={(event) => event.stopPropagation()}

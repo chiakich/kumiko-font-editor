@@ -20,6 +20,7 @@ interface GlyphCardProps {
   isSelected: boolean
   isTransitioning?: boolean
   onEnterEditor: (glyphId: string) => void
+  onOpenContextMenu: (glyphId: string, event: MouseEvent) => void
   onSelectGlyph: (glyphId: string, event: MouseEvent) => void
 }
 
@@ -34,6 +35,7 @@ export const GlyphCard = memo(function GlyphCard({
   isSelected,
   isTransitioning,
   onEnterEditor,
+  onOpenContextMenu,
   onSelectGlyph,
 }: GlyphCardProps) {
   const handleClick = useCallback(
@@ -55,6 +57,12 @@ export const GlyphCard = memo(function GlyphCard({
       onEnterEditor(glyph.id)
     },
     [glyph.id, onEnterEditor]
+  )
+  const handleContextMenu = useCallback(
+    (event: MouseEvent) => {
+      onOpenContextMenu(glyph.id, event)
+    },
+    [glyph.id, onOpenContextMenu]
   )
 
   const hasFullCardColor = Boolean(
@@ -82,6 +90,7 @@ export const GlyphCard = memo(function GlyphCard({
       transition="background 60ms ease"
       userSelect="none"
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMouseDown}
     >

@@ -331,6 +331,12 @@
         "atMost": "is at most"
       }
     },
+    "glyphContext": {
+      "copiedToastTitle": "Glyphs copied",
+      "copiedToastDescription": "{{count}} glyph(s) copied.",
+      "pastedToastTitle": "Glyphs pasted",
+      "pastedToastDescription": "{{count}} glyph copy/copies created."
+    },
     "filterLabels": {
       "all": "All",
       "categories": "Categories",

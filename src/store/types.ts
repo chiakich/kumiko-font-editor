@@ -495,6 +495,10 @@ export interface GlobalState {
     layerId: string,
     color: KumikoColor | null
   ) => void
+  pasteGlyphCopies: (
+    glyphs: GlyphData[],
+    options?: { afterGlyphId?: string | null }
+  ) => string[]
   addComponentRef: (glyphId: string, componentGlyphId: string) => boolean
   addGlyphs: (
     glyphs: Array<{

@@ -331,6 +331,12 @@
         "atMost": "至多"
       }
     },
+    "glyphContext": {
+      "copiedToastTitle": "已複製字符",
+      "copiedToastDescription": "已複製 {{count}} 個字符。",
+      "pastedToastTitle": "已貼上字符",
+      "pastedToastDescription": "已建立 {{count}} 個字符副本。"
+    },
     "filterLabels": {
       "all": "全部",
       "categories": "分類",

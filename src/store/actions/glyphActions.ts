@@ -51,6 +51,7 @@ import {
   markGlyphDirty,
   markUiStateDirty,
 } from 'src/store/dirtyState'
+import { createGlyphCopies, insertGlyphIdsAfter } from 'src/store/glyphCopy'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>
@@ -261,6 +262,43 @@ export const buildGlyphActions = (set: ImmerSet) => ({
       markGlyphDirty(state, glyphId)
       syncFilteredGlyphList(state)
     }),
+
+  pasteGlyphCopies: (
+    glyphs: GlyphData[],
+    options: { afterGlyphId?: string | null } = {}
+  ) => {
+    const pastedGlyphIds: string[] = []
+    set((state) => {
+      if (!state.fontData || glyphs.length === 0) {
+        return
+      }
+
+      const glyphCopies = createGlyphCopies(
+        glyphs,
+        Object.keys(state.fontData.glyphs)
+      )
+      if (glyphCopies.length === 0) {
+        return
+      }
+
+      const currentGlyphOrder =
+        state.fontData.glyphOrder ?? Object.keys(state.fontData.glyphs)
+      for (const glyphCopy of glyphCopies) {
+        state.fontData.glyphs[glyphCopy.id] = glyphCopy
+        pastedGlyphIds.push(glyphCopy.id)
+        markGlyphAdded(state, glyphCopy.id)
+      }
+      state.fontData.glyphOrder = insertGlyphIdsAfter(
+        currentGlyphOrder,
+        pastedGlyphIds,
+        options.afterGlyphId
+      )
+
+      syncFilteredGlyphList(state)
+      state.selectedGlyphId = pastedGlyphIds[0] ?? state.selectedGlyphId
+    })
+    return pastedGlyphIds
+  },
 
   addGlyphs: (
     glyphs: Array<{
