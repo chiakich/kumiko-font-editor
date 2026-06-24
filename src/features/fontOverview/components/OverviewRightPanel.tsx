@@ -127,9 +127,12 @@ export function OverviewRightPanel({
         loadingText={fontExport.loadingText}
         openTypeWarnings={fontExport.openTypeExportWarnings}
         glyphsWarnings={fontExport.glyphsExportWarnings}
+        exportInstances={fontExport.exportInstances}
         sourceFormat={fontExport.sourceFormat}
         onClose={exportModal.onClose}
-        onExport={(format) => void fontExport.exportFont(format)}
+        onExport={(format, options) =>
+          void fontExport.exportFont(format, options)
+        }
       />
       {fontSettingsModal.isOpen ? (
         <FontSettingsModal

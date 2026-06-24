@@ -1,7 +1,10 @@
 import { useToast } from '@chakra-ui/react'
 import { zipSync } from 'fflate'
 import { useMemo, useState } from 'react'
-import { exportCanonicalProjectAsBinary } from 'src/lib/fontFormats/canonicalBinaryExport'
+import {
+  exportCanonicalProjectAsBinary,
+  exportCanonicalProjectInstanceAsBinary,
+} from 'src/lib/fontFormats/canonicalBinaryExport'
 import { exportUfoAsZipBlob } from 'src/lib/fontFormats/ufoZipExportClient'
 import {
   createCompilerRuntimeStatus,
@@ -23,7 +26,12 @@ import { markKumikoProjectExportClean } from 'src/lib/project/kumikoProjectPersi
 import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { canUseCanonicalUfoZipExport } from 'src/features/common/fontExport/exportDraftPolicy'
 import { useStore } from 'src/store'
-import type { FontExportFormat } from 'src/features/common/fontExport/ExportFontModal'
+import type {
+  FontExportFormat,
+  FontExportOptions,
+} from 'src/features/common/fontExport/ExportFontModal'
+import type { BinaryFontExportFormat } from 'src/lib/fontFormats/fontBinaryFormat'
+import type { FontExportInstance } from 'src/store'
 
 const triggerBlobDownload = (blob: Blob, fileName: string) => {
   const href = URL.createObjectURL(blob)
@@ -42,6 +50,34 @@ const makeZipBlob = (files: Record<string, Uint8Array>) => {
   const zipBuffer = new ArrayBuffer(zipBytes.byteLength)
   new Uint8Array(zipBuffer).set(zipBytes)
   return new Blob([zipBuffer], { type: 'application/zip' })
+}
+
+const binaryFormats = new Set<FontExportFormat>(['ttf', 'otf', 'woff', 'woff2'])
+
+const isBinaryFormat = (
+  format: FontExportFormat
+): format is BinaryFontExportFormat => binaryFormats.has(format)
+
+const sanitizeFileStem = (value: string, fallback: string) => {
+  const sanitized = value
+    .trim()
+    .replace(/\.(otf|ttf|woff2?|ufo)$/i, '')
+    .replace(/[/\\?%*:|"<>]+/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return sanitized || fallback
+}
+
+const getInstanceFileName = (
+  baseFileName: string,
+  instance: FontExportInstance,
+  format: BinaryFontExportFormat
+) => {
+  const sourceName =
+    instance.fileName ||
+    `${baseFileName}-${instance.styleName || instance.name || instance.id}`
+  return `${sanitizeFileStem(sourceName, instance.id)}.${format}`
 }
 
 interface ExportAsset {
@@ -115,7 +151,10 @@ export function useFontExport() {
       : `匯出中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
     : '匯出中...'
 
-  const exportFont = async (formats: FontExportFormat[]) => {
+  const exportFont = async (
+    formats: FontExportFormat[],
+    options: FontExportOptions = {}
+  ) => {
     const selectedFormats = Array.from(new Set(formats))
     if (
       !fontData ||
@@ -163,13 +202,7 @@ export function useFontExport() {
       const selectedGlyphs3Formats = selectedFormats.filter(
         (format) => format === 'glyphs3' || format === 'glyphspackage'
       )
-      const selectedBinaryFormats = selectedFormats.filter(
-        (format) =>
-          format !== 'zip' &&
-          format !== 'glyphs2' &&
-          format !== 'glyphs3' &&
-          format !== 'glyphspackage'
-      )
+      const selectedBinaryFormats = selectedFormats.filter(isBinaryFormat)
       if (
         fontData.openTypeFeatures &&
         selectedBinaryFormats.length > 0 &&
@@ -187,22 +220,34 @@ export function useFontExport() {
       }
 
       const baseFileName = projectTitle || projectId
-      const buildExportAsset = async (
+      const exportableInstancesById = new Map(
+        (fontData.exportInstances ?? [])
+          .filter((instance) => instance.export !== false)
+          .map((instance) => [instance.id, instance])
+      )
+      const selectedInstanceIds = (options.instanceIds ?? []).filter(
+        (instanceId) => exportableInstancesById.has(instanceId)
+      )
+      const includeDefaultBinary = options.includeDefaultBinary !== false
+
+      const buildExportAssets = async (
         format: FontExportFormat
-      ): Promise<ExportAsset> => {
+      ): Promise<ExportAsset[]> => {
         // Glyphs export streams from Kumiko's canonical records.
         if (format === 'glyphs2' || format === 'glyphs3') {
           const result = await serializeCanonicalGlyphsProjectToBlob({
             projectId,
             formatVersion: format === 'glyphs3' ? 3 : 2,
           })
-          return {
-            blob: result.blob,
-            fileName: `${baseFileName}-glyphs${format === 'glyphs3' ? '3' : '2'}.glyphs`,
-            label: format === 'glyphs3' ? 'Glyphs 3' : 'Glyphs 2',
-            totalGlyphs: result.totalGlyphs,
-            warnings: result.warnings,
-          }
+          return [
+            {
+              blob: result.blob,
+              fileName: `${baseFileName}-glyphs${format === 'glyphs3' ? '3' : '2'}.glyphs`,
+              label: format === 'glyphs3' ? 'Glyphs 3' : 'Glyphs 2',
+              totalGlyphs: result.totalGlyphs,
+              warnings: result.warnings,
+            },
+          ]
         }
 
         if (format === 'glyphspackage') {
@@ -215,22 +260,46 @@ export function useFontExport() {
             files[`${packageData.packageName}/${innerPath}`] =
               encoder.encode(text)
           }
-          return {
-            blob: makeZipBlob(files),
-            fileName: `${baseFileName}.glyphspackage.zip`,
-            label: 'Glyphs Package',
-            totalGlyphs: packageData.totalGlyphs,
-            warnings: packageData.warnings,
-          }
+          return [
+            {
+              blob: makeZipBlob(files),
+              fileName: `${baseFileName}.glyphspackage.zip`,
+              label: 'Glyphs Package',
+              totalGlyphs: packageData.totalGlyphs,
+              warnings: packageData.warnings,
+            },
+          ]
         }
 
-        if (format !== 'zip') {
-          return {
-            blob: await exportCanonicalProjectAsBinary({ projectId, format }),
-            fileName: `${baseFileName}.${format}`,
-            label: format.toUpperCase(),
-            totalGlyphs: null,
+        if (isBinaryFormat(format)) {
+          const assets: ExportAsset[] = []
+          if (includeDefaultBinary) {
+            assets.push({
+              blob: await exportCanonicalProjectAsBinary({ projectId, format }),
+              fileName: `${baseFileName}.${format}`,
+              label: format.toUpperCase(),
+              totalGlyphs: null,
+            })
           }
+
+          for (const instanceId of selectedInstanceIds) {
+            const instance = exportableInstancesById.get(instanceId)
+            if (!instance) {
+              continue
+            }
+            assets.push({
+              blob: await exportCanonicalProjectInstanceAsBinary({
+                projectId,
+                format,
+                instanceId,
+              }),
+              fileName: getInstanceFileName(baseFileName, instance, format),
+              label: `${format.toUpperCase()} ${instance.styleName || instance.name}`,
+              totalGlyphs: null,
+            })
+          }
+
+          return assets
         }
 
         if (format === 'zip') {
@@ -239,16 +308,20 @@ export function useFontExport() {
             markClean: usesSourceBackedUfoZipExport,
             onProgress: setUfoExportProgress,
           })
-          return {
-            blob: result.blob,
-            fileName:
-              sourceFormat === 'designspace'
-                ? `${baseFileName}.designspace.zip`
-                : `${baseFileName}.ufo.zip`,
-            label:
-              sourceFormat === 'designspace' ? 'Designspace + UFO' : 'UFO ZIP',
-            totalGlyphs: result.totalGlyphs,
-          }
+          return [
+            {
+              blob: result.blob,
+              fileName:
+                sourceFormat === 'designspace'
+                  ? `${baseFileName}.designspace.zip`
+                  : `${baseFileName}.ufo.zip`,
+              label:
+                sourceFormat === 'designspace'
+                  ? 'Designspace + UFO'
+                  : 'UFO ZIP',
+              totalGlyphs: result.totalGlyphs,
+            },
+          ]
         }
 
         throw new Error(`Unsupported export format: ${format}`)
@@ -256,7 +329,10 @@ export function useFontExport() {
 
       const assets: ExportAsset[] = []
       for (const format of selectedFormats) {
-        assets.push(await buildExportAsset(format))
+        assets.push(...(await buildExportAssets(format)))
+      }
+      if (assets.length === 0) {
+        throw new Error('請選擇至少一個要匯出的字型檔案。')
       }
 
       if (assets.length === 1) {
@@ -299,14 +375,11 @@ export function useFontExport() {
         (asset) => asset.totalGlyphs !== null
       )?.totalGlyphs
       toast({
-        title:
-          selectedFormats.length > 1
-            ? '已匯出 ZIP'
-            : `已匯出 ${assets[0].label}`,
+        title: assets.length > 1 ? '已匯出 ZIP' : `已匯出 ${assets[0].label}`,
         description:
           totalUfoGlyphs != null
-            ? `已匯出 ${selectedFormats.length} 種格式，包含 ${totalUfoGlyphs} 個 glyph。`
-            : `已匯出 ${selectedFormats.length} 種格式。`,
+            ? `已匯出 ${assets.length} 個檔案，包含 ${totalUfoGlyphs} 個 glyph。`
+            : `已匯出 ${assets.length} 個檔案。`,
         status: 'success',
         duration: 2400,
         isClosable: true,
@@ -332,6 +405,7 @@ export function useFontExport() {
     exportFont,
     openTypeExportWarnings,
     glyphsExportWarnings,
+    exportInstances: fontData?.exportInstances ?? [],
     isExporting,
     loadingText,
     ufoExportProgress,

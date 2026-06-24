@@ -5,6 +5,7 @@ import {
   AlertTitle,
   Button,
   Checkbox,
+  Divider,
   HStack,
   Modal,
   ModalBody,
@@ -16,11 +17,12 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { GlyphsExportWarning } from 'src/lib/fontFormats/glyphsExport'
 import type { OpenTypeExportWarning } from 'src/lib/openTypeFeatures'
 import { requiresDropUnsupportedConfirmation } from 'src/lib/openTypeFeatures/exportPolicy'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
+import type { FontExportInstance } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
 export type FontExportFormat =
@@ -33,6 +35,11 @@ export type FontExportFormat =
   | 'woff'
   | 'woff2'
 
+export interface FontExportOptions {
+  includeDefaultBinary?: boolean
+  instanceIds?: string[]
+}
+
 interface ExportFontModalProps {
   isOpen: boolean
   canExport: boolean
@@ -40,10 +47,11 @@ interface ExportFontModalProps {
   loadingText: string
   openTypeWarnings?: OpenTypeExportWarning[]
   glyphsWarnings?: GlyphsExportWarning[]
+  exportInstances?: FontExportInstance[]
   // Source format of the open project; gates the .glyphspackage round-trip option.
   sourceFormat?: ProjectSourceFormat | null
   onClose: () => void
-  onExport: (formats: FontExportFormat[]) => void
+  onExport: (formats: FontExportFormat[], options?: FontExportOptions) => void
 }
 
 const exportOptions: Array<{
@@ -95,6 +103,10 @@ const exportOptions: Array<{
     description: '壓縮率較高的網頁字型格式。',
   },
 ]
+
+const binaryFormats = new Set<FontExportFormat>(['ttf', 'otf', 'woff', 'woff2'])
+
+const isBinaryFormat = (format: FontExportFormat) => binaryFormats.has(format)
 
 type ExportWarningSeverity = OpenTypeExportWarning['severity']
 
@@ -223,6 +235,7 @@ export function ExportFontModal({
   loadingText,
   openTypeWarnings = [],
   glyphsWarnings = [],
+  exportInstances = [],
   sourceFormat = null,
   onClose,
   onExport,
@@ -232,14 +245,28 @@ export function ExportFontModal({
   const visibleOptions = exportOptions.filter(
     (option) => !option.sourceFormat || option.sourceFormat === sourceFormat
   )
+  const exportableInstances = useMemo(
+    () => exportInstances.filter((instance) => instance.export !== false),
+    [exportInstances]
+  )
 
   const [selectedFormats, setSelectedFormats] = useState<FontExportFormat[]>([
     'zip',
   ])
+  const [includeDefaultBinary, setIncludeDefaultBinary] = useState(true)
+  const [excludedInstanceIds, setExcludedInstanceIds] = useState<string[]>([])
   const [confirmedDropUnsupported, setConfirmedDropUnsupported] =
     useState(false)
   const needsDropUnsupportedConfirmation =
     requiresDropUnsupportedConfirmation(openTypeWarnings)
+  const hasSelectedBinaryFormat = selectedFormats.some(isBinaryFormat)
+  const selectedInstanceIds = exportableInstances
+    .map((instance) => instance.id)
+    .filter((instanceId) => !excludedInstanceIds.includes(instanceId))
+  const selectedBinaryTargetCount =
+    (includeDefaultBinary ? 1 : 0) + selectedInstanceIds.length
+  const hasBinaryTarget =
+    !hasSelectedBinaryFormat || selectedBinaryTargetCount > 0
   const showsGlyphs3Warnings =
     selectedFormats.includes('glyphs3') ||
     selectedFormats.includes('glyphspackage')
@@ -248,10 +275,13 @@ export function ExportFontModal({
     canExport &&
     selectedFormats.length > 0 &&
     !isExporting &&
+    hasBinaryTarget &&
     (!needsDropUnsupportedConfirmation || confirmedDropUnsupported)
 
   const closeModal = () => {
     setConfirmedDropUnsupported(false)
+    setIncludeDefaultBinary(true)
+    setExcludedInstanceIds([])
     onClose()
   }
 
@@ -260,6 +290,14 @@ export function ExportFontModal({
       current.includes(format)
         ? current.filter((item) => item !== format)
         : [...current, format]
+    )
+  }
+
+  const toggleInstance = (instanceId: string) => {
+    setExcludedInstanceIds((current) =>
+      current.includes(instanceId)
+        ? current.filter((item) => item !== instanceId)
+        : [...current, instanceId]
     )
   }
 
@@ -311,6 +349,49 @@ export function ExportFontModal({
                 </Stack>
               </Button>
             ))}
+            {hasSelectedBinaryFormat && exportableInstances.length > 0 && (
+              <>
+                <Divider />
+                <Stack spacing={3}>
+                  <Text fontWeight="semibold">Binary 靜態輸出</Text>
+                  <Checkbox
+                    isChecked={includeDefaultBinary}
+                    isDisabled={!canExport || isExporting}
+                    onChange={(event) =>
+                      setIncludeDefaultBinary(event.target.checked)
+                    }
+                  >
+                    <Text as="span" fontSize="sm">
+                      目前字型
+                    </Text>
+                  </Checkbox>
+                  <Stack spacing={2}>
+                    {exportableInstances.map((instance) => (
+                      <Checkbox
+                        key={instance.id}
+                        isChecked={selectedInstanceIds.includes(instance.id)}
+                        isDisabled={!canExport || isExporting}
+                        onChange={() => toggleInstance(instance.id)}
+                      >
+                        <Stack spacing={0}>
+                          <Text as="span" fontSize="sm">
+                            {instance.name || instance.styleName}
+                          </Text>
+                          <Text
+                            as="span"
+                            fontSize="xs"
+                            color="field.muted"
+                            fontFamily="mono"
+                          >
+                            {JSON.stringify(instance.location)}
+                          </Text>
+                        </Stack>
+                      </Checkbox>
+                    ))}
+                  </Stack>
+                </Stack>
+              </>
+            )}
           </Stack>
         </ModalBody>
         <ModalFooter>
@@ -322,7 +403,12 @@ export function ExportFontModal({
             isDisabled={!canSubmit}
             isLoading={isExporting}
             loadingText={loadingText}
-            onClick={() => onExport(selectedFormats)}
+            onClick={() =>
+              onExport(selectedFormats, {
+                includeDefaultBinary,
+                instanceIds: selectedInstanceIds,
+              })
+            }
           >
             {t('fontExport.export')}
           </Button>
