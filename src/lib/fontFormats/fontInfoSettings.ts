@@ -308,6 +308,29 @@ const asNumberLocation = (value: unknown): Record<string, number> => {
   )
 }
 
+const asNumberArray = (value: unknown): number[] | undefined => {
+  if (!Array.isArray(value)) {
+    return undefined
+  }
+  const numbers = value.filter(isFiniteNumber)
+  return numbers.length > 0 ? numbers : undefined
+}
+
+const asAxisMapping = (value: unknown): Array<[number, number]> | undefined => {
+  if (!Array.isArray(value)) {
+    return undefined
+  }
+  const mapping = value.flatMap((entry) =>
+    Array.isArray(entry) &&
+    entry.length >= 2 &&
+    isFiniteNumber(entry[0]) &&
+    isFiniteNumber(entry[1])
+      ? ([[entry[0], entry[1]]] as Array<[number, number]>)
+      : []
+  )
+  return mapping.length > 0 ? mapping : undefined
+}
+
 export const defaultFontAxes: FontAxes = {
   axes: [],
   mappings: [],
@@ -348,6 +371,12 @@ export const fontAxesFromLib = (
         defaultValue: isFiniteNumber(axis.defaultValue) ? axis.defaultValue : 0,
         maxValue: isFiniteNumber(axis.maxValue) ? axis.maxValue : 100,
         hidden: Boolean(axis.hidden),
+        ...(asNumberArray(axis.values)
+          ? { values: asNumberArray(axis.values) }
+          : {}),
+        ...(asAxisMapping(axis.mapping)
+          ? { mapping: asAxisMapping(axis.mapping) }
+          : {}),
         customData: isRecord(axis.customData) ? axis.customData : {},
       }))
     : []

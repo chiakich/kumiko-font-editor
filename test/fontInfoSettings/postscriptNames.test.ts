@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildUfoLibFromFontData } from 'src/lib/fontFormats/fontInfoSettings'
+import {
+  buildUfoLibFromFontData,
+  fontAxesFromLib,
+} from 'src/lib/fontFormats/fontInfoSettings'
 import type { FontData, GlyphData } from 'src/store'
 
 const makeGlyph = (id: string, production: string | null): GlyphData =>
@@ -76,5 +79,39 @@ describe('buildUfoLibFromFontData public.glyphOrder', () => {
       makeFontDataWithOrder([makeGlyph('A', null), makeGlyph('B', null)])
     )
     expect(lib['public.glyphOrder']).toEqual(['A', 'B'])
+  })
+})
+
+describe('fontAxesFromLib', () => {
+  it('preserves discrete values and axis mappings from Kumiko UFO lib metadata', () => {
+    const lib = buildUfoLibFromFontData({
+      glyphs: {},
+      axes: {
+        axes: [
+          {
+            name: 'Italic',
+            label: 'Italic',
+            tag: 'ital',
+            minValue: 0,
+            defaultValue: 0,
+            maxValue: 1,
+            values: [0, 1],
+            mapping: [
+              [0, 0],
+              [1, 100],
+            ],
+          },
+        ],
+        mappings: [],
+      },
+    } as unknown as FontData)
+
+    expect(fontAxesFromLib(lib)?.axes[0]).toMatchObject({
+      values: [0, 1],
+      mapping: [
+        [0, 0],
+        [1, 100],
+      ],
+    })
   })
 })
