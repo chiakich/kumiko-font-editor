@@ -1,4 +1,5 @@
 import { useEffect, type RefObject } from 'react'
+import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
 import { getGlyphLayer, type FontData } from 'src/store'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 
@@ -28,20 +29,6 @@ interface UseCanvasKeyboardShortcutsOptions {
       newPos: { x: number; y: number }
     }>
   ) => void
-}
-
-const isTypingTarget = (target: EventTarget | null, activeToolId: ToolId) => {
-  if (
-    target instanceof HTMLTextAreaElement &&
-    target.dataset.kumikoHiddenTextInput === 'true' &&
-    activeToolId !== 'text'
-  ) {
-    return false
-  }
-
-  return (
-    target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
-  )
 }
 
 export function useCanvasKeyboardShortcuts({
@@ -136,7 +123,11 @@ export function useCanvasKeyboardShortcuts({
         event.stopPropagation()
       }
 
-      if (isTypingTarget(event.target, activeToolId)) {
+      if (
+        shouldIgnoreGlobalShortcut(event.target, {
+          ignoreKumikoHiddenTextInput: activeToolId !== 'text',
+        })
+      ) {
         return
       }
 

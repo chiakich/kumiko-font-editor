@@ -23,6 +23,7 @@ import { setPendingEditorViewportRect } from 'src/features/editor/pendingEditorV
 import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
+import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
 import {
   OverviewGlyphContextMenu,
   type OverviewGlyphContextMenuColor,
@@ -57,11 +58,6 @@ import {
 } from 'src/features/fontOverview/utils/overviewGridZoom'
 
 const OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS = 250
-
-const isTypingShortcutTarget = (target: EventTarget | null) =>
-  target instanceof HTMLInputElement ||
-  target instanceof HTMLTextAreaElement ||
-  (target instanceof HTMLElement && target.isContentEditable)
 
 export function FontOverviewScreen() {
   useHistoryShortcuts()
@@ -617,7 +613,7 @@ export function FontOverviewScreen() {
       if (!event.metaKey && !event.ctrlKey) {
         return
       }
-      if (isTypingShortcutTarget(event.target)) {
+      if (shouldIgnoreGlobalShortcut(event.target)) {
         return
       }
 

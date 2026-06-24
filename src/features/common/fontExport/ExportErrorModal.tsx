@@ -4,7 +4,6 @@ import {
   AlertIcon,
   AlertTitle,
   Badge,
-  Box,
   Button,
   Divider,
   HStack,
@@ -17,6 +16,7 @@ import {
   ModalOverlay,
   Stack,
   Text,
+  Textarea,
   useToast,
 } from '@chakra-ui/react'
 import { Copy } from 'iconoir-react'
@@ -70,25 +70,30 @@ const diagnosticColor = (severity: FeatureDiagnostic['severity']) => {
 }
 
 function DetailBlock({ label, text }: { label: string; text: string }) {
+  const rows = Math.min(12, Math.max(4, text.split('\n').length))
+
   return (
     <Stack spacing={2}>
       <Text fontSize="sm" fontWeight="800">
         {label}
       </Text>
-      <Box
-        as="pre"
+      <Textarea
+        aria-label={label}
+        value={text}
+        readOnly
+        spellCheck={false}
+        rows={rows}
         p={3}
         maxH="260px"
-        overflow="auto"
+        overflowY="auto"
+        resize="vertical"
         bg="field.panelMuted"
         borderWidth="1px"
         borderRadius="sm"
         fontFamily="mono"
         fontSize="xs"
-        whiteSpace="pre-wrap"
-      >
-        {text}
-      </Box>
+        lineHeight="1.45"
+      />
     </Stack>
   )
 }

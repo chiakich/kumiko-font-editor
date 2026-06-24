@@ -1,8 +1,6 @@
 import { useEffect } from 'react'
+import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
 import { useStore } from 'src/store'
-
-const isTypingTarget = (target: EventTarget | null) =>
-  target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
 
 /**
  * Wires Cmd/Ctrl+Z (undo) and Cmd/Ctrl+Shift+Z / Cmd/Ctrl+Y (redo) to the
@@ -22,7 +20,7 @@ export function useHistoryShortcuts() {
         return
       }
 
-      if (isTypingTarget(event.target)) {
+      if (shouldIgnoreGlobalShortcut(event.target)) {
         return
       }
 
