@@ -2,15 +2,15 @@ import {
   Badge,
   Box,
   Button,
-  Collapse,
+  Collapsible,
   HStack,
   IconButton,
   Input,
   SimpleGrid,
   Text,
   Stack,
-  Tooltip,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import {
   Minus,
   Plus,
@@ -103,32 +103,31 @@ export function SpacingBehaviorTableRow({
 
   return (
     <Stack
-      spacing={2}
+      gap={2}
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
       borderColor="field.panelMuted"
     >
       <HStack justify="space-between" align="center">
-        <HStack spacing={1} minW={0} flex={1}>
+        <HStack gap={1} minW={0} flex={1}>
           <IconButton
             aria-label={t('editor.expandClassMembers')}
-            icon={
-              <NavArrowRight
-                width={14}
-                height={14}
-                aria-hidden="true"
-                style={{
-                  transform: isExpanded ? 'rotate(90deg)' : undefined,
-                  transition: 'transform 100ms ease',
-                }}
-              />
-            }
             size="xs"
             variant="ghost"
-            isDisabled={!hasClassMembers}
+            disabled={!hasClassMembers}
             onClick={() => setIsExpanded((value) => !value)}
-          />
+          >
+            <NavArrowRight
+              width={14}
+              height={14}
+              aria-hidden="true"
+              style={{
+                transform: isExpanded ? 'rotate(90deg)' : undefined,
+                transition: 'transform 100ms ease',
+              }}
+            />
+          </IconButton>
           <PairLabel
             left={left}
             right={right}
@@ -139,35 +138,32 @@ export function SpacingBehaviorTableRow({
           {!isClassPair ? (
             <Button
               aria-label={t('editor.addSpacingPairToEditor')}
-              leftIcon={
-                <ArrowLeftTag width={14} height={14} aria-hidden="true" />
-              }
               size="xs"
               variant="ghost"
-              isDisabled={!left || !right}
+              disabled={!left || !right}
               onClick={() => openSpacingPair(left, right)}
             >
+              <ArrowLeftTag width={14} height={14} aria-hidden="true" />
               {t('editor.edit')}
             </Button>
           ) : null}
         </HStack>
-        <HStack spacing={1} wrap="wrap" justify="flex-end">
+        <HStack gap={1} wrap="wrap" justify="flex-end">
           {row?.sourceLabel ? (
-            <Badge variant="subtle" colorScheme="gray">
+            <Badge variant="subtle" colorPalette="gray">
               {row.sourceLabel}
             </Badge>
           ) : null}
           {row?.status.map((status) => (
-            <Badge key={status} colorScheme="red">
+            <Badge key={status} colorPalette="red">
               {status}
             </Badge>
           ))}
           {!canCommit && (left || right || value) ? (
-            <Badge colorScheme="red">{t('editor.invalidInput')}</Badge>
+            <Badge colorPalette="red">{t('editor.invalidInput')}</Badge>
           ) : null}
         </HStack>
       </HStack>
-
       <Box
         display="grid"
         gridTemplateColumns="minmax(48px, 1fr) minmax(48px, 1fr) 96px 28px"
@@ -200,14 +196,15 @@ export function SpacingBehaviorTableRow({
             onKeyDown={commitOnEnter}
           />
         )}
-        <HStack spacing={0}>
+        <HStack gap={0}>
           <IconButton
             aria-label={t('editor.decreaseSpacing')}
-            icon={<Minus width={14} height={14} aria-hidden="true" />}
             size="xs"
             variant="ghost"
             onClick={() => nudge(-10)}
-          />
+          >
+            <Minus width={14} height={14} aria-hidden="true" />
+          </IconButton>
           <Input
             aria-label={t('editor.spacingValue')}
             value={value}
@@ -220,32 +217,36 @@ export function SpacingBehaviorTableRow({
           />
           <IconButton
             aria-label={t('editor.increaseSpacing')}
-            icon={<Plus width={14} height={14} aria-hidden="true" />}
             size="xs"
             variant="ghost"
             onClick={() => nudge(10)}
-          />
+          >
+            <Plus width={14} height={14} aria-hidden="true" />
+          </IconButton>
         </HStack>
-        <Tooltip label={t('editor.deleteSpacingPair')}>
+        <Tooltip content={t('editor.deleteSpacingPair')}>
           <IconButton
             aria-label={t('editor.deleteSpacingPair')}
-            icon={<Trash width={15} height={15} aria-hidden="true" />}
             size="xs"
             variant="ghost"
             color="field.red.500"
             onClick={onDelete}
-          />
+          >
+            <Trash width={15} height={15} aria-hidden="true" />
+          </IconButton>
         </Tooltip>
       </Box>
       {row ? (
-        <Collapse in={isExpanded} animateOpacity>
-          <ClassMembersPanel
-            row={row}
-            left={left}
-            right={right}
-            value={Number.isFinite(numericValue) ? numericValue : row.value}
-          />
-        </Collapse>
+        <Collapsible.Root open={isExpanded}>
+          <Collapsible.Content>
+            <ClassMembersPanel
+              row={row}
+              left={left}
+              right={right}
+              value={Number.isFinite(numericValue) ? numericValue : row.value}
+            />
+          </Collapsible.Content>
+        </Collapsible.Root>
       ) : null}
     </Stack>
   )
@@ -274,7 +275,7 @@ function FixedGlyphCell({ label }: { label: string }) {
       fontFamily="mono"
       fontSize="xs"
     >
-      <Text as="span" isTruncated>
+      <Text as="span" truncate>
         {label}
       </Text>
     </Box>
@@ -313,13 +314,13 @@ function PairLabel({
       alignItems="center"
       gap={1}
     >
-      <Text as="span" minW={0} isTruncated title={leftLabel ?? leftText}>
+      <Text as="span" minW={0} truncate title={leftLabel ?? leftText}>
         {leftText}
       </Text>
       <Text as="span" flexShrink={0} color="field.muted">
         +
       </Text>
-      <Text as="span" minW={0} isTruncated title={rightLabel ?? rightText}>
+      <Text as="span" minW={0} truncate title={rightLabel ?? rightText}>
         {rightText}
       </Text>
       {isClassPair ? (
@@ -348,7 +349,7 @@ function ClassMembersPanel({
   value: number
 }) {
   return (
-    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+    <SimpleGrid columns={{ base: 1, md: 2 }} gap={2}>
       <ClassMemberList
         title={row.leftLabel ?? left}
         side="left"
@@ -393,36 +394,36 @@ function ClassMemberList({
   return (
     <Box borderWidth="1px" borderColor="field.line" bg="field.panelMuted">
       <HStack px={2} py={1} justify="space-between">
-        <Text fontSize="10px" fontWeight="bold" color="field.muted" isTruncated>
+        <Text fontSize="10px" fontWeight="bold" color="field.muted" truncate>
           {title}
         </Text>
-        <Badge size="sm" colorScheme="gray">
+        <Badge size="sm" colorPalette="gray">
           {members.length}
         </Badge>
       </HStack>
-      <Stack spacing={0} maxH="160px" overflowY="auto">
+      <Stack gap={0} maxH="160px" overflowY="auto">
         {members.map((glyphId) => {
           const pairLeft = side === 'left' ? glyphId : counterpartGlyphId
           const pairRight = side === 'left' ? counterpartGlyphId : glyphId
           return (
-            <HStack key={glyphId} spacing={1} px={2} py={1} minW={0}>
-              <Text fontSize="xs" fontFamily="mono" flex={1} isTruncated>
+            <HStack key={glyphId} gap={1} px={2} py={1} minW={0}>
+              <Text fontSize="xs" fontFamily="mono" flex={1} truncate>
                 {glyphId}
               </Text>
-              <Tooltip label={t('editor.addThisPairToEditor')}>
+              <Tooltip content={t('editor.addThisPairToEditor')}>
                 <IconButton
                   aria-label={t('editor.addToEditingArea')}
-                  icon={<ArrowLeftTag width={13} height={13} />}
                   size="xs"
                   variant="ghost"
                   onClick={() => openSpacingPair(pairLeft, pairRight)}
-                />
+                >
+                  <ArrowLeftTag width={13} height={13} />
+                </IconButton>
               </Tooltip>
               {row.scope === 'classPair' ? (
-                <Tooltip label={t('editor.splitMemberOutAsAnIndependent')}>
+                <Tooltip content={t('editor.splitMemberOutAsAnIndependent')}>
                   <IconButton
                     aria-label={t('editor.splitMemberOutAsAnIndependent')}
-                    icon={<ArrowEmailForward width={13} height={13} />}
                     size="xs"
                     variant="ghost"
                     onClick={() =>
@@ -435,7 +436,9 @@ function ClassMemberList({
                         value,
                       })
                     }
-                  />
+                  >
+                    <ArrowEmailForward width={13} height={13} />
+                  </IconButton>
                 </Tooltip>
               ) : null}
             </HStack>

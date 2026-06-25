@@ -75,7 +75,7 @@ export function OverviewRightPanel({
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
     >
-      <Stack spacing={4}>
+      <Stack gap={4}>
         <ProjectControlActions
           hasGitHubSource={panel.hasGitHubSource}
           isSavingToLocal={fontExport.isExporting}
@@ -120,9 +120,8 @@ export function OverviewRightPanel({
           />
         )}
       </Stack>
-
       <ExportFontModal
-        isOpen={exportModal.isOpen}
+        isOpen={exportModal.open}
         canExport={fontExport.canExport}
         isExporting={fontExport.isExporting}
         loadingText={fontExport.loadingText}
@@ -142,10 +141,10 @@ export function OverviewRightPanel({
         report={fontExport.exportErrorReport}
         onClose={fontExport.closeExportErrorReport}
       />
-      {fontSettingsModal.isOpen ? (
+      {fontSettingsModal.open ? (
         <FontSettingsModal
           fontData={panel.fontData}
-          isOpen={fontSettingsModal.isOpen}
+          isOpen={fontSettingsModal.open}
           projectTitle={panel.projectTitle}
           onClose={fontSettingsModal.onClose}
           onSave={updateFontSettings}
@@ -158,14 +157,14 @@ export function OverviewRightPanel({
       />
       {qualityCheckMode === 'selected' ? (
         <SelectedGlyphQualityCheckModal
-          isOpen={qualityCheckModal.isOpen}
+          isOpen={qualityCheckModal.open}
           onClose={qualityCheckModal.onClose}
           selectedGlyphIds={hasSelection ? selectedGlyphIds : undefined}
         />
       ) : (
         <FontQualityCheckModal
           key={qualityCheckScope}
-          isOpen={qualityCheckModal.isOpen}
+          isOpen={qualityCheckModal.open}
           onClose={qualityCheckModal.onClose}
           initialScope={qualityCheckScope}
         />

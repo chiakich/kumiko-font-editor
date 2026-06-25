@@ -4,16 +4,11 @@ import {
   Button,
   Code,
   HStack,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Radio,
   RadioGroup,
   Stack,
   Text,
+  Dialog,
+  Portal,
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -70,109 +65,133 @@ export function DesignspaceImportChoiceModal({
   const canConfirm = Boolean(selectedCandidate && !selectedCandidate.parseError)
 
   return (
-    <Modal isOpen={isOpen} onClose={onCancel} size="2xl" isCentered>
-      <ModalOverlay />
-      <ModalContent borderRadius="sm">
-        <ModalHeader>{t('home.chooseDesignspaceTitle')}</ModalHeader>
-        <ModalBody>
-          <Stack spacing={4}>
-            <Text fontSize="sm" color="field.muted">
-              {t('home.chooseDesignspaceDescription')}
-            </Text>
+    <Dialog.Root
+      open={isOpen}
+      size="xl"
+      placement="center"
+      onOpenChange={(e) => {
+        if (!e.open) {
+          onCancel()
+        }
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content borderRadius="sm">
+            <Dialog.Header>{t('home.chooseDesignspaceTitle')}</Dialog.Header>
+            <Dialog.Body>
+              <Stack gap={4}>
+                <Text fontSize="sm" color="field.muted">
+                  {t('home.chooseDesignspaceDescription')}
+                </Text>
 
-            <RadioGroup
-              value={selectedPath}
-              onChange={(path) => setSelection({ key: candidateKey, path })}
-            >
-              <Stack spacing={3}>
-                {candidates.map((candidate) => {
-                  const { axes } = candidateSummary(candidate)
-                  const disabled = Boolean(candidate.parseError)
-                  return (
-                    <Box
-                      key={candidate.relativePath}
-                      border="1px solid"
-                      borderColor={
-                        candidate.relativePath === selectedPath
-                          ? 'field.red.500'
-                          : 'field.line'
-                      }
-                      bg={
-                        candidate.relativePath === selectedPath
-                          ? 'field.yellow.300'
-                          : 'field.paper'
-                      }
-                      borderRadius="sm"
-                      p={3}
-                    >
-                      <Radio
-                        value={candidate.relativePath}
-                        isDisabled={disabled}
-                      >
-                        <Stack spacing={2} pl={1}>
-                          <HStack spacing={2} align="center" wrap="wrap">
-                            <Code fontSize="xs">{candidate.relativePath}</Code>
-                            {candidate.recommended && (
-                              <Badge colorScheme="green">
-                                {t('home.recommendedDesignspace')}
-                              </Badge>
-                            )}
-                            {disabled && (
-                              <Badge colorScheme="red">
-                                {t('home.unreadableDesignspace')}
-                              </Badge>
-                            )}
-                          </HStack>
-                          <HStack spacing={3} wrap="wrap">
-                            <Text fontSize="xs" color="field.muted">
-                              {t('home.designspaceAxes', { axes })}
-                            </Text>
-                            <Text fontSize="xs" color="field.muted">
-                              {t('home.designspaceSources', {
-                                count: candidate.sourceCount,
-                                matched: candidate.matchedSourceCount,
-                              })}
-                            </Text>
-                            {!candidate.hasDefaultSource && !disabled && (
-                              <Text fontSize="xs" color="field.red.500">
-                                {t('home.designspaceNoDefaultSource')}
-                              </Text>
-                            )}
-                          </HStack>
-                          {candidate.missingSourceCount > 0 && !disabled && (
-                            <Text fontSize="xs" color="field.red.500">
-                              {t('home.designspaceMissingSources', {
-                                count: candidate.missingSourceCount,
-                              })}
-                            </Text>
-                          )}
-                          {candidate.parseError && (
-                            <Text fontSize="xs" color="field.red.500">
-                              {candidate.parseError}
-                            </Text>
-                          )}
-                        </Stack>
-                      </Radio>
-                    </Box>
-                  )
-                })}
+                <RadioGroup.Root
+                  value={selectedPath}
+                  onValueChange={(details) =>
+                    setSelection({
+                      key: candidateKey,
+                      path: details.value ?? '',
+                    })
+                  }
+                >
+                  <Stack gap={3}>
+                    {candidates.map((candidate) => {
+                      const { axes } = candidateSummary(candidate)
+                      const disabled = Boolean(candidate.parseError)
+                      return (
+                        <Box
+                          key={candidate.relativePath}
+                          border="1px solid"
+                          borderColor={
+                            candidate.relativePath === selectedPath
+                              ? 'field.red.500'
+                              : 'field.line'
+                          }
+                          bg={
+                            candidate.relativePath === selectedPath
+                              ? 'field.yellow.300'
+                              : 'field.paper'
+                          }
+                          borderRadius="sm"
+                          p={3}
+                        >
+                          <RadioGroup.Item
+                            value={candidate.relativePath}
+                            disabled={disabled}
+                            alignItems="flex-start"
+                          >
+                            <RadioGroup.ItemHiddenInput />
+                            <RadioGroup.ItemControl mt={1} />
+                            <Stack gap={2} pl={1}>
+                              <HStack gap={2} align="center" wrap="wrap">
+                                <Code fontSize="xs">
+                                  {candidate.relativePath}
+                                </Code>
+                                {candidate.recommended && (
+                                  <Badge colorPalette="green">
+                                    {t('home.recommendedDesignspace')}
+                                  </Badge>
+                                )}
+                                {disabled && (
+                                  <Badge colorPalette="red">
+                                    {t('home.unreadableDesignspace')}
+                                  </Badge>
+                                )}
+                              </HStack>
+                              <HStack gap={3} wrap="wrap">
+                                <Text fontSize="xs" color="field.muted">
+                                  {t('home.designspaceAxes', { axes })}
+                                </Text>
+                                <Text fontSize="xs" color="field.muted">
+                                  {t('home.designspaceSources', {
+                                    count: candidate.sourceCount,
+                                    matched: candidate.matchedSourceCount,
+                                  })}
+                                </Text>
+                                {!candidate.hasDefaultSource && !disabled && (
+                                  <Text fontSize="xs" color="field.red.500">
+                                    {t('home.designspaceNoDefaultSource')}
+                                  </Text>
+                                )}
+                              </HStack>
+                              {candidate.missingSourceCount > 0 &&
+                                !disabled && (
+                                  <Text fontSize="xs" color="field.red.500">
+                                    {t('home.designspaceMissingSources', {
+                                      count: candidate.missingSourceCount,
+                                    })}
+                                  </Text>
+                                )}
+                              {candidate.parseError && (
+                                <Text fontSize="xs" color="field.red.500">
+                                  {candidate.parseError}
+                                </Text>
+                              )}
+                            </Stack>
+                          </RadioGroup.Item>
+                        </Box>
+                      )
+                    })}
+                  </Stack>
+                </RadioGroup.Root>
               </Stack>
-            </RadioGroup>
-          </Stack>
-        </ModalBody>
-        <ModalFooter gap={2}>
-          <Button variant="ghost" onClick={onCancel}>
-            {t('home.cancel')}
-          </Button>
-          <Button
-            onClick={() => selectedPath && onConfirm(selectedPath)}
-            isDisabled={!canConfirm}
-            isLoading={isLoading}
-          >
-            {t('home.importSelectedDesignspace')}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+            </Dialog.Body>
+            <Dialog.Footer gap={2}>
+              <Button variant="ghost" onClick={onCancel}>
+                {t('home.cancel')}
+              </Button>
+              <Button
+                onClick={() => selectedPath && onConfirm(selectedPath)}
+                disabled={!canConfirm}
+                loading={isLoading}
+              >
+                {t('home.importSelectedDesignspace')}
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }

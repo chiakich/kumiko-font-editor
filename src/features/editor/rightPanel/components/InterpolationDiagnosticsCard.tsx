@@ -64,24 +64,22 @@ export function InterpolationDiagnosticsCard({
       borderColor={borderColor}
       borderRadius="sm"
     >
-      <HStack justify="space-between" spacing={2} mb={2} align="center">
+      <HStack justify="space-between" gap={2} mb={2} align="center">
         <Heading size="sm" textTransform="uppercase" color="field.ink">
           {t('editor.interpolationDiagnostics')}
         </Heading>
-        <Badge colorScheme={colorScheme} fontSize="2xs">
+        <Badge colorPalette={colorScheme} fontSize="2xs">
           {isBlocking
             ? t('editor.interpolationBlocking')
             : t('editor.interpolationWarning')}
         </Badge>
       </HStack>
-
       <Text fontSize="xs" color="field.muted" mb={3}>
         {t('editor.interpolationDiagnosticsSummary', {
           issues: diagnostics.issues.length,
           errors: diagnostics.modelErrors.length,
         })}
       </Text>
-
       {diagnostics.isFallback ? (
         <Text fontSize="xs" color="red.600" mb={3}>
           {t('editor.interpolationFallback', {
@@ -89,8 +87,7 @@ export function InterpolationDiagnosticsCard({
           })}
         </Text>
       ) : null}
-
-      <VStack align="stretch" spacing={2}>
+      <VStack align="stretch" gap={2}>
         {visibleIssues.map((issue, index) => {
           const locationLabel = issueLocationLabel(issue)
           return (
@@ -100,8 +97,8 @@ export function InterpolationDiagnosticsCard({
               bg="blackAlpha.50"
               borderRadius="sm"
             >
-              <HStack spacing={2} mb={locationLabel ? 1 : 0} align="center">
-                <Badge colorScheme={colorScheme} fontSize="2xs">
+              <HStack gap={2} mb={locationLabel ? 1 : 0} align="center">
+                <Badge colorPalette={colorScheme} fontSize="2xs">
                   {issue.code}
                 </Badge>
                 {locationLabel ? (
@@ -110,7 +107,7 @@ export function InterpolationDiagnosticsCard({
                     fontSize="2xs"
                     color="field.muted"
                     fontFamily="mono"
-                    noOfLines={1}
+                    lineClamp={1}
                   >
                     {locationLabel}
                   </Text>
@@ -125,8 +122,8 @@ export function InterpolationDiagnosticsCard({
 
         {visibleModelErrors.map((error, index) => (
           <Box key={`${error.type ?? 'model'}-${index}`} p={2} bg="red.50">
-            <HStack spacing={2} mb={1} align="center">
-              <Badge colorScheme="red" fontSize="2xs">
+            <HStack gap={2} mb={1} align="center">
+              <Badge colorPalette="red" fontSize="2xs">
                 {error.type ?? 'model-error'}
               </Badge>
             </HStack>

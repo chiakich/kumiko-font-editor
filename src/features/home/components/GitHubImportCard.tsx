@@ -1,7 +1,7 @@
 import {
   Box,
   Button,
-  Collapse,
+  Collapsible,
   Heading,
   Input,
   Text,
@@ -46,7 +46,7 @@ export function GitHubImportCard({
       <Text fontSize="sm" color="field.muted" mb={4}>
         {t('home.repoInputHint')}
       </Text>
-      <VStack spacing={3} align="stretch">
+      <VStack gap={3} align="stretch">
         <Input
           value={repoInput}
           onChange={(event) => onRepoInputChange(event.target.value)}
@@ -57,33 +57,33 @@ export function GitHubImportCard({
           variant="ghost"
           alignSelf="flex-start"
           onClick={onToggleRefInput}
-          rightIcon={
-            <Text
-              as="span"
-              fontSize="sm"
-              transform={showRefInput ? 'rotate(180deg)' : 'rotate(0deg)'}
-              transition="transform 0.2s ease"
-            >
-              ▾
-            </Text>
-          }
         >
           {showRefInput
             ? '收合 branch / tag / commit'
             : '指定 branch / tag / commit'}
+          <Text
+            as="span"
+            fontSize="sm"
+            transform={showRefInput ? 'rotate(180deg)' : 'rotate(0deg)'}
+            transition="transform 0.2s ease"
+          >
+            ▾
+          </Text>
         </Button>
-        <Collapse in={showRefInput} animateOpacity>
-          <Box>
-            <Input
-              value={refInput}
-              onChange={(event) => onRefInputChange(event.target.value)}
-              placeholder={t('home.refPlaceholder')}
-            />
-          </Box>
-        </Collapse>
+        <Collapsible.Root open={showRefInput}>
+          <Collapsible.Content>
+            <Box>
+              <Input
+                value={refInput}
+                onChange={(event) => onRefInputChange(event.target.value)}
+                placeholder={t('home.refPlaceholder')}
+              />
+            </Box>
+          </Collapsible.Content>
+        </Collapsible.Root>
         <Button
           onClick={() => void onImport()}
-          isLoading={isLoading}
+          loading={isLoading}
           loadingText="下載與解析中..."
         >
           {t('home.loadGitHubProject')}

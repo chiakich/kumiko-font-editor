@@ -57,7 +57,7 @@ export function RecentProjectsList({
           {t('home.noRecentProjects')}
         </Text>
       ) : (
-        <VStack align="stretch" spacing={2} maxHeight="300px" overflowY="auto">
+        <VStack align="stretch" gap={2} maxHeight="300px" overflowY="auto">
           {projects.map((project) => {
             const isEditing = editingId === project.id
             return (
@@ -89,7 +89,7 @@ export function RecentProjectsList({
                       }}
                     />
                   ) : (
-                    <Text fontWeight="900" fontSize="lg" isTruncated>
+                    <Text fontWeight="900" fontSize="lg" truncate>
                       {project.title}
                     </Text>
                   )}
@@ -110,7 +110,7 @@ export function RecentProjectsList({
                     <Button
                       size="sm"
                       onClick={() => void commitEditing()}
-                      isDisabled={!editingTitle.trim()}
+                      disabled={!editingTitle.trim()}
                     >
                       {t('home.save')}
                     </Button>

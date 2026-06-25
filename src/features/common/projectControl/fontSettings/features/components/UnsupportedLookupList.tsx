@@ -13,7 +13,7 @@ export function UnsupportedLookupList({
 
   if (unsupportedLookups.length === 0) {
     return (
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <Text fontWeight="semibold">
           {t('projectControl.unsupportedImportedLookups')}
         </Text>
@@ -25,14 +25,14 @@ export function UnsupportedLookupList({
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       <Text fontWeight="semibold">
         {t('projectControl.unsupportedImportedLookups')}
       </Text>
       {unsupportedLookups.map((lookup) => (
         <Stack
           key={lookup.id}
-          spacing={2}
+          gap={2}
           borderWidth="1px"
           borderRadius="sm"
           p={3}
@@ -44,7 +44,7 @@ export function UnsupportedLookupList({
                 {t('projectControl.type')}
                 {lookup.lookupType}
               </Badge>
-              <Badge colorScheme="orange">{lookup.preserveMode}</Badge>
+              <Badge colorPalette="orange">{lookup.preserveMode}</Badge>
             </HStack>
             <Text fontSize="xs" color="field.muted">
               {t('projectControl.lookup')}

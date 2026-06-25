@@ -2,13 +2,12 @@ import {
   Box,
   Button,
   Checkbox,
-  FormControl,
-  FormLabel,
   HStack,
   Input,
   SimpleGrid,
   Stack,
   Text,
+  Field,
 } from '@chakra-ui/react'
 import { NumberField } from 'src/features/common/projectControl/fontSettings/components/fields'
 import {
@@ -54,7 +53,7 @@ export function FontExportsTab({
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       <HStack justify="space-between">
         <Text fontWeight="semibold">{t('projectControl.exportInstances')}</Text>
         <Button
@@ -78,52 +77,54 @@ export function FontExportsTab({
       </HStack>
       {exports.map((instance, index) => (
         <Box key={instance.id} borderWidth="1px" p={3}>
-          <SimpleGrid columns={{ base: 1, lg: 4 }} spacing={3}>
-            <FormControl>
-              <FormLabel fontSize="sm">{t('projectControl.name')}</FormLabel>
+          <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3}>
+            <Field.Root>
+              <Field.Label fontSize="sm">
+                {t('projectControl.name')}
+              </Field.Label>
               <Input
                 value={instance.name}
                 onChange={(event) =>
                   updateExport(index, { name: event.target.value })
                 }
               />
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="sm">
+            </Field.Root>
+            <Field.Root>
+              <Field.Label fontSize="sm">
                 {t('projectControl.familyName')}
-              </FormLabel>
+              </Field.Label>
               <Input
                 value={instance.familyName ?? ''}
                 onChange={(event) =>
                   updateExport(index, { familyName: event.target.value })
                 }
               />
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="sm">
+            </Field.Root>
+            <Field.Root>
+              <Field.Label fontSize="sm">
                 {t('projectControl.styleName')}
-              </FormLabel>
+              </Field.Label>
               <Input
                 value={instance.styleName}
                 onChange={(event) =>
                   updateExport(index, { styleName: event.target.value })
                 }
               />
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="sm">
+            </Field.Root>
+            <Field.Root>
+              <Field.Label fontSize="sm">
                 {t('projectControl.fileName')}
-              </FormLabel>
+              </Field.Label>
               <Input
                 value={instance.fileName ?? ''}
                 onChange={(event) =>
                   updateExport(index, { fileName: event.target.value })
                 }
               />
-            </FormControl>
+            </Field.Root>
           </SimpleGrid>
           {axes.length > 0 ? (
-            <SimpleGrid columns={{ base: 1, lg: 4 }} spacing={3} mt={3}>
+            <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3} mt={3}>
               {axes.map((axis) => (
                 <NumberField
                   key={axis.name}
@@ -142,11 +143,11 @@ export function FontExportsTab({
               ))}
             </SimpleGrid>
           ) : (
-            <SimpleGrid columns={{ base: 1, lg: 4 }} spacing={3} mt={3}>
-              <FormControl>
-                <FormLabel fontSize="sm">
+            <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3} mt={3}>
+              <Field.Root>
+                <Field.Label fontSize="sm">
                   {t('projectControl.locationJson')}
-                </FormLabel>
+                </Field.Label>
                 <Input
                   fontFamily="mono"
                   value={instance.locationText}
@@ -157,10 +158,10 @@ export function FontExportsTab({
                     })
                   }}
                 />
-              </FormControl>
+              </Field.Root>
             </SimpleGrid>
           )}
-          <SimpleGrid columns={{ base: 1, lg: 4 }} spacing={3} mt={3}>
+          <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3} mt={3}>
             <NumberField
               label={t('projectControl.weightClass')}
               min={1}
@@ -181,14 +182,18 @@ export function FontExportsTab({
             />
           </SimpleGrid>
           <HStack justify="space-between" mt={3}>
-            <Checkbox
-              isChecked={instance.export}
-              onChange={(event) =>
-                updateExport(index, { export: event.target.checked })
+            <Checkbox.Root
+              onCheckedChange={(details) =>
+                updateExport(index, { export: details.checked === true })
               }
+              checked={instance.export}
             >
-              {t('projectControl.export')}
-            </Checkbox>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>{t('projectControl.export')}</Checkbox.Label>
+            </Checkbox.Root>
             <Button
               size="sm"
               variant="ghost"

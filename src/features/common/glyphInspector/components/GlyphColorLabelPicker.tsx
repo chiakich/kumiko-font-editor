@@ -1,4 +1,5 @@
-import { Box, Flex, IconButton, Text, Tooltip } from '@chakra-ui/react'
+import { Box, Flex, IconButton, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import {
   GLYPHS_LABEL_COLOR_KEYS,
   GLYPHS_LABEL_COLORS,
@@ -26,7 +27,7 @@ export function GlyphColorLabelPicker({
         {t('glyphInspector.colorLabel')}
       </Text>
       <Flex gap="5px" wrap="wrap">
-        <Tooltip label={t('glyphInspector.colorLabels.none')}>
+        <Tooltip content={t('glyphInspector.colorLabels.none')}>
           <IconButton
             aria-label={t('glyphInspector.colorLabels.none')}
             aria-pressed={hasNoColor}
@@ -37,28 +38,27 @@ export function GlyphColorLabelPicker({
             variant="ghost"
             bg="transparent"
             border="none"
-            icon={
-              <Box
-                h={hasNoColor ? '14px' : '12px'}
-                w={hasNoColor ? '14px' : '12px'}
-                borderRadius="full"
-                border="1px solid"
-                borderColor={hasNoColor ? 'field.ink' : 'field.gray.300'}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Box
-                  h="2px"
-                  w={hasNoColor ? '9px' : '8px'}
-                  bg="field.gray.400"
-                  transform="rotate(-45deg)"
-                />
-              </Box>
-            }
             _hover={{ bg: 'transparent' }}
             onClick={() => onChange(null)}
-          />
+          >
+            <Box
+              h={hasNoColor ? '14px' : '12px'}
+              w={hasNoColor ? '14px' : '12px'}
+              borderRadius="full"
+              border="1px solid"
+              borderColor={hasNoColor ? 'field.ink' : 'field.gray.300'}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Box
+                h="2px"
+                w={hasNoColor ? '9px' : '8px'}
+                bg="field.gray.400"
+                transform="rotate(-45deg)"
+              />
+            </Box>
+          </IconButton>
         </Tooltip>
         {GLYPHS_LABEL_COLORS.map((color, colorIndex) => {
           const isSelected = areKumikoColorsEqual(value, color)
@@ -66,7 +66,7 @@ export function GlyphColorLabelPicker({
             `glyphInspector.colorLabels.${GLYPHS_LABEL_COLOR_KEYS[colorIndex]}`
           )
           return (
-            <Tooltip key={GLYPHS_LABEL_COLOR_KEYS[colorIndex]} label={label}>
+            <Tooltip key={GLYPHS_LABEL_COLOR_KEYS[colorIndex]} content={label}>
               <IconButton
                 aria-label={label}
                 aria-pressed={isSelected}
@@ -77,25 +77,24 @@ export function GlyphColorLabelPicker({
                 variant="ghost"
                 bg="transparent"
                 border="none"
-                icon={
-                  <Box
-                    h={isSelected ? '14px' : '12px'}
-                    w={isSelected ? '14px' : '12px'}
-                    borderRadius="full"
-                    border={isSelected ? '1px solid' : 'none'}
-                    borderColor="field.ink"
-                    bg={kumikoColorToCssRgba(color)}
-                    opacity={isSelected ? 1 : 0.74}
-                    boxShadow={
-                      isSelected
-                        ? 'none'
-                        : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
-                    }
-                  />
-                }
                 _hover={{ bg: 'transparent' }}
                 onClick={() => onChange(color)}
-              />
+              >
+                <Box
+                  h={isSelected ? '14px' : '12px'}
+                  w={isSelected ? '14px' : '12px'}
+                  borderRadius="full"
+                  border={isSelected ? '1px solid' : 'none'}
+                  borderColor="field.ink"
+                  bg={kumikoColorToCssRgba(color)}
+                  opacity={isSelected ? 1 : 0.74}
+                  boxShadow={
+                    isSelected
+                      ? 'none'
+                      : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
+                  }
+                />
+              </IconButton>
             </Tooltip>
           )
         })}

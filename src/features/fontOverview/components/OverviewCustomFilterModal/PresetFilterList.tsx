@@ -14,7 +14,7 @@ export function PresetFilterList({
   presets,
 }: PresetFilterListProps) {
   return (
-    <VStack align="stretch" overflow="visible" spacing={1}>
+    <VStack align="stretch" overflow="visible" gap={1}>
       {presets.map((preset) => (
         <PresetFilterButton
           key={preset.id}
@@ -40,6 +40,7 @@ function PresetFilterButton({
       alignItems="stretch"
       bg="transparent"
       borderRadius="sm"
+      className="group"
       color="field.ink"
       h="58px"
       justifyContent="flex-start"
@@ -47,7 +48,6 @@ function PresetFilterButton({
       px={3}
       py={2}
       position="relative"
-      role="group"
       textAlign="left"
       variant="ghost"
       whiteSpace="normal"
@@ -65,7 +65,7 @@ function PresetFilterButton({
       onClick={() => onCreatePreset(preset)}
     >
       <PresetHoverBackground />
-      <HStack align="center" flex={1} minW={0} spacing={4} w="100%" zIndex={1}>
+      <HStack align="center" flex={1} minW={0} gap={4} w="100%" zIndex={1}>
         <PresetTitle>{t(preset.labelKey)}</PresetTitle>
         <PresetSummary>{getPresetSummary(preset, t)}</PresetSummary>
         <PresetArrow />
@@ -118,7 +118,7 @@ function PresetSummary({ children }: { children: string }) {
       fontWeight="normal"
       lineHeight="1.35"
       minW={0}
-      noOfLines={1}
+      lineClamp={1}
       overflow="hidden"
     >
       {children}

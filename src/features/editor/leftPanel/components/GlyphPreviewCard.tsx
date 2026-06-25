@@ -24,7 +24,7 @@ export function GlyphPreviewCard({
 
   return (
     <Box flexShrink={0} minH={0}>
-      <VStack align="stretch" spacing={2} h="100%">
+      <VStack align="stretch" gap={2} h="100%">
         <HStack justify="space-between" align="center">
           <Box minW={0}>
             <Text fontSize="sm" color="field.ink" fontWeight="900">
@@ -33,7 +33,7 @@ export function GlyphPreviewCard({
             <Text
               fontSize="xs"
               color="field.muted"
-              noOfLines={1}
+              lineClamp={1}
               fontFamily="mono"
             >
               {glyph.id}

@@ -5,9 +5,9 @@ import {
   Heading,
   Spinner,
   Stack,
-  Switch,
   Text,
 } from '@chakra-ui/react'
+import { Switch } from '@/components/ui/switch'
 import { useMemo } from 'react'
 import {
   buildRadarAdvice,
@@ -20,7 +20,7 @@ const MAX_VISIBLE_ADVICES = 4
 function AdviceRow({ advice }: { advice: RadarAdvice }) {
   return (
     <Box>
-      <HStack spacing={2} align="flex-start">
+      <HStack gap={2} align="flex-start">
         <Box
           mt="6px"
           boxSize="8px"
@@ -28,7 +28,7 @@ function AdviceRow({ advice }: { advice: RadarAdvice }) {
           flexShrink={0}
           bg={advice.severity === 'warning' ? 'red.400' : 'orange.300'}
         />
-        <Stack spacing={0.5}>
+        <Stack gap={0.5}>
           <Text fontSize="sm" fontWeight="700">
             {advice.title}
           </Text>
@@ -65,14 +65,13 @@ export function GlyphInsightCard() {
           品質提示
         </Heading>
         {insight.status === 'ready' ? (
-          <Badge colorScheme={advices.length === 0 ? 'green' : 'orange'}>
+          <Badge colorPalette={advices.length === 0 ? 'green' : 'orange'}>
             {advices.length === 0 ? '良好' : `${advices.length} 項建議`}
           </Badge>
         ) : null}
       </HStack>
-
       {insight.status === 'analyzing' ? (
-        <HStack spacing={2}>
+        <HStack gap={2}>
           <Spinner size="xs" />
           <Text fontSize="xs" color="field.muted">
             正在背景分析字體統計基準…
@@ -83,13 +82,13 @@ export function GlyphInsightCard() {
           漢字樣本不足（需 20 個以上），尚無法跟群體比較。
         </Text>
       ) : (
-        <Stack spacing={3}>
+        <Stack gap={3}>
           {advices.length === 0 ? (
             <Text fontSize="xs" color="field.muted">
               這個字的邊界、比例、墨量與重心都落在這套字的常見範圍內。
             </Text>
           ) : (
-            <Stack spacing={2.5}>
+            <Stack gap={2.5}>
               {advices.slice(0, MAX_VISIBLE_ADVICES).map((advice) => (
                 <AdviceRow key={advice.key} advice={advice} />
               ))}
@@ -106,8 +105,10 @@ export function GlyphInsightCard() {
             </Text>
             <Switch
               size="sm"
-              isChecked={insight.showBands}
-              onChange={(event) => insight.setShowBands(event.target.checked)}
+              checked={insight.showBands}
+              onCheckedChange={(details) =>
+                insight.setShowBands(details.checked)
+              }
             />
           </HStack>
         </Stack>

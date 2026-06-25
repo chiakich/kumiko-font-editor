@@ -78,7 +78,7 @@ export function MetricsCard({
               size="sm"
               type="number"
               value={draftMetrics[field]}
-              isDisabled={isReadOnly}
+              disabled={isReadOnly}
               onFocus={() => setFocusedField(field)}
               onBlur={() => handleBlur(field)}
               onChange={(event) =>

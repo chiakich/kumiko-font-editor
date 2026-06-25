@@ -1,13 +1,5 @@
-import {
-  Box,
-  Button,
-  HStack,
-  Input,
-  Stack,
-  Switch,
-  Tag,
-  Text,
-} from '@chakra-ui/react'
+import { Box, Button, HStack, Input, Stack, Tag, Text } from '@chakra-ui/react'
+import { Switch } from '@/components/ui/switch'
 import { useMemo, useState } from 'react'
 import type { FontData, GlyphData } from 'src/store'
 import { ProofLineSvg } from 'src/features/common/qualityCheck/components/ProofLineSvg'
@@ -73,15 +65,14 @@ export function MixedProofPanel({
   const digitRatio = formatRatio(metrics.digitHeight, metrics.hanFaceHeight)
 
   return (
-    <Stack spacing={4}>
+    <Stack gap={4}>
       <Text fontSize="sm" color="field.muted">
         {isFocusedScope
           ? t('qualityCheck.mixedProof.focusedDescription')
           : t('qualityCheck.mixedProof.description')}
       </Text>
-
-      <HStack spacing={3} wrap="wrap" justify="space-between">
-        <HStack spacing={2} wrap="wrap">
+      <HStack gap={3} wrap="wrap" justify="space-between">
+        <HStack gap={2} wrap="wrap">
           {mixedProofPresets.map((preset) => (
             <Button
               key={preset}
@@ -94,12 +85,12 @@ export function MixedProofPanel({
           ))}
         </HStack>
         {isFocusedScope ? (
-          <HStack spacing={2} ml="auto">
+          <HStack gap={2} ml="auto">
             <Switch
               size="sm"
               aria-label={t('qualityCheck.highlightScopedGlyphs')}
-              isChecked={showHighlight}
-              onChange={(event) => setShowHighlight(event.target.checked)}
+              checked={showHighlight}
+              onCheckedChange={(details) => setShowHighlight(details.checked)}
             />
             <Text fontSize="xs" color="field.muted" fontWeight="800">
               {t('qualityCheck.highlightScopedGlyphs')}
@@ -107,28 +98,25 @@ export function MixedProofPanel({
           </HStack>
         ) : null}
       </HStack>
-
       <Input
         value={proofText}
         onChange={(event) => onProofTextChange(event.target.value)}
       />
-
-      <HStack spacing={2} wrap="wrap">
-        <Tag size="sm">matched {proofRun.matchedCount}</Tag>
-        <Tag size="sm">missing {proofRun.missingCount}</Tag>
-        <Tag size="sm">
+      <HStack gap={2} wrap="wrap">
+        <Tag.Root size="sm">matched {proofRun.matchedCount}</Tag.Root>
+        <Tag.Root size="sm">missing {proofRun.missingCount}</Tag.Root>
+        <Tag.Root size="sm">
           大寫高/漢字字面 {capRatio === null ? 'N/A' : `${capRatio}%`}
-        </Tag>
-        <Tag size="sm">
+        </Tag.Root>
+        <Tag.Root size="sm">
           x字高/漢字字面 {xRatio === null ? 'N/A' : `${xRatio}%`}
-        </Tag>
-        <Tag size="sm">
+        </Tag.Root>
+        <Tag.Root size="sm">
           數字高/漢字字面 {digitRatio === null ? 'N/A' : `${digitRatio}%`}
-        </Tag>
+        </Tag.Root>
       </HStack>
-
       <Stack
-        spacing={3}
+        gap={3}
         bg="field.panel"
         borderWidth={1}
         borderColor="field.line"

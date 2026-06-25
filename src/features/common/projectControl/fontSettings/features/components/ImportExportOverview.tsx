@@ -15,9 +15,9 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
   const summary = deriveOpenTypeImportExportSummary(state)
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       <HStack justify="space-between" align="flex-start" gap={3}>
-        <Stack spacing={1}>
+        <Stack gap={1}>
           <Text fontWeight="semibold">
             {t('projectControl.behaviorLibraryExportView')}
           </Text>
@@ -25,12 +25,11 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
             {t('projectControl.importedTablesAreTreatedAsPreserved')}
           </Text>
         </Stack>
-        <Badge colorScheme="cyan" flexShrink={0}>
+        <Badge colorPalette="cyan" flexShrink={0}>
           {t(`projectControl.exportMode.${state.exportPolicy}.label`)}
         </Badge>
       </HStack>
-
-      <SimpleGrid columns={{ base: 1, md: 4 }} spacing={3}>
+      <SimpleGrid columns={{ base: 1, md: 4 }} gap={3}>
         <OverviewTile
           accent="Sources"
           detail={`${summary.rawFeatureSourceSections} raw / ${summary.compiledSourceSections} compiled`}
@@ -56,8 +55,7 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
           value={summary.generatedRules}
         />
       </SimpleGrid>
-
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+      <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
         <StatusLine
           label={t('projectControl.classifiedSourceSections')}
           value={summary.classifiedSourceSections}
@@ -71,8 +69,7 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
           value={summary.editableLookups}
         />
       </SimpleGrid>
-
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
         <StatusLine
           label={t('projectControl.preservedRawLookups')}
           value={summary.preservedLookups}
@@ -83,7 +80,6 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
           tone={summary.unsupportedLookups > 0 ? 'orange' : 'gray'}
         />
       </SimpleGrid>
-
       <Text fontSize="sm" color="field.muted">
         {t(`projectControl.exportMode.${state.exportPolicy}.description`)}
       </Text>
@@ -103,7 +99,7 @@ function OverviewTile({
   value: number
 }) {
   return (
-    <Stack borderWidth="1px" borderRadius="sm" p={3} spacing={2}>
+    <Stack borderWidth="1px" borderRadius="sm" p={3} gap={2}>
       <HStack justify="space-between">
         <Text fontSize="xs" color="field.muted">
           {label}
@@ -140,7 +136,7 @@ function StatusLine({
       <Text fontSize="sm" color="field.muted">
         {label}
       </Text>
-      <Badge colorScheme={tone}>{value}</Badge>
+      <Badge colorPalette={tone}>{value}</Badge>
     </HStack>
   )
 }

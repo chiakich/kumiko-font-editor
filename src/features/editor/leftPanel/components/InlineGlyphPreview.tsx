@@ -1,4 +1,4 @@
-import { Box } from '@chakra-ui/react'
+import { chakra } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { buildGlyphPreviewData } from 'src/lib/glyph/glyphOverview'
 import { useStore, type GlyphData } from 'src/store'
@@ -26,8 +26,7 @@ export function InlineGlyphPreview({
     READONLY_UNITS_PER_EM
 
   return (
-    <Box
-      as="svg"
+    <chakra.svg
       viewBox={preview.viewBox}
       width="1.4em"
       height="1.4em"
@@ -47,6 +46,6 @@ export function InlineGlyphPreview({
           />
         ))}
       </g>
-    </Box>
+    </chakra.svg>
   )
 }

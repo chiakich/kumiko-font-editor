@@ -1,4 +1,4 @@
-import { Box, Text } from '@chakra-ui/react'
+import { chakra, Text } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import type { ProofGlyph, ProofRun } from 'src/lib/qualityCheck/qualityProof'
 
@@ -98,8 +98,7 @@ export function ProofLineSvg({
   const widthPx = Math.max(fontSize, (proofRun.totalAdvance / 1000) * fontSize)
 
   return (
-    <Box
-      as="svg"
+    <chakra.svg
       viewBox={`0 ${PROOF_DESCENDER} ${proofRun.totalAdvance} ${PROOF_ASCENDER - PROOF_DESCENDER}`}
       width={`${widthPx}px`}
       height={`${Math.max(28, fontSize * 1.8)}px`}
@@ -118,7 +117,7 @@ export function ProofLineSvg({
           highlightGlyphIds={highlightGlyphIds}
         />
       ))}
-    </Box>
+    </chakra.svg>
   )
 }
 
@@ -178,8 +177,7 @@ export function ProofParagraphSvg({
     lines.length * LINE_ADVANCE + (PROOF_ASCENDER - PROOF_DESCENDER - 1000)
 
   return (
-    <Box
-      as="svg"
+    <chakra.svg
       viewBox={`0 ${PROOF_DESCENDER} ${lineWidth} ${totalHeight}`}
       width={`${emPerLine * fontSize}px`}
       maxW="100%"
@@ -200,6 +198,6 @@ export function ProofParagraphSvg({
           />
         ))
       )}
-    </Box>
+    </chakra.svg>
   )
 }

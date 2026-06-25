@@ -1,12 +1,5 @@
-import {
-  Badge,
-  Box,
-  HStack,
-  IconButton,
-  Input,
-  Stack,
-  Tooltip,
-} from '@chakra-ui/react'
+import { Badge, Box, HStack, IconButton, Input, Stack } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Trash } from 'iconoir-react'
 import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
@@ -68,7 +61,7 @@ export function AnchorBehaviorTableRow({
 
   return (
     <Stack
-      spacing={2}
+      gap={2}
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
@@ -107,30 +100,30 @@ export function AnchorBehaviorTableRow({
           onChange={(event) => setY(event.target.value)}
           onKeyDown={commitOnEnter}
         />
-        <Tooltip label={t('editor.deleteAnchor')}>
+        <Tooltip content={t('editor.deleteAnchor')}>
           <IconButton
             aria-label={t('editor.deleteAnchor')}
-            icon={<Trash width={15} height={15} aria-hidden="true" />}
             size="xs"
             variant="ghost"
             color="field.red.500"
             onClick={onDelete}
-          />
+          >
+            <Trash width={15} height={15} aria-hidden="true" />
+          </IconButton>
         </Tooltip>
       </Box>
-
       <HStack justify="space-between" align="center">
-        <Badge colorScheme={name.startsWith('_') ? 'purple' : 'cyan'}>
+        <Badge colorPalette={name.startsWith('_') ? 'purple' : 'cyan'}>
           {name.startsWith('_') ? 'Mark' : 'Base'}
         </Badge>
-        <HStack spacing={1} wrap="wrap" justify="flex-end">
+        <HStack gap={1} wrap="wrap" justify="flex-end">
           {row?.status.map((status) => (
-            <Badge key={status} colorScheme="red">
+            <Badge key={status} colorPalette="red">
               {status}
             </Badge>
           ))}
           {!canCommit && (name || x || y) ? (
-            <Badge colorScheme="red">{t('editor.invalidInput')}</Badge>
+            <Badge colorPalette="red">{t('editor.invalidInput')}</Badge>
           ) : null}
         </HStack>
       </HStack>

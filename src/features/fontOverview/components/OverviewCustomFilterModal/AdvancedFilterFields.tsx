@@ -1,14 +1,13 @@
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   HStack,
   Input,
-  Select,
+  NativeSelect,
   Stack,
   Text,
   VStack,
+  Field,
 } from '@chakra-ui/react'
 import { Plus } from 'iconoir-react'
 import type { Dispatch, SetStateAction } from 'react'
@@ -44,7 +43,7 @@ export function AdvancedFilterFields({
   updateRule,
 }: AdvancedFilterFieldsProps) {
   return (
-    <VStack align="stretch" spacing={4}>
+    <VStack align="stretch" gap={4}>
       <FilterBasicFields draft={draft} setDraft={setDraft} />
       <FilterRulesPanel
         addGroup={addGroup}
@@ -69,8 +68,8 @@ function FilterBasicFields({
 
   return (
     <>
-      <FormControl>
-        <FormLabel>{t('fontOverview.customFilter.name')}</FormLabel>
+      <Field.Root>
+        <Field.Label>{t('fontOverview.customFilter.name')}</Field.Label>
         <Input
           placeholder={t('fontOverview.customFilter.namePlaceholder')}
           value={draft.name}
@@ -78,8 +77,8 @@ function FilterBasicFields({
             setDraft((current) => ({ ...current, name: event.target.value }))
           }
         />
-      </FormControl>
-      <Stack direction={{ base: 'column', md: 'row' }} spacing={3}>
+      </Field.Root>
+      <Stack direction={{ base: 'column', md: 'row' }} gap={3}>
         <FilterModeSelect draft={draft} setDraft={setDraft} />
         <FilterSortSelect draft={draft} setDraft={setDraft} />
       </Stack>
@@ -97,22 +96,27 @@ function FilterModeSelect({
   const { t } = useTranslation()
 
   return (
-    <FormControl>
-      <FormLabel>{t('fontOverview.customFilter.matchMode')}</FormLabel>
-      <Select
-        value={draft.mode}
-        onChange={(event) =>
-          setDraft((current) => ({
-            ...current,
-            mode: event.target.value as OverviewCustomFilterMode,
-          }))
-        }
-      >
-        <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
-        <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
-        <option value="none">{t('fontOverview.customFilter.matchNone')}</option>
-      </Select>
-    </FormControl>
+    <Field.Root>
+      <Field.Label>{t('fontOverview.customFilter.matchMode')}</Field.Label>
+      <NativeSelect.Root>
+        <NativeSelect.Field
+          value={draft.mode}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              mode: event.target.value as OverviewCustomFilterMode,
+            }))
+          }
+        >
+          <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
+          <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
+          <option value="none">
+            {t('fontOverview.customFilter.matchNone')}
+          </option>
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
+    </Field.Root>
   )
 }
 
@@ -126,25 +130,28 @@ function FilterSortSelect({
   const { t } = useTranslation()
 
   return (
-    <FormControl>
-      <FormLabel>{t('fontOverview.customFilter.sort')}</FormLabel>
-      <Select
-        value={draft.sort ?? 'codePoint'}
-        onChange={(event) =>
-          setDraft((current) => ({
-            ...current,
-            sort: event.target.value as OverviewCustomFilterSort,
-          }))
-        }
-      >
-        <option value="codePoint">
-          {t('fontOverview.customFilter.sortCodePoint')}
-        </option>
-        <option value="recentEdit">
-          {t('fontOverview.customFilter.sortRecentEdit')}
-        </option>
-      </Select>
-    </FormControl>
+    <Field.Root>
+      <Field.Label>{t('fontOverview.customFilter.sort')}</Field.Label>
+      <NativeSelect.Root>
+        <NativeSelect.Field
+          value={draft.sort ?? 'codePoint'}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              sort: event.target.value as OverviewCustomFilterSort,
+            }))
+          }
+        >
+          <option value="codePoint">
+            {t('fontOverview.customFilter.sortCodePoint')}
+          </option>
+          <option value="recentEdit">
+            {t('fontOverview.customFilter.sortRecentEdit')}
+          </option>
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
+    </Field.Root>
   )
 }
 
@@ -169,12 +176,9 @@ function FilterRulesPanel({
     <Box border="2px solid" borderColor="field.haze" borderRadius="2px" p={3}>
       <HStack justify="space-between" mb={2}>
         <Text fontWeight="900">{t('fontOverview.customFilter.rules')}</Text>
-        <HStack spacing={2}>
-          <Button
-            leftIcon={<Plus width={16} height={16} strokeWidth={2.2} />}
-            size="sm"
-            onClick={() => addRule(null)}
-          >
+        <HStack gap={2}>
+          <Button size="sm" onClick={() => addRule(null)}>
+            <Plus width={16} height={16} strokeWidth={2.2} />
             {t('fontOverview.customFilter.addRule')}
           </Button>
           <Button size="sm" onClick={() => addGroup(null)}>

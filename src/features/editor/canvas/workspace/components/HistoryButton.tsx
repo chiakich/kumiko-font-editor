@@ -1,4 +1,5 @@
-import { Button, Tooltip } from '@chakra-ui/react'
+import { Button } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Redo, Undo } from 'iconoir-react'
 
 interface HistoryButtonProps {
@@ -16,7 +17,7 @@ export function HistoryButton({
   const label = action === 'undo' ? 'Undo' : 'Redo'
 
   return (
-    <Tooltip label={label}>
+    <Tooltip content={label}>
       <Button
         size="xs"
         minW={8}
@@ -25,7 +26,7 @@ export function HistoryButton({
         variant="ghost"
         color="whiteAlpha.900"
         onClick={onClick}
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         aria-label={label}
       >
         <Icon width={18} height={18} strokeWidth={1.9} aria-hidden="true" />

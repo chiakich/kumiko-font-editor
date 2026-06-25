@@ -13,7 +13,7 @@ export function WorkspaceHeader({
 }) {
   return (
     <HStack justify="space-between" align="flex-start" gap={3}>
-      <Stack spacing={1} minW={0}>
+      <Stack gap={1} minW={0}>
         <Text fontSize="lg" fontWeight="900">
           {title}
         </Text>
@@ -61,7 +61,7 @@ export function SourceSectionsDocument({
 
 export function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <Stack borderWidth="1px" borderRadius="sm" p={3} spacing={1}>
+    <Stack borderWidth="1px" borderRadius="sm" p={3} gap={1}>
       <Text fontSize="xs" color="field.muted">
         {label}
       </Text>

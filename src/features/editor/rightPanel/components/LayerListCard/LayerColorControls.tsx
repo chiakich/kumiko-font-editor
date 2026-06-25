@@ -1,4 +1,5 @@
-import { Box, HStack, Portal, Text, Tooltip } from '@chakra-ui/react'
+import { Box, HStack, Portal, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -37,12 +38,10 @@ function LayerColorButton({
   const swatchSize = isSelected ? '18px' : '15px'
 
   return (
-    <Tooltip label={label}>
+    <Tooltip content={label}>
       <Box
-        as="button"
         aria-label={label}
         aria-pressed={isSelected}
-        type="button"
         alignItems="center"
         borderRadius="full"
         display="flex"
@@ -51,39 +50,41 @@ function LayerColorButton({
         title={label}
         w="22px"
         _hover={{ bg: 'blackAlpha.50' }}
-        onClick={onClick}
+        asChild
       >
-        {color ? (
-          <Box
-            h={swatchSize}
-            w={swatchSize}
-            borderRadius="full"
-            bg={kumikoColorToCssRgba(color)}
-            border={isSelected ? '1px solid' : 'none'}
-            borderColor="field.ink"
-            boxShadow={
-              isSelected ? undefined : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
-            }
-          />
-        ) : (
-          <Box
-            h={swatchSize}
-            w={swatchSize}
-            borderRadius="full"
-            border="1px solid"
-            borderColor={isSelected ? 'field.ink' : 'field.gray.300'}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
+        <button type="button" onClick={onClick}>
+          {color ? (
             <Box
-              h="2px"
-              w="11px"
-              bg="field.gray.400"
-              transform="rotate(-45deg)"
+              h={swatchSize}
+              w={swatchSize}
+              borderRadius="full"
+              bg={kumikoColorToCssRgba(color)}
+              border={isSelected ? '1px solid' : 'none'}
+              borderColor="field.ink"
+              boxShadow={
+                isSelected ? undefined : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
+              }
             />
-          </Box>
-        )}
+          ) : (
+            <Box
+              h={swatchSize}
+              w={swatchSize}
+              borderRadius="full"
+              border="1px solid"
+              borderColor={isSelected ? 'field.ink' : 'field.gray.300'}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Box
+                h="2px"
+                w="11px"
+                bg="field.gray.400"
+                transform="rotate(-45deg)"
+              />
+            </Box>
+          )}
+        </button>
       </Box>
     </Tooltip>
   )
@@ -143,7 +144,7 @@ export function LayerColorContextMenu({
         <Text color="gray.600" fontSize="11px" fontWeight="700" mb="8px">
           {t('editor.layerColorLabel')}
         </Text>
-        <HStack flexWrap="wrap" spacing="3px">
+        <HStack flexWrap="wrap" gap="3px">
           <LayerColorButton
             color={null}
             isSelected={!layer.color}

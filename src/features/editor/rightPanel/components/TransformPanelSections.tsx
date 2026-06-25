@@ -5,8 +5,8 @@ import {
   IconButton,
   Stack,
   Text,
-  Tooltip,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import {
   AlignBottomBox,
   AlignHorizontalCenters,
@@ -106,7 +106,7 @@ export function TransformFrameControls({
   onStep,
 }: TransformFrameControlsProps) {
   return (
-    <HStack align="start" spacing={4}>
+    <HStack align="start" gap={4}>
       <OriginPicker
         origin={origin}
         isDisabled={isDisabled}
@@ -168,21 +168,22 @@ export function AlignControls({ isDisabled, onAlign }: AlignControlsProps) {
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text fontSize="xs" color="field.muted" fontFamily="mono">
         {t('editor.align')}
       </Text>
       <Grid templateColumns="repeat(3, minmax(0, 1fr))" gap={2}>
         {alignButtons.map(({ icon: Icon, label, target }) => (
-          <Tooltip key={target} label={label}>
+          <Tooltip key={target} content={label}>
             <IconButton
               aria-label={label}
               size="sm"
               variant="outline"
-              isDisabled={isDisabled}
-              icon={<Icon width={16} height={16} />}
+              disabled={isDisabled}
               onClick={() => onAlign(target)}
-            />
+            >
+              <Icon width={16} height={16} />
+            </IconButton>
           </Tooltip>
         ))}
       </Grid>
@@ -198,7 +199,7 @@ export function PathOpsControls({
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <HStack justify="space-between">
         <Text fontSize="xs" color="field.muted" fontFamily="mono">
           {t('editor.pathOps')}
@@ -211,15 +212,16 @@ export function PathOpsControls({
       </HStack>
       <Grid templateColumns="repeat(4, minmax(0, 1fr))" gap={2}>
         {pathActions.map(({ icon: Icon, label, operation }) => (
-          <Tooltip key={label} label={label}>
+          <Tooltip key={label} content={label}>
             <IconButton
               aria-label={label}
-              icon={<Icon width={16} height={16} />}
               size="sm"
               variant="outline"
-              isDisabled={!canApply}
+              disabled={!canApply}
               onClick={() => onPathOperation(operation, selectedClosedPathIds)}
-            />
+            >
+              <Icon width={16} height={16} />
+            </IconButton>
           </Tooltip>
         ))}
       </Grid>

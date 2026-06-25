@@ -4,9 +4,6 @@ import {
   HStack,
   Heading,
   Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
   Text,
   VStack,
 } from '@chakra-ui/react'
@@ -62,13 +59,13 @@ export function DesignspaceLocationControl() {
       borderColor="transparent"
       color="field.ink"
     >
-      <VStack spacing={2} align="stretch">
-        <HStack justify="space-between" spacing={2}>
+      <VStack gap={2} align="stretch">
+        <HStack justify="space-between" gap={2}>
           <Heading size="sm" textTransform="uppercase" color="field.ink">
             {t('editor.designspace')}
           </Heading>
           {isInstancePreview ? (
-            <Badge colorScheme="cyan" fontSize="2xs">
+            <Badge colorPalette="cyan" fontSize="2xs">
               {t('editor.instancePreview')}
             </Badge>
           ) : null}
@@ -82,89 +79,93 @@ export function DesignspaceLocationControl() {
             isAxisMarkerActive(axis, marker.value, value)
           )
           return (
-            <HStack key={axis.name} spacing={3} align="center">
+            <HStack key={axis.name} gap={3} align="center">
               <Text
                 w="72px"
                 minW={0}
                 fontSize="xs"
                 fontWeight="700"
-                noOfLines={1}
+                lineClamp={1}
               >
                 {axis.label || axis.name}
               </Text>
-              <Slider
+              <Slider.Root
                 flex="1"
                 min={axis.minValue}
                 max={axis.maxValue}
                 step={getAxisStep(axis)}
-                value={value}
-                aria-label={axis.label || axis.name}
+                value={[value]}
+                aria-label={[axis.label || axis.name]}
                 onPointerDown={() => setDesignspaceScrubbing(true)}
                 onPointerCancel={() => setDesignspaceScrubbing(false)}
-                onChangeStart={() => setDesignspaceScrubbing(true)}
-                onChange={(nextValue) =>
+                onValueChange={(details) =>
                   setEditLocation(
                     snapDesignspaceLocation({
                       axes: axisList,
                       axis,
                       location: editLocation,
                       sources,
-                      value: nextValue,
+                      value: details.value[0] ?? value,
                     })
                   )
                 }
-                onChangeEnd={(nextValue) => {
+                onValueChangeEnd={(details) => {
                   setEditLocation(
                     snapDesignspaceLocation({
                       axes: axisList,
                       axis,
                       location: editLocation,
                       sources,
-                      value: nextValue,
+                      value: details.value[0] ?? value,
                     })
                   )
                   setDesignspaceScrubbing(false)
                 }}
                 onBlur={() => setDesignspaceScrubbing(false)}
               >
-                <SliderTrack bg="blackAlpha.200" position="relative">
-                  <SliderFilledTrack bg="field.yellow.400" />
-                  {sourceMarkers.map((marker) => {
-                    const isActive = isAxisMarkerActive(
-                      axis,
-                      marker.value,
-                      value
-                    )
-                    return (
-                      <Box
-                        key={`${axis.name}-${marker.value}`}
-                        aria-hidden="true"
-                        position="absolute"
-                        left={`${getAxisPercent(axis, marker.value)}%`}
-                        top="50%"
-                        transform="translate(-50%, -50%)"
-                        w={isActive ? '3px' : '2px'}
-                        h={isActive ? '16px' : '10px'}
-                        borderRadius="full"
-                        bg={isActive ? 'field.ink' : 'blackAlpha.500'}
-                        boxShadow={
-                          isActive
-                            ? '0 0 0 3px var(--chakra-colors-field-yellow-200)'
-                            : 'none'
-                        }
-                        pointerEvents="none"
-                        zIndex={2}
-                      />
-                    )
-                  })}
-                </SliderTrack>
-                <SliderThumb
-                  boxSize={3}
-                  bg={hasActiveMarker ? 'field.yellow.400' : 'white'}
-                  border="1px solid"
-                  borderColor={hasActiveMarker ? 'field.ink' : 'blackAlpha.300'}
-                />
-              </Slider>
+                <Slider.Control>
+                  <Slider.Track bg="blackAlpha.200" position="relative">
+                    <Slider.Range bg="field.yellow.400" />
+                    {sourceMarkers.map((marker) => {
+                      const isActive = isAxisMarkerActive(
+                        axis,
+                        marker.value,
+                        value
+                      )
+                      return (
+                        <Box
+                          key={`${axis.name}-${marker.value}`}
+                          aria-hidden="true"
+                          position="absolute"
+                          left={`${getAxisPercent(axis, marker.value)}%`}
+                          top="50%"
+                          transform="translate(-50%, -50%)"
+                          w={isActive ? '3px' : '2px'}
+                          h={isActive ? '16px' : '10px'}
+                          borderRadius="full"
+                          bg={isActive ? 'field.ink' : 'blackAlpha.500'}
+                          boxShadow={
+                            isActive
+                              ? '0 0 0 3px var(--chakra-colors-field-yellow-200)'
+                              : 'none'
+                          }
+                          pointerEvents="none"
+                          zIndex={2}
+                        />
+                      )
+                    })}
+                  </Slider.Track>
+                  <Slider.Thumb
+                    index={0}
+                    boxSize={3}
+                    bg={hasActiveMarker ? 'field.yellow.400' : 'white'}
+                    border="1px solid"
+                    borderColor={
+                      hasActiveMarker ? 'field.ink' : 'blackAlpha.300'
+                    }
+                  />
+                </Slider.Control>
+              </Slider.Root>
               <Text
                 w="48px"
                 flexShrink={0}

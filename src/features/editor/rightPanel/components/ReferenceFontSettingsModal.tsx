@@ -4,26 +4,15 @@ import {
   Checkbox,
   HStack,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Popover,
-  PopoverArrow,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
   Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
   Spinner,
   Stack,
   Text,
+  Dialog,
+  Portal,
 } from '@chakra-ui/react'
+import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -143,10 +132,8 @@ export function ReferenceFontSettingsModal({
     return record?.fontBytes ?? null
   }
 
-  const handleResidualToggle = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!event.target.checked) {
+  const handleResidualToggle = async (checked: boolean) => {
+    if (!checked) {
       clearReferenceFontResidual()
       return
     }
@@ -180,211 +167,249 @@ export function ReferenceFontSettingsModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <ModalOverlay />
-      <ModalContent bg="field.paper">
-        <ModalHeader>{t('editor.referenceFontSettings')}</ModalHeader>
-        <ModalCloseButton isDisabled={isComputingResidual} />
-        <ModalBody>
-          <Stack spacing={5}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".ttf,.otf,.woff"
-              style={{ display: 'none' }}
-              onChange={(event) => void handleFileChange(event)}
-            />
+    <Dialog.Root
+      open={isOpen}
+      size="md"
+      onOpenChange={(e) => {
+        if (!e.open) {
+          onClose()
+        }
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content bg="field.paper">
+            <Dialog.Header>{t('editor.referenceFontSettings')}</Dialog.Header>
+            <DialogCloseButton disabled={isComputingResidual} />
+            <Dialog.Body>
+              <Stack gap={5}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".ttf,.otf,.woff"
+                  style={{ display: 'none' }}
+                  onChange={(event) => void handleFileChange(event)}
+                />
 
-            <Stack spacing={3}>
-              {referenceFontName ? (
-                <HStack justify="space-between" align="flex-start">
-                  <Box minW={0}>
-                    <Text fontSize="xs" color="field.muted" mb={1}>
-                      {t('editor.referenceFontCurrent')}
-                    </Text>
-                    <Text fontSize="sm" fontWeight="800" noOfLines={2}>
-                      {referenceFontName}
-                    </Text>
-                  </Box>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    isDisabled={isComputingResidual}
-                    onClick={handleClear}
-                  >
-                    {t('editor.clearReferenceFont')}
-                  </Button>
-                </HStack>
-              ) : (
-                <Text fontSize="sm" color="field.muted">
-                  {t('editor.referenceFontNoFontLoaded')}
-                </Text>
-              )}
-
-              <Button
-                size="sm"
-                alignSelf="flex-start"
-                isDisabled={isComputingResidual}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {referenceFontName
-                  ? t('editor.referenceFontReplace')
-                  : t('editor.loadReferenceFont')}
-              </Button>
-            </Stack>
-
-            <Box>
-              <Text fontSize="xs" color="field.muted" mb={1}>
-                {t('editor.referenceFontCharOverride')}
-              </Text>
-              <Input
-                size="sm"
-                maxLength={2}
-                isDisabled={!referenceFontName || isComputingResidual}
-                value={referenceFontChar ?? ''}
-                onChange={(event) =>
-                  setReferenceFontChar(event.target.value || null)
-                }
-                placeholder={t('editor.referenceFontCharOverridePlaceholder')}
-              />
-            </Box>
-
-            <Box>
-              <Text fontSize="xs" color="field.muted" mb={2}>
-                {t('editor.referenceFontAppearance')}
-              </Text>
-              <Stack spacing={2}>
-                <HStack justify="space-between" spacing={3}>
-                  <Text fontSize="sm" fontWeight="700">
-                    {t('editor.referenceFontColor')}
-                  </Text>
-                  <Popover placement="bottom-end">
-                    <PopoverTrigger>
+                <Stack gap={3}>
+                  {referenceFontName ? (
+                    <HStack justify="space-between" align="flex-start">
+                      <Box minW={0}>
+                        <Text fontSize="xs" color="field.muted" mb={1}>
+                          {t('editor.referenceFontCurrent')}
+                        </Text>
+                        <Text fontSize="sm" fontWeight="800" lineClamp={2}>
+                          {referenceFontName}
+                        </Text>
+                      </Box>
                       <Button
-                        size="sm"
-                        variant="outline"
-                        aria-label={t('editor.referenceFontColor')}
+                        size="xs"
+                        variant="ghost"
+                        disabled={isComputingResidual}
+                        onClick={handleClear}
                       >
-                        <HStack spacing={2}>
-                          <Box
-                            w="18px"
-                            h="18px"
-                            borderRadius="sm"
-                            borderWidth={1}
-                            borderColor="field.line"
-                            bg={referenceFontColor}
-                            opacity={referenceFontOpacity}
-                          />
-                          <Text fontFamily="mono" fontSize="xs">
-                            {Math.round(referenceFontOpacity * 100)}%
-                          </Text>
-                        </HStack>
+                        {t('editor.clearReferenceFont')}
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      bg="field.paper"
-                      borderColor="field.line"
-                      w="240px"
-                    >
-                      <PopoverArrow bg="field.paper" />
-                      <PopoverBody>
-                        <Stack spacing={3}>
-                          <HStack justify="space-between">
-                            <Text fontSize="sm" fontWeight="700">
-                              {t('editor.referenceFontColor')}
-                            </Text>
-                            <Input
-                              type="color"
-                              size="sm"
-                              w="52px"
-                              h="32px"
-                              p={1}
-                              value={referenceFontColor}
-                              onChange={(event) =>
-                                setReferenceFontColor(event.target.value)
-                              }
-                            />
-                          </HStack>
-                          <Box>
-                            <HStack justify="space-between" mb={1}>
-                              <Text fontSize="sm" fontWeight="700">
-                                {t('editor.referenceFontOpacity')}
-                              </Text>
-                              <Text
-                                fontFamily="mono"
-                                fontSize="xs"
-                                color="field.muted"
-                              >
+                    </HStack>
+                  ) : (
+                    <Text fontSize="sm" color="field.muted">
+                      {t('editor.referenceFontNoFontLoaded')}
+                    </Text>
+                  )}
+
+                  <Button
+                    size="sm"
+                    alignSelf="flex-start"
+                    disabled={isComputingResidual}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {referenceFontName
+                      ? t('editor.referenceFontReplace')
+                      : t('editor.loadReferenceFont')}
+                  </Button>
+                </Stack>
+
+                <Box>
+                  <Text fontSize="xs" color="field.muted" mb={1}>
+                    {t('editor.referenceFontCharOverride')}
+                  </Text>
+                  <Input
+                    size="sm"
+                    maxLength={2}
+                    disabled={!referenceFontName || isComputingResidual}
+                    value={referenceFontChar ?? ''}
+                    onChange={(event) =>
+                      setReferenceFontChar(event.target.value || null)
+                    }
+                    placeholder={t(
+                      'editor.referenceFontCharOverridePlaceholder'
+                    )}
+                  />
+                </Box>
+
+                <Box>
+                  <Text fontSize="xs" color="field.muted" mb={2}>
+                    {t('editor.referenceFontAppearance')}
+                  </Text>
+                  <Stack gap={2}>
+                    <HStack justify="space-between" gap={3}>
+                      <Text fontSize="sm" fontWeight="700">
+                        {t('editor.referenceFontColor')}
+                      </Text>
+                      <Popover.Root
+                        positioning={{
+                          placement: 'bottom-end',
+                        }}
+                      >
+                        <Popover.Trigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            aria-label={t('editor.referenceFontColor')}
+                          >
+                            <HStack gap={2}>
+                              <Box
+                                w="18px"
+                                h="18px"
+                                borderRadius="sm"
+                                borderWidth={1}
+                                borderColor="field.line"
+                                bg={referenceFontColor}
+                                opacity={referenceFontOpacity}
+                              />
+                              <Text fontFamily="mono" fontSize="xs">
                                 {Math.round(referenceFontOpacity * 100)}%
                               </Text>
                             </HStack>
-                            <Slider
-                              min={5}
-                              max={100}
-                              step={5}
-                              value={Math.round(referenceFontOpacity * 100)}
-                              onChange={(value) =>
-                                setReferenceFontOpacity(value / 100)
-                              }
-                            >
-                              <SliderTrack bg="blackAlpha.200">
-                                <SliderFilledTrack bg="field.yellow.400" />
-                              </SliderTrack>
-                              <SliderThumb />
-                            </Slider>
-                          </Box>
-                        </Stack>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </Popover>
-                </HStack>
-              </Stack>
-            </Box>
+                          </Button>
+                        </Popover.Trigger>
+                        <Popover.Positioner>
+                          <Popover.Content
+                            bg="field.paper"
+                            borderColor="field.line"
+                            w="240px"
+                          >
+                            <Popover.Arrow bg="field.paper" />
+                            <Popover.Body>
+                              <Stack gap={3}>
+                                <HStack justify="space-between">
+                                  <Text fontSize="sm" fontWeight="700">
+                                    {t('editor.referenceFontColor')}
+                                  </Text>
+                                  <Input
+                                    type="color"
+                                    size="sm"
+                                    w="52px"
+                                    h="32px"
+                                    p={1}
+                                    value={referenceFontColor}
+                                    onChange={(event) =>
+                                      setReferenceFontColor(event.target.value)
+                                    }
+                                  />
+                                </HStack>
+                                <Box>
+                                  <HStack justify="space-between" mb={1}>
+                                    <Text fontSize="sm" fontWeight="700">
+                                      {t('editor.referenceFontOpacity')}
+                                    </Text>
+                                    <Text
+                                      fontFamily="mono"
+                                      fontSize="xs"
+                                      color="field.muted"
+                                    >
+                                      {Math.round(referenceFontOpacity * 100)}%
+                                    </Text>
+                                  </HStack>
+                                  <Slider.Root
+                                    min={5}
+                                    max={100}
+                                    step={5}
+                                    value={[
+                                      Math.round(referenceFontOpacity * 100),
+                                    ]}
+                                    onValueChange={(details) =>
+                                      setReferenceFontOpacity(
+                                        (details.value[0] ?? 100) / 100
+                                      )
+                                    }
+                                  >
+                                    <Slider.Control>
+                                      <Slider.Track bg="blackAlpha.200">
+                                        <Slider.Range bg="field.yellow.400" />
+                                      </Slider.Track>
+                                      <Slider.Thumb index={0} />
+                                    </Slider.Control>
+                                  </Slider.Root>
+                                </Box>
+                              </Stack>
+                            </Popover.Body>
+                          </Popover.Content>
+                        </Popover.Positioner>
+                      </Popover.Root>
+                    </HStack>
+                  </Stack>
+                </Box>
 
-            <Box opacity={isComputingResidual ? 0.65 : 1}>
-              <HStack justify="space-between" align="center" mb={1}>
-                <Checkbox
-                  size="sm"
-                  isChecked={isResidualChecked || isComputingResidual}
-                  isDisabled={!referenceFontName || isComputingResidual}
-                  onChange={(event) => void handleResidualToggle(event)}
-                >
-                  {t('editor.referenceFontResidualUse')}
-                </Checkbox>
-                {isComputingResidual ? (
-                  <Spinner size="sm" color="field.yellow.400" />
+                <Box opacity={isComputingResidual ? 0.65 : 1}>
+                  <HStack justify="space-between" align="center" mb={1}>
+                    <Checkbox.Root
+                      size="sm"
+                      disabled={!referenceFontName || isComputingResidual}
+                      onCheckedChange={(details) =>
+                        void handleResidualToggle(details.checked === true)
+                      }
+                      checked={isResidualChecked || isComputingResidual}
+                    >
+                      <Checkbox.HiddenInput />
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <Checkbox.Label>
+                        {t('editor.referenceFontResidualUse')}
+                      </Checkbox.Label>
+                    </Checkbox.Root>
+                    {isComputingResidual ? (
+                      <Spinner size="sm" color="field.yellow.400" />
+                    ) : null}
+                  </HStack>
+                  <Text fontSize="xs" color="field.muted">
+                    {t('editor.referenceFontResidualDescription')}
+                  </Text>
+                  {residualSummary && isResidualChecked ? (
+                    <Text fontSize="xs" color="green.500" mt={2}>
+                      {t('editor.referenceFontResidualReady', {
+                        count: residualSummary.entryCount.toLocaleString(),
+                      })}
+                    </Text>
+                  ) : null}
+                  {residualError ? (
+                    <Text fontSize="xs" color="red.400" mt={2}>
+                      {residualError}
+                    </Text>
+                  ) : null}
+                </Box>
+
+                {error ? (
+                  <Text fontSize="xs" color="red.400">
+                    {error}
+                  </Text>
                 ) : null}
-              </HStack>
-              <Text fontSize="xs" color="field.muted">
-                {t('editor.referenceFontResidualDescription')}
-              </Text>
-              {residualSummary && isResidualChecked ? (
-                <Text fontSize="xs" color="green.500" mt={2}>
-                  {t('editor.referenceFontResidualReady', {
-                    count: residualSummary.entryCount.toLocaleString(),
-                  })}
-                </Text>
-              ) : null}
-              {residualError ? (
-                <Text fontSize="xs" color="red.400" mt={2}>
-                  {residualError}
-                </Text>
-              ) : null}
-            </Box>
-
-            {error ? (
-              <Text fontSize="xs" color="red.400">
-                {error}
-              </Text>
-            ) : null}
-          </Stack>
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" onClick={onClose} isDisabled={isComputingResidual}>
-            {t('common.done')}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+              </Stack>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button
+                size="sm"
+                onClick={onClose}
+                disabled={isComputingResidual}
+              >
+                {t('common.done')}
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }

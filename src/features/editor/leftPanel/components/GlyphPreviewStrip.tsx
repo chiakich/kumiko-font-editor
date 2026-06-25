@@ -79,7 +79,7 @@ export function GlyphPreviewStrip({
             const isActive = glyph.id === previewGlyphId
             return (
               <Button
-                size="m"
+                size="sm"
                 variant="ghost"
                 minW="unset"
                 p="3px"

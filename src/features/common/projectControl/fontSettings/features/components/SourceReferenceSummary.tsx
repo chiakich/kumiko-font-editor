@@ -20,11 +20,11 @@ export function SourceReferenceSummary({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text fontSize="xs" color="field.muted">
         {t('projectControl.sourceSections')}
       </Text>
-      <Stack spacing={2}>
+      <Stack gap={2}>
         {sourceSectionRecords.map((sourceSectionRecord) => (
           <SourceReferenceCard
             key={sourceSectionRecord.section.id}
@@ -46,10 +46,10 @@ function SourceReferenceCard({
   const hiddenCount = Math.max(records.length - visibleRecords.length, 0)
 
   return (
-    <Stack spacing={2} borderTopWidth="1px" pt={2}>
+    <Stack gap={2} borderTopWidth="1px" pt={2}>
       <HStack justify="space-between" align="flex-start" gap={2}>
-        <Stack spacing={1} minW={0}>
-          <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
+        <Stack gap={1} minW={0}>
+          <Text fontSize="sm" fontWeight="semibold" lineClamp={1}>
             {section.title}
           </Text>
           <HStack wrap="wrap" gap={1}>
@@ -70,7 +70,7 @@ function SourceReferenceCard({
         ))}
       </HStack>
       {visibleRecords.length > 0 ? (
-        <Stack spacing={1}>
+        <Stack gap={1}>
           {visibleRecords.map((record, index) => (
             <SourceRecordLine
               key={`${record.kind}-${record.id}-${index}`}
@@ -101,9 +101,9 @@ function SourceRecordLine({ record }: { record: SourceSectionRecordSummary }) {
             : undefined
 
   return (
-    <Stack spacing={0}>
+    <Stack gap={0}>
       <HStack minW={0} gap={1}>
-        <Badge flexShrink={0} colorScheme={colorScheme} variant="subtle">
+        <Badge flexShrink={0} colorPalette={colorScheme} variant="subtle">
           {record.kind}
         </Badge>
         {record.table ? (
@@ -111,11 +111,11 @@ function SourceRecordLine({ record }: { record: SourceSectionRecordSummary }) {
             {record.table}
           </Badge>
         ) : null}
-        <Text fontSize="xs" fontFamily="mono" noOfLines={1}>
+        <Text fontSize="xs" fontFamily="mono" lineClamp={1}>
           {record.label}
         </Text>
       </HStack>
-      <Text fontSize="xs" color="field.muted" noOfLines={1}>
+      <Text fontSize="xs" color="field.muted" lineClamp={1}>
         {record.detail}
       </Text>
     </Stack>

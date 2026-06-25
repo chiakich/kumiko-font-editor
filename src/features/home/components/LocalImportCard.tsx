@@ -70,22 +70,18 @@ export function LocalImportCard({
       />
       <Flex gap={2}>
         <Button
-          as="label"
-          htmlFor="package-folder-upload"
           cursor="pointer"
-          isLoading={isLoading}
+          loading={isLoading}
           loadingText="讀取與解析中..."
           flex="1"
+          asChild
         >
-          {t('home.uploadFolder')}
+          <label htmlFor="package-folder-upload">
+            {t('home.uploadFolder')}
+          </label>
         </Button>
-        <Button
-          as="label"
-          htmlFor="package-file-upload"
-          cursor="pointer"
-          flex="1"
-        >
-          {t('home.uploadFile')}
+        <Button cursor="pointer" flex="1" asChild>
+          <label htmlFor="package-file-upload">{t('home.uploadFile')}</label>
         </Button>
       </Flex>
       {isLoading && (

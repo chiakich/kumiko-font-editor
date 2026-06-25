@@ -1,4 +1,4 @@
-import { Box, Button, HStack, Spinner, Text, VStack } from '@chakra-ui/react'
+import { Button, chakra, HStack, Spinner, Text, VStack } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GlyphwikiPartBox } from 'src/lib/glyph/glyphwikiComposition'
@@ -21,8 +21,7 @@ function PartPositionIndicator({
   isSelected: boolean
 }) {
   return (
-    <Box
-      as="svg"
+    <chakra.svg
       viewBox="0 0 200 200"
       width="14px"
       height="14px"
@@ -50,7 +49,7 @@ function PartPositionIndicator({
           fillOpacity={isSelected ? 0.9 : 0.55}
         />
       ))}
-    </Box>
+    </chakra.svg>
   )
 }
 
@@ -76,13 +75,13 @@ export function ComponentSearchSection({
   }, [components, partBoxesByComponent])
 
   return (
-    <VStack align="stretch" spacing={2}>
+    <VStack align="stretch" gap={2}>
       <Text fontSize="sm" color="field.muted" fontFamily="mono">
         {t('editor.decompositionComponents')}
       </Text>
-      <HStack spacing={2} flexWrap="wrap">
+      <HStack gap={2} flexWrap="wrap">
         {loading && components.length === 0 ? (
-          <HStack spacing={2}>
+          <HStack gap={2}>
             <Spinner size="sm" color="field.yellow.400" />
             <Text fontSize="sm" color="field.muted">
               {t('editor.analyzing')}
@@ -100,15 +99,13 @@ export function ComponentSearchSection({
                 fontFamily="glyph"
                 opacity={boxes?.length || isSelected ? 1 : 0.55}
                 onClick={() => onSelectComponent(component)}
-                leftIcon={
-                  boxes?.length ? (
-                    <PartPositionIndicator
-                      boxes={boxes}
-                      isSelected={isSelected}
-                    />
-                  ) : undefined
-                }
               >
+                {boxes?.length ? (
+                  <PartPositionIndicator
+                    boxes={boxes}
+                    isSelected={isSelected}
+                  />
+                ) : undefined}
                 {component}
               </Button>
             )

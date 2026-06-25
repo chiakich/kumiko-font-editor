@@ -1,15 +1,14 @@
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   HStack,
   Input,
   Grid,
   Stack,
   Text,
   IconButton,
-  Select,
+  NativeSelect,
+  Field,
 } from '@chakra-ui/react'
 import { XmarkCircle } from 'iconoir-react'
 import { Fragment } from 'react'
@@ -73,7 +72,7 @@ export function LocalizedNamesEditor({
   }
 
   return (
-    <Stack spacing={4}>
+    <Stack gap={4}>
       {editableNameKeys.map(([nameKey, label]) => {
         const entries = Object.entries(localizedNames[nameKey] ?? {})
         return (
@@ -98,38 +97,41 @@ export function LocalizedNamesEditor({
             <Grid templateColumns="240px 1fr min-content" gap={2}>
               {entries.map(([language, value]) => (
                 <Fragment key={`${nameKey}-${language}`}>
-                  <FormControl>
-                    <FormLabel fontSize="xs">
+                  <Field.Root>
+                    <Field.Label fontSize="xs">
                       {t('projectControl.language')}
-                    </FormLabel>
-                    <Select
-                      value={language}
-                      onChange={(event) =>
-                        updateLanguage(nameKey, language, event.target.value)
-                      }
-                    >
-                      {!COMMON_LANGUAGES.some((l) => l.tag === language) &&
-                        language && (
-                          <option value={language}>{language}</option>
-                        )}
-                      {COMMON_LANGUAGES.map((lang) => (
-                        <option key={lang.tag} value={lang.tag}>
-                          {lang.label} ({lang.tag})
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel fontSize="xs">
+                    </Field.Label>
+                    <NativeSelect.Root>
+                      <NativeSelect.Field
+                        value={language}
+                        onChange={(event) =>
+                          updateLanguage(nameKey, language, event.target.value)
+                        }
+                      >
+                        {!COMMON_LANGUAGES.some((l) => l.tag === language) &&
+                          language && (
+                            <option value={language}>{language}</option>
+                          )}
+                        {COMMON_LANGUAGES.map((lang) => (
+                          <option key={lang.tag} value={lang.tag}>
+                            {lang.label} ({lang.tag})
+                          </option>
+                        ))}
+                      </NativeSelect.Field>
+                      <NativeSelect.Indicator />
+                    </NativeSelect.Root>
+                  </Field.Root>
+                  <Field.Root>
+                    <Field.Label fontSize="xs">
                       {t('projectControl.value')}
-                    </FormLabel>
+                    </Field.Label>
                     <Input
                       value={value}
                       onChange={(event) =>
                         updateValue(nameKey, language, event.target.value)
                       }
                     />
-                  </FormControl>
+                  </Field.Root>
                   <IconButton
                     alignSelf="end"
                     variant="ghost"
@@ -138,10 +140,9 @@ export function LocalizedNamesEditor({
                     aria-label={t('projectControl.delete')}
                     borderRadius="full"
                     _hover={{ bg: 'transparent', color: 'red.500' }}
-                    icon={
-                      <XmarkCircle width={20} height={20} aria-hidden="true" />
-                    }
-                  />
+                  >
+                    <XmarkCircle width={20} height={20} aria-hidden="true" />
+                  </IconButton>
                 </Fragment>
               ))}
             </Grid>

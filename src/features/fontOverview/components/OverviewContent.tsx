@@ -8,8 +8,8 @@ import {
   Stack,
   Tag,
   Text,
-  Tooltip,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { useCallback, useEffect, useMemo, useRef, type MouseEvent } from 'react'
 import { Minus, Plus } from 'iconoir-react'
 import { MasterSwitcher } from 'src/features/common/masterSwitcher/MasterSwitcher'
@@ -174,8 +174,8 @@ export function OverviewContent({
       backgroundRepeat="repeat"
     >
       <Box h="100%" overflow="auto" p={5}>
-        <Stack spacing={5}>
-          <HStack justify="space-between" align="flex-start" spacing={4}>
+        <Stack gap={5}>
+          <HStack justify="space-between" align="flex-start" gap={4}>
             <Box>
               <Text
                 fontSize="10px"
@@ -198,7 +198,7 @@ export function OverviewContent({
                 {t('fontOverview.glyphCardHint')}
               </Text>
             </Box>
-            <HStack spacing={3} flexShrink={0} align="center">
+            <HStack gap={3} flexShrink={0} align="center">
               <MasterSwitcher />
               <Button
                 size="sm"
@@ -233,15 +233,15 @@ export function OverviewContent({
                 <Heading size="sm" color="field.ink" textTransform="uppercase">
                   {activeSection.label}
                 </Heading>
-                <Tag size="sm" variant="subtle">
+                <Tag.Root size="sm" variant="subtle">
                   {activeSection.glyphs.length}
-                </Tag>
+                </Tag.Root>
               </HStack>
 
               <Box
                 flex={1}
                 minH={0}
-                sx={{
+                css={{
                   '--overview-card-min-width': `${zoomLayout.cardMinWidth}px`,
                   '--overview-grid-gap': `${zoomLayout.gap}px`,
                 }}
@@ -288,13 +288,12 @@ export function OverviewContent({
           )}
         </Stack>
       </Box>
-
       <HStack
         position="absolute"
         right={5}
         bottom={5}
         zIndex={2}
-        spacing={1}
+        gap={1}
         p={1}
         bg="field.panel"
         border="1px solid"
@@ -302,15 +301,16 @@ export function OverviewContent({
         borderRadius="sm"
         boxShadow="floating"
       >
-        <Tooltip label={t('fontOverview.zoomOut')}>
+        <Tooltip content={t('fontOverview.zoomOut')}>
           <IconButton
             aria-label={t('fontOverview.zoomOut')}
-            icon={<Minus width={16} height={16} aria-hidden="true" />}
-            isDisabled={!canZoomOut}
+            disabled={!canZoomOut}
             size="sm"
             variant="ghost"
             onClick={onZoomOut}
-          />
+          >
+            <Minus width={16} height={16} aria-hidden="true" />
+          </IconButton>
         </Tooltip>
         <Input
           aria-label={t('fontOverview.zoomSize')}
@@ -332,15 +332,16 @@ export function OverviewContent({
             }
           }}
         />
-        <Tooltip label={t('fontOverview.zoomIn')}>
+        <Tooltip content={t('fontOverview.zoomIn')}>
           <IconButton
             aria-label={t('fontOverview.zoomIn')}
-            icon={<Plus width={16} height={16} aria-hidden="true" />}
-            isDisabled={!canZoomIn}
+            disabled={!canZoomIn}
             size="sm"
             variant="ghost"
             onClick={onZoomIn}
-          />
+          >
+            <Plus width={16} height={16} aria-hidden="true" />
+          </IconButton>
         </Tooltip>
       </HStack>
     </Box>

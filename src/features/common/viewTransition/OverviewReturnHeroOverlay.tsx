@@ -149,7 +149,7 @@ export function OverviewReturnHeroOverlay() {
       color="field.ink"
       pointerEvents="none"
       aria-hidden="true"
-      sx={{
+      css={{
         contain: 'layout paint style',
         willChange: 'color, transform, opacity',
       }}

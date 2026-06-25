@@ -6,10 +6,10 @@ import {
   Progress,
   SimpleGrid,
   Stack,
-  Switch,
   Tag,
   Text,
 } from '@chakra-ui/react'
+import { Switch } from '@/components/ui/switch'
 import { useMemo, useState } from 'react'
 import type { FontData, GlyphData } from 'src/store'
 import { ProofParagraphSvg } from 'src/features/common/qualityCheck/components/ProofLineSvg'
@@ -130,15 +130,14 @@ export function GrayProofPanel({
   }, [grayStats, isFocusedScope, proofRun.glyphs, selectedGlyphIdSet])
 
   return (
-    <Stack spacing={4}>
+    <Stack gap={4}>
       <Text fontSize="sm" color="field.muted">
         {isFocusedScope
           ? t('qualityCheck.grayProof.focusedDescription')
           : t('qualityCheck.grayProof.description')}
       </Text>
-
-      <HStack spacing={3} wrap="wrap" justify="space-between">
-        <HStack spacing={2} wrap="wrap">
+      <HStack gap={3} wrap="wrap" justify="space-between">
+        <HStack gap={2} wrap="wrap">
           {grayArticlePresets.map((preset, index) => (
             <Button
               key={preset.slice(0, 8)}
@@ -149,16 +148,16 @@ export function GrayProofPanel({
               文章 {index + 1}
             </Button>
           ))}
-          <Tag size="sm">{grayStats.sampleCount} 個漢字樣本</Tag>
-          <Tag size="sm">missing {proofRun.missingCount}</Tag>
+          <Tag.Root size="sm">{grayStats.sampleCount} 個漢字樣本</Tag.Root>
+          <Tag.Root size="sm">missing {proofRun.missingCount}</Tag.Root>
         </HStack>
         {isFocusedScope ? (
-          <HStack spacing={2} ml="auto">
+          <HStack gap={2} ml="auto">
             <Switch
               size="sm"
               aria-label={t('qualityCheck.highlightScopedGlyphs')}
-              isChecked={showHighlight}
-              onChange={(event) => setShowHighlight(event.target.checked)}
+              checked={showHighlight}
+              onCheckedChange={(details) => setShowHighlight(details.checked)}
             />
             <Text fontSize="xs" color="field.muted" fontWeight="800">
               {t('qualityCheck.highlightScopedGlyphs')}
@@ -166,8 +165,7 @@ export function GrayProofPanel({
           </HStack>
         ) : null}
       </HStack>
-
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+      <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
         <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={3}>
           <Text fontSize="xs" color="field.muted" fontWeight="800">
             整段平均灰度
@@ -175,7 +173,15 @@ export function GrayProofPanel({
           <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
             {meanPercent === null ? 'N/A' : `${meanPercent}%`}
           </Text>
-          <Progress value={meanPercent ?? 0} size="xs" colorScheme="yellow" />
+          <Progress.Root
+            value={meanPercent ?? 0}
+            size="xs"
+            colorPalette="yellow"
+          >
+            <Progress.Track>
+              <Progress.Range />
+            </Progress.Track>
+          </Progress.Root>
         </Box>
         <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={3}>
           <Text fontSize="xs" color="field.muted" fontWeight="800">
@@ -194,8 +200,7 @@ export function GrayProofPanel({
           </Text>
         </Box>
       </SimpleGrid>
-
-      <Stack spacing={3}>
+      <Stack gap={3}>
         {paragraphSizes.map((fontSize) => (
           <Box
             key={fontSize}
@@ -216,7 +221,6 @@ export function GrayProofPanel({
           </Box>
         ))}
       </Stack>
-
       {isFocusedScope ? (
         <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
           <Text fontSize="sm" fontWeight="900" mb={3}>
@@ -227,10 +231,10 @@ export function GrayProofPanel({
               檢查範圍內沒有可估算灰度的輪廓，或不在文章中。
             </Text>
           ) : (
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
               {selectedComparisons.map((comparison) => (
                 <HStack key={comparison.glyphId} justify="space-between">
-                  <HStack spacing={2} minW={0}>
+                  <HStack gap={2} minW={0}>
                     <Text fontFamily="glyph" fontSize="lg" lineHeight={1}>
                       {comparison.character}
                     </Text>
@@ -238,7 +242,7 @@ export function GrayProofPanel({
                       {comparison.glyphName}
                     </Text>
                   </HStack>
-                  <HStack spacing={2}>
+                  <HStack gap={2}>
                     <Text fontFamily="mono" fontSize="xs" color="field.muted">
                       {comparison.inkPercent === null
                         ? 'N/A'
@@ -248,7 +252,7 @@ export function GrayProofPanel({
                         : `（${comparison.deltaPercent > 0 ? '+' : ''}${comparison.deltaPercent}）`}
                     </Text>
                     <Badge
-                      colorScheme={
+                      colorPalette={
                         comparison.tone === 'ok'
                           ? 'green'
                           : comparison.tone === 'dark'
@@ -282,10 +286,10 @@ export function GrayProofPanel({
               這段文章中沒有灰度明顯偏離的字。
             </Text>
           ) : (
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
               {grayStats.outliers.map((outlier) => (
                 <HStack key={outlier.glyphId} justify="space-between">
-                  <HStack spacing={2} minW={0}>
+                  <HStack gap={2} minW={0}>
                     <Text fontFamily="glyph" fontSize="lg" lineHeight={1}>
                       {outlier.character}
                     </Text>
@@ -293,14 +297,14 @@ export function GrayProofPanel({
                       {outlier.glyphName}
                     </Text>
                   </HStack>
-                  <HStack spacing={2}>
+                  <HStack gap={2}>
                     <Text fontFamily="mono" fontSize="xs" color="field.muted">
                       {outlier.inkRatio === null
                         ? 'N/A'
                         : `${toPercent(outlier.inkRatio)}%`}
                     </Text>
                     <Badge
-                      colorScheme={outlier.deviation > 0 ? 'red' : 'orange'}
+                      colorPalette={outlier.deviation > 0 ? 'red' : 'orange'}
                     >
                       {outlier.deviation > 0 ? '偏黑' : '偏淡'}
                     </Badge>

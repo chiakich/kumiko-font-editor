@@ -1,8 +1,8 @@
 import {
   Box,
   Button,
-  Divider,
   HStack,
+  Separator,
   SimpleGrid,
   Spinner,
   Stack,
@@ -99,7 +99,7 @@ export function StructurePanel({
     return (
       <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={6}>
         {isAnalyzing ? (
-          <HStack spacing={3}>
+          <HStack gap={3}>
             <Spinner size="sm" color="field.yellow.400" />
             <Text fontSize="sm" color="field.muted" fontWeight="800">
               正在背景分析字體幾何…
@@ -115,9 +115,9 @@ export function StructurePanel({
   }
 
   return (
-    <Stack spacing={4}>
+    <Stack gap={4}>
       {!isFocusedScope && radar ? (
-        <SimpleGrid columns={{ base: 2, md: 5 }} spacing={3}>
+        <SimpleGrid columns={{ base: 2, md: 5 }} gap={3}>
           <RadarScoreTile
             label="整體健康度"
             score={radar.overallScore}
@@ -140,7 +140,6 @@ export function StructurePanel({
           </Text>
         </Box>
       ) : null}
-
       {isFocusedScope ? (
         <Text fontSize="sm" color="field.muted">
           以整套字體現有 {baseline.sampleCount}{' '}
@@ -155,10 +154,9 @@ export function StructurePanel({
           各邊兩類筆畫邊距的眾數與 80% 集中區間，可用來檢查新做或新產生的字。
         </Text>
       )}
-
-      <HStack align="flex-start" spacing={6} flexWrap="wrap">
+      <HStack align="flex-start" gap={6} flexWrap="wrap">
         <StructureRangeSvg baseline={baseline} />
-        <Stack spacing={3} flex={1} minW="260px">
+        <Stack gap={3} flex={1} minW="260px">
           {STRUCTURE_SIDES.map((side) => (
             <Box
               key={side}
@@ -170,7 +168,7 @@ export function StructurePanel({
               <Text fontSize="xs" fontWeight="900" mb={2}>
                 {sideLabels[side]}
               </Text>
-              <Stack spacing={1}>
+              <Stack gap={1}>
                 <DistributionRow
                   label="框架"
                   colorScheme="pink"
@@ -185,15 +183,14 @@ export function StructurePanel({
             </Box>
           ))}
           {baseline.centerOffsetMedian !== null ? (
-            <Tag size="sm" w="fit-content">
+            <Tag.Root size="sm" w="fit-content">
               左右框架字 lsb−rsb 基準 {baseline.centerOffsetMedian}
-            </Tag>
+            </Tag.Root>
           ) : null}
         </Stack>
       </HStack>
-
       {isFocusedScope ? (
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <Text fontSize="sm" fontWeight="900">
             範圍內字的邊界筆畫分析（{scopedSamples.length} 個漢字）
           </Text>
@@ -218,7 +215,7 @@ export function StructurePanel({
                 p={3}
               >
                 <HStack justify="space-between" mb={2}>
-                  <HStack spacing={3}>
+                  <HStack gap={3}>
                     <Text fontFamily="glyph" fontSize="2xl" lineHeight={1}>
                       {sample.character}
                     </Text>
@@ -240,7 +237,6 @@ export function StructurePanel({
           )}
         </Stack>
       ) : null}
-
       {radar ? (
         <Box borderWidth={1} borderColor="field.line" bg="field.panel">
           <HStack justify="space-between" px={3} py={2} bg="field.panelMuted">
@@ -249,15 +245,15 @@ export function StructurePanel({
                 ? '範圍內字的離群分析'
                 : '最值得人工檢查的字（風險排名）'}
             </Text>
-            <HStack spacing={2}>
-              <Tag
+            <HStack gap={2}>
+              <Tag.Root
                 size="sm"
-                colorScheme={radar.suspects.length > 0 ? 'orange' : 'green'}
+                colorPalette={radar.suspects.length > 0 ? 'orange' : 'green'}
               >
                 {isFocusedScope
                   ? `${visibleEvaluations.filter((entry) => entry.score > 0).length} 個離群`
                   : `${radar.suspects.length} 個可疑字`}
-              </Tag>
+              </Tag.Root>
             </HStack>
           </HStack>
           {visibleEvaluations.length === 0 ? (
@@ -269,7 +265,7 @@ export function StructurePanel({
               </Text>
             </Box>
           ) : (
-            <Stack spacing={0} divider={<Divider />} align="stretch">
+            <Stack gap={0} align="stretch">
               {visibleEvaluations.map((evaluation, index) => (
                 <SuspectRow
                   key={evaluation.glyphId}
@@ -278,6 +274,7 @@ export function StructurePanel({
                   onLocateGlyph={onLocateGlyph}
                 />
               ))}
+              <Separator />
               {!isFocusedScope &&
               radar.suspects.length > visibleEvaluations.length ? (
                 <Text fontSize="xs" color="field.muted" px={3} py={2}>

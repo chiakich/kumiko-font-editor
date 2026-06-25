@@ -1,4 +1,4 @@
-import { Box, Divider, Grid, VStack } from '@chakra-ui/react'
+import { Box, Grid, VStack, Separator } from '@chakra-ui/react'
 import { DesignspaceImportChoiceModal } from 'src/features/home/components/DesignspaceImportChoiceModal'
 import { GitHubImportCard } from 'src/features/home/components/GitHubImportCard'
 import { HomeHeader } from 'src/features/home/components/HomeHeader'
@@ -78,7 +78,6 @@ export function Home() {
         onCancel={handleCancelGitHubDesignspaceImport}
         onConfirm={handleConfirmGitHubDesignspaceImport}
       />
-
       <Box
         p={{ base: 5, md: 8 }}
         borderRadius="sm"
@@ -101,7 +100,7 @@ export function Home() {
       >
         <HomeHeader />
 
-        <VStack spacing={6} align="stretch">
+        <VStack gap={6} align="stretch">
           <Grid templateColumns="1fr 1fr" gap={6}>
             <LocalImportCard
               folderInputRef={folderInputRef}
@@ -130,7 +129,7 @@ export function Home() {
             />
           </Grid>
 
-          <Divider borderColor="field.line" />
+          <Separator borderColor="field.line" />
 
           <RecentProjectsList
             projects={projects}

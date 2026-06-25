@@ -529,17 +529,14 @@ export function GlyphReadonlyReference({
       <Text fontSize="xs" color="field.muted" mb={2} fontFamily="mono">
         {t('editor.componentSearchHint')}
       </Text>
-      <Box
-        as="canvas"
-        ref={canvasRef}
-        display="block"
-        w="100%"
-        h="220px"
-        cursor="pointer"
-        onPointerMove={handlePointerMove}
-        onPointerLeave={handlePointerLeave}
-        onClick={handleClick}
-      />
+      <Box display="block" w="100%" h="220px" cursor="pointer" asChild>
+        <canvas
+          ref={canvasRef}
+          onPointerMove={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
+          onClick={handleClick}
+        />
+      </Box>
     </Box>
   )
 }

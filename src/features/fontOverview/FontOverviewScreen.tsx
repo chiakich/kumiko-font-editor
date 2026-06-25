@@ -1,4 +1,5 @@
-import { Grid, GridItem, useToast } from '@chakra-ui/react'
+import { useToast } from '@/components/ui/toast'
+import { Grid, GridItem } from '@chakra-ui/react'
 import {
   useCallback,
   useEffect,

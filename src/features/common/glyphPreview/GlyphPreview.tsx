@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from '@chakra-ui/react'
+import { chakra, Flex, Text } from '@chakra-ui/react'
 import { memo, useMemo } from 'react'
 import {
   buildGlyphPreviewData,
@@ -46,8 +46,7 @@ export const GlyphPreviewArtwork = memo(function GlyphPreviewArtwork({
   }
 
   return (
-    <Box
-      as="svg"
+    <chakra.svg
       viewBox={preview.viewBox}
       width="100%"
       height="100%"
@@ -65,7 +64,7 @@ export const GlyphPreviewArtwork = memo(function GlyphPreviewArtwork({
           />
         ))}
       </g>
-    </Box>
+    </chakra.svg>
   )
 })
 

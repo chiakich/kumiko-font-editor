@@ -1,13 +1,13 @@
 import {
   Box,
   Button,
-  Divider,
   Heading,
   HStack,
   Stack,
   Text,
-  Tooltip,
+  Separator,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Refresh } from 'iconoir-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -181,8 +181,7 @@ export function BatchTransformCard({
           </Text>
         </Box>
       </HStack>
-
-      <Stack spacing={4}>
+      <Stack gap={4}>
         <Box>
           <OriginPicker
             origin={origin}
@@ -191,9 +190,9 @@ export function BatchTransformCard({
           />
         </Box>
 
-        <Divider borderColor="field.panelMuted" />
+        <Separator borderColor="field.panelMuted" />
 
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <ScaleActionGroup
             scaleX={actionDrafts.scaleX}
             scaleY={actionDrafts.scaleY}
@@ -268,26 +267,26 @@ export function BatchTransformCard({
             <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
               {t('editor.quick')}
             </Text>
-            <Tooltip label={t('editor.rotate90Degrees')}>
+            <Tooltip content={t('editor.rotate90Degrees')}>
               <Button
                 aria-label={t('editor.rotate90Degrees')}
-                leftIcon={<Refresh width={16} height={16} />}
                 size="sm"
                 w="100%"
-                isDisabled={isDisabled}
+                disabled={isDisabled}
                 onClick={() =>
                   applyToAll((nodes, bounds) =>
                     buildRotatedUpdates(nodes, bounds, 90, origin)
                   )
                 }
               >
+                <Refresh width={16} height={16} />
                 {t('editor.rotateNinety')}
               </Button>
             </Tooltip>
           </Box>
         </Stack>
 
-        <Divider borderColor="field.panelMuted" />
+        <Separator borderColor="field.panelMuted" />
 
         <MirrorControls isDisabled={isDisabled} onMirror={applyMirror} />
       </Stack>

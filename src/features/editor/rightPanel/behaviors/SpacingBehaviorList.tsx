@@ -1,12 +1,5 @@
-import {
-  Badge,
-  Box,
-  HStack,
-  IconButton,
-  Stack,
-  Text,
-  Tooltip,
-} from '@chakra-ui/react'
+import { Badge, Box, HStack, IconButton, Stack, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { MinusCircle, PlusCircle } from 'iconoir-react'
 import { useState } from 'react'
 import type {
@@ -35,16 +28,15 @@ export function SpacingBehaviorList({
   const rightRows = rows.filter((row) => row.left === currentGlyphId)
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <HStack justify="space-between" align="center">
-        <HStack spacing={2}>
+        <HStack gap={2}>
           <Text fontSize="sm" fontWeight="semibold">
             {t('editor.spacing')}
           </Text>
-          <Badge colorScheme="gray">{rows.length}</Badge>
+          <Badge colorPalette="gray">{rows.length}</Badge>
         </HStack>
       </HStack>
-
       <SpacingBehaviorGroup
         title={t('editor.leftSpacing')}
         side="left"
@@ -107,31 +99,33 @@ function SpacingBehaviorGroup({
         borderBottomWidth="1px"
         borderColor="field.line"
       >
-        <HStack spacing={2}>
+        <HStack gap={2}>
           <Text fontSize="xs" fontWeight="bold">
             {title}
           </Text>
-          <Badge colorScheme="gray">{rows.length}</Badge>
+          <Badge colorPalette="gray">{rows.length}</Badge>
         </HStack>
-        <HStack spacing={1}>
-          <Tooltip label={`Add ${title.toLowerCase()} pair`}>
+        <HStack gap={1}>
+          <Tooltip content={`Add ${title.toLowerCase()} pair`}>
             <IconButton
               aria-label={`新增 ${title} pair`}
-              icon={<PlusCircle width={16} height={16} aria-hidden="true" />}
               size="xs"
               variant="ghost"
               onClick={addDraftRow}
-            />
+            >
+              <PlusCircle width={16} height={16} aria-hidden="true" />
+            </IconButton>
           </Tooltip>
-          <Tooltip label={t('editor.removeTheLastDraftRow')}>
+          <Tooltip content={t('editor.removeTheLastDraftRow')}>
             <IconButton
               aria-label={`移除最後一列 ${title} 草稿`}
-              icon={<MinusCircle width={16} height={16} aria-hidden="true" />}
               size="xs"
               variant="ghost"
-              isDisabled={draftRowIds.length === 0}
+              disabled={draftRowIds.length === 0}
               onClick={() => removeDraftRow(draftRowIds.at(-1) ?? '')}
-            />
+            >
+              <MinusCircle width={16} height={16} aria-hidden="true" />
+            </IconButton>
           </Tooltip>
         </HStack>
       </HStack>

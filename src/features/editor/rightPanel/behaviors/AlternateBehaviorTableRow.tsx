@@ -4,10 +4,10 @@ import {
   HStack,
   IconButton,
   Input,
-  Select,
+  NativeSelect,
   Stack,
-  Tooltip,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { NavArrowRight, Trash } from 'iconoir-react'
 import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
@@ -94,7 +94,7 @@ export function AlternateBehaviorTableRow({
 
   return (
     <Stack
-      spacing={2}
+      gap={2}
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
@@ -128,28 +128,29 @@ export function AlternateBehaviorTableRow({
           }}
           onKeyDown={commitOnEnter}
         />
-        <Tooltip label={t('editor.openAlternateGlyph')}>
+        <Tooltip content={t('editor.openAlternateGlyph')}>
           <IconButton
             aria-label={t('editor.openAlternateGlyph')}
-            icon={<NavArrowRight width={15} height={15} aria-hidden="true" />}
             size="xs"
             variant="ghost"
-            isDisabled={!alternate}
+            disabled={!alternate}
             onClick={() => openGlyph(alternate)}
-          />
+          >
+            <NavArrowRight width={15} height={15} aria-hidden="true" />
+          </IconButton>
         </Tooltip>
-        <Tooltip label={t('editor.deleteBehavior')}>
+        <Tooltip content={t('editor.deleteBehavior')}>
           <IconButton
             aria-label={t('editor.deleteAlternate')}
-            icon={<Trash width={15} height={15} aria-hidden="true" />}
             size="xs"
             variant="ghost"
             color="field.red.500"
             onClick={onDelete}
-          />
+          >
+            <Trash width={15} height={15} aria-hidden="true" />
+          </IconButton>
         </Tooltip>
       </Box>
-
       <Box
         display="grid"
         gridTemplateColumns={
@@ -157,25 +158,27 @@ export function AlternateBehaviorTableRow({
         }
         gap={1}
       >
-        <Select
-          aria-label={t('editor.alternateBehaviorType')}
-          value={type}
-          size="xs"
-          onBlur={commit}
-          onChange={(event) => {
-            const nextType = event.target.value as AlternateBehaviorType
-            setType(nextType)
-            if (nextType !== 'customFeature') {
-              setCustomFeatureTag('')
-            }
-          }}
-        >
-          {ALTERNATE_BEHAVIOR_TYPES.map((behaviorType) => (
-            <option key={behaviorType} value={behaviorType}>
-              {ALTERNATE_BEHAVIOR_TYPE_LABELS[behaviorType]}
-            </option>
-          ))}
-        </Select>
+        <NativeSelect.Root size="xs">
+          <NativeSelect.Field
+            aria-label={t('editor.alternateBehaviorType')}
+            value={type}
+            onBlur={commit}
+            onChange={(event) => {
+              const nextType = event.target.value as AlternateBehaviorType
+              setType(nextType)
+              if (nextType !== 'customFeature') {
+                setCustomFeatureTag('')
+              }
+            }}
+          >
+            {ALTERNATE_BEHAVIOR_TYPES.map((behaviorType) => (
+              <option key={behaviorType} value={behaviorType}>
+                {ALTERNATE_BEHAVIOR_TYPE_LABELS[behaviorType]}
+              </option>
+            ))}
+          </NativeSelect.Field>
+          <NativeSelect.Indicator />
+        </NativeSelect.Root>
         {type === 'customFeature' ? (
           <Input
             aria-label={t('editor.customAlternateFeatureTag')}
@@ -189,28 +192,27 @@ export function AlternateBehaviorTableRow({
           />
         ) : null}
       </Box>
-
-      <HStack spacing={1} justify="space-between" align="flex-start">
-        <HStack spacing={1} wrap="wrap">
+      <HStack gap={1} justify="space-between" align="flex-start">
+        <HStack gap={1} wrap="wrap">
           {row?.sourceLabel ? (
-            <Badge variant="subtle" colorScheme="gray">
+            <Badge variant="subtle" colorPalette="gray">
               {row.sourceLabel}
             </Badge>
           ) : null}
           {type === 'customFeature' ? (
-            <Badge variant="subtle" colorScheme="gray">
+            <Badge variant="subtle" colorPalette="gray">
               {resolveAlternateFeatureTag(draft) || 'tag'}
             </Badge>
           ) : null}
         </HStack>
-        <HStack spacing={1} wrap="wrap" justify="flex-end">
+        <HStack gap={1} wrap="wrap" justify="flex-end">
           {row?.status.map((status) => (
-            <Badge key={status} colorScheme="red">
+            <Badge key={status} colorPalette="red">
               {status}
             </Badge>
           ))}
           {!canCommit && (source || alternate) ? (
-            <Badge colorScheme="red">{t('editor.invalidInput')}</Badge>
+            <Badge colorPalette="red">{t('editor.invalidInput')}</Badge>
           ) : null}
         </HStack>
       </HStack>

@@ -1,14 +1,4 @@
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  FormControl,
-  FormLabel,
-  Select,
-  Stack,
-  Text,
-} from '@chakra-ui/react'
+import { Alert, NativeSelect, Stack, Text, Field } from '@chakra-ui/react'
 import type {
   ExportPolicy,
   FeatureDiagnostic,
@@ -74,22 +64,25 @@ export function ExportPolicyControl({
   )
 
   return (
-    <Stack spacing={3}>
-      <FormControl>
-        <FormLabel fontSize="sm">
+    <Stack gap={3}>
+      <Field.Root>
+        <Field.Label fontSize="sm">
           {t('projectControl.opentypeExportPolicy')}
-        </FormLabel>
-        <Select
-          value={state.exportPolicy}
-          onChange={(event) => onChange(event.target.value as ExportPolicy)}
-        >
-          {EXPORT_POLICIES.map((policy) => (
-            <option key={policy} value={policy}>
-              {getExportPolicyLabel(policy, t)}
-            </option>
-          ))}
-        </Select>
-      </FormControl>
+        </Field.Label>
+        <NativeSelect.Root>
+          <NativeSelect.Field
+            value={state.exportPolicy}
+            onChange={(event) => onChange(event.target.value as ExportPolicy)}
+          >
+            {EXPORT_POLICIES.map((policy) => (
+              <option key={policy} value={policy}>
+                {getExportPolicyLabel(policy, t)}
+              </option>
+            ))}
+          </NativeSelect.Field>
+          <NativeSelect.Indicator />
+        </NativeSelect.Root>
+      </Field.Root>
       <Text fontSize="sm" color="field.muted">
         {t('projectControl.exportBehaviorIsExplicitBecauseCompiling')}
       </Text>
@@ -111,19 +104,19 @@ function ExportWarningAlert({
   const translatedWarning = translateExportWarning(warning, t)
 
   return (
-    <Alert
+    <Alert.Root
       status={getAlertStatus(warning.severity)}
       alignItems="flex-start"
       borderRadius="sm"
     >
-      <AlertIcon mt={1} />
-      <Stack spacing={0}>
-        <AlertTitle fontSize="sm">{translatedWarning.title}</AlertTitle>
-        <AlertDescription fontSize="sm">
+      <Alert.Indicator mt={1} />
+      <Stack gap={0}>
+        <Alert.Title fontSize="sm">{translatedWarning.title}</Alert.Title>
+        <Alert.Description fontSize="sm">
           {translatedWarning.message}
-        </AlertDescription>
+        </Alert.Description>
         {warning.details && warning.details.length > 0 && (
-          <Stack as="ul" spacing={1} mt={2} pl={4}>
+          <Stack as="ul" gap={1} mt={2} pl={4}>
             {warning.details.slice(0, 8).map((detail) => (
               <Text key={detail} as="li" fontSize="sm">
                 {detail}
@@ -137,7 +130,7 @@ function ExportWarningAlert({
           </Stack>
         )}
       </Stack>
-    </Alert>
+    </Alert.Root>
   )
 }
 

@@ -1,4 +1,5 @@
-import { Box, Button, Grid, Stack, Text, Tooltip } from '@chakra-ui/react'
+import { Box, Button, Grid, Stack, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Flip } from 'iconoir-react'
 import type { TransformOrigin } from 'src/features/common/transform/utils/transformGeometry'
 import { useTranslation } from 'react-i18next'
@@ -42,7 +43,7 @@ export function OriginPicker({
         ).map(([x, y]) => {
           const isActive = origin.x === x && origin.y === y
           return (
-            <Tooltip key={`${x}-${y}`} label={`${x} ${y}`}>
+            <Tooltip key={`${x}-${y}`} content={`${x} ${y}`}>
               <Button
                 aria-label={`${x} ${y} origin`}
                 size="xs"
@@ -51,7 +52,7 @@ export function OriginPicker({
                 p={0}
                 borderRadius="1px"
                 variant={isActive ? 'solid' : 'outline'}
-                isDisabled={isDisabled}
+                disabled={isDisabled}
                 onClick={() => onOriginChange({ x, y })}
               >
                 <Box
@@ -72,31 +73,29 @@ export function MirrorControls({ isDisabled, onMirror }: MirrorControlsProps) {
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text fontSize="xs" color="field.muted" fontFamily="mono">
         {t('editor.mirror')}
       </Text>
       <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap={2}>
-        <Tooltip label={t('editor.mirrorHorizontally')}>
+        <Tooltip content={t('editor.mirrorHorizontally')}>
           <Button
             size="sm"
             variant="outline"
-            leftIcon={<Flip width={16} height={16} transform="rotate(-90)" />}
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={() => onMirror('x')}
           >
-            X
+            <Flip width={16} height={16} transform="rotate(-90)" />X
           </Button>
         </Tooltip>
-        <Tooltip label={t('editor.mirrorVertically')}>
+        <Tooltip content={t('editor.mirrorVertically')}>
           <Button
             size="sm"
             variant="outline"
-            leftIcon={<Flip width={16} height={16} />}
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={() => onMirror('y')}
           >
-            Y
+            <Flip width={16} height={16} />Y
           </Button>
         </Tooltip>
       </Grid>

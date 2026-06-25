@@ -1,9 +1,4 @@
-import {
-  FormControl,
-  FormLabel,
-  NumberInput,
-  NumberInputField,
-} from '@chakra-ui/react'
+import { NumberInput, Field } from '@chakra-ui/react'
 
 interface NumberFieldProps {
   label: string
@@ -21,11 +16,16 @@ export function NumberField({
   onChange,
 }: NumberFieldProps) {
   return (
-    <FormControl>
-      <FormLabel fontSize="sm">{label}</FormLabel>
-      <NumberInput min={min} max={max} value={value ?? ''} onChange={onChange}>
-        <NumberInputField />
-      </NumberInput>
-    </FormControl>
+    <Field.Root>
+      <Field.Label fontSize="sm">{label}</Field.Label>
+      <NumberInput.Root
+        min={min}
+        max={max}
+        value={String(value ?? '')}
+        onValueChange={(details) => onChange(details.value)}
+      >
+        <NumberInput.Input />
+      </NumberInput.Root>
+    </Field.Root>
   )
 }

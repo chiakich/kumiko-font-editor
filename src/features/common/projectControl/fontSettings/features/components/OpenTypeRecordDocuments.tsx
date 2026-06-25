@@ -1,12 +1,11 @@
 import {
   Badge,
-  FormControl,
-  FormLabel,
   HStack,
   SimpleGrid,
   Stack,
   Text,
   Textarea,
+  Field,
 } from '@chakra-ui/react'
 import {
   Metric,
@@ -45,8 +44,8 @@ export function FeatureDocument({
   const featureFea = extractGeneratedFeaForFeature(generatedFea, feature.id)
 
   return (
-    <Stack spacing={4}>
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+    <Stack gap={4}>
+      <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
         <Metric
           label={t('projectControl.scriptLanguageEntries')}
           value={feature.entries.length}
@@ -57,15 +56,17 @@ export function FeatureDocument({
           value={countFeatureRules(feature, state)}
         />
       </SimpleGrid>
-      <FormControl>
-        <FormLabel fontSize="sm">{t('projectControl.featureBlock')}</FormLabel>
+      <Field.Root>
+        <Field.Label fontSize="sm">
+          {t('projectControl.featureBlock')}
+        </Field.Label>
         <Textarea
           minH="360px"
           fontFamily="mono"
           value={featureFea || t('projectControl.noFeatureBlock')}
-          isReadOnly
+          readOnly
         />
-      </FormControl>
+      </Field.Root>
       <SourceSectionsDocument
         emptyText={t('projectControl.noSourceSections')}
         sourceSectionRecords={sourceSectionRecords}
@@ -91,8 +92,8 @@ export function TableDocument({
   )
 
   return (
-    <Stack spacing={4}>
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+    <Stack gap={4}>
+      <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
         <Metric label={t('projectControl.lookups')} value={lookups.length} />
         <Metric
           label={t('projectControl.unsupported')}
@@ -103,7 +104,7 @@ export function TableDocument({
           value={sourceSectionRecords.length}
         />
       </SimpleGrid>
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <Text fontSize="sm" fontWeight="semibold">
           {t('projectControl.lookups')}
         </Text>
@@ -121,15 +122,15 @@ export function TableDocument({
               align="flex-start"
               gap={3}
             >
-              <Stack spacing={1} minW={0}>
-                <Text fontFamily="mono" fontWeight="900" noOfLines={1}>
+              <Stack gap={1} minW={0}>
+                <Text fontFamily="mono" fontWeight="900" lineClamp={1}>
                   {lookup.name}
                 </Text>
                 <HStack wrap="wrap" gap={1}>
                   <Badge>{lookup.lookupType}</Badge>
                   <Badge variant="outline">{lookup.origin}</Badge>
                   {lookup.editable ? (
-                    <Badge colorScheme="green">
+                    <Badge colorPalette="green">
                       {t('projectControl.editable')}
                     </Badge>
                   ) : null}

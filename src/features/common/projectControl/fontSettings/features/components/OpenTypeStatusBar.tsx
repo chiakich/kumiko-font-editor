@@ -42,10 +42,10 @@ export function OpenTypeStatusBar({
         label={t('projectControl.unsupported')}
         value={state.unsupportedLookups.length}
       />
-      <Badge colorScheme={errorCount ? 'red' : 'green'}>
+      <Badge colorPalette={errorCount ? 'red' : 'green'}>
         {errorCount} {t('projectControl.errors')}
       </Badge>
-      <Badge colorScheme={warningCount ? 'yellow' : 'gray'}>
+      <Badge colorPalette={warningCount ? 'yellow' : 'gray'}>
         {warningCount} {t('projectControl.warnings')}
       </Badge>
       <Badge variant="outline">{state.exportPolicy}</Badge>

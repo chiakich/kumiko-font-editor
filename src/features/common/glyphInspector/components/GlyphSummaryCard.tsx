@@ -3,7 +3,7 @@ import {
   Button,
   Grid,
   GridItem,
-  Select,
+  NativeSelect,
   Stack,
   Tag,
   Text,
@@ -65,7 +65,7 @@ export function GlyphSummaryCard({
       borderRadius="sm"
       boxShadow="inset 0 6px 0 rgba(247, 235, 64, 0.9)"
     >
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <Text
           fontWeight="900"
           color="field.ink"
@@ -97,14 +97,14 @@ export function GlyphSummaryCard({
             </Text>
           </Box>
         )}
-        <Stack direction="row" spacing={1} align="center">
-          <Tag
+        <Stack direction="row" gap={1} align="center">
+          <Tag.Root
             fontSize="xs"
-            colorScheme={isDirty ? 'orange' : 'green'}
+            colorPalette={isDirty ? 'orange' : 'green'}
             variant="subtle"
           >
             {isDirty ? '等待本機儲存' : '已同步到本機'}
-          </Tag>
+          </Tag.Root>
         </Stack>
         <GlyphColorLabelPicker
           value={glyph.color}
@@ -115,17 +115,19 @@ export function GlyphSummaryCard({
             <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
               {t('glyphInspector.layerMaster')}
             </Text>
-            <Select
-              size="sm"
-              value={activeLayer?.id ?? ''}
-              onChange={(event) => onLayerChange(event.target.value)}
-            >
-              {availableLayers.map((layer) => (
-                <option key={layer.id} value={layer.id}>
-                  {layer.name || layer.id}
-                </option>
-              ))}
-            </Select>
+            <NativeSelect.Root size="sm">
+              <NativeSelect.Field
+                value={activeLayer?.id ?? ''}
+                onChange={(event) => onLayerChange(event.target.value)}
+              >
+                {availableLayers.map((layer) => (
+                  <option key={layer.id} value={layer.id}>
+                    {layer.name || layer.id}
+                  </option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
           </Box>
         )}
         {workspaceView === 'overview' && (
@@ -169,12 +171,8 @@ export function GlyphSummaryCard({
               {t('glyphInspector.enterGlyphEditor')}
             </Button>
             {onOpenQualityCheck ? (
-              <Button
-                size="sm"
-                variant="outline"
-                leftIcon={<PageSearch width={14} height={14} />}
-                onClick={onOpenQualityCheck}
-              >
+              <Button size="sm" variant="outline" onClick={onOpenQualityCheck}>
+                <PageSearch width={14} height={14} />
                 {t('qualityCheck.title')}
               </Button>
             ) : null}

@@ -1,4 +1,5 @@
-import { Box, HStack, Portal, Text, Tooltip } from '@chakra-ui/react'
+import { Box, HStack, Portal, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -79,7 +80,7 @@ export function OverviewGlyphContextMenu({
           <Text color="gray.600" fontSize="11px" fontWeight="700" mb="8px">
             {t('glyphInspector.colorLabel')}
           </Text>
-          <HStack flexWrap="wrap" spacing="3px">
+          <HStack flexWrap="wrap" gap="3px">
             <GlyphColorButton
               color={null}
               isSelected={selectedColor === null}
@@ -127,31 +128,34 @@ function ContextMenuButton({
 }) {
   return (
     <Box
-      as="button"
       color={
         isDisabled ? 'gray.400' : tone === 'danger' ? 'red.600' : 'gray.800'
       }
       cursor={isDisabled ? 'default' : 'pointer'}
-      disabled={isDisabled}
       display="block"
       fontSize="13px"
       px="12px"
       py="8px"
       textAlign="left"
-      type="button"
       w="100%"
       _hover={
         isDisabled
           ? undefined
           : { bg: tone === 'danger' ? 'red.50' : 'gray.50' }
       }
-      onClick={() => {
-        if (!isDisabled) {
-          onClick()
-        }
-      }}
+      asChild
     >
-      {children}
+      <button
+        disabled={isDisabled}
+        type="button"
+        onClick={() => {
+          if (!isDisabled) {
+            onClick()
+          }
+        }}
+      >
+        {children}
+      </button>
     </Box>
   )
 }
@@ -170,53 +174,53 @@ function GlyphColorButton({
   const swatchSize = isSelected ? '18px' : '15px'
 
   return (
-    <Tooltip label={label}>
+    <Tooltip content={label}>
       <Box
         alignItems="center"
         aria-label={label}
         aria-pressed={isSelected}
-        as="button"
         borderRadius="full"
         display="flex"
         h="22px"
         justifyContent="center"
         title={label}
-        type="button"
         w="22px"
         _hover={{ bg: 'blackAlpha.50' }}
-        onClick={onClick}
+        asChild
       >
-        {color ? (
-          <Box
-            bg={kumikoColorToCssRgba(color)}
-            border={isSelected ? '1px solid' : 'none'}
-            borderColor="field.ink"
-            borderRadius="full"
-            boxShadow={
-              isSelected ? undefined : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
-            }
-            h={swatchSize}
-            w={swatchSize}
-          />
-        ) : (
-          <Box
-            alignItems="center"
-            border="1px solid"
-            borderColor={isSelected ? 'field.ink' : 'field.gray.300'}
-            borderRadius="full"
-            display="flex"
-            h={swatchSize}
-            justifyContent="center"
-            w={swatchSize}
-          >
+        <button type="button" onClick={onClick}>
+          {color ? (
             <Box
-              bg="field.gray.400"
-              h="2px"
-              transform="rotate(-45deg)"
-              w="11px"
+              bg={kumikoColorToCssRgba(color)}
+              border={isSelected ? '1px solid' : 'none'}
+              borderColor="field.ink"
+              borderRadius="full"
+              boxShadow={
+                isSelected ? undefined : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
+              }
+              h={swatchSize}
+              w={swatchSize}
             />
-          </Box>
-        )}
+          ) : (
+            <Box
+              alignItems="center"
+              border="1px solid"
+              borderColor={isSelected ? 'field.ink' : 'field.gray.300'}
+              borderRadius="full"
+              display="flex"
+              h={swatchSize}
+              justifyContent="center"
+              w={swatchSize}
+            >
+              <Box
+                bg="field.gray.400"
+                h="2px"
+                transform="rotate(-45deg)"
+                w="11px"
+              />
+            </Box>
+          )}
+        </button>
       </Box>
     </Tooltip>
   )

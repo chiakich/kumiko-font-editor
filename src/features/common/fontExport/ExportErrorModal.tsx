@@ -1,24 +1,17 @@
+import { useToast } from '@/components/ui/toast'
 import {
   Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
   Badge,
   Button,
-  Divider,
   HStack,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Stack,
   Text,
   Textarea,
-  useToast,
+  Separator,
+  Dialog,
+  Portal,
 } from '@chakra-ui/react'
+import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { Copy } from 'iconoir-react'
 import { useMemo, type WheelEvent } from 'react'
 import {
@@ -108,7 +101,7 @@ function DetailBlock({ label, text }: { label: string; text: string }) {
   const rows = Math.min(12, Math.max(4, text.split('\n').length))
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text fontSize="sm" fontWeight="800">
         {label}
       </Text>
@@ -166,96 +159,110 @@ export function ExportErrorModal({ report, onClose }: ExportErrorModalProps) {
   }
 
   return (
-    <Modal isOpen onClose={onClose} size="2xl" scrollBehavior="inside">
-      <ModalOverlay />
-      <ModalContent maxH="86vh">
-        <ModalHeader pr={14}>
-          <Stack spacing={1}>
-            <Text>匯出失敗</Text>
-            <HStack spacing={2} flexWrap="wrap">
-              {report.formats.map((format) => (
-                <Badge key={format} colorScheme="red">
-                  {formatLabels[format] ?? format}
-                </Badge>
-              ))}
-            </HStack>
-          </Stack>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <Stack spacing={4}>
-            <Alert
-              status="error"
-              variant="subtle"
-              alignItems="flex-start"
-              borderRadius="md"
-            >
-              <AlertIcon mt={1} />
-              <Stack spacing={1}>
-                <AlertTitle fontSize="sm">錯誤摘要</AlertTitle>
-                <AlertDescription fontSize="sm">
-                  {report.message}
-                </AlertDescription>
+    <Dialog.Root
+      open
+      size="xl"
+      scrollBehavior="inside"
+      onOpenChange={(e) => {
+        if (!e.open) {
+          onClose()
+        }
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content maxH="86vh">
+            <Dialog.Header pr={14}>
+              <Stack gap={1}>
+                <Text>匯出失敗</Text>
+                <HStack gap={2} flexWrap="wrap">
+                  {report.formats.map((format) => (
+                    <Badge key={format} colorPalette="red">
+                      {formatLabels[format] ?? format}
+                    </Badge>
+                  ))}
+                </HStack>
               </Stack>
-            </Alert>
-
-            {report.diagnostics.length > 0 ? (
-              <Stack spacing={2}>
-                <Text fontSize="sm" fontWeight="800">
-                  Diagnostics
-                </Text>
-                {report.diagnostics.map((diagnostic) => (
-                  <Stack
-                    key={diagnostic.id}
-                    spacing={1}
-                    p={3}
-                    borderWidth="1px"
-                    borderRadius="sm"
-                  >
-                    <HStack spacing={2}>
-                      <Badge colorScheme={diagnosticColor(diagnostic.severity)}>
-                        {diagnostic.severity}
-                      </Badge>
-                      <Text fontSize="xs" color="field.muted" fontFamily="mono">
-                        {targetLabel(diagnostic)}
-                      </Text>
-                    </HStack>
-                    <Text fontSize="sm">{diagnostic.message}</Text>
+            </Dialog.Header>
+            <DialogCloseButton />
+            <Dialog.Body>
+              <Stack gap={4}>
+                <Alert.Root
+                  status="error"
+                  variant="subtle"
+                  alignItems="flex-start"
+                  borderRadius="md"
+                >
+                  <Alert.Indicator mt={1} />
+                  <Stack gap={1}>
+                    <Alert.Title fontSize="sm">錯誤摘要</Alert.Title>
+                    <Alert.Description fontSize="sm">
+                      {report.message}
+                    </Alert.Description>
                   </Stack>
-                ))}
+                </Alert.Root>
+
+                {report.diagnostics.length > 0 ? (
+                  <Stack gap={2}>
+                    <Text fontSize="sm" fontWeight="800">
+                      Diagnostics
+                    </Text>
+                    {report.diagnostics.map((diagnostic) => (
+                      <Stack
+                        key={diagnostic.id}
+                        gap={1}
+                        p={3}
+                        borderWidth="1px"
+                        borderRadius="sm"
+                      >
+                        <HStack gap={2}>
+                          <Badge
+                            colorPalette={diagnosticColor(diagnostic.severity)}
+                          >
+                            {diagnostic.severity}
+                          </Badge>
+                          <Text
+                            fontSize="xs"
+                            color="field.muted"
+                            fontFamily="mono"
+                          >
+                            {targetLabel(diagnostic)}
+                          </Text>
+                        </HStack>
+                        <Text fontSize="sm">{diagnostic.message}</Text>
+                      </Stack>
+                    ))}
+                  </Stack>
+                ) : null}
+
+                {report.rawCompilerOutput ? (
+                  <DetailBlock
+                    label="fontTools / compiler output"
+                    text={report.rawCompilerOutput}
+                  />
+                ) : null}
+
+                {report.stack ? (
+                  <>
+                    <Separator />
+                    <DetailBlock label="Stack trace" text={report.stack} />
+                  </>
+                ) : null}
               </Stack>
-            ) : null}
-
-            {report.rawCompilerOutput ? (
-              <DetailBlock
-                label="fontTools / compiler output"
-                text={report.rawCompilerOutput}
-              />
-            ) : null}
-
-            {report.stack ? (
-              <>
-                <Divider />
-                <DetailBlock label="Stack trace" text={report.stack} />
-              </>
-            ) : null}
-          </Stack>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            variant="ghost"
-            leftIcon={
-              <Copy width={18} height={18} strokeWidth={1.9} aria-hidden />
-            }
-            onClick={() => void handleCopyDetails()}
-          >
-            複製詳情
-          </Button>
-          <Button ml={3} onClick={onClose}>
-            關閉
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => void handleCopyDetails()}>
+                <Copy width={18} height={18} strokeWidth={1.9} aria-hidden />
+                複製詳情
+              </Button>
+              <Button ml={3} onClick={onClose}>
+                關閉
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }

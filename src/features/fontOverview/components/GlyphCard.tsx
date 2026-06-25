@@ -81,7 +81,9 @@ export const GlyphCard = memo(function GlyphCard({
       p={1}
       h={`${cardHeight}px`}
       overflow="hidden"
-      sx={{ contain: 'layout paint style' }}
+      css={{
+        contain: 'layout paint style',
+      }}
       position="relative"
       borderRadius="sm"
       bg={isSelected ? 'field.yellow.400' : 'field.panel'}
@@ -108,7 +110,7 @@ export const GlyphCard = memo(function GlyphCard({
           pointerEvents="none"
         />
       ) : null}
-      <Stack spacing={showGlyphName ? 1 : 0} h="100%">
+      <Stack gap={showGlyphName ? 1 : 0} h="100%">
         <Flex
           align="center"
           justify="center"
@@ -139,7 +141,7 @@ export const GlyphCard = memo(function GlyphCard({
           <Text
             fontSize="xs"
             color="field.muted"
-            noOfLines={1}
+            lineClamp={1}
             textAlign="center"
             fontFamily="mono"
           >

@@ -1,14 +1,13 @@
 import {
   Button,
   Checkbox,
-  FormControl,
-  FormLabel,
   HStack,
   Input,
-  Select,
+  NativeSelect,
   SimpleGrid,
   Stack,
   Text,
+  Field,
 } from '@chakra-ui/react'
 import type {
   DevelopmentStatusDefinition,
@@ -58,38 +57,47 @@ export function FontOtherTab({
   }
 
   return (
-    <Stack spacing={5}>
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <FormControl>
-          <FormLabel fontSize="sm">{t('projectControl.fontType')}</FormLabel>
-          <Select
-            value={fontType}
-            onChange={(event) =>
-              onFontTypeChange(
-                event.target.value === 'variable' ? 'variable' : 'static'
-              )
-            }
-          >
-            <option value="static">{t('projectControl.static')}</option>
-            <option value="variable">{t('projectControl.variable')}</option>
-          </Select>
-        </FormControl>
-        <FormControl>
-          <FormLabel fontSize="sm">{t('projectControl.outlineType')}</FormLabel>
-          <Select
-            value={outlineType}
-            onChange={(event) =>
-              onOutlineTypeChange(
-                event.target.value === 'quadratic' ? 'quadratic' : 'cubic'
-              )
-            }
-          >
-            <option value="cubic">{t('projectControl.cubic')}</option>
-            <option value="quadratic">{t('projectControl.quadratic')}</option>
-          </Select>
-        </FormControl>
+    <Stack gap={5}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+        <Field.Root>
+          <Field.Label fontSize="sm">
+            {t('projectControl.fontType')}
+          </Field.Label>
+          <NativeSelect.Root>
+            <NativeSelect.Field
+              value={fontType}
+              onChange={(event) =>
+                onFontTypeChange(
+                  event.target.value === 'variable' ? 'variable' : 'static'
+                )
+              }
+            >
+              <option value="static">{t('projectControl.static')}</option>
+              <option value="variable">{t('projectControl.variable')}</option>
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+        </Field.Root>
+        <Field.Root>
+          <Field.Label fontSize="sm">
+            {t('projectControl.outlineType')}
+          </Field.Label>
+          <NativeSelect.Root>
+            <NativeSelect.Field
+              value={outlineType}
+              onChange={(event) =>
+                onOutlineTypeChange(
+                  event.target.value === 'quadratic' ? 'quadratic' : 'cubic'
+                )
+              }
+            >
+              <option value="cubic">{t('projectControl.cubic')}</option>
+              <option value="quadratic">{t('projectControl.quadratic')}</option>
+            </NativeSelect.Field>
+            <NativeSelect.Indicator />
+          </NativeSelect.Root>
+        </Field.Root>
       </SimpleGrid>
-
       <HStack justify="space-between">
         <Text fontWeight="semibold">
           {t('projectControl.statusDefinitions')}
@@ -110,12 +118,12 @@ export function FontOtherTab({
           {t('projectControl.add')}
         </Button>
       </HStack>
-      <Stack spacing={3}>
+      <Stack gap={3}>
         {statusDefinitions.map((status, index) => (
           <SimpleGrid
             key={`${status.value}-${index}`}
             columns={{ base: 1, lg: 5 }}
-            spacing={3}
+            gap={3}
           >
             <NumberField
               label={t('projectControl.value')}
@@ -127,15 +135,17 @@ export function FontOtherTab({
                 })
               }
             />
-            <FormControl>
-              <FormLabel fontSize="sm">{t('projectControl.label')}</FormLabel>
+            <Field.Root>
+              <Field.Label fontSize="sm">
+                {t('projectControl.label')}
+              </Field.Label>
               <Input
                 value={status.label}
                 onChange={(event) =>
                   updateStatus(index, { label: event.target.value })
                 }
               />
-            </FormControl>
+            </Field.Root>
             {[0, 1, 2, 3].map((colorIndex) => (
               <NumberField
                 key={colorIndex}
@@ -155,15 +165,19 @@ export function FontOtherTab({
                 }}
               />
             ))}
-            <Checkbox
+            <Checkbox.Root
               alignSelf="end"
-              isChecked={status.isDefault ?? false}
-              onChange={(event) =>
-                updateStatus(index, { isDefault: event.target.checked })
+              onCheckedChange={(details) =>
+                updateStatus(index, { isDefault: details.checked === true })
               }
+              checked={status.isDefault ?? false}
             >
-              {t('projectControl.default')}
-            </Checkbox>
+              <Checkbox.HiddenInput />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>{t('projectControl.default')}</Checkbox.Label>
+            </Checkbox.Root>
           </SimpleGrid>
         ))}
       </Stack>

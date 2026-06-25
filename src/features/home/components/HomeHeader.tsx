@@ -6,7 +6,7 @@ export function HomeHeader() {
   const { t } = useTranslation()
 
   return (
-    <HStack mt={4} mb={8} align="center" spacing={{ base: 4, md: 6 }}>
+    <HStack mt={4} mb={8} align="center" gap={{ base: 4, md: 6 }}>
       <Image
         src={logoUrl}
         alt={t('home.kumikoFontEditor')}

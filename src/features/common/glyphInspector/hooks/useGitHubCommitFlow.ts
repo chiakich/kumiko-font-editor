@@ -1,4 +1,5 @@
-import { useDisclosure, useToast } from '@chakra-ui/react'
+import { useToast } from '@/components/ui/toast'
+import { useDisclosure } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -151,7 +152,7 @@ export const useGitHubCommitFlow = ({
     repo: githubRepoFullName,
     branch: null,
     enabled:
-      gitHubModal.isOpen &&
+      gitHubModal.open &&
       Boolean(githubViewer && githubRepoFullName) &&
       !forkStatusOverride,
   })
@@ -588,7 +589,7 @@ export const useGitHubCommitFlow = ({
   }
 
   const modalProps: GitHubCommitModalProps = {
-    isOpen: gitHubModal.isOpen,
+    isOpen: gitHubModal.open,
     onClose: () => {
       setHasBlockingSyncConflicts(false)
       gitHubModal.onClose()
@@ -641,7 +642,7 @@ export const useGitHubCommitFlow = ({
     },
     onMergeUpstream: () => void handleMergeGitHubUpstream(),
     onCreateCommit: () => void handleCreateGitHubCommit(),
-    isSyncEnabled: gitHubModal.isOpen && hasGitHubSource,
+    isSyncEnabled: gitHubModal.open && hasGitHubSource,
     onBlockingSyncConflictsChange: setHasBlockingSyncConflicts,
     hasBlockingSyncConflicts,
   }

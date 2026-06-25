@@ -1,10 +1,5 @@
-import {
-  Modal,
-  ModalCloseButton,
-  ModalContent,
-  ModalOverlay,
-  Tabs,
-} from '@chakra-ui/react'
+import { Dialog, Portal } from '@chakra-ui/react'
+import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -12,6 +7,7 @@ import {
   CustomFilterModalFooter,
   CustomFilterModalHeader,
 } from 'src/features/fontOverview/components/OverviewCustomFilterModal/CustomFilterModalFrame'
+import { SlidingTabsRoot } from 'src/features/common/SlidingTabList'
 import {
   addRuleTreeChild,
   createDefaultRule,
@@ -155,49 +151,50 @@ function OverviewCustomFilterModalForm({
   }
 
   return (
-    <ModalContent
-      borderRadius="sm"
-      h={{ base: 'calc(100vh - 32px)', md: '720px' }}
-    >
-      <ModalCloseButton zIndex={2} />
-      <Tabs
-        display="flex"
-        flex={1}
-        flexDirection="column"
-        index={activeTabIndex}
-        minH={0}
-        size="sm"
-        onChange={setActiveTabIndex}
-        variant="enclosed"
+    <Dialog.Positioner>
+      <Dialog.Content
+        borderRadius="sm"
+        h={{ base: 'calc(100vh - 32px)', md: '720px' }}
       >
-        <CustomFilterModalHeader
-          activeTabIndex={activeTabIndex}
-          isEditing={Boolean(filter)}
-        />
-        <CustomFilterModalBody
-          addGroup={addGroup}
-          addRule={addRule}
-          deleteRule={deleteRule}
-          draft={draft}
-          presetScrollRef={presetScrollRef}
-          presets={presets}
-          setDraft={setDraft}
-          updateGroupMode={updateGroupMode}
-          updatePresetScrollMask={updatePresetScrollMask}
-          updateRule={updateRule}
-          onCreatePreset={handleCreatePreset}
-        />
-        {activeTabIndex === 1 ? (
-          <CustomFilterModalFooter
-            canDelete={Boolean(filter)}
-            canSave={canSave}
-            onCancel={onClose}
-            onDelete={handleDelete}
-            onSave={handleSave}
+        <DialogCloseButton zIndex={2} />
+        <SlidingTabsRoot
+          display="flex"
+          flex={1}
+          flexDirection="column"
+          value={String(activeTabIndex)}
+          minH={0}
+          size="sm"
+          onValueChange={(details) => setActiveTabIndex(Number(details.value))}
+        >
+          <CustomFilterModalHeader
+            activeTabIndex={activeTabIndex}
+            isEditing={Boolean(filter)}
           />
-        ) : null}
-      </Tabs>
-    </ModalContent>
+          <CustomFilterModalBody
+            addGroup={addGroup}
+            addRule={addRule}
+            deleteRule={deleteRule}
+            draft={draft}
+            presetScrollRef={presetScrollRef}
+            presets={presets}
+            setDraft={setDraft}
+            updateGroupMode={updateGroupMode}
+            updatePresetScrollMask={updatePresetScrollMask}
+            updateRule={updateRule}
+            onCreatePreset={handleCreatePreset}
+          />
+          {activeTabIndex === 1 ? (
+            <CustomFilterModalFooter
+              canDelete={Boolean(filter)}
+              canSave={canSave}
+              onCancel={onClose}
+              onDelete={handleDelete}
+              onSave={handleSave}
+            />
+          ) : null}
+        </SlidingTabsRoot>
+      </Dialog.Content>
+    </Dialog.Positioner>
   )
 }
 
@@ -221,25 +218,31 @@ export function OverviewCustomFilterModal({
   const contentKey = filter?.id ?? 'new'
 
   return (
-    <Modal
-      isCentered
-      isOpen={isOpen}
-      onClose={onClose}
+    <Dialog.Root
+      placement="center"
+      open={isOpen}
       scrollBehavior="inside"
-      size="3xl"
+      size="xl"
+      onOpenChange={(e) => {
+        if (!e.open) {
+          onClose()
+        }
+      }}
     >
-      <ModalOverlay />
-      {isOpen ? (
-        <OverviewCustomFilterModalForm
-          key={contentKey}
-          filter={filter}
-          initialDraft={initialDraft}
-          onClose={onClose}
-          onCreateFilter={onCreateFilter}
-          onDeleteFilter={onDeleteFilter}
-          onUpdateFilter={onUpdateFilter}
-        />
-      ) : null}
-    </Modal>
+      <Portal>
+        <Dialog.Backdrop />
+        {isOpen ? (
+          <OverviewCustomFilterModalForm
+            key={contentKey}
+            filter={filter}
+            initialDraft={initialDraft}
+            onClose={onClose}
+            onCreateFilter={onCreateFilter}
+            onDeleteFilter={onDeleteFilter}
+            onUpdateFilter={onUpdateFilter}
+          />
+        ) : null}
+      </Portal>
+    </Dialog.Root>
   )
 }

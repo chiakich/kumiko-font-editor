@@ -38,7 +38,7 @@ export function OpenTypeOutline({
 
   return (
     <Stack
-      spacing={4}
+      gap={4}
       borderRightWidth={{ base: 0, lg: '1px' }}
       pr={{ base: 0, lg: 4 }}
       minW={0}
@@ -61,7 +61,6 @@ export function OpenTypeOutline({
           onClick={() => onSelect({ kind: 'source', view: 'imported-tables' })}
         />
       </OutlineSection>
-
       <OutlineSection title={t('projectControl.prefixes')}>
         <OutlineButton
           isSelected={isPrefixSelected(selected, 'languagesystems')}
@@ -92,7 +91,6 @@ export function OpenTypeOutline({
           onClick={() => onSelect({ kind: 'prefix', view: 'gdef' })}
         />
       </OutlineSection>
-
       <OutlineSection title={t('projectControl.featuresSection')}>
         {state.features.length === 0 ? (
           <Text fontSize="sm" color="field.muted">
@@ -116,7 +114,6 @@ export function OpenTypeOutline({
           ))
         )}
       </OutlineSection>
-
       <OutlineSection title={t('projectControl.usedLayoutTables')}>
         {tableSummaries.length === 0 ? (
           <Text fontSize="sm" color="field.muted">
@@ -137,7 +134,6 @@ export function OpenTypeOutline({
           ))
         )}
       </OutlineSection>
-
       <OutlineSection title={t('projectControl.build')}>
         <OutlineButton
           isSelected={isBuildSelected(selected, 'generated-fea')}
@@ -177,7 +173,7 @@ function OutlineSection({
   title: string
 }) {
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text fontSize="xs" fontWeight="900" color="field.muted">
         {title}
       </Text>
@@ -211,10 +207,10 @@ function OutlineButton({
       whiteSpace="normal"
       onClick={onClick}
     >
-      <Stack spacing={1} align="stretch" w="100%">
+      <Stack gap={1} align="stretch" w="100%">
         <HStack justify="space-between" minW={0}>
           <HStack minW={0} gap={2}>
-            <Text fontFamily="mono" fontWeight="900" noOfLines={1}>
+            <Text fontFamily="mono" fontWeight="900" lineClamp={1}>
               {label}
             </Text>
             {metaBadge ? (
@@ -224,7 +220,7 @@ function OutlineButton({
             ) : null}
           </HStack>
           {badge > 0 ? (
-            <Badge flexShrink={0} colorScheme="yellow">
+            <Badge flexShrink={0} colorPalette="yellow">
               {badge}
             </Badge>
           ) : null}

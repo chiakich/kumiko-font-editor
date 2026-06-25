@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  HStack,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  Text,
-} from '@chakra-ui/react'
+import { Box, Button, HStack, Menu, Text, Portal } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useStore, type FontSource } from 'src/store'
 
@@ -43,46 +34,54 @@ export function MasterSwitcher() {
     !selectedGlyphLayers?.[id]
 
   return (
-    <Menu placement="bottom-end">
-      <MenuButton
-        as={Button}
-        size="sm"
-        variant="outline"
-        minW="120px"
-        maxW="220px"
-        fontWeight="500"
-        rightIcon={
+    <Menu.Root
+      positioning={{
+        placement: 'bottom-end',
+      }}
+    >
+      <Menu.Trigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          minW="120px"
+          maxW="220px"
+          fontWeight="500"
+        >
+          <Text lineClamp={1} textAlign="left">
+            {current?.name ?? '—'}
+          </Text>
           <Box as="span" fontSize="9px" opacity={0.6}>
             ▼
           </Box>
-        }
-      >
-        <Text noOfLines={1} textAlign="left">
-          {current?.name ?? '—'}
-        </Text>
-      </MenuButton>
-      <MenuList maxH="360px" minW="220px" overflowY="auto">
-        {sourceList.map((source) => (
-          <MenuItem
-            key={source.id}
-            bg={source.id === currentId ? 'field.yellow.100' : undefined}
-            onClick={() => setActiveMasterId(source.id)}
-          >
-            <HStack w="100%" justify="space-between" spacing={4}>
-              <Text
-                noOfLines={1}
-                fontWeight={source.id === currentId ? '700' : '400'}
+        </Button>
+      </Menu.Trigger>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            {sourceList.map((source) => (
+              <Menu.Item
+                key={source.id}
+                bg={source.id === currentId ? 'field.yellow.100' : undefined}
+                onSelect={() => setActiveMasterId(source.id)}
+                value="item-0"
               >
-                {source.name}
-                {isSparse(source.id) ? ' +' : ''}
-              </Text>
-              <Text fontSize="xs" color="field.muted" flexShrink={0}>
-                {locationLabel(source)}
-              </Text>
-            </HStack>
-          </MenuItem>
-        ))}
-      </MenuList>
-    </Menu>
+                <HStack w="100%" justify="space-between" gap={4}>
+                  <Text
+                    lineClamp={1}
+                    fontWeight={source.id === currentId ? '700' : '400'}
+                  >
+                    {source.name}
+                    {isSparse(source.id) ? ' +' : ''}
+                  </Text>
+                  <Text fontSize="xs" color="field.muted" flexShrink={0}>
+                    {locationLabel(source)}
+                  </Text>
+                </HStack>
+              </Menu.Item>
+            ))}
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
+    </Menu.Root>
   )
 }

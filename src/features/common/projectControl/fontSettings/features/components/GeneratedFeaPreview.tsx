@@ -1,4 +1,4 @@
-import { FormControl, FormLabel, Textarea, Text } from '@chakra-ui/react'
+import { Textarea, Text, Field } from '@chakra-ui/react'
 import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
@@ -14,14 +14,14 @@ export function GeneratedFeaPreview({
   const { t } = useTranslation()
 
   return (
-    <FormControl>
-      <FormLabel fontSize="sm">
+    <Field.Root>
+      <Field.Label fontSize="sm">
         {t('projectControl.generatedDisposableFea')}
-      </FormLabel>
-      <Textarea minH="280px" fontFamily="mono" value={feaText} isReadOnly />
+      </Field.Label>
+      <Textarea minH="280px" fontFamily="mono" value={feaText} readOnly />
       <Text mt={2} fontSize="xs" color="field.muted">
         {sourceMap.entries.length} {t('projectControl.sourceMapEntries')}
       </Text>
-    </FormControl>
+    </Field.Root>
   )
 }

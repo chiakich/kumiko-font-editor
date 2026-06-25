@@ -1,11 +1,6 @@
-import {
-  Box,
-  HStack,
-  IconButton,
-  Tooltip,
-  useDisclosure,
-  useToast,
-} from '@chakra-ui/react'
+import { useToast } from '@/components/ui/toast'
+import { Box, HStack, IconButton, useDisclosure } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import {
   CheckCircle,
   ClockRotateRight,
@@ -90,7 +85,7 @@ export function ProjectControlActions({
   return (
     <>
       <HStack
-        spacing={1}
+        gap={1}
         justify="flex-end"
         alignSelf="flex-end"
         px={2}
@@ -99,17 +94,9 @@ export function ProjectControlActions({
         borderRadius="full"
       >
         {hasGitHubSource ? (
-          <Tooltip label={t('projectControl.gitHubCommit')}>
+          <Tooltip content={t('projectControl.gitHubCommit')}>
             <IconButton
               aria-label={t('projectControl.openGitHubCommit')}
-              icon={
-                <Github
-                  width={18}
-                  height={18}
-                  strokeWidth={1.9}
-                  aria-hidden="true"
-                />
-              }
               size="sm"
               minW={9}
               h={9}
@@ -119,20 +106,19 @@ export function ProjectControlActions({
               color="field.ink"
               _hover={{ bg: 'field.ink', color: 'field.paper' }}
               onClick={onOpenGitHubModal}
-            />
-          </Tooltip>
-        ) : null}
-        <Tooltip label={t('qualityCheck.title')}>
-          <IconButton
-            aria-label={t('qualityCheck.open')}
-            icon={
-              <PageSearch
+            >
+              <Github
                 width={18}
                 height={18}
                 strokeWidth={1.9}
                 aria-hidden="true"
               />
-            }
+            </IconButton>
+          </Tooltip>
+        ) : null}
+        <Tooltip content={t('qualityCheck.title')}>
+          <IconButton
+            aria-label={t('qualityCheck.open')}
             size="sm"
             minW={9}
             h={9}
@@ -142,19 +128,18 @@ export function ProjectControlActions({
             color="field.ink"
             _hover={{ bg: 'field.ink', color: 'field.paper' }}
             onClick={onOpenQualityCheckModal}
-          />
+          >
+            <PageSearch
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
         </Tooltip>
-        <Tooltip label={t('settings.title')}>
+        <Tooltip content={t('settings.title')}>
           <IconButton
             aria-label={t('projectControl.openSettings')}
-            icon={
-              <Settings
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            }
             size="sm"
             minW={9}
             h={9}
@@ -164,19 +149,18 @@ export function ProjectControlActions({
             color="field.ink"
             _hover={{ bg: 'field.ink', color: 'field.paper' }}
             onClick={appSettingsModal.onOpen}
-          />
+          >
+            <Settings
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
         </Tooltip>
-        <Tooltip label={t('projectControl.fontSettings')}>
+        <Tooltip content={t('projectControl.fontSettings')}>
           <IconButton
             aria-label={t('projectControl.openFontSettings')}
-            icon={
-              <FontQuestion
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            }
             size="sm"
             minW={9}
             h={9}
@@ -186,24 +170,23 @@ export function ProjectControlActions({
             color="field.ink"
             _hover={{ bg: 'field.ink', color: 'field.paper' }}
             onClick={onOpenFontSettingsModal}
-          />
+          >
+            <FontQuestion
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
         </Tooltip>
         {hasLocalSaveError ? (
           <Tooltip
-            label={t('projectControl.localSaveFailedRetryTooltip', {
+            content={t('projectControl.localSaveFailedRetryTooltip', {
               message: localSaveErrorMessage,
             })}
           >
             <IconButton
               aria-label={t('projectControl.retryLocalSave')}
-              icon={
-                <WarningTriangle
-                  width={18}
-                  height={18}
-                  strokeWidth={1.9}
-                  aria-hidden="true"
-                />
-              }
               size="sm"
               minW={9}
               h={9}
@@ -213,12 +196,19 @@ export function ProjectControlActions({
               color="field.red.500"
               _hover={{ bg: 'field.red.500', color: 'field.panel' }}
               onClick={() => void handleRetryLocalSave()}
-              isLoading={isRetryingLocalSave}
-            />
+              loading={isRetryingLocalSave}
+            >
+              <WarningTriangle
+                width={18}
+                height={18}
+                strokeWidth={1.9}
+                aria-hidden="true"
+              />
+            </IconButton>
           </Tooltip>
         ) : null}
         {localSaveStatus ? (
-          <Tooltip label={localSaveStatusLabel}>
+          <Tooltip content={localSaveStatusLabel}>
             <Box
               role="status"
               aria-label={localSaveStatusLabel}
@@ -249,17 +239,9 @@ export function ProjectControlActions({
             </Box>
           </Tooltip>
         ) : null}
-        <Tooltip label={t('projectControl.export')}>
+        <Tooltip content={t('projectControl.export')}>
           <IconButton
             aria-label={t('projectControl.export')}
-            icon={
-              <Download
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            }
             size="sm"
             minW={9}
             h={9}
@@ -269,12 +251,19 @@ export function ProjectControlActions({
             color="field.ink"
             _hover={{ bg: 'field.ink', color: 'field.paper' }}
             onClick={onOpenExportModal}
-            isDisabled={isSavingToLocal}
-          />
+            disabled={isSavingToLocal}
+          >
+            <Download
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
         </Tooltip>
       </HStack>
       <AppSettingsModal
-        isOpen={appSettingsModal.isOpen}
+        isOpen={appSettingsModal.open}
         onClose={appSettingsModal.onClose}
       />
     </>

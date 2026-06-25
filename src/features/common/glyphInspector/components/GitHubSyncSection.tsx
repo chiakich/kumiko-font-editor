@@ -1,3 +1,4 @@
+import { useToast } from '@/components/ui/toast'
 import {
   Badge,
   Box,
@@ -7,7 +8,6 @@ import {
   Spinner,
   Stack,
   Text,
-  useToast,
 } from '@chakra-ui/react'
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -106,26 +106,26 @@ function ConflictRow({
   const { t } = useTranslation()
 
   return (
-    <HStack justify="space-between" spacing={3}>
-      <HStack spacing={2} minWidth={0}>
-        <Text fontSize="sm" fontWeight="medium" noOfLines={1}>
+    <HStack justify="space-between" gap={3}>
+      <HStack gap={2} minWidth={0}>
+        <Text fontSize="sm" fontWeight="medium" lineClamp={1}>
           {entry.glyphName ?? entry.fileName}
         </Text>
         {entry.remoteSha === null ? (
-          <Badge colorScheme="red">
+          <Badge colorPalette="red">
             {t('glyphInspector.syncRemoteDeleted')}
           </Badge>
         ) : null}
       </HStack>
-      <ButtonGroup size="xs" isAttached variant="outline">
+      <ButtonGroup size="xs" attached variant="outline">
         <Button
-          isActive={resolution === 'keepLocal'}
+          data-active={resolution === 'keepLocal' ? '' : undefined}
           onClick={() => onResolutionChange(entry.path, 'keepLocal')}
         >
           {t('glyphInspector.syncKeepLocal')}
         </Button>
         <Button
-          isActive={resolution === 'takeRemote'}
+          data-active={resolution === 'takeRemote' ? '' : undefined}
           onClick={() => onResolutionChange(entry.path, 'takeRemote')}
         >
           {t('glyphInspector.syncTakeRemote')}
@@ -149,7 +149,7 @@ export function GitHubSyncSection({
 
   if (isLoading && !report) {
     return (
-      <HStack spacing={2} color="gray.500">
+      <HStack gap={2} color="gray.500">
         <Spinner size="xs" />
         <Text fontSize="sm">{t('glyphInspector.syncChecking')}</Text>
       </HStack>
@@ -193,7 +193,7 @@ export function GitHubSyncSection({
       p={3}
       borderColor={hasConflicts ? 'orange.300' : 'blue.200'}
     >
-      <Stack spacing={3}>
+      <Stack gap={3}>
         {hasRemoteChanges ? (
           <Text fontSize="sm" color="blue.600">
             {t('glyphInspector.syncRemoteChanges', {
@@ -203,7 +203,7 @@ export function GitHubSyncSection({
         ) : null}
 
         {hasConflicts ? (
-          <Stack spacing={2}>
+          <Stack gap={2}>
             <Text fontSize="sm" fontWeight="medium" color="orange.600">
               {t('glyphInspector.syncConflicts', {
                 count: report.conflicts.length,
@@ -226,10 +226,10 @@ export function GitHubSyncSection({
           </Text>
           <Button
             size="sm"
-            colorScheme={hasConflicts ? 'orange' : 'blue'}
+            colorPalette={hasConflicts ? 'orange' : 'blue'}
             onClick={onApplyRemote}
-            isLoading={isApplying}
-            isDisabled={hasConflicts && unresolvedConflictCount > 0}
+            loading={isApplying}
+            disabled={hasConflicts && unresolvedConflictCount > 0}
           >
             {t('glyphInspector.syncApplyRemote')}
           </Button>

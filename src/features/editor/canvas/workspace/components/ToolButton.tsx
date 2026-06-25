@@ -1,4 +1,5 @@
-import { Button, Tooltip } from '@chakra-ui/react'
+import { Button } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import { TOOL_ICONS } from 'src/features/editor/canvas/workspace/components/toolIcons'
 
@@ -22,7 +23,7 @@ export function ToolButton({
   const ToolIcon = TOOL_ICONS[toolId]
 
   return (
-    <Tooltip label={`${label} (${shortcut})`}>
+    <Tooltip content={`${label} (${shortcut})`}>
       <Button
         size="xs"
         minW={8}

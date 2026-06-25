@@ -86,7 +86,7 @@ export function FontFeaturesTab({
   const activeSelection = normalizeSelection(selected, openTypeFeatures)
 
   return (
-    <Stack spacing={5} h="100%" minH={0}>
+    <Stack gap={5} h="100%" minH={0}>
       <OpenTypeStatusBar state={openTypeFeatures} diagnostics={diagnostics} />
       <Grid
         gap={5}

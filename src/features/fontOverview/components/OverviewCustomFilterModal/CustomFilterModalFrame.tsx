@@ -1,16 +1,10 @@
-import {
-  Box,
-  Button,
-  HStack,
-  ModalBody,
-  ModalFooter,
-  TabPanel,
-  TabPanels,
-  Text,
-} from '@chakra-ui/react'
+import { Box, Button, HStack, Tabs, Text, Dialog } from '@chakra-ui/react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { SlidingTabList } from 'src/features/common/SlidingTabList'
+import {
+  SlidingTabList,
+  SlidingTabsContentGroup,
+} from 'src/features/common/SlidingTabList'
 import { AdvancedFilterFields } from 'src/features/fontOverview/components/OverviewCustomFilterModal/AdvancedFilterFields'
 import { PresetFilterList } from 'src/features/fontOverview/components/OverviewCustomFilterModal/PresetFilterList'
 import type {
@@ -88,15 +82,15 @@ export function CustomFilterModalBody({
   onCreatePreset: (preset: OverviewCustomFilterPreset) => void
 }) {
   return (
-    <ModalBody flex={1} minH={0} pb={5}>
-      <TabPanels h="100%">
+    <Dialog.Body flex={1} minH={0} pb={5}>
+      <SlidingTabsContentGroup h="100%" mt={0}>
         <PresetFilterPanel
           presetScrollRef={presetScrollRef}
           presets={presets}
           updatePresetScrollMask={updatePresetScrollMask}
           onCreatePreset={onCreatePreset}
         />
-        <TabPanel h="100%" overflow="auto" p={0} pr={1}>
+        <Tabs.Content value="1" h="100%" overflow="auto" p={0} pr={1}>
           <AdvancedFilterFields
             addGroup={addGroup}
             addRule={addRule}
@@ -106,9 +100,9 @@ export function CustomFilterModalBody({
             updateGroupMode={updateGroupMode}
             updateRule={updateRule}
           />
-        </TabPanel>
-      </TabPanels>
-    </ModalBody>
+        </Tabs.Content>
+      </SlidingTabsContentGroup>
+    </Dialog.Body>
   )
 }
 
@@ -124,7 +118,7 @@ function PresetFilterPanel({
   onCreatePreset: (preset: OverviewCustomFilterPreset) => void
 }) {
   return (
-    <TabPanel h="100%" p={0} position="relative">
+    <Tabs.Content value="0" h="100%" p={0} position="relative">
       <Box
         ref={presetScrollRef}
         h="100%"
@@ -132,16 +126,17 @@ function PresetFilterPanel({
         pb={8}
         pr={1}
         onScroll={updatePresetScrollMask}
-        sx={{
+        css={{
           maskImage:
             'var(--preset-scroll-mask, linear-gradient(to bottom, black, black))',
+
           WebkitMaskImage:
             'var(--preset-scroll-mask, linear-gradient(to bottom, black, black))',
         }}
       >
         <PresetFilterList presets={presets} onCreatePreset={onCreatePreset} />
       </Box>
-    </TabPanel>
+    </Tabs.Content>
   )
 }
 
@@ -161,22 +156,22 @@ export function CustomFilterModalFooter({
   const { t } = useTranslation()
 
   return (
-    <ModalFooter justifyContent="space-between" gap={3}>
+    <Dialog.Footer justifyContent="space-between" gap={3}>
       <Box>
         {canDelete ? (
-          <Button colorScheme="red" variant="ghost" onClick={onDelete}>
+          <Button colorPalette="red" variant="ghost" onClick={onDelete}>
             {t('fontOverview.customFilter.deleteFilter')}
           </Button>
         ) : null}
       </Box>
-      <HStack spacing={3}>
+      <HStack gap={3}>
         <Button variant="ghost" onClick={onCancel}>
           {t('fontOverview.cancel')}
         </Button>
-        <Button isDisabled={!canSave} onClick={onSave}>
+        <Button disabled={!canSave} onClick={onSave}>
           {t('fontOverview.customFilter.save')}
         </Button>
       </HStack>
-    </ModalFooter>
+    </Dialog.Footer>
   )
 }

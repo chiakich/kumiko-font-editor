@@ -3,16 +3,18 @@ import { createRoot } from 'react-dom/client'
 import { ChakraProvider } from '@chakra-ui/react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import App from 'src/App.tsx'
+import { Toaster } from 'src/components/ui/toaster.tsx'
 import { queryClient } from 'src/lib/queryClient.ts'
-import theme from 'src/theme.ts'
+import system from 'src/theme.ts'
 import 'src/i18n'
 import 'src/global.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ChakraProvider theme={theme}>
+      <ChakraProvider value={system}>
         <App />
+        <Toaster />
       </ChakraProvider>
     </QueryClientProvider>
   </StrictMode>

@@ -1,13 +1,12 @@
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   HStack,
   Input,
   SimpleGrid,
   Stack,
   Text,
+  Field,
 } from '@chakra-ui/react'
 import type { FontData } from 'src/store'
 import { defaultFontSource } from 'src/lib/fontFormats/fontInfoSettings'
@@ -41,7 +40,7 @@ export function FontSourcesTab({
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       <HStack justify="space-between">
         <Text fontWeight="semibold">{t('projectControl.sourcesTitle')}</Text>
         <Button
@@ -68,16 +67,18 @@ export function FontSourcesTab({
       </HStack>
       {sources.map((source, index) => (
         <Box key={source.id} borderWidth="1px" p={3}>
-          <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={3}>
-            <FormControl>
-              <FormLabel fontSize="sm">{t('projectControl.name')}</FormLabel>
+          <SimpleGrid columns={{ base: 1, lg: 3 }} gap={3}>
+            <Field.Root>
+              <Field.Label fontSize="sm">
+                {t('projectControl.name')}
+              </Field.Label>
               <Input
                 value={source.name}
                 onChange={(event) =>
                   updateSource(index, { name: event.target.value })
                 }
               />
-            </FormControl>
+            </Field.Root>
             <NumberField
               label={t('projectControl.italicAngle')}
               value={source.italicAngle}
@@ -87,10 +88,10 @@ export function FontSourcesTab({
                 })
               }
             />
-            <FormControl>
-              <FormLabel fontSize="sm">
+            <Field.Root>
+              <Field.Label fontSize="sm">
                 {t('projectControl.locationJson')}
-              </FormLabel>
+              </Field.Label>
               <Input
                 fontFamily="mono"
                 value={source.locationText}
@@ -98,9 +99,9 @@ export function FontSourcesTab({
                   updateSource(index, { locationText: event.target.value })
                 }
               />
-            </FormControl>
+            </Field.Root>
           </SimpleGrid>
-          <SimpleGrid columns={{ base: 1, lg: 4 }} spacing={3} mt={3}>
+          <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3} mt={3}>
             {(['ascender', 'descender', 'xHeight', 'capHeight'] as const).map(
               (metric) => (
                 <NumberField

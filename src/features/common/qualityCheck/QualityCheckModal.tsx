@@ -3,24 +3,22 @@ import {
   Box,
   Button,
   HStack,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   SimpleGrid,
   Stack,
-  TabPanel,
-  TabPanels,
   Tabs,
   Text,
+  Dialog,
+  Portal,
 } from '@chakra-ui/react'
+import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { FrameSelect, GraphUp, List, MessageText } from 'iconoir-react'
-import { SlidingTabList } from 'src/features/common/SlidingTabList'
+import {
+  SlidingTabList,
+  SlidingTabsContentGroup,
+  SlidingTabsRoot,
+} from 'src/features/common/SlidingTabList'
 import { useStore } from 'src/store'
 import { LintPanel } from 'src/features/common/qualityCheck/components/LintPanel'
 import { MixedProofPanel } from 'src/features/common/qualityCheck/components/MixedProofPanel'
@@ -251,136 +249,154 @@ function QualityCheckDialog({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="5xl">
-      <ModalOverlay />
-      <ModalContent maxH="86vh">
-        <ModalHeader pr={14}>
-          <Stack
-            direction={{ base: 'column', md: 'row' }}
-            align={{ base: 'stretch', md: 'center' }}
-            justify="space-between"
-            spacing={3}
-          >
-            <Box>
-              <HStack spacing={3} align="center">
-                <Text as="span">{t('qualityCheck.title')}</Text>
-                {!isWholeFontScope ? (
-                  <Badge colorScheme="orange">
-                    {scopeLabel} {isReportPending ? '...' : glyphs.length}
-                  </Badge>
-                ) : null}
-              </HStack>
-              <Text fontSize="xs" color="field.muted" fontWeight="800" mt={1}>
-                {isWholeFontScope
-                  ? t('qualityCheck.description.font')
-                  : t('qualityCheck.description.focused', {
-                      scope: scopeLabel,
-                    })}
-              </Text>
-            </Box>
-            {scopeControl}
-          </Stack>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody overflowY="auto">
-          <Stack spacing={4}>
-            <SimpleGrid
-              columns={{
-                base: 1,
-                md: summary.deletedCount === null ? 5 : 6,
-              }}
-              spacing={3}
-            >
-              <SummaryTile
-                label={t('qualityCheck.summary.scope')}
-                value={scopeLabel}
-              />
-              <SummaryTile
-                label={t('qualityCheck.summary.glyphs')}
-                value={displayGlyphCount}
-              />
-              <SummaryTile
-                label={t('qualityCheck.summary.blocking')}
-                value={displayValue(summary.blockingCount)}
-                tone="red"
-              />
-              <SummaryTile
-                label={t('qualityCheck.summary.warning')}
-                value={displayValue(summary.warningCount)}
-                tone="orange"
-              />
-              <SummaryTile
-                label={t('qualityCheck.summary.info')}
-                value={displayValue(summary.infoCount)}
-              />
-              {summary.deletedCount === null ? null : (
-                <SummaryTile
-                  label={t('qualityCheck.summary.deleted')}
-                  value={displayValue(summary.deletedCount)}
-                />
-              )}
-            </SimpleGrid>
-
-            <Tabs
-              variant="unstyled"
-              colorScheme="yellow"
-              isLazy
-              index={activeTabIndex}
-              onChange={setActiveTabIndex}
-            >
-              <SlidingTabList
-                activeIndex={activeTabIndex}
-                labels={qualityTabLabels}
-                layoutGroupId="quality-check-tabs"
-              />
-
-              <TabPanels>
-                <TabPanel px={0}>
-                  {isReportPending ? (
-                    <ReportLoadingPanel />
-                  ) : (
-                    <LintPanel
-                      issues={issues}
-                      glyphCount={glyphs.length}
-                      onLocateIssue={handleLocateIssue}
+    <Dialog.Root
+      open={isOpen}
+      size="xl"
+      onOpenChange={(e) => {
+        if (!e.open) {
+          onClose()
+        }
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content maxH="86vh">
+            <Dialog.Header pr={14}>
+              <Stack
+                direction={{ base: 'column', md: 'row' }}
+                align={{ base: 'stretch', md: 'center' }}
+                justify="space-between"
+                gap={3}
+              >
+                <Box>
+                  <HStack gap={3} align="center">
+                    <Text as="span">{t('qualityCheck.title')}</Text>
+                    {!isWholeFontScope ? (
+                      <Badge colorPalette="orange">
+                        {scopeLabel} {isReportPending ? '...' : glyphs.length}
+                      </Badge>
+                    ) : null}
+                  </HStack>
+                  <Text
+                    fontSize="xs"
+                    color="field.muted"
+                    fontWeight="800"
+                    mt={1}
+                  >
+                    {isWholeFontScope
+                      ? t('qualityCheck.description.font')
+                      : t('qualityCheck.description.focused', {
+                          scope: scopeLabel,
+                        })}
+                  </Text>
+                </Box>
+                {scopeControl}
+              </Stack>
+            </Dialog.Header>
+            <DialogCloseButton />
+            <Dialog.Body overflowY="auto">
+              <Stack gap={4}>
+                <SimpleGrid
+                  columns={{
+                    base: 1,
+                    md: summary.deletedCount === null ? 5 : 6,
+                  }}
+                  gap={3}
+                >
+                  <SummaryTile
+                    label={t('qualityCheck.summary.scope')}
+                    value={scopeLabel}
+                  />
+                  <SummaryTile
+                    label={t('qualityCheck.summary.glyphs')}
+                    value={displayGlyphCount}
+                  />
+                  <SummaryTile
+                    label={t('qualityCheck.summary.blocking')}
+                    value={displayValue(summary.blockingCount)}
+                    tone="red"
+                  />
+                  <SummaryTile
+                    label={t('qualityCheck.summary.warning')}
+                    value={displayValue(summary.warningCount)}
+                    tone="orange"
+                  />
+                  <SummaryTile
+                    label={t('qualityCheck.summary.info')}
+                    value={displayValue(summary.infoCount)}
+                  />
+                  {summary.deletedCount === null ? null : (
+                    <SummaryTile
+                      label={t('qualityCheck.summary.deleted')}
+                      value={displayValue(summary.deletedCount)}
                     />
                   )}
-                </TabPanel>
-                <TabPanel px={0}>
-                  <MixedProofPanel
-                    fontData={fontData}
-                    scopedGlyphs={glyphs}
-                    scope={scope}
-                    proofText={proofText}
-                    onProofTextChange={setProofText}
+                </SimpleGrid>
+
+                <SlidingTabsRoot
+                  colorPalette="yellow"
+                  value={String(activeTabIndex)}
+                  onValueChange={(details) =>
+                    setActiveTabIndex(Number(details.value))
+                  }
+                >
+                  <SlidingTabList
+                    activeIndex={activeTabIndex}
+                    labels={qualityTabLabels}
+                    layoutGroupId="quality-check-tabs"
+                    w="100%"
                   />
-                </TabPanel>
-                <TabPanel px={0}>
-                  <GrayProofPanel
-                    fontData={fontData}
-                    scopedGlyphs={glyphs}
-                    scope={scope}
-                  />
-                </TabPanel>
-                <TabPanel px={0}>
-                  <StructurePanel
-                    fontData={fontData}
-                    scopedGlyphs={glyphs}
-                    scope={scope}
-                    onLocateGlyph={handleLocateGlyph}
-                  />
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </Stack>
-        </ModalBody>
-        <ModalFooter gap={3}>
-          <Button variant="ghost" onClick={onClose}>
-            {t('common.close')}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+
+                  <SlidingTabsContentGroup>
+                    <Tabs.Content value="0" px={0}>
+                      {isReportPending ? (
+                        <ReportLoadingPanel />
+                      ) : (
+                        <LintPanel
+                          issues={issues}
+                          glyphCount={glyphs.length}
+                          onLocateIssue={handleLocateIssue}
+                        />
+                      )}
+                    </Tabs.Content>
+                    <Tabs.Content value="1" px={0}>
+                      <MixedProofPanel
+                        fontData={fontData}
+                        scopedGlyphs={glyphs}
+                        scope={scope}
+                        proofText={proofText}
+                        onProofTextChange={setProofText}
+                      />
+                    </Tabs.Content>
+                    <Tabs.Content value="2" px={0}>
+                      <GrayProofPanel
+                        fontData={fontData}
+                        scopedGlyphs={glyphs}
+                        scope={scope}
+                      />
+                    </Tabs.Content>
+                    <Tabs.Content value="3" px={0}>
+                      <StructurePanel
+                        fontData={fontData}
+                        scopedGlyphs={glyphs}
+                        scope={scope}
+                        onLocateGlyph={handleLocateGlyph}
+                      />
+                    </Tabs.Content>
+                  </SlidingTabsContentGroup>
+                </SlidingTabsRoot>
+              </Stack>
+            </Dialog.Body>
+            <Dialog.Footer gap={3}>
+              <Button variant="ghost" onClick={onClose}>
+                {t('common.close')}
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }
 
@@ -433,7 +449,7 @@ function ScopeSelector({
 
   return (
     <HStack
-      spacing={1}
+      gap={1}
       bg="field.panelMuted"
       borderRadius="full"
       p={1}
@@ -464,7 +480,7 @@ function TabLabel({
   children: ReactNode
 }) {
   return (
-    <HStack spacing={2}>
+    <HStack gap={2}>
       {icon}
       <Text as="span">{children}</Text>
     </HStack>

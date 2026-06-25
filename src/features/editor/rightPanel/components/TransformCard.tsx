@@ -1,13 +1,13 @@
 import {
   Box,
   Button,
-  Divider,
   Heading,
   HStack,
   Stack,
   Text,
-  Tooltip,
+  Separator,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Refresh } from 'iconoir-react'
 import { useMemo, useState } from 'react'
 import { activeLayer, type GlyphData } from 'src/store'
@@ -257,8 +257,7 @@ export function TransformCard({
           </Text>
         </Box>
       </HStack>
-
-      <Stack spacing={4}>
+      <Stack gap={4}>
         <TransformFrameControls
           origin={origin}
           isDisabled={isDisabled}
@@ -275,9 +274,9 @@ export function TransformCard({
           onStep={stepField}
         />
 
-        <Divider borderColor="field.panelMuted" />
+        <Separator borderColor="field.panelMuted" />
 
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <ScaleActionGroup
             scaleX={actionDrafts.scaleX}
             scaleY={actionDrafts.scaleY}
@@ -352,13 +351,12 @@ export function TransformCard({
             <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
               {t('editor.quick')}
             </Text>
-            <Tooltip label={t('editor.rotate90Degrees')}>
+            <Tooltip content={t('editor.rotate90Degrees')}>
               <Button
                 aria-label={t('editor.rotate90Degrees')}
-                leftIcon={<Refresh width={16} height={16} />}
                 size="sm"
                 w="100%"
-                isDisabled={isDisabled}
+                disabled={isDisabled}
                 onClick={() =>
                   onMoveSelection(
                     bounds
@@ -367,19 +365,20 @@ export function TransformCard({
                   )
                 }
               >
+                <Refresh width={16} height={16} />
                 {t('editor.rotateNinety')}
               </Button>
             </Tooltip>
           </Box>
         </Stack>
 
-        <Divider borderColor="field.panelMuted" />
+        <Separator borderColor="field.panelMuted" />
 
         <MirrorControls isDisabled={isDisabled} onMirror={applyMirror} />
 
         <AlignControls isDisabled={isDisabled} onAlign={applyAlign} />
 
-        <Divider borderColor="field.panelMuted" />
+        <Separator borderColor="field.panelMuted" />
 
         <PathOpsControls
           canApply={canApplyPathOps}

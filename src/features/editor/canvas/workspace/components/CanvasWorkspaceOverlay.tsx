@@ -39,14 +39,14 @@ export function CanvasWorkspaceOverlay({
         backdropFilter="blur(10px)"
         boxShadow="none"
       >
-        <HStack spacing={1}>
+        <HStack gap={1}>
           <HistoryButton action="undo" isDisabled={!canUndo} onClick={onUndo} />
           <HistoryButton action="redo" isDisabled={!canRedo} onClick={onRedo} />
         </HStack>
 
         <Box h={6} w="1px" bg="whiteAlpha.300" />
 
-        <HStack spacing={1} align="center">
+        <HStack gap={1} align="center">
           {AVAILABLE_TOOLS.map((tool) => (
             <ToolButton
               key={tool.id}

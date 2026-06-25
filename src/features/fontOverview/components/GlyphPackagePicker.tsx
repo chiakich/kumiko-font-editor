@@ -96,8 +96,8 @@ function PackageCard({
       p={3}
       position="relative"
     >
-      <Stack spacing={2} align="center" textAlign="center" w="100%">
-        <Stack spacing={1} align="center">
+      <Stack gap={2} align="center" textAlign="center" w="100%">
+        <Stack gap={1} align="center">
           <Text fontWeight="bold" lineHeight="1.1">
             {glyphPackage.label}
           </Text>
@@ -118,7 +118,7 @@ function PackageCard({
         <Text fontSize="xs" color={mutedColor} fontWeight="normal">
           {glyphPackage.description}
         </Text>
-        <Stack spacing={1} w="100%">
+        <Stack gap={1} w="100%">
           <HStack justify="space-between" fontSize="xs" fontFamily="mono">
             <Text color={mutedColor}>{percent}%</Text>
             <Text color={mutedColor}>
@@ -126,12 +126,16 @@ function PackageCard({
               {coverage.total.toLocaleString()}
             </Text>
           </HStack>
-          <Progress
+          <Progress.Root
             value={percent}
             size="xs"
             borderRadius="full"
-            colorScheme={percent >= 100 ? 'green' : 'yellow'}
-          />
+            colorPalette={percent >= 100 ? 'green' : 'yellow'}
+          >
+            <Progress.Track>
+              <Progress.Range />
+            </Progress.Track>
+          </Progress.Root>
           <Text fontSize="xs" color={mutedColor} fontFamily="mono">
             {t('fontOverview.coverageMissing')}{' '}
             {coverage.missingGlyphNames.length.toLocaleString()}
@@ -152,7 +156,7 @@ function PackageGroupSidebar({
   onSelectGroup,
 }: PackageGroupSidebarProps) {
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       {defaultGlyphPackageGroups.map((group) => {
         const isActive = activeGroupId === group.id
         return (
@@ -194,10 +198,11 @@ function PackageGroupSource({ groupId }: PackageGroupSourceProps) {
       {t('fontOverview.sourceLabel')}
       <Link
         href="https://justfont.com/jf7000"
-        isExternal
         fontWeight="900"
         color="field.ink"
         textDecoration="underline"
+        target="_blank"
+        rel="noopener noreferrer"
       >
         {t('fontOverview.jf7000Package')}
       </Link>
@@ -221,7 +226,7 @@ function PackageCardSection({
   onTogglePackage,
 }: PackageCardSectionProps) {
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text
         fontSize="xs"
         color="field.muted"
@@ -230,7 +235,7 @@ function PackageCardSection({
       >
         {section}
       </Text>
-      <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} spacing={2}>
+      <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} gap={2}>
         {sectionPackages.map((glyphPackage) => {
           const coverage = coverageByPackageId.get(glyphPackage.id)
           if (!coverage) {
@@ -265,7 +270,7 @@ function PackageCardsArea({
   onTogglePackage,
 }: PackageCardsAreaProps) {
   return (
-    <Stack spacing={3} w="100%">
+    <Stack gap={3} w="100%">
       {getPackagesBySection(packages).map(([section, sectionPackages]) => (
         <PackageCardSection
           key={section}
@@ -287,7 +292,7 @@ interface SummaryTokenProps {
 function SummaryToken({ glyphPackage }: SummaryTokenProps) {
   return (
     <HStack
-      spacing={0}
+      gap={0}
       border="2px solid"
       borderColor="field.ink"
       borderRadius="2px"
@@ -335,10 +340,10 @@ function SummaryFormula({ packages }: SummaryFormulaProps) {
   }
 
   return (
-    <Wrap spacing={2} align="center">
+    <Wrap gap={2} align="center">
       {packages.map((glyphPackage, index) => (
         <WrapItem key={glyphPackage.id} alignItems="center">
-          <HStack spacing={2}>
+          <HStack gap={2}>
             {index > 0 && <Plus width={16} height={16} />}
             <SummaryToken glyphPackage={glyphPackage} />
           </HStack>
@@ -425,7 +430,7 @@ export function GlyphPackagePicker({
         />
       </GridItem>
       <GridItem minW={0} minH={0}>
-        <Stack h="100%" minH={0} spacing={3}>
+        <Stack h="100%" minH={0} gap={3}>
           <Box
             flex={1}
             minH={0}

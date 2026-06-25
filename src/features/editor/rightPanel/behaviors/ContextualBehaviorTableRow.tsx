@@ -6,8 +6,8 @@ import {
   Input,
   Stack,
   Text,
-  Tooltip,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { NavArrowRight, Trash } from 'iconoir-react'
 import { useState } from 'react'
 import type { KeyboardEvent } from 'react'
@@ -71,13 +71,13 @@ export function ContextualBehaviorTableRow({
 
   return (
     <Stack
-      spacing={2}
+      gap={2}
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
       borderColor="field.panelMuted"
     >
-      <Stack spacing={1}>
+      <Stack gap={1}>
         <Text fontSize="10px" fontWeight="bold" color="field.muted">
           {t('editor.when')}
         </Text>
@@ -114,19 +114,19 @@ export function ContextualBehaviorTableRow({
             onChange={(event) => setAfter(event.target.value)}
             onKeyDown={commitOnEnter}
           />
-          <Tooltip label={t('editor.deleteContextualRule')}>
+          <Tooltip content={t('editor.deleteContextualRule')}>
             <IconButton
               aria-label={t('editor.deleteContextualRule')}
-              icon={<Trash width={15} height={15} aria-hidden="true" />}
               size="xs"
               variant="ghost"
               color="field.red.500"
               onClick={onDelete}
-            />
+            >
+              <Trash width={15} height={15} aria-hidden="true" />
+            </IconButton>
           </Tooltip>
         </Box>
       </Stack>
-
       <Box
         display="grid"
         gridTemplateColumns="minmax(0, 1fr) 14px minmax(0, 1fr)"
@@ -134,7 +134,7 @@ export function ContextualBehaviorTableRow({
         alignItems="center"
       >
         <Box px={2} py={1} bg="field.panelMuted" borderRadius="2px">
-          <Text fontSize="xs" fontFamily="mono" isTruncated>
+          <Text fontSize="xs" fontFamily="mono" truncate>
             {source || 'glyph'}
           </Text>
         </Box>
@@ -149,23 +149,22 @@ export function ContextualBehaviorTableRow({
           onKeyDown={commitOnEnter}
         />
       </Box>
-
       <HStack justify="space-between" align="flex-start">
-        <HStack spacing={1} wrap="wrap">
+        <HStack gap={1} wrap="wrap">
           {row?.sourceLabel ? (
-            <Badge variant="subtle" colorScheme="gray">
+            <Badge variant="subtle" colorPalette="gray">
               {row.sourceLabel}
             </Badge>
           ) : null}
         </HStack>
-        <HStack spacing={1} wrap="wrap" justify="flex-end">
+        <HStack gap={1} wrap="wrap" justify="flex-end">
           {row?.status.map((status) => (
-            <Badge key={status} colorScheme="red">
+            <Badge key={status} colorPalette="red">
               {status}
             </Badge>
           ))}
           {!canCommit && (before || after || source || replacement) ? (
-            <Badge colorScheme="red">{t('editor.invalidInput')}</Badge>
+            <Badge colorPalette="red">{t('editor.invalidInput')}</Badge>
           ) : null}
         </HStack>
       </HStack>

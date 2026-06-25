@@ -1,13 +1,11 @@
 import {
   Badge,
-  FormControl,
-  FormHelperText,
-  FormLabel,
   HStack,
   SimpleGrid,
   Stack,
   Text,
   Textarea,
+  Field,
 } from '@chakra-ui/react'
 import {
   Metric,
@@ -31,8 +29,10 @@ export function RawFeatureTextEditor({
   const { t } = useTranslation()
 
   return (
-    <FormControl>
-      <FormLabel fontSize="sm">{t('projectControl.rawFeatureText')}</FormLabel>
+    <Field.Root>
+      <Field.Label fontSize="sm">
+        {t('projectControl.rawFeatureText')}
+      </Field.Label>
       <Textarea
         minH="560px"
         fontFamily="mono"
@@ -40,10 +40,10 @@ export function RawFeatureTextEditor({
         onChange={(event) => onRawFeatureTextChange(event.target.value)}
         placeholder={t('projectControl.rawFeatureTextPlaceholder')}
       />
-      <FormHelperText fontSize="xs">
+      <Field.HelperText fontSize="xs">
         {t('projectControl.rawFeatureTextHelp')}
-      </FormHelperText>
-    </FormControl>
+      </Field.HelperText>
+    </Field.Root>
   )
 }
 
@@ -106,16 +106,16 @@ export function GlyphClassDocument({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       {glyphClasses.map((glyphClass) => (
-        <Stack key={glyphClass.id} spacing={1} borderTopWidth="1px" pt={2}>
+        <Stack key={glyphClass.id} gap={1} borderTopWidth="1px" pt={2}>
           <HStack justify="space-between" align="flex-start" gap={2}>
-            <Text fontFamily="mono" fontWeight="900" noOfLines={1}>
+            <Text fontFamily="mono" fontWeight="900" lineClamp={1}>
               {glyphClass.name}
             </Text>
             <Badge flexShrink={0}>{glyphClass.glyphs.length}</Badge>
           </HStack>
-          <Text fontSize="xs" color="field.muted" noOfLines={2}>
+          <Text fontSize="xs" color="field.muted" lineClamp={2}>
             {glyphClass.glyphs.slice(0, 48).join(' ')}
             {glyphClass.glyphs.length > 48 ? ' ...' : ''}
           </Text>
@@ -141,16 +141,16 @@ export function MarkClassDocument({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       {markClasses.map((markClass) => (
-        <Stack key={markClass.id} spacing={1} borderTopWidth="1px" pt={2}>
+        <Stack key={markClass.id} gap={1} borderTopWidth="1px" pt={2}>
           <HStack justify="space-between" align="flex-start" gap={2}>
-            <Text fontFamily="mono" fontWeight="900" noOfLines={1}>
+            <Text fontFamily="mono" fontWeight="900" lineClamp={1}>
               {markClass.name}
             </Text>
             <Badge flexShrink={0}>{markClass.marks.length}</Badge>
           </HStack>
-          <Text fontSize="xs" color="field.muted" noOfLines={2}>
+          <Text fontSize="xs" color="field.muted" lineClamp={2}>
             {markClass.marks
               .slice(0, 48)
               .map((mark) => mark.glyph)
@@ -178,9 +178,9 @@ export function GdefDocument({ state }: { state: OpenTypeFeaturesState }) {
   }
 
   return (
-    <Stack spacing={4}>
+    <Stack gap={4}>
       {state.gdef ? (
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+        <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
           <Metric
             label={t('projectControl.glyphClasses')}
             value={countGdefGlyphClasses(state)}

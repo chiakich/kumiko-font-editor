@@ -18,7 +18,7 @@ export function AutoFeatureSuggestions({
   const { t } = useTranslation()
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       <HStack justify="space-between">
         <Text fontWeight="semibold">
           {t('projectControl.autoFeatureSuggestions')}
@@ -35,7 +35,7 @@ export function AutoFeatureSuggestions({
         suggestions.map((suggestion) => (
           <Stack
             key={suggestion.id}
-            spacing={2}
+            gap={2}
             borderWidth="1px"
             borderRadius="sm"
             p={3}
@@ -46,7 +46,7 @@ export function AutoFeatureSuggestions({
                   {suggestion.featureTag}
                 </Text>
                 <Badge>{suggestion.confidence}</Badge>
-                <Badge colorScheme="blue">
+                <Badge colorPalette="blue">
                   {suggestion.ruleIds.length} {t('projectControl.rules')}
                 </Badge>
               </HStack>

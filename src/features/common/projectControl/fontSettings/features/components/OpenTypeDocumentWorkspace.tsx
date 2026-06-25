@@ -1,4 +1,4 @@
-import { Divider, Stack, Text } from '@chakra-ui/react'
+import { Stack, Text, Separator } from '@chakra-ui/react'
 import { AutoFeatureSuggestions } from 'src/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
 import { ExportPolicyControl } from 'src/features/common/projectControl/fontSettings/features/components/ExportPolicyControl'
 import { FeatureDiagnosticsList } from 'src/features/common/projectControl/fontSettings/features/components/FeatureDiagnosticsList'
@@ -63,7 +63,7 @@ export function OpenTypeDocumentWorkspace({
   const selectedFeature = getSelectedFeature(selection, state)
 
   return (
-    <Stack spacing={4}>
+    <Stack gap={4}>
       <WorkspaceHeader
         badges={getSelectionBadges(selection, selectedFeature)}
         description={getSelectionDescription(selection, t)}
@@ -156,15 +156,15 @@ function SelectionView({
         />
       ),
       'export-policy': (
-        <Stack spacing={5}>
+        <Stack gap={5}>
           <ImportExportOverview state={state} />
-          <Divider />
+          <Separator />
           <ExportPolicyControl
             diagnostics={diagnostics}
             state={state}
             onChange={onExportPolicyChange}
           />
-          <Divider />
+          <Separator />
           <UnsupportedLookupList
             unsupportedLookups={state.unsupportedLookups}
           />

@@ -7,14 +7,12 @@ import {
   IconButton,
   Input,
   Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
   Stack,
   Text,
-  Tooltip,
   useDisclosure,
+  Portal,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { EyeClosed, EyeSolid, Settings } from 'iconoir-react'
 import {
   useState,
@@ -53,23 +51,26 @@ function EyeToggle({
 }) {
   return (
     <Box
-      as="button"
-      type="button"
       lineHeight={0}
       flexShrink={0}
       color={isDisabled ? 'field.muted' : 'field.ink'}
       opacity={isDisabled ? 0.4 : 1}
       cursor={isDisabled ? 'default' : 'pointer'}
-      onClick={(event: MouseEvent<HTMLButtonElement>) => {
-        event.stopPropagation()
-        if (!isDisabled) onToggle()
-      }}
+      asChild
     >
-      {visible ? (
-        <EyeSolid width={16} height={16} />
-      ) : (
-        <EyeClosed width={16} height={16} />
-      )}
+      <button
+        type="button"
+        onClick={(event: MouseEvent<HTMLButtonElement>) => {
+          event.stopPropagation()
+          if (!isDisabled) onToggle()
+        }}
+      >
+        {visible ? (
+          <EyeSolid width={16} height={16} />
+        ) : (
+          <EyeClosed width={16} height={16} />
+        )}
+      </button>
     </Box>
   )
 }
@@ -138,8 +139,7 @@ export function LayerListCard({
           +
         </Button>
       </HStack>
-
-      <Stack spacing={1}>
+      <Stack gap={1}>
         {layers.map((layer) => {
           const isMaster = layer.type !== 'backup'
           const isActive = layer.id === activeLayerId
@@ -152,7 +152,7 @@ export function LayerListCard({
           return (
             <HStack
               key={layer.id}
-              spacing={2}
+              gap={2}
               px={2}
               py={1.5}
               borderRadius="sm"
@@ -180,18 +180,13 @@ export function LayerListCard({
                 }
               />
               <LayerColorDot color={layer.color} />
-
               {isMaster ? (
-                <Box
-                  as="button"
-                  type="button"
-                  flex="1"
-                  minW={0}
-                  textAlign="left"
-                >
-                  <Text fontSize="sm" fontWeight="700" noOfLines={1}>
-                    {layer.name || layer.id}
-                  </Text>
+                <Box flex="1" minW={0} textAlign="left" asChild>
+                  <button type="button">
+                    <Text fontSize="sm" fontWeight="700" lineClamp={1}>
+                      {layer.name || layer.id}
+                    </Text>
+                  </button>
                 </Box>
               ) : (
                 <Box flex="1" minW={0} ml={4}>
@@ -217,60 +212,73 @@ export function LayerListCard({
                     />
                   ) : (
                     <Text
-                      as="button"
-                      type="button"
                       w="100%"
                       minW={0}
                       textAlign="left"
                       fontSize="sm"
                       color="field.ink"
-                      noOfLines={1}
-                      onDoubleClick={(event) => {
-                        event.stopPropagation()
-                        setRenamingLayerId(layer.id)
-                        setRenameValue(layer.name)
-                      }}
+                      lineClamp={1}
+                      asChild
                     >
-                      {layer.name}
+                      <button
+                        type="button"
+                        onDoubleClick={(event) => {
+                          event.stopPropagation()
+                          setRenamingLayerId(layer.id)
+                          setRenameValue(layer.name)
+                        }}
+                      >
+                        {layer.name}
+                      </button>
                     </Text>
                   )}
                 </Box>
               )}
-
               {isActive ? (
-                <Badge colorScheme="cyan" fontSize="2xs">
+                <Badge colorPalette="cyan" fontSize="2xs">
                   {t('editor.layerEditing')}
                 </Badge>
               ) : null}
-
               {!isMaster ? (
-                <Menu>
-                  <MenuButton
-                    as={Button}
-                    size="xs"
-                    variant="ghost"
-                    px={1}
-                    aria-label={t('editor.layerActions')}
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    ⋯
-                  </MenuButton>
-                  <MenuList>
-                    <MenuItem
-                      onClick={() => promoteBackupToMaster(glyphId, layer.id)}
+                <Menu.Root>
+                  <Menu.Trigger asChild>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      px={1}
+                      aria-label={t('editor.layerActions')}
+                      onClick={(event) => event.stopPropagation()}
                     >
-                      {t('editor.layerUseAsMaster')}
-                    </MenuItem>
-                    <MenuItem onClick={() => duplicateLayer(glyphId, layer.id)}>
-                      {t('editor.layerDuplicate')}
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => deleteBackupLayer(glyphId, layer.id)}
-                    >
-                      {t('editor.layerDelete')}
-                    </MenuItem>
-                  </MenuList>
-                </Menu>
+                      ⋯
+                    </Button>
+                  </Menu.Trigger>
+                  <Portal>
+                    <Menu.Positioner>
+                      <Menu.Content>
+                        <Menu.Item
+                          onSelect={() =>
+                            promoteBackupToMaster(glyphId, layer.id)
+                          }
+                          value="item-0"
+                        >
+                          {t('editor.layerUseAsMaster')}
+                        </Menu.Item>
+                        <Menu.Item
+                          onSelect={() => duplicateLayer(glyphId, layer.id)}
+                          value="item-1"
+                        >
+                          {t('editor.layerDuplicate')}
+                        </Menu.Item>
+                        <Menu.Item
+                          onSelect={() => deleteBackupLayer(glyphId, layer.id)}
+                          value="item-2"
+                        >
+                          {t('editor.layerDelete')}
+                        </Menu.Item>
+                      </Menu.Content>
+                    </Menu.Positioner>
+                  </Portal>
+                </Menu.Root>
               ) : null}
             </HStack>
           )
@@ -281,7 +289,7 @@ export function LayerListCard({
           .map((source) => (
             <HStack
               key={`missing-${source.id}`}
-              spacing={2}
+              gap={2}
               px={2}
               py={1.5}
               borderRadius="sm"
@@ -296,7 +304,7 @@ export function LayerListCard({
                 fontSize="sm"
                 fontStyle="italic"
                 color="field.muted"
-                noOfLines={1}
+                lineClamp={1}
               >
                 {source.name}
               </Text>
@@ -316,7 +324,7 @@ export function LayerListCard({
             </HStack>
           ))}
 
-        <HStack spacing={2} px={2} py={1.5} borderRadius="sm">
+        <HStack gap={2} px={2} py={1.5} borderRadius="sm">
           <EyeToggle
             visible={referenceFontVisible}
             isDisabled={!referenceFontName}
@@ -325,7 +333,7 @@ export function LayerListCard({
           <Text
             fontSize="sm"
             color="field.muted"
-            noOfLines={1}
+            lineClamp={1}
             flex="1"
             minW={0}
           >
@@ -333,22 +341,23 @@ export function LayerListCard({
               ? `${t('editor.referenceFont')} · ${referenceFontName}`
               : t('editor.referenceFont')}
           </Text>
-          <Tooltip label={t('editor.referenceFontSettings')}>
+          <Tooltip content={t('editor.referenceFontSettings')}>
             <IconButton
               size="xs"
               variant="ghost"
               aria-label={t('editor.referenceFontSettings')}
-              icon={<Settings width={16} height={16} />}
               onClick={(event) => {
                 event.stopPropagation()
                 referenceFontSettings.onOpen()
               }}
-            />
+            >
+              <Settings width={16} height={16} />
+            </IconButton>
           </Tooltip>
         </HStack>
       </Stack>
       <ReferenceFontSettingsModal
-        isOpen={referenceFontSettings.isOpen}
+        isOpen={referenceFontSettings.open}
         onClose={referenceFontSettings.onClose}
       />
       {layerColorMenu && layerColorMenuLayer ? (

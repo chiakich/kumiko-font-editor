@@ -1,13 +1,4 @@
-import {
-  Badge,
-  Box,
-  Button,
-  Divider,
-  HStack,
-  Stack,
-  Tag,
-  Text,
-} from '@chakra-ui/react'
+import { Badge, Box, Button, HStack, Stack, Tag, Text } from '@chakra-ui/react'
 import type {
   QualityIssue,
   QualityIssueSeverity,
@@ -50,7 +41,7 @@ export function LintPanel({
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       {Object.entries(groupedIssues).map(([group, groupIssues]) => (
         <Box
           key={group}
@@ -62,9 +53,9 @@ export function LintPanel({
             <Text fontSize="sm" fontWeight="900">
               {group}
             </Text>
-            <Tag size="sm">{groupIssues.length}</Tag>
+            <Tag.Root size="sm">{groupIssues.length}</Tag.Root>
           </HStack>
-          <Stack spacing={0} divider={<Divider />} align="stretch">
+          <Stack gap={0} align="stretch">
             {groupIssues.map((issue) => {
               const meta = severityMeta[issue.severity]
               return (
@@ -74,18 +65,18 @@ export function LintPanel({
                   align="center"
                   px={3}
                   py={2}
-                  spacing={3}
+                  gap={3}
                 >
-                  <HStack spacing={3} minW={0}>
-                    <Badge colorScheme={meta.colorScheme}>{meta.label}</Badge>
+                  <HStack gap={3} minW={0}>
+                    <Badge colorPalette={meta.colorScheme}>{meta.label}</Badge>
                     <Text fontFamily="mono" fontSize="sm" fontWeight="900">
                       {issue.glyphName}
                     </Text>
-                    <Text fontSize="sm" color="field.muted" noOfLines={1}>
+                    <Text fontSize="sm" color="field.muted" lineClamp={1}>
                       {issue.message}
                     </Text>
                   </HStack>
-                  <HStack spacing={2}>
+                  <HStack gap={2}>
                     <Button
                       size="xs"
                       variant="outline"

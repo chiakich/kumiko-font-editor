@@ -1,16 +1,15 @@
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   HStack,
   IconButton,
   Input,
-  Select,
+  NativeSelect,
   Stack,
-  Tooltip,
   VStack,
+  Field,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Trash } from 'iconoir-react'
 import type { ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -58,7 +57,7 @@ export function RuleTreeEditor({
   updateRule,
 }: RuleTreeEditorProps) {
   return (
-    <VStack align="stretch" spacing={2}>
+    <VStack align="stretch" gap={2}>
       {rules.map((rule) =>
         isRuleGroup(rule) ? (
           <RuleGroupEditor
@@ -140,29 +139,35 @@ function RuleGroupHeader({
       align={{ base: 'stretch', md: 'center' }}
       direction={{ base: 'column', md: 'row' }}
       mb={2}
-      spacing={2}
+      gap={2}
     >
-      <FormControl flex="1">
-        <FormLabel fontSize="xs" mb={1}>
+      <Field.Root flex="1">
+        <Field.Label fontSize="xs" mb={1}>
           {t('fontOverview.customFilter.groupMode')}
-        </FormLabel>
-        <Select
-          size="sm"
-          value={rule.mode}
-          onChange={(event) =>
-            updateGroupMode(
-              rule.id,
-              event.target.value as OverviewCustomFilterMode
-            )
-          }
-        >
-          <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
-          <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
-          <option value="none">
-            {t('fontOverview.customFilter.matchNone')}
-          </option>
-        </Select>
-      </FormControl>
+        </Field.Label>
+        <NativeSelect.Root size="sm">
+          <NativeSelect.Field
+            value={rule.mode}
+            onChange={(event) =>
+              updateGroupMode(
+                rule.id,
+                event.target.value as OverviewCustomFilterMode
+              )
+            }
+          >
+            <option value="all">
+              {t('fontOverview.customFilter.matchAll')}
+            </option>
+            <option value="any">
+              {t('fontOverview.customFilter.matchAny')}
+            </option>
+            <option value="none">
+              {t('fontOverview.customFilter.matchNone')}
+            </option>
+          </NativeSelect.Field>
+          <NativeSelect.Indicator />
+        </NativeSelect.Root>
+      </Field.Root>
       <RuleGroupActions
         addGroup={addGroup}
         addRule={addRule}
@@ -187,20 +192,21 @@ function RuleGroupActions({
   const { t } = useTranslation()
 
   return (
-    <HStack alignSelf={{ base: 'flex-end', md: 'flex-end' }} spacing={2}>
+    <HStack alignSelf={{ base: 'flex-end', md: 'flex-end' }} gap={2}>
       <Button size="sm" onClick={() => addRule(ruleId)}>
         {t('fontOverview.customFilter.addRule')}
       </Button>
       <Button size="sm" onClick={() => addGroup(ruleId)}>
         {t('fontOverview.customFilter.addGroup')}
       </Button>
-      <Tooltip label={t('fontOverview.customFilter.deleteGroup')}>
+      <Tooltip content={t('fontOverview.customFilter.deleteGroup')}>
         <IconButton
           aria-label={t('fontOverview.customFilter.deleteGroup')}
-          icon={<Trash width={17} height={17} strokeWidth={2.1} />}
           size="sm"
           onClick={() => deleteRule(ruleId)}
-        />
+        >
+          <Trash width={17} height={17} strokeWidth={2.1} />
+        </IconButton>
       </Tooltip>
     </HStack>
   )
@@ -227,7 +233,7 @@ function RuleConditionEditor({
     <Stack
       align={{ base: 'stretch', md: 'flex-start' }}
       direction={{ base: 'column', md: 'row' }}
-      spacing={2}
+      gap={2}
     >
       <RuleFieldSelect rule={rule} updateRule={updateRule} />
       <RuleOperatorSelect
@@ -262,21 +268,24 @@ function RuleFieldSelect({
   const { t } = useTranslation()
 
   return (
-    <Select
-      flex="1"
-      value={rule.field}
-      onChange={(event) =>
-        updateRule(rule.id, {
-          field: event.target.value as OverviewCustomFilterRuleField,
-        })
-      }
-    >
-      {RULE_FIELDS.map((field) => (
-        <option key={field} value={field}>
-          {t(`fontOverview.customFilter.fields.${field}`)}
-        </option>
-      ))}
-    </Select>
+    <NativeSelect.Root>
+      <NativeSelect.Field
+        flex="1"
+        value={rule.field}
+        onChange={(event) =>
+          updateRule(rule.id, {
+            field: event.target.value as OverviewCustomFilterRuleField,
+          })
+        }
+      >
+        {RULE_FIELDS.map((field) => (
+          <option key={field} value={field}>
+            {t(`fontOverview.customFilter.fields.${field}`)}
+          </option>
+        ))}
+      </NativeSelect.Field>
+      <NativeSelect.Indicator />
+    </NativeSelect.Root>
   )
 }
 
@@ -292,25 +301,29 @@ function RuleOperatorSelect({
   const { t } = useTranslation()
 
   return (
-    <Select
-      flex="1"
-      value={rule.operator}
-      onChange={(event) =>
-        updateRule(rule.id, {
-          operator: event.target.value as OverviewCustomFilterRuleOperator,
-          value:
-            event.target.value === 'missing' || event.target.value === 'exists'
-              ? ''
-              : rule.value,
-        })
-      }
-    >
-      {operators.map((operator) => (
-        <option key={operator} value={operator}>
-          {t(`fontOverview.customFilter.operators.${operator}`)}
-        </option>
-      ))}
-    </Select>
+    <NativeSelect.Root>
+      <NativeSelect.Field
+        flex="1"
+        value={rule.operator}
+        onChange={(event) =>
+          updateRule(rule.id, {
+            operator: event.target.value as OverviewCustomFilterRuleOperator,
+            value:
+              event.target.value === 'missing' ||
+              event.target.value === 'exists'
+                ? ''
+                : rule.value,
+          })
+        }
+      >
+        {operators.map((operator) => (
+          <option key={operator} value={operator}>
+            {t(`fontOverview.customFilter.operators.${operator}`)}
+          </option>
+        ))}
+      </NativeSelect.Field>
+      <NativeSelect.Indicator />
+    </NativeSelect.Root>
   )
 }
 
@@ -341,18 +354,23 @@ function RuleValueControl({
 
   if (booleanField) {
     return (
-      <Select
-        flex="1"
-        value={rule.value === 'false' ? 'false' : 'true'}
-        onChange={(event) => updateRule(rule.id, { value: event.target.value })}
-      >
-        <option value="true">
-          {t('fontOverview.customFilter.booleanTrue')}
-        </option>
-        <option value="false">
-          {t('fontOverview.customFilter.booleanFalse')}
-        </option>
-      </Select>
+      <NativeSelect.Root>
+        <NativeSelect.Field
+          flex="1"
+          value={rule.value === 'false' ? 'false' : 'true'}
+          onChange={(event) =>
+            updateRule(rule.id, { value: event.target.value })
+          }
+        >
+          <option value="true">
+            {t('fontOverview.customFilter.booleanTrue')}
+          </option>
+          <option value="false">
+            {t('fontOverview.customFilter.booleanFalse')}
+          </option>
+        </NativeSelect.Field>
+        <NativeSelect.Indicator />
+      </NativeSelect.Root>
     )
   }
 
@@ -378,7 +396,7 @@ function ColorLabelValueControl({
   const selectedValue = rule.value || 'none'
 
   return (
-    <HStack align="center" flex="1" minH="40px" spacing={1} wrap="wrap">
+    <HStack align="center" flex="1" minH="40px" gap={1} wrap="wrap">
       <ColorLabelButton
         ariaLabel={t('glyphInspector.colorLabels.none')}
         isSelected={selectedValue === 'none'}
@@ -446,7 +464,7 @@ function ColorLabelButton({
   onClick: () => void
 }) {
   return (
-    <Tooltip label={ariaLabel}>
+    <Tooltip content={ariaLabel}>
       <IconButton
         aria-label={ariaLabel}
         aria-pressed={isSelected}
@@ -454,13 +472,14 @@ function ColorLabelButton({
         border="none"
         borderRadius="full"
         boxSize="22px"
-        icon={children}
         minW="22px"
         p={0}
         variant="ghost"
         _hover={{ bg: 'transparent' }}
         onClick={onClick}
-      />
+      >
+        {children}
+      </IconButton>
     </Tooltip>
   )
 }
@@ -477,14 +496,15 @@ function RuleDeleteButton({
   const { t } = useTranslation()
 
   return (
-    <Tooltip label={t('fontOverview.customFilter.deleteRule')}>
+    <Tooltip content={t('fontOverview.customFilter.deleteRule')}>
       <IconButton
         alignSelf={{ base: 'flex-end', md: 'auto' }}
         aria-label={t('fontOverview.customFilter.deleteRule')}
-        icon={<Trash width={17} height={17} strokeWidth={2.1} />}
-        isDisabled={!canDelete}
+        disabled={!canDelete}
         onClick={() => onDelete(ruleId)}
-      />
+      >
+        <Trash width={17} height={17} strokeWidth={2.1} />
+      </IconButton>
     </Tooltip>
   )
 }

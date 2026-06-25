@@ -1,12 +1,5 @@
-import {
-  Box,
-  Grid,
-  IconButton,
-  Input,
-  Stack,
-  Text,
-  Tooltip,
-} from '@chakra-ui/react'
+import { Box, Grid, IconButton, Input, Stack, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Lock, ScaleFrameEnlarge, ScaleFrameReduce } from 'iconoir-react'
 import type { MouseEvent, ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -76,16 +69,17 @@ export function TransformActionRow({
         {label}
       </Text>
       <Grid templateColumns="32px 88px 32px" gap={1} justifyContent="center">
-        <Tooltip label={leftLabel}>
+        <Tooltip content={leftLabel}>
           <IconButton
             aria-label={leftLabel}
-            icon={leftIcon}
             size="sm"
             minW="32px"
             variant="outline"
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={onLeft}
-          />
+          >
+            {leftIcon}
+          </IconButton>
         </Tooltip>
         <ActionValueInput
           value={value}
@@ -94,16 +88,17 @@ export function TransformActionRow({
           onChange={onChange}
           onStep={onStep}
         />
-        <Tooltip label={rightLabel}>
+        <Tooltip content={rightLabel}>
           <IconButton
             aria-label={rightLabel}
-            icon={rightIcon}
             size="sm"
             minW="32px"
             variant="outline"
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={onRight}
-          />
+          >
+            {rightIcon}
+          </IconButton>
         </Tooltip>
       </Grid>
     </Box>
@@ -131,7 +126,7 @@ export function ScaleActionGroup({
 
   return (
     <Box position="relative">
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <ScaleActionLine
           label={t('editor.scaleX')}
           value={scaleX}
@@ -156,7 +151,7 @@ export function ScaleActionGroup({
         />
       </Stack>
       <Tooltip
-        label={
+        content={
           isScaleLocked
             ? 'Unlock proportional scale'
             : 'Lock proportional scale'
@@ -168,16 +163,17 @@ export function ScaleActionGroup({
               ? 'Unlock proportional scale'
               : 'Lock proportional scale'
           }
-          icon={<Lock width={16} height={16} />}
           position="absolute"
           right="0"
           top="50%"
           size="sm"
           minW="32px"
           variant={isScaleLocked ? 'solid' : 'outline'}
-          isDisabled={isDisabled}
+          disabled={isDisabled}
           onClick={onToggleLock}
-        />
+        >
+          <Lock width={16} height={16} />
+        </IconButton>
       </Tooltip>
     </Box>
   )
@@ -200,16 +196,17 @@ function ScaleActionLine({
         {label}
       </Text>
       <Grid templateColumns="32px 88px 32px" gap={1} justifyContent="center">
-        <Tooltip label={leftLabel}>
+        <Tooltip content={leftLabel}>
           <IconButton
             aria-label={leftLabel}
-            icon={<ScaleFrameReduce width={16} height={16} />}
             size="sm"
             minW="32px"
             variant="outline"
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={onLeft}
-          />
+          >
+            <ScaleFrameReduce width={16} height={16} />
+          </IconButton>
         </Tooltip>
         <ActionValueInput
           value={value}
@@ -218,16 +215,17 @@ function ScaleActionLine({
           onChange={onChange}
           onStep={onStep}
         />
-        <Tooltip label={rightLabel}>
+        <Tooltip content={rightLabel}>
           <IconButton
             aria-label={rightLabel}
-            icon={<ScaleFrameEnlarge width={16} height={16} />}
             size="sm"
             minW="32px"
             variant="outline"
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={onRight}
-          />
+          >
+            <ScaleFrameEnlarge width={16} height={16} />
+          </IconButton>
         </Tooltip>
       </Grid>
     </Box>
@@ -262,7 +260,7 @@ function ActionValueInput({
         textAlign="center"
         pr="42px"
         value={value}
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
@@ -295,36 +293,42 @@ function ActionValueInput({
         opacity={isDisabled ? 0.35 : 1}
       >
         <Box
-          as="button"
-          type="button"
           aria-label={t('editor.incrementActionValue')}
           fontSize="7px"
           lineHeight="1"
           color="field.muted"
           borderTopRightRadius="3px"
           _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
-          onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
-            event.preventDefault()
-          }
-          onClick={() => handleStep(1)}
+          asChild
         >
-          ▲
+          <button
+            type="button"
+            onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
+              event.preventDefault()
+            }
+            onClick={() => handleStep(1)}
+          >
+            ▲
+          </button>
         </Box>
         <Box
-          as="button"
-          type="button"
           aria-label={t('editor.decrementActionValue')}
           fontSize="7px"
           lineHeight="1"
           color="field.muted"
           borderBottomRightRadius="3px"
           _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
-          onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
-            event.preventDefault()
-          }
-          onClick={() => handleStep(-1)}
+          asChild
         >
-          ▼
+          <button
+            type="button"
+            onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
+              event.preventDefault()
+            }
+            onClick={() => handleStep(-1)}
+          >
+            ▼
+          </button>
         </Box>
       </Box>
     </Box>

@@ -202,8 +202,6 @@ function ContextMenuButton({
 }) {
   return (
     <Box
-      as="button"
-      type="button"
       display="block"
       w="100%"
       px="12px"
@@ -212,15 +210,20 @@ function ContextMenuButton({
       fontSize="13px"
       color={isDisabled ? 'gray.400' : 'gray.800'}
       cursor={isDisabled ? 'default' : 'pointer'}
-      disabled={isDisabled}
       _hover={isDisabled ? undefined : { bg: 'gray.50' }}
-      onClick={() => {
-        if (!isDisabled) {
-          onClick()
-        }
-      }}
+      asChild
     >
-      {children}
+      <button
+        type="button"
+        disabled={isDisabled}
+        onClick={() => {
+          if (!isDisabled) {
+            onClick()
+          }
+        }}
+      >
+        {children}
+      </button>
     </Box>
   )
 }

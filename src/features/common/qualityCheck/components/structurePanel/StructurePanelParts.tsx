@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  chakra,
   HStack,
   SimpleGrid,
   Stack,
@@ -141,8 +142,7 @@ export function StructureRangeSvg({
   }
 
   return (
-    <Box
-      as="svg"
+    <chakra.svg
       viewBox="-20 -20 1040 1040"
       w="100%"
       maxW="340px"
@@ -179,7 +179,7 @@ export function StructureRangeSvg({
           )}
         </g>
       ))}
-    </Box>
+    </chakra.svg>
   )
 }
 
@@ -193,8 +193,8 @@ export function DistributionRow({
   distribution: SideDistribution | null
 }) {
   return (
-    <HStack justify="space-between" spacing={3}>
-      <Badge colorScheme={colorScheme}>{label}</Badge>
+    <HStack justify="space-between" gap={3}>
+      <Badge colorPalette={colorScheme}>{label}</Badge>
       {distribution ? (
         <Text fontFamily="mono" fontSize="xs">
           眾數 {distribution.mode}・80% {distribution.p10}–{distribution.p90}・
@@ -219,14 +219,8 @@ export function SuspectRow({
   onLocateGlyph: (glyphId: string) => void
 }) {
   return (
-    <HStack
-      justify="space-between"
-      align="flex-start"
-      px={3}
-      py={2}
-      spacing={3}
-    >
-      <HStack spacing={3} minW={0} align="flex-start">
+    <HStack justify="space-between" align="flex-start" px={3} py={2} gap={3}>
+      <HStack gap={3} minW={0} align="flex-start">
         {rank !== null ? (
           <Text
             fontFamily="mono"
@@ -242,33 +236,33 @@ export function SuspectRow({
         <Text fontFamily="glyph" fontSize="2xl" lineHeight={1.2}>
           {evaluation.character}
         </Text>
-        <Stack spacing={1} minW={0}>
-          <HStack spacing={2}>
+        <Stack gap={1} minW={0}>
+          <HStack gap={2}>
             <Text fontFamily="mono" fontSize="xs" fontWeight="900">
               {evaluation.glyphName}
             </Text>
-            <Tag
+            <Tag.Root
               size="sm"
-              colorScheme={evaluation.score > 4 ? 'red' : 'orange'}
+              colorPalette={evaluation.score > 4 ? 'red' : 'orange'}
             >
               風險 {evaluation.score.toFixed(1)}
-            </Tag>
+            </Tag.Root>
           </HStack>
-          <HStack spacing={1} flexWrap="wrap">
+          <HStack gap={1} flexWrap="wrap">
             {evaluation.reasons.slice(0, 3).map((reason) => (
-              <Tag
+              <Tag.Root
                 key={reason.key}
                 size="sm"
                 variant="subtle"
                 title={formatRadarReason(reason)}
               >
                 {buildRadarAdvice(reason).title}
-              </Tag>
+              </Tag.Root>
             ))}
             {evaluation.reasons.length > 3 ? (
-              <Tag size="sm" variant="subtle" color="field.muted">
+              <Tag.Root size="sm" variant="subtle" color="field.muted">
                 +{evaluation.reasons.length - 3}
-              </Tag>
+              </Tag.Root>
             ) : null}
           </HStack>
         </Stack>
@@ -287,17 +281,17 @@ export function SuspectRow({
 
 export function GlyphSideTable({ sample }: { sample: GlyphGeometrySample }) {
   return (
-    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+    <SimpleGrid columns={{ base: 1, md: 2 }} gap={2}>
       {STRUCTURE_SIDES.map((side) => {
         const sideSample = sample.sides[side]
         return (
-          <HStack key={side} justify="space-between" spacing={3}>
-            <HStack spacing={2}>
+          <HStack key={side} justify="space-between" gap={3}>
+            <HStack gap={2}>
               <Text fontSize="xs" fontWeight="800" w="34px">
                 {sideLabels[side]}
               </Text>
               <Badge
-                colorScheme={sideSample.type === 'framing' ? 'pink' : 'blue'}
+                colorPalette={sideSample.type === 'framing' ? 'pink' : 'blue'}
               >
                 {strokeTypeLabels[sideSample.type]}
               </Badge>

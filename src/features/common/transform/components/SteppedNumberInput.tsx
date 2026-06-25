@@ -39,7 +39,7 @@ export function SteppedNumberInput({
         step={step}
         value={value}
         placeholder={placeholder}
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         onFocus={onFocus}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
@@ -63,36 +63,42 @@ export function SteppedNumberInput({
         opacity={isDisabled ? 0.35 : 1}
       >
         <Box
-          as="button"
-          type="button"
           aria-label={t('editor.incrementValue')}
           fontSize="8px"
           lineHeight="1"
           color="field.muted"
           borderTopRightRadius="3px"
           _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
-          onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
-            event.preventDefault()
-          }
-          onClick={() => handleStep(1)}
+          asChild
         >
-          ▲
+          <button
+            type="button"
+            onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
+              event.preventDefault()
+            }
+            onClick={() => handleStep(1)}
+          >
+            ▲
+          </button>
         </Box>
         <Box
-          as="button"
-          type="button"
           aria-label={t('editor.decrementValue')}
           fontSize="8px"
           lineHeight="1"
           color="field.muted"
           borderBottomRightRadius="3px"
           _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
-          onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
-            event.preventDefault()
-          }
-          onClick={() => handleStep(-1)}
+          asChild
         >
-          ▼
+          <button
+            type="button"
+            onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
+              event.preventDefault()
+            }
+            onClick={() => handleStep(-1)}
+          >
+            ▼
+          </button>
         </Box>
       </Box>
     </Box>

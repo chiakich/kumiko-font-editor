@@ -1,6 +1,6 @@
+import { useToast } from '@/components/ui/toast'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast } from '@chakra-ui/react'
 import {
   isCjkDefaultFullWidthCodePoint,
   parseGlyphAdditionInput,

@@ -1,15 +1,5 @@
-import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
-  Stack,
-  useDisclosure,
-  useToast,
-} from '@chakra-ui/react'
+import { useToast } from '@/components/ui/toast'
+import { Button, Stack, useDisclosure, Dialog, Portal } from '@chakra-ui/react'
 import { useMemo, useRef, useState } from 'react'
 import {
   deriveGlyphAlternateBehaviors,
@@ -186,7 +176,7 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
 
   return (
     <>
-      <Stack spacing={4}>
+      <Stack gap={4}>
         <CombinationBehaviorList
           rows={combinationRows}
           onCommit={(draft) => upsertCombinationBehavior(draft)}
@@ -217,31 +207,39 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
           onDelete={deleteAnchorRow}
         />
       </Stack>
-
-      <AlertDialog
-        isOpen={unusedGlyphDialog.isOpen}
-        leastDestructiveRef={cancelUnusedGlyphRef}
-        onClose={closeUnusedGlyphDialog}
+      <Dialog.Root
+        open={unusedGlyphDialog.open}
+        initialFocusEl={() => cancelUnusedGlyphRef.current}
+        role="alertdialog"
+        onOpenChange={(e) => {
+          if (!e.open) {
+            closeUnusedGlyphDialog()
+          }
+        }}
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {t('editor.unusedGlyph')}
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              {unusedGlyphPrompt?.glyphId} {t('editor.isNoLongerUsedByAny')}
-            </AlertDialogBody>
-            <AlertDialogFooter>
-              <Button ref={cancelUnusedGlyphRef} onClick={keepUnusedGlyph}>
-                {t('editor.keep')}
-              </Button>
-              <Button colorScheme="red" ml={3} onClick={deleteUnusedGlyph}>
-                {t('editor.delete')}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+        <Portal>
+          <Dialog.Backdrop>
+            <Dialog.Positioner>
+              <Dialog.Content>
+                <Dialog.Header fontSize="lg" fontWeight="bold">
+                  {t('editor.unusedGlyph')}
+                </Dialog.Header>
+                <Dialog.Body>
+                  {unusedGlyphPrompt?.glyphId} {t('editor.isNoLongerUsedByAny')}
+                </Dialog.Body>
+                <Dialog.Footer>
+                  <Button ref={cancelUnusedGlyphRef} onClick={keepUnusedGlyph}>
+                    {t('editor.keep')}
+                  </Button>
+                  <Button colorPalette="red" ml={3} onClick={deleteUnusedGlyph}>
+                    {t('editor.delete')}
+                  </Button>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Dialog.Backdrop>
+        </Portal>
+      </Dialog.Root>
     </>
   )
 }

@@ -1,15 +1,5 @@
-import {
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  ModalOverlay,
-  Select,
-  Stack,
-} from '@chakra-ui/react'
+import { NativeSelect, Stack, Field, Dialog, Portal } from '@chakra-ui/react'
+import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import {
   saveGlyphColorLabelDisplayMode,
   useGlyphColorLabelDisplayMode,
@@ -43,51 +33,71 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalOverlay />
-      <ModalContent borderRadius="sm">
-        <ModalHeader>{t('settings.title')}</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody pb={6}>
-          <Stack spacing={4}>
-            <FormControl>
-              <FormLabel fontSize="sm">{t('settings.language')}</FormLabel>
-              <Select
-                value={activeLanguage}
-                onChange={(event) =>
-                  changeLanguage(event.target.value as SupportedLanguage)
-                }
-              >
-                {supportedLanguages.map((language) => (
-                  <option key={language} value={language}>
-                    {languageNames[language]}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="sm">
-                {t('settings.glyphColorLabelDisplay')}
-              </FormLabel>
-              <Select
-                value={glyphColorLabelDisplayMode}
-                onChange={(event) =>
-                  changeGlyphColorLabelDisplayMode(
-                    event.target.value as GlyphColorLabelDisplayMode
-                  )
-                }
-              >
-                <option value="card">
-                  {t('settings.glyphColorLabelDisplayCard')}
-                </option>
-                <option value="dot">
-                  {t('settings.glyphColorLabelDisplayDot')}
-                </option>
-              </Select>
-            </FormControl>
-          </Stack>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+    <Dialog.Root
+      open={isOpen}
+      size="sm"
+      onOpenChange={(e) => {
+        if (!e.open) {
+          onClose()
+        }
+      }}
+    >
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content borderRadius="sm">
+            <Dialog.Header>{t('settings.title')}</Dialog.Header>
+            <DialogCloseButton />
+            <Dialog.Body pb={6}>
+              <Stack gap={4}>
+                <Field.Root>
+                  <Field.Label fontSize="sm">
+                    {t('settings.language')}
+                  </Field.Label>
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      value={activeLanguage}
+                      onChange={(event) =>
+                        changeLanguage(event.target.value as SupportedLanguage)
+                      }
+                    >
+                      {supportedLanguages.map((language) => (
+                        <option key={language} value={language}>
+                          {languageNames[language]}
+                        </option>
+                      ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label fontSize="sm">
+                    {t('settings.glyphColorLabelDisplay')}
+                  </Field.Label>
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      value={glyphColorLabelDisplayMode}
+                      onChange={(event) =>
+                        changeGlyphColorLabelDisplayMode(
+                          event.target.value as GlyphColorLabelDisplayMode
+                        )
+                      }
+                    >
+                      <option value="card">
+                        {t('settings.glyphColorLabelDisplayCard')}
+                      </option>
+                      <option value="dot">
+                        {t('settings.glyphColorLabelDisplayDot')}
+                      </option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Field.Root>
+              </Stack>
+            </Dialog.Body>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }

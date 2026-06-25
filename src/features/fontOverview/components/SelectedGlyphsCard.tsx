@@ -19,8 +19,8 @@ export function SelectedGlyphsCard({
 
   return (
     <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
-      <Stack spacing={3}>
-        <HStack justify="space-between" spacing={3} align="start">
+      <Stack gap={3}>
+        <HStack justify="space-between" gap={3} align="start">
           <Box>
             <Text fontSize="lg" fontWeight="900" color="field.ink">
               {t('fontOverview.selection.selectedGlyphs', {
@@ -31,33 +31,22 @@ export function SelectedGlyphsCard({
               {t('fontOverview.selection.description')}
             </Text>
           </Box>
-          <Tag size="sm" colorScheme="orange" flexShrink={0}>
+          <Tag.Root size="sm" colorPalette="orange" flexShrink={0}>
             {t('fontOverview.selection.badge')}
-          </Tag>
+          </Tag.Root>
         </HStack>
 
-        <Stack spacing={2}>
-          <Button
-            size="sm"
-            leftIcon={<NavArrowRight width={14} height={14} />}
-            onClick={onEnterEditor}
-          >
+        <Stack gap={2}>
+          <Button size="sm" onClick={onEnterEditor}>
+            <NavArrowRight width={14} height={14} />
             {t('glyphInspector.enterGlyphEditor')}
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            leftIcon={<PageSearch width={14} height={14} />}
-            onClick={onOpenQualityCheck}
-          >
+          <Button size="sm" variant="outline" onClick={onOpenQualityCheck}>
+            <PageSearch width={14} height={14} />
             {t('qualityCheck.title')}
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            leftIcon={<Trash width={14} height={14} />}
-            onClick={onDeleteGlyphs}
-          >
+          <Button size="sm" variant="outline" onClick={onDeleteGlyphs}>
+            <Trash width={14} height={14} />
             {t('glyphInspector.deleteGlyph')}
           </Button>
         </Stack>

@@ -23,18 +23,18 @@ export function ExportImpactSummary({ items }: ExportImpactSummaryProps) {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Text fontSize="xs" fontWeight="900" color="field.muted">
         {t('projectControl.exportImpact')}
       </Text>
-      <Stack spacing={2}>
+      <Stack gap={2}>
         {items.slice(0, 10).map((item) => (
-          <HStack key={item.id} align="flex-start" spacing={3}>
-            <Badge colorScheme={STATUS_COLOR[item.status]} flexShrink={0}>
+          <HStack key={item.id} align="flex-start" gap={3}>
+            <Badge colorPalette={STATUS_COLOR[item.status]} flexShrink={0}>
               {getImpactStatusLabel(item.status, t)}
             </Badge>
-            <Stack spacing={0} minW={0}>
-              <HStack spacing={1} wrap="wrap">
+            <Stack gap={0} minW={0}>
+              <HStack gap={1} wrap="wrap">
                 {item.table ? (
                   <Badge variant="outline">{item.table}</Badge>
                 ) : null}

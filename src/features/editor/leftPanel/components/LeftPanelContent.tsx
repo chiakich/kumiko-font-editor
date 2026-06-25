@@ -1,4 +1,4 @@
-import { Divider, HStack, Stack, Text, VStack } from '@chakra-ui/react'
+import { HStack, Stack, Text, VStack, Separator } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ListRange } from 'react-virtuoso'
 import {
@@ -124,7 +124,7 @@ export function LeftPanelContent({
 
   return (
     <>
-      <VStack align="stretch" spacing={3} mb={4}>
+      <VStack align="stretch" gap={3} mb={4}>
         <LeftPanelHeader
           hasSelectedGlyph={Boolean(selectedGlyph)}
           isCjkGlyph={isCjkGlyph}
@@ -147,10 +147,8 @@ export function LeftPanelContent({
           </Text>
         </HStack>
       </VStack>
-
-      <Divider mb={4} borderColor="field.haze" opacity={0.55} />
-
-      <Stack height="100%" minH={0} spacing={3}>
+      <Separator mb={4} borderColor="field.haze" opacity={0.55} />
+      <Stack height="100%" minH={0} gap={3}>
         <GlyphPreviewStrip
           glyphMap={glyphMap}
           previewGlyphId={previewGlyph?.id ?? null}
@@ -165,7 +163,6 @@ export function LeftPanelContent({
           targetRect={targetRect}
         />
       </Stack>
-
       {searchState.error ? (
         <Text mt={3} fontSize="sm" color="field.red.400">
           {searchState.error}

@@ -1,5 +1,5 @@
+import { useToast } from '@/components/ui/toast'
 import { useEffect } from 'react'
-import { useToast } from '@chakra-ui/react'
 import { sanitizeGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
   listExportDirtyKumikoGlyphIds,

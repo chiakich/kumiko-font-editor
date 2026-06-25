@@ -1,25 +1,18 @@
 import {
   Box,
   Button,
-  Divider,
   Heading,
   HStack,
   IconButton,
   Input,
   InputGroup,
-  InputLeftElement,
-  InputRightElement,
   Menu,
-  MenuButton,
-  MenuDivider,
-  MenuItemOption,
-  MenuList,
-  MenuOptionGroup,
   Portal,
   Text,
-  Tooltip,
   VStack,
+  Separator,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import type {
   GlyphOverviewTreeNode,
   OverviewSearchField,
@@ -84,10 +77,6 @@ const searchFieldGroupsToFields = (
   )
 }
 
-const normalizeMenuValues = <T extends string>(
-  value: string | string[]
-): T[] => (Array.isArray(value) ? (value as T[]) : ([value] as T[]))
-
 interface OverviewSidebarProps {
   currentSearchQuery: string
   isClosingProject: boolean
@@ -123,10 +112,6 @@ export function OverviewSidebar({
   const selectedFieldGroups = getSelectedSearchFieldGroups(
     overviewSearchOptions.fields
   )
-  const searchOptionValues = [
-    ...(overviewSearchOptions.matchCase ? ['matchCase'] : []),
-    ...(overviewSearchOptions.regex ? ['regex'] : []),
-  ]
 
   useEffect(() => {
     if (localSearchQuery === null || localSearchQuery === currentSearchQuery) {
@@ -156,7 +141,7 @@ export function OverviewSidebar({
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
     >
-      <VStack align="stretch" spacing={3} mb={4}>
+      <VStack align="stretch" gap={3} mb={4}>
         <HStack justify="space-between" align="flex-start">
           <Box>
             <Text
@@ -178,14 +163,14 @@ export function OverviewSidebar({
             >
               {t('fontOverview.glyphOverview')}
             </Heading>
-            <Text fontSize="sm" color="field.muted" mt={2} noOfLines={2}>
+            <Text fontSize="sm" color="field.muted" mt={2} lineClamp={2}>
               {projectTitle}
             </Text>
           </Box>
           <Button
             size="sm"
             variant="ghost"
-            isLoading={isClosingProject}
+            loading={isClosingProject}
             loadingText={t('fontOverview.saving')}
             onClick={onCloseProject}
           >
@@ -193,14 +178,26 @@ export function OverviewSidebar({
           </Button>
         </HStack>
 
-        <InputGroup>
-          <InputLeftElement>
-            <Menu closeOnSelect={false} placement="bottom-start">
-              <Tooltip label={t('fontOverview.searchOptions')}>
-                <MenuButton
-                  as={IconButton}
-                  aria-label={t('fontOverview.searchOptions')}
-                  icon={
+        <InputGroup
+          startElementProps={{ pointerEvents: 'auto' }}
+          endElementProps={{ pointerEvents: 'auto' }}
+          startElement={
+            <Menu.Root
+              closeOnSelect={false}
+              positioning={{
+                placement: 'bottom-start',
+              }}
+            >
+              <Tooltip content={t('fontOverview.searchOptions')}>
+                <Menu.Trigger asChild>
+                  <IconButton
+                    aria-label={t('fontOverview.searchOptions')}
+                    size="sm"
+                    variant="ghost"
+                    _active={{ bg: 'transparent' }}
+                    _expanded={{ bg: 'transparent' }}
+                    _hover={{ bg: 'transparent' }}
+                  >
                     <Box h="22px" position="relative" w="22px">
                       <Search width={18} height={18} strokeWidth={2.2} />
                       <Box bottom={0} position="absolute" right="-6px">
@@ -211,61 +208,89 @@ export function OverviewSidebar({
                         />
                       </Box>
                     </Box>
-                  }
-                  size="sm"
-                  variant="ghost"
-                  _active={{ bg: 'transparent' }}
-                  _expanded={{ bg: 'transparent' }}
-                  _hover={{ bg: 'transparent' }}
-                />
+                  </IconButton>
+                </Menu.Trigger>
               </Tooltip>
               <Portal>
-                <MenuList bg="white" minW="220px" zIndex="popover">
-                  <MenuOptionGroup
-                    title={t('fontOverview.searchFieldsTitle')}
-                    type="checkbox"
-                    value={selectedFieldGroups}
-                    onChange={(value) => {
-                      const nextGroups =
-                        normalizeMenuValues<SearchFieldGroupId>(value)
-                      if (!nextGroups.length) {
-                        return
-                      }
-                      onSearchOptionsChange({
-                        fields: searchFieldGroupsToFields(nextGroups),
-                      })
-                    }}
-                  >
-                    {SEARCH_FIELD_GROUPS.map((group) => (
-                      <MenuItemOption key={group.id} value={group.id}>
-                        {t(group.labelKey)}
-                      </MenuItemOption>
-                    ))}
-                  </MenuOptionGroup>
-                  <MenuDivider />
-                  <MenuOptionGroup
-                    title={t('fontOverview.searchOptionsTitle')}
-                    type="checkbox"
-                    value={searchOptionValues}
-                    onChange={(value) => {
-                      const values = new Set(normalizeMenuValues(value))
-                      onSearchOptionsChange({
-                        matchCase: values.has('matchCase'),
-                        regex: values.has('regex'),
-                      })
-                    }}
-                  >
-                    <MenuItemOption value="matchCase">
-                      {t('fontOverview.matchCase')}
-                    </MenuItemOption>
-                    <MenuItemOption value="regex">
-                      {t('fontOverview.regex')}
-                    </MenuItemOption>
-                  </MenuOptionGroup>
-                </MenuList>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.ItemGroup>
+                      <Menu.ItemGroupLabel>
+                        {t('fontOverview.searchFieldsTitle')}
+                      </Menu.ItemGroupLabel>
+                      {SEARCH_FIELD_GROUPS.map((group) => (
+                        <Menu.CheckboxItem
+                          key={group.id}
+                          value={group.id}
+                          checked={selectedFieldGroups.includes(group.id)}
+                          onCheckedChange={(checked) => {
+                            const groupSet = new Set(selectedFieldGroups)
+                            if (checked) {
+                              groupSet.add(group.id)
+                            } else {
+                              groupSet.delete(group.id)
+                            }
+                            const nextGroups = Array.from(groupSet)
+                            if (!nextGroups.length) {
+                              return
+                            }
+                            onSearchOptionsChange({
+                              fields: searchFieldGroupsToFields(nextGroups),
+                            })
+                          }}
+                        >
+                          {t(group.labelKey)}
+                        </Menu.CheckboxItem>
+                      ))}
+                    </Menu.ItemGroup>
+                    <Menu.Separator />
+                    <Menu.ItemGroup>
+                      <Menu.ItemGroupLabel>
+                        {t('fontOverview.searchOptionsTitle')}
+                      </Menu.ItemGroupLabel>
+                      <Menu.CheckboxItem
+                        value="matchCase"
+                        checked={overviewSearchOptions.matchCase}
+                        onCheckedChange={(checked) =>
+                          onSearchOptionsChange({
+                            matchCase: checked,
+                          })
+                        }
+                      >
+                        {t('fontOverview.matchCase')}
+                      </Menu.CheckboxItem>
+                      <Menu.CheckboxItem
+                        value="regex"
+                        checked={overviewSearchOptions.regex}
+                        onCheckedChange={(checked) =>
+                          onSearchOptionsChange({
+                            regex: checked,
+                          })
+                        }
+                      >
+                        {t('fontOverview.regex')}
+                      </Menu.CheckboxItem>
+                    </Menu.ItemGroup>
+                  </Menu.Content>
+                </Menu.Positioner>
               </Portal>
-            </Menu>
-          </InputLeftElement>
+            </Menu.Root>
+          }
+          endElement={
+            displayedSearchQuery ? (
+              <Tooltip content={t('fontOverview.clearSearch')}>
+                <IconButton
+                  aria-label={t('fontOverview.clearSearch')}
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleClearSearch}
+                >
+                  <Xmark width={18} height={18} strokeWidth={2.2} />
+                </IconButton>
+              </Tooltip>
+            ) : undefined
+          }
+        >
           <Input
             pl={9}
             pr={11}
@@ -273,19 +298,6 @@ export function OverviewSidebar({
             value={displayedSearchQuery}
             onChange={(event) => setLocalSearchQuery(event.target.value)}
           />
-          {displayedSearchQuery ? (
-            <InputRightElement>
-              <Tooltip label={t('fontOverview.clearSearch')}>
-                <IconButton
-                  aria-label={t('fontOverview.clearSearch')}
-                  icon={<Xmark width={18} height={18} strokeWidth={2.2} />}
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleClearSearch}
-                />
-              </Tooltip>
-            </InputRightElement>
-          ) : null}
         </InputGroup>
 
         <Text fontSize="sm" color="field.muted" fontFamily="mono">
@@ -295,9 +307,7 @@ export function OverviewSidebar({
           })}
         </Text>
       </VStack>
-
-      <Divider mb={4} borderColor="field.haze" opacity={0.55} />
-
+      <Separator mb={4} borderColor="field.haze" opacity={0.55} />
       <Box flex={1} minH={0} bg="white" borderRadius="sm" overflow="auto" p={2}>
         <OverviewTreeNav
           nodes={treeNodes}

@@ -2,14 +2,13 @@ import {
   Box,
   Button,
   Checkbox,
-  FormControl,
-  FormLabel,
   HStack,
   Input,
   SimpleGrid,
   Stack,
   Text,
   Textarea,
+  Field,
 } from '@chakra-ui/react'
 import {
   generalFontInfoFields,
@@ -88,12 +87,12 @@ export function FontBasicsTab({
   }
 
   return (
-    <Stack spacing={6}>
+    <Stack gap={6}>
       <Box>
         <Text fontWeight="semibold" mb={3}>
           {t('projectControl.static')}
         </Text>
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
+        <SimpleGrid columns={{ base: 1, lg: 2 }} gap={4}>
           {generalFontInfoFields.map((field) =>
             field.type === 'number' ? (
               <NumberField
@@ -106,8 +105,8 @@ export function FontBasicsTab({
                 }
               />
             ) : (
-              <FormControl key={field.key}>
-                <FormLabel fontSize="sm">{field.label}</FormLabel>
+              <Field.Root key={field.key}>
+                <Field.Label fontSize="sm">{field.label}</Field.Label>
                 <Input
                   maxW={field.width}
                   value={generalDraft[field.key]}
@@ -118,7 +117,7 @@ export function FontBasicsTab({
                     })
                   }
                 />
-              </FormControl>
+              </Field.Root>
             )
           )}
           <NumberField
@@ -129,7 +128,6 @@ export function FontBasicsTab({
           />
         </SimpleGrid>
       </Box>
-
       <Box>
         <Text fontWeight="semibold" mb={3}>
           {t('projectControl.localizedNames')}
@@ -139,7 +137,6 @@ export function FontBasicsTab({
           onChange={onLocalizedNamesChange}
         />
       </Box>
-
       <Box>
         <HStack justify="space-between" mb={3}>
           <Text fontWeight="semibold">{t('projectControl.variationAxes')}</Text>
@@ -162,23 +159,25 @@ export function FontBasicsTab({
             {t('projectControl.add')}
           </Button>
         </HStack>
-        <Stack spacing={3}>
+        <Stack gap={3}>
           {axes.map((axis, index) => (
             <Box key={`${axis.name}-${index}`} borderWidth="1px" p={3}>
-              <SimpleGrid columns={{ base: 1, lg: 7 }} spacing={3}>
-                <FormControl>
-                  <FormLabel fontSize="sm">
+              <SimpleGrid columns={{ base: 1, lg: 7 }} gap={3}>
+                <Field.Root>
+                  <Field.Label fontSize="sm">
                     {t('projectControl.name')}
-                  </FormLabel>
+                  </Field.Label>
                   <Input
                     value={axis.name}
                     onChange={(event) =>
                       updateAxis(index, { name: event.target.value })
                     }
                   />
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontSize="sm">{t('projectControl.tag')}</FormLabel>
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label fontSize="sm">
+                    {t('projectControl.tag')}
+                  </Field.Label>
                   <Input
                     value={axis.tag}
                     maxLength={4}
@@ -186,18 +185,18 @@ export function FontBasicsTab({
                       updateAxis(index, { tag: event.target.value })
                     }
                   />
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontSize="sm">
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label fontSize="sm">
                     {t('projectControl.label')}
-                  </FormLabel>
+                  </Field.Label>
                   <Input
                     value={axis.label}
                     onChange={(event) =>
                       updateAxis(index, { label: event.target.value })
                     }
                   />
-                </FormControl>
+                </Field.Root>
                 {(['minValue', 'defaultValue', 'maxValue'] as const).map(
                   (key) => (
                     <NumberField
@@ -212,10 +211,10 @@ export function FontBasicsTab({
                     />
                   )
                 )}
-                <FormControl>
-                  <FormLabel fontSize="sm">
+                <Field.Root>
+                  <Field.Label fontSize="sm">
                     {t('projectControl.axisValues')}
-                  </FormLabel>
+                  </Field.Label>
                   <Input
                     fontFamily="mono"
                     value={formatAxisValues(axis.values)}
@@ -225,17 +224,21 @@ export function FontBasicsTab({
                       })
                     }
                   />
-                </FormControl>
+                </Field.Root>
               </SimpleGrid>
               <HStack mt={3} justify="space-between">
-                <Checkbox
-                  isChecked={axis.hidden ?? false}
-                  onChange={(event) =>
-                    updateAxis(index, { hidden: event.target.checked })
+                <Checkbox.Root
+                  onCheckedChange={(details) =>
+                    updateAxis(index, { hidden: details.checked === true })
                   }
+                  checked={axis.hidden ?? false}
                 >
-                  {t('projectControl.hidden')}
-                </Checkbox>
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label>{t('projectControl.hidden')}</Checkbox.Label>
+                </Checkbox.Root>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -252,24 +255,22 @@ export function FontBasicsTab({
           ))}
         </Stack>
       </Box>
-
-      <FormControl>
-        <FormLabel fontSize="sm">
+      <Field.Root>
+        <Field.Label fontSize="sm">
           {t('projectControl.crossAxisMapping')}
-        </FormLabel>
+        </Field.Label>
         <Textarea
           minH="140px"
           fontFamily="mono"
           value={mappingsText}
           onChange={(event) => onMappingsTextChange(event.target.value)}
         />
-      </FormControl>
-
+      </Field.Root>
       <Box>
         <Text fontWeight="semibold" mb={3}>
           {t('projectControl.opentypeSettings')}
         </Text>
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
+        <SimpleGrid columns={{ base: 1, lg: 2 }} gap={4}>
           {openTypeFontInfoSettings.map((setting) =>
             setting.type === 'number' ? (
               <NumberField
@@ -286,8 +287,8 @@ export function FontBasicsTab({
                 }
               />
             ) : (
-              <FormControl key={setting.key}>
-                <FormLabel fontSize="sm">{setting.label}</FormLabel>
+              <Field.Root key={setting.key}>
+                <Field.Label fontSize="sm">{setting.label}</Field.Label>
                 <Input
                   value={openTypeDraft[setting.key]}
                   placeholder={
@@ -302,23 +303,22 @@ export function FontBasicsTab({
                     })
                   }
                 />
-              </FormControl>
+              </Field.Root>
             )
           )}
         </SimpleGrid>
       </Box>
-
-      <FormControl>
-        <FormLabel fontSize="sm">
+      <Field.Root>
+        <Field.Label fontSize="sm">
           {t('projectControl.customParameters')}
-        </FormLabel>
+        </Field.Label>
         <Textarea
           minH="160px"
           fontFamily="mono"
           value={customParametersText}
           onChange={(event) => onCustomParametersTextChange(event.target.value)}
         />
-      </FormControl>
+      </Field.Root>
     </Stack>
   )
 }

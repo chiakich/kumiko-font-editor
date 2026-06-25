@@ -1,12 +1,4 @@
-import {
-  Box,
-  Stack,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Text,
-  useDisclosure,
-} from '@chakra-ui/react'
+import { Box, Stack, Tabs, Text, useDisclosure } from '@chakra-ui/react'
 import { useState } from 'react'
 import { ExportErrorModal } from 'src/features/common/fontExport/ExportErrorModal'
 import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
@@ -14,7 +6,11 @@ import { useFontExport } from 'src/features/common/fontExport/useFontExport'
 import { GitHubCommitModal } from 'src/features/common/glyphInspector/components/GitHubCommitModal'
 import { GlyphSummaryCard } from 'src/features/common/glyphInspector/components/GlyphSummaryCard'
 import { useRightPanelModel } from 'src/features/common/glyphInspector/hooks/useRightPanelModel'
-import { SlidingTabList } from 'src/features/common/SlidingTabList'
+import {
+  SlidingTabList,
+  SlidingTabsContentGroup,
+  SlidingTabsRoot,
+} from 'src/features/common/SlidingTabList'
 import { FontSettingsModal } from 'src/features/common/projectControl/FontSettingsModal'
 import { ProjectControlActions } from 'src/features/common/projectControl/ProjectControlActions'
 import { FontQualityCheckModal } from 'src/features/common/qualityCheck/QualityCheckModal'
@@ -49,7 +45,7 @@ export function EditorRightPanel() {
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
     >
-      <Stack spacing={5}>
+      <Stack gap={5}>
         <ProjectControlActions
           hasGitHubSource={panel.hasGitHubSource}
           isSavingToLocal={fontExport.isExporting}
@@ -66,21 +62,22 @@ export function EditorRightPanel() {
             {t('editor.noGlyphSelected')}
           </Text>
         ) : (
-          <Tabs
-            variant="unstyled"
+          <SlidingTabsRoot
             size="sm"
-            isLazy
-            index={activeTabIndex}
-            onChange={setActiveTabIndex}
+            value={String(activeTabIndex)}
+            onValueChange={(details) =>
+              setActiveTabIndex(Number(details.value))
+            }
           >
             <SlidingTabList
               activeIndex={activeTabIndex}
               labels={rightPanelTabLabels}
               layoutGroupId="editor-right-panel-tabs"
+              w="100%"
             />
-            <TabPanels>
-              <TabPanel px={0} pb={0}>
-                <Stack spacing={4}>
+            <SlidingTabsContentGroup mt={4}>
+              <Tabs.Content value="0" px={0} pb={0}>
+                <Stack gap={4}>
                   <GlyphSummaryCard
                     activeLayer={panel.activeLayer ?? null}
                     availableLayers={panel.availableLayers}
@@ -131,9 +128,9 @@ export function EditorRightPanel() {
 
                   <GlyphInsightCard />
                 </Stack>
-              </TabPanel>
-              <TabPanel px={0} pb={0}>
-                <Stack spacing={4}>
+              </Tabs.Content>
+              <Tabs.Content value="1" px={0} pb={0}>
+                <Stack gap={4}>
                   <TransformCard
                     glyph={panel.glyph}
                     selectedNodeIds={panel.selectedNodeIds}
@@ -141,17 +138,16 @@ export function EditorRightPanel() {
                     onPathOperation={panel.handlePathOperation}
                   />
                 </Stack>
-              </TabPanel>
-              <TabPanel px={0} pb={0}>
+              </Tabs.Content>
+              <Tabs.Content value="2" px={0} pb={0}>
                 <BehaviorsPanel fontData={panel.fontData} glyph={panel.glyph} />
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+              </Tabs.Content>
+            </SlidingTabsContentGroup>
+          </SlidingTabsRoot>
         )}
       </Stack>
-
       <ExportFontModal
-        isOpen={exportModal.isOpen}
+        isOpen={exportModal.open}
         canExport={fontExport.canExport}
         isExporting={fontExport.isExporting}
         loadingText={fontExport.loadingText}
@@ -171,10 +167,10 @@ export function EditorRightPanel() {
         report={fontExport.exportErrorReport}
         onClose={fontExport.closeExportErrorReport}
       />
-      {fontSettingsModal.isOpen ? (
+      {fontSettingsModal.open ? (
         <FontSettingsModal
           fontData={panel.fontData}
-          isOpen={fontSettingsModal.isOpen}
+          isOpen={fontSettingsModal.open}
           projectTitle={panel.projectTitle}
           onClose={fontSettingsModal.onClose}
           onSave={updateFontSettings}
@@ -186,7 +182,7 @@ export function EditorRightPanel() {
         onOpenQualityCheck={qualityCheckModal.onOpen}
       />
       <FontQualityCheckModal
-        isOpen={qualityCheckModal.isOpen}
+        isOpen={qualityCheckModal.open}
         onClose={qualityCheckModal.onClose}
       />
     </Box>
@@ -194,13 +190,37 @@ export function EditorRightPanel() {
 }
 
 const rightPanelTabLabels = [
-  <Text key="inspect" as="span" fontSize="xs" fontWeight="800">
+  <Text
+    key="inspect"
+    as="span"
+    display="inline-flex"
+    alignItems="center"
+    fontSize="xs"
+    fontWeight="800"
+    lineHeight={1}
+  >
     Inspect
   </Text>,
-  <Text key="transform" as="span" fontSize="xs" fontWeight="800">
+  <Text
+    key="transform"
+    as="span"
+    display="inline-flex"
+    alignItems="center"
+    fontSize="xs"
+    fontWeight="800"
+    lineHeight={1}
+  >
     Transform
   </Text>,
-  <Text key="behaviors" as="span" fontSize="xs" fontWeight="800">
+  <Text
+    key="behaviors"
+    as="span"
+    display="inline-flex"
+    alignItems="center"
+    fontSize="xs"
+    fontWeight="800"
+    lineHeight={1}
+  >
     Behaviors
   </Text>,
 ]

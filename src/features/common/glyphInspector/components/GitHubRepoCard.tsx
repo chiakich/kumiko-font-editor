@@ -39,18 +39,23 @@ export function GitHubRepoCard({
 
   return (
     <Box borderWidth={1} borderRadius="lg" p={4}>
-      <Stack spacing={3}>
-        <HStack justify="space-between" align="start" spacing={3}>
+      <Stack gap={3}>
+        <HStack justify="space-between" align="start" gap={3}>
           <Box minW={0}>
-            <HStack spacing={2} mb={1} align="center">
+            <HStack gap={2} mb={1} align="center">
               <Text fontWeight="medium">{title}</Text>
               {badgeLabel ? (
-                <Badge colorScheme={badgeColorScheme}>{badgeLabel}</Badge>
+                <Badge colorPalette={badgeColorScheme}>{badgeLabel}</Badge>
               ) : null}
             </HStack>
             {repo ? (
-              <Stack spacing={1}>
-                <Link href={repo.htmlUrl} isExternal color="blue.600">
+              <Stack gap={1}>
+                <Link
+                  href={repo.htmlUrl}
+                  color="blue.600"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {repo.fullName}
                 </Link>
                 <Text fontSize="sm" color="gray.500">
@@ -69,8 +74,8 @@ export function GitHubRepoCard({
               size="xs"
               variant="outline"
               onClick={onAction}
-              isLoading={isActionLoading}
-              isDisabled={isActionDisabled || !onAction}
+              loading={isActionLoading}
+              disabled={isActionDisabled || !onAction}
               loadingText={actionLabel}
               flexShrink={0}
             >
@@ -84,7 +89,7 @@ export function GitHubRepoCard({
           </Text>
         ) : null}
         {statusText ? (
-          <HStack justify="space-between" align="center" spacing={3}>
+          <HStack justify="space-between" align="center" gap={3}>
             <Text fontSize="sm" color="gray.600">
               {statusText}
             </Text>
@@ -93,8 +98,8 @@ export function GitHubRepoCard({
                 size="xs"
                 variant="ghost"
                 onClick={onStatusAction}
-                isDisabled={isStatusActionDisabled || !onStatusAction}
-                isLoading={isStatusActionLoading}
+                disabled={isStatusActionDisabled || !onStatusAction}
+                loading={isStatusActionLoading}
                 flexShrink={0}
               >
                 {statusActionLabel}

@@ -1,6 +1,6 @@
+import { useToast } from '@/components/ui/toast'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast } from '@chakra-ui/react'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
 import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
 import { useStore } from 'src/store'

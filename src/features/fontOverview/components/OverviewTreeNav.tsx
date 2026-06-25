@@ -6,9 +6,9 @@ import {
   Portal,
   Tag,
   Text,
-  Tooltip,
   VStack,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { NavArrowDown, NavArrowRight, Plus, Settings } from 'iconoir-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -95,7 +95,6 @@ function ExpandToggle({
   return (
     <IconButton
       aria-label={isExpanded ? `收合 ${label}` : `展開 ${label}`}
-      icon={<Icon width={20} height={20} strokeWidth={2.25} />}
       size="xs"
       variant="ghost"
       minW="22px"
@@ -105,7 +104,9 @@ function ExpandToggle({
         event.stopPropagation()
         onToggle()
       }}
-    />
+    >
+      <Icon width={20} height={20} strokeWidth={2.25} />
+    </IconButton>
   )
 }
 
@@ -150,7 +151,7 @@ function OverviewTreeRow({
 
   return (
     <HStack
-      spacing={0}
+      gap={0}
       pl={depth * 2.5}
       onContextMenu={(event) => {
         if (!customFilterId) {
@@ -180,16 +181,15 @@ function OverviewTreeRow({
         fontWeight="900"
         onClick={() => onSectionSelect(node.id)}
       >
-        <Text noOfLines={1}>{label}</Text>
+        <Text lineClamp={1}>{label}</Text>
         {node.id !== 'filters' ? (
-          <Tag size="sm">{node.glyphs.length}</Tag>
+          <Tag.Root size="sm">{node.glyphs.length}</Tag.Root>
         ) : null}
       </Button>
       {node.id === 'filters' ? (
-        <Tooltip label={createCustomFilterLabel}>
+        <Tooltip content={createCustomFilterLabel}>
           <IconButton
             aria-label={createCustomFilterLabel}
-            icon={<Plus width={17} height={17} strokeWidth={2.2} />}
             minW="28px"
             w="28px"
             h="32px"
@@ -200,14 +200,15 @@ function OverviewTreeRow({
               event.stopPropagation()
               onCreateCustomFilter()
             }}
-          />
+          >
+            <Plus width={17} height={17} strokeWidth={2.2} />
+          </IconButton>
         </Tooltip>
       ) : null}
       {customFilterId ? (
-        <Tooltip label={editCustomFilterLabel}>
+        <Tooltip content={editCustomFilterLabel}>
           <IconButton
             aria-label={editCustomFilterLabel}
-            icon={<Settings width={17} height={17} strokeWidth={2.1} />}
             minW="28px"
             w="28px"
             h="32px"
@@ -218,7 +219,9 @@ function OverviewTreeRow({
               event.stopPropagation()
               onEditCustomFilter(customFilterId)
             }}
-          />
+          >
+            <Settings width={17} height={17} strokeWidth={2.1} />
+          </IconButton>
         </Tooltip>
       ) : null}
     </HStack>
@@ -371,19 +374,19 @@ function ContextMenuButton({
 }) {
   return (
     <Box
-      as="button"
       color={tone === 'danger' ? 'red.600' : 'gray.800'}
       display="block"
       fontSize="13px"
       px="12px"
       py="8px"
       textAlign="left"
-      type="button"
       w="100%"
       _hover={{ bg: tone === 'danger' ? 'red.50' : 'gray.50' }}
-      onClick={onClick}
+      asChild
     >
-      {children}
+      <button type="button" onClick={onClick}>
+        {children}
+      </button>
     </Box>
   )
 }
@@ -496,7 +499,7 @@ export function OverviewTreeNav({
 
   return (
     <>
-      <VStack align="stretch" spacing={1}>
+      <VStack align="stretch" gap={1}>
         {nodes.map((node) => (
           <OverviewTreeBranch
             key={node.id}

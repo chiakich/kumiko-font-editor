@@ -46,12 +46,12 @@ export function NodeInspectorCard({
       </Heading>
       {!selectedNode || !nodeRef ? (
         selectedSegment ? (
-          <Stack spacing={3}>
+          <Stack gap={3}>
             <Text fontSize="sm" color="field.ink" fontFamily="mono">
               {t('editor.segment')}{' '}
-              <Tag size="sm" ml={2}>
+              <Tag.Root size="sm" ml={2}>
                 {selectedSegment.pathId}
-              </Tag>
+              </Tag.Root>
             </Text>
             <Text fontSize="sm" color="field.muted">
               {t('editor.highlightedSegmentPrefix')}
@@ -73,12 +73,12 @@ export function NodeInspectorCard({
           </Text>
         )
       ) : (
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <Text fontSize="sm" color="field.ink" fontFamily="mono">
             {t('editor.path')}{' '}
-            <Tag size="sm" ml={2}>
+            <Tag.Root size="sm" ml={2}>
               {nodeRef.pathId}
-            </Tag>
+            </Tag.Root>
           </Text>
 
           <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap={3}>
@@ -115,23 +115,23 @@ export function NodeInspectorCard({
               {t('editor.selectedHandleNoNodeType')}
             </Text>
           ) : (
-            <Stack spacing={2}>
+            <Stack gap={2}>
               <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap={2}>
                 <Button
                   size="sm"
                   variant={effectiveNodeType === 'corner' ? 'solid' : 'outline'}
                   onClick={() => onNodeTypeChange('corner')}
-                  leftIcon={<CornerNodeIcon />}
                 >
+                  <CornerNodeIcon />
                   {t('editor.corner')}
                 </Button>
                 <Button
                   size="sm"
                   variant={effectiveNodeType === 'smooth' ? 'solid' : 'outline'}
                   onClick={() => onNodeTypeChange('smooth')}
-                  isDisabled={isEndpointNode}
-                  leftIcon={<SmoothNodeIcon />}
+                  disabled={isEndpointNode}
                 >
+                  <SmoothNodeIcon />
                   {t('editor.smooth')}
                 </Button>
               </Grid>

@@ -20,18 +20,18 @@ export function FeatureDiagnosticsList({
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       {diagnostics.map((diagnostic) => (
         <Stack
           key={diagnostic.id}
-          spacing={1}
+          gap={1}
           borderWidth="1px"
           borderRadius="sm"
           p={3}
         >
           <Badge
             alignSelf="flex-start"
-            colorScheme={diagnostic.severity === 'error' ? 'red' : 'yellow'}
+            colorPalette={diagnostic.severity === 'error' ? 'red' : 'yellow'}
           >
             {diagnostic.severity}
           </Badge>

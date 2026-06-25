@@ -1,12 +1,5 @@
-import {
-  Badge,
-  Box,
-  HStack,
-  IconButton,
-  Stack,
-  Text,
-  Tooltip,
-} from '@chakra-ui/react'
+import { Badge, Box, HStack, IconButton, Stack, Text } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { MinusCircle, PlusCircle } from 'iconoir-react'
 import { useState } from 'react'
 import type {
@@ -38,37 +31,38 @@ export function AnchorBehaviorList({
     setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <HStack justify="space-between" align="center">
-        <HStack spacing={2}>
+        <HStack gap={2}>
           <Text fontSize="sm" fontWeight="semibold">
             {t('editor.anchors')}
           </Text>
-          <Badge colorScheme="gray">{rows.length}</Badge>
+          <Badge colorPalette="gray">{rows.length}</Badge>
         </HStack>
-        <HStack spacing={1}>
-          <Tooltip label={t('editor.addAnchor')}>
+        <HStack gap={1}>
+          <Tooltip content={t('editor.addAnchor')}>
             <IconButton
               aria-label={t('editor.addAnchor')}
-              icon={<PlusCircle width={17} height={17} aria-hidden="true" />}
               size="xs"
               variant="ghost"
               onClick={addDraftRow}
-            />
+            >
+              <PlusCircle width={17} height={17} aria-hidden="true" />
+            </IconButton>
           </Tooltip>
-          <Tooltip label={t('editor.removeTheLastDraftRow')}>
+          <Tooltip content={t('editor.removeTheLastDraftRow')}>
             <IconButton
               aria-label={t('editor.removeLastAnchorDraft')}
-              icon={<MinusCircle width={17} height={17} aria-hidden="true" />}
               size="xs"
               variant="ghost"
-              isDisabled={draftRowIds.length === 0}
+              disabled={draftRowIds.length === 0}
               onClick={() => removeDraftRow(draftRowIds.at(-1) ?? '')}
-            />
+            >
+              <MinusCircle width={17} height={17} aria-hidden="true" />
+            </IconButton>
           </Tooltip>
         </HStack>
       </HStack>
-
       <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
         <AnchorHeader />
         {rows.length === 0 && draftRowIds.length === 0 ? (
