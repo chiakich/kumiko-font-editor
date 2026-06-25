@@ -12,6 +12,12 @@ export type ReconnectEndpoint = {
   endpoint: 'start' | 'end'
   chainId?: number
   originalNodeId?: string
+  /**
+   * Unit tangent pointing from this endpoint *into* its own chain. Used to
+   * reconnect crossing strokes by continuity (straight-through) rather than by
+   * raw distance. Undefined when the chain is too short to derive a direction.
+   */
+  dir?: { x: number; y: number }
 }
 
 export const pairNearestEndpoints = (
@@ -72,6 +78,140 @@ export const pairNearestEndpoints = (
     const target = remaining.splice(targetIndex, 1)[0]
     const source = remaining.splice(sourceIndex, 1)[0]
     pairs.push([source, target])
+  }
+
+  return pairs
+}
+
+/** Endpoints within this distance (font units) are treated as one junction. */
+const JUNCTION_EPS = 1.5
+
+const coincident = (
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): boolean => Math.hypot(a.x - b.x, a.y - b.y) <= JUNCTION_EPS
+
+/**
+ * Unit tangent pointing from a chain's endpoint into the chain (toward the
+ * first node that is actually distinct from the endpoint, so off-curve handles
+ * and zero-length steps still yield a meaningful direction). Returns null for
+ * chains too short or degenerate to derive a direction.
+ */
+const endpointDirection = (
+  nodes: PathNode[],
+  side: 'start' | 'end'
+): { x: number; y: number } | null => {
+  const count = nodes.length
+  if (count < 2) {
+    return null
+  }
+  const origin = side === 'start' ? nodes[0] : nodes[count - 1]
+  const step = side === 'start' ? 1 : -1
+  for (
+    let i = side === 'start' ? 1 : count - 2;
+    i >= 0 && i < count;
+    i += step
+  ) {
+    const dx = nodes[i].x - origin.x
+    const dy = nodes[i].y - origin.y
+    const len = Math.hypot(dx, dy)
+    if (len > 0.001) {
+      return { x: dx / len, y: dy / len }
+    }
+  }
+  return null
+}
+
+const tangentDot = (a: ReconnectEndpoint, b: ReconnectEndpoint): number =>
+  a.dir && b.dir ? a.dir.x * b.dir.x + a.dir.y * b.dir.y : 0
+
+/**
+ * Pair the endpoints of a single junction (a cluster of coincident endpoints)
+ * by stroke continuity: repeatedly join the two stubs whose tangents are most
+ * opposite (dot → -1), i.e. the connection that carries the stroke straight
+ * through the junction. This is what turns a crossing into one stroke per axis
+ * instead of pinwheels / L-shapes.
+ */
+const matchJunction = (
+  cluster: ReconnectEndpoint[]
+): {
+  pairs: Array<[ReconnectEndpoint, ReconnectEndpoint]>
+  leftover: ReconnectEndpoint[]
+} => {
+  const remaining = [...cluster]
+  const pairs: Array<[ReconnectEndpoint, ReconnectEndpoint]> = []
+
+  while (remaining.length >= 2) {
+    let bestPair: [number, number] | null = null
+    let bestDot = Number.POSITIVE_INFINITY
+
+    for (let i = 0; i < remaining.length; i += 1) {
+      for (let j = i + 1; j < remaining.length; j += 1) {
+        // Never close a chain onto its own other end here; bridging a chain to
+        // itself is the distance-fallback's job, not a through-junction.
+        if (remaining[i].chainId === remaining[j].chainId) {
+          continue
+        }
+        const dot = tangentDot(remaining[i], remaining[j])
+        if (dot < bestDot) {
+          bestDot = dot
+          bestPair = [i, j]
+        }
+      }
+    }
+
+    if (!bestPair) {
+      break
+    }
+
+    const [i, j] = bestPair
+    const second = remaining.splice(j, 1)[0]
+    const first = remaining.splice(i, 1)[0]
+    pairs.push([first, second])
+  }
+
+  return { pairs, leftover: remaining }
+}
+
+/**
+ * Reconnect free chain endpoints by stroke continuity. Endpoints that land on
+ * the same junction (coincident positions, as where overlapping strokes cross)
+ * are matched straight-through by tangent; any endpoints that don't share a
+ * junction fall back to nearest-distance pairing.
+ */
+export const pairEndpointsByContinuity = (
+  endpoints: ReconnectEndpoint[]
+): Array<[ReconnectEndpoint, ReconnectEndpoint]> => {
+  const clusters: ReconnectEndpoint[][] = []
+  for (const endpoint of endpoints) {
+    const cluster = clusters.find(
+      (members) =>
+        Math.hypot(
+          members[0].node.x - endpoint.node.x,
+          members[0].node.y - endpoint.node.y
+        ) <= JUNCTION_EPS
+    )
+    if (cluster) {
+      cluster.push(endpoint)
+    } else {
+      clusters.push([endpoint])
+    }
+  }
+
+  const pairs: Array<[ReconnectEndpoint, ReconnectEndpoint]> = []
+  const leftovers: ReconnectEndpoint[] = []
+  for (const cluster of clusters) {
+    if (cluster.length < 2) {
+      leftovers.push(...cluster)
+      continue
+    }
+    const { pairs: junctionPairs, leftover } = matchJunction(cluster)
+    pairs.push(...junctionPairs)
+    leftovers.push(...leftover)
+  }
+
+  if (leftovers.length >= 2) {
+    pairs.push(...pairNearestEndpoints(leftovers))
   }
 
   return pairs
@@ -285,9 +425,11 @@ export const performReconnect = (
       }
     }
 
-    // Build endpoints
+    // Build endpoints, carrying each stub's tangent so crossing strokes can be
+    // reconnected straight-through instead of by raw distance.
     const endpoints: ReconnectEndpoint[] = []
     for (const chain of allChains) {
+      const last = chain.nodes.length - 1
       endpoints.push({
         pathId: 'multi',
         nodeId: chain.nodes[0].id,
@@ -295,18 +437,20 @@ export const performReconnect = (
         endpoint: 'start',
         chainId: chain.id,
         originalNodeId: chain.nodes[0].id,
+        dir: endpointDirection(chain.nodes, 'start') ?? undefined,
       })
       endpoints.push({
         pathId: 'multi',
-        nodeId: chain.nodes[chain.nodes.length - 1].id,
-        node: chain.nodes[chain.nodes.length - 1],
+        nodeId: chain.nodes[last].id,
+        node: chain.nodes[last],
         endpoint: 'end',
         chainId: chain.id,
-        originalNodeId: chain.nodes[chain.nodes.length - 1].id,
+        originalNodeId: chain.nodes[last].id,
+        dir: endpointDirection(chain.nodes, 'end') ?? undefined,
       })
     }
 
-    const pairs = pairNearestEndpoints(endpoints)
+    const pairs = pairEndpointsByContinuity(endpoints)
 
     // Trace loops
     const adj = new Map<string, { chainId: number; side: 'start' | 'end' }>()
@@ -336,7 +480,7 @@ export const performReconnect = (
         continue
       }
 
-      const loopNodes: PathNode[] = []
+      const tracedNodes: PathNode[] = []
       let currentChainId = chain.id
       let movingForward = true
       const pieceId = generateId('path')
@@ -344,17 +488,11 @@ export const performReconnect = (
       while (!visitedChains.has(currentChainId)) {
         visitedChains.add(currentChainId)
         const currentChain = allChains[currentChainId]
-        const nodesToAdd = movingForward
-          ? currentChain.nodes
-          : [...currentChain.nodes].reverse()
-
-        for (const node of nodesToAdd) {
-          const newNode = { ...node, id: generateId('node') }
-          loopNodes.push(newNode)
-          if (allSelectedIds.has(node.id)) {
-            nextSelection.push(`${pieceId}:${newNode.id}`)
-          }
-        }
+        tracedNodes.push(
+          ...(movingForward
+            ? currentChain.nodes
+            : [...currentChain.nodes].reverse())
+        )
 
         const exitSide = movingForward ? 'end' : 'start'
         const nextHop = adj.get(`${currentChainId}:${exitSide}`)
@@ -366,6 +504,39 @@ export const performReconnect = (
         currentChainId = nextHop.chainId
         movingForward = nextHop.side === 'start'
       }
+
+      // Weld coincident junction nodes: adjacent chains each carry the shared
+      // cut node, so collapse runs of coincident nodes (and the closing wrap)
+      // into one to avoid zero-length segments. When welding, keep a selected
+      // source id so the user's selection survives onto the surviving node.
+      const weldedNodes: PathNode[] = []
+      for (const node of tracedNodes) {
+        const prev = weldedNodes[weldedNodes.length - 1]
+        if (prev && coincident(prev, node)) {
+          if (allSelectedIds.has(node.id)) {
+            prev.id = node.id
+          }
+          continue
+        }
+        weldedNodes.push({ ...node })
+      }
+      while (
+        weldedNodes.length > 2 &&
+        coincident(weldedNodes[0], weldedNodes[weldedNodes.length - 1])
+      ) {
+        const dropped = weldedNodes.pop()!
+        if (allSelectedIds.has(dropped.id)) {
+          weldedNodes[0].id = dropped.id
+        }
+      }
+
+      const loopNodes = weldedNodes.map((node) => {
+        const newNode = { ...node, id: generateId('node') }
+        if (allSelectedIds.has(node.id)) {
+          nextSelection.push(`${pieceId}:${newNode.id}`)
+        }
+        return newNode
+      })
 
       pieces.push({
         id: pieceId,
