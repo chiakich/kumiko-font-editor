@@ -725,6 +725,12 @@
     "weight": "Weight",
     "weightClass": "Weight class",
     "widthClass": "Width class",
+    "axisRangeWarning": "Outside the axis range ({{defaultValue}}); skipped when exporting a Variable OTF.",
+    "styleLinking": "Style linking",
+    "bold": "Bold",
+    "italic": "Italic",
+    "italicAngle": "Italic angle",
+    "addInstancePerMaster": "Add per master",
     "workflow": "Workflow",
     "workflowSection": "Workflow"
   },

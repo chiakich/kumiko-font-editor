@@ -5,6 +5,7 @@ import {
   HStack,
   Input,
   SimpleGrid,
+  Slider,
   Stack,
   Text,
   Field,
@@ -25,6 +26,78 @@ interface FontExportsTabProps {
   axes: FontAxis[]
   exports: ExportDraft[]
   onExportsChange: (exports: ExportDraft[]) => void
+}
+
+const axisStep = (axis: FontAxis) => {
+  const range = Math.abs(axis.maxValue - axis.minValue)
+  return range > 0 && range <= 4 ? 0.01 : 1
+}
+
+interface AxisLocationFieldProps {
+  axis: FontAxis
+  value: number
+  onChange: (value: number) => void
+}
+
+// A slider + numeric entry for one axis, warning when the value falls outside
+// the axis range (the variable-font build silently drops out-of-range instances).
+function AxisLocationField({ axis, value, onChange }: AxisLocationFieldProps) {
+  const { t } = useTranslation()
+  const min = Math.min(axis.minValue, axis.maxValue)
+  const max = Math.max(axis.minValue, axis.maxValue)
+  const outOfRange = value < min || value > max
+  const sliderValue = Math.min(max, Math.max(min, value))
+  return (
+    <Field.Root>
+      <HStack justify="space-between" align="baseline">
+        <Field.Label fontSize="sm">{axis.label || axis.name}</Field.Label>
+        <Text
+          fontSize="xs"
+          fontFamily="mono"
+          color={outOfRange ? 'red.500' : 'field.muted'}
+        >
+          {value}
+        </Text>
+      </HStack>
+      <HStack gap={3} align="center">
+        <Slider.Root
+          flex="1"
+          min={min}
+          max={max}
+          step={axisStep(axis)}
+          value={[sliderValue]}
+          aria-label={[axis.label || axis.name]}
+          onValueChange={(details) => onChange(details.value[0] ?? value)}
+        >
+          <Slider.Control>
+            <Slider.Track bg="blackAlpha.200">
+              <Slider.Range bg="field.accent" />
+            </Slider.Track>
+            <Slider.Thumb index={0} boxSize={3} />
+          </Slider.Control>
+        </Slider.Root>
+        <Box w="88px" flexShrink={0}>
+          <NumberField
+            label=""
+            value={value}
+            onChange={(next) => {
+              const parsed = parseNumber(next)
+              onChange(parsed ?? axis.defaultValue)
+            }}
+          />
+        </Box>
+      </HStack>
+      {outOfRange ? (
+        <Text fontSize="xs" color="red.500" mt={1}>
+          {t('projectControl.axisRangeWarning', {
+            min,
+            max,
+            defaultValue: `${min}–${max}`,
+          })}
+        </Text>
+      ) : null}
+    </Field.Root>
+  )
 }
 
 export function FontExportsTab({
@@ -124,21 +197,18 @@ export function FontExportsTab({
             </Field.Root>
           </SimpleGrid>
           {axes.length > 0 ? (
-            <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3} mt={3}>
+            <SimpleGrid columns={{ base: 1, lg: 2 }} gap={3} mt={3}>
               {axes.map((axis) => (
-                <NumberField
+                <AxisLocationField
                   key={axis.name}
-                  label={axis.label || axis.name}
-                  min={axis.minValue}
-                  max={axis.maxValue}
+                  axis={axis}
                   value={instance.location[axis.name] ?? axis.defaultValue}
-                  onChange={(value) => {
-                    const parsed = parseNumber(value)
+                  onChange={(value) =>
                     updateLocation(index, {
                       ...instance.location,
-                      [axis.name]: parsed ?? axis.defaultValue,
+                      [axis.name]: value,
                     })
-                  }}
+                  }
                 />
               ))}
             </SimpleGrid>

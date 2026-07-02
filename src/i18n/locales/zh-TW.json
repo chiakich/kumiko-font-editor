@@ -725,6 +725,12 @@
     "weight": "Weight",
     "weightClass": "Weight class",
     "widthClass": "Width class",
+    "axisRangeWarning": "超出軸範圍（{{defaultValue}}），匯出 Variable OTF 時會被略過。",
+    "styleLinking": "樣式連結",
+    "bold": "Bold",
+    "italic": "Italic",
+    "italicAngle": "Italic angle",
+    "addInstancePerMaster": "依 master 建立",
     "workflow": "Workflow",
     "workflowSection": "工作流程"
   },
