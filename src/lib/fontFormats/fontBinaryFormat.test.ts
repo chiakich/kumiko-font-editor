@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import opentype from 'opentype.js'
 import { exportGlyphListAsBinary } from './fontBinaryFormat'
-import type { GlyphData, PathNode } from 'src/store'
+import type { GlyphComponentRef, GlyphData, PathNode } from 'src/store'
 
 const on = (
   x: number,
@@ -68,5 +68,73 @@ describe('appendShapeToPath closed-contour wrap-around', () => {
     // Two cubic segments: b->c and the wrap d->start. Before the fix the second
     // was dropped and the contour closed with a straight line.
     expect(curves.length).toBe(2)
+  })
+})
+
+describe('component decomposition on binary export', () => {
+  const square = (offsetX: number): PathNode[] => [
+    on(offsetX + 0, 0, 'line', 's0'),
+    on(offsetX + 100, 0, 'line', 's1'),
+    on(offsetX + 100, 100, 'line', 's2'),
+    on(offsetX + 0, 100, 'line', 's3'),
+  ]
+
+  const makeGlyphWith = (
+    id: string,
+    unicodes: string[],
+    nodes: PathNode[],
+    componentRefs: GlyphComponentRef[] = []
+  ): GlyphData => ({
+    id,
+    name: id,
+    unicodes,
+    activeLayerId: 'public.default',
+    layerOrder: ['public.default'],
+    layers: {
+      'public.default': {
+        id: 'public.default',
+        name: 'public.default',
+        type: 'master',
+        associatedMasterId: 'public.default',
+        paths: nodes.length ? [{ id: 'p0', nodes, closed: true }] : [],
+        componentRefs,
+        anchors: [],
+        guidelines: [],
+        metrics: { lsb: 0, rsb: 0, width: 500 },
+      },
+    },
+  })
+
+  it('decomposes component-only glyphs into outlines with the transform applied', async () => {
+    const base = makeGlyphWith('base', [], square(0))
+    // Glyph "A" has no paths, only a component referencing "base" shifted +200 x.
+    const composed = makeGlyphWith(
+      'A',
+      ['0041'],
+      [],
+      [
+        {
+          id: 'c0',
+          glyphId: 'base',
+          x: 200,
+          y: 0,
+          scaleX: 1,
+          scaleY: 1,
+          rotation: 0,
+        },
+      ]
+    )
+    const blob = await exportGlyphListAsBinary({
+      fontData: { unitsPerEm: 1000 },
+      glyphs: [base, composed],
+      format: 'otf',
+    })
+    const font = opentype.parse(await blob.arrayBuffer())
+    const bbox = font.charToGlyph('A').getBoundingBox()
+    // Before the fix the glyph was empty; now it carries the shifted square.
+    expect(bbox.x1).toBeCloseTo(200, 0)
+    expect(bbox.x2).toBeCloseTo(300, 0)
+    expect(bbox.y1).toBeCloseTo(0, 0)
+    expect(bbox.y2).toBeCloseTo(100, 0)
   })
 })

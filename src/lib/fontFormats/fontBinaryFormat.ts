@@ -14,6 +14,11 @@ import type {
 } from 'src/store'
 import { getNodeSegmentType, isOffCurveNode, isOnCurveNode } from 'src/store'
 import { activeLayer } from 'src/store/glyphLayer'
+import {
+  getComponentMatrix,
+  isIdentityComponentMatrix,
+  type ComponentMatrix,
+} from 'src/lib/components/componentTransform'
 import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
@@ -480,6 +485,69 @@ export const exportFontAsBinary = (
     format,
   })
 
+// Affine composition in DOMMatrix order: `outer` is applied after `inner`, so a
+// point p maps to outer(inner(p)). Used to fold a component's transform into its
+// parent's when flattening nested references.
+const composeMatrices = (
+  outer: ComponentMatrix,
+  inner: ComponentMatrix
+): ComponentMatrix => ({
+  a: outer.a * inner.a + outer.c * inner.b,
+  b: outer.b * inner.a + outer.d * inner.b,
+  c: outer.a * inner.c + outer.c * inner.d,
+  d: outer.b * inner.c + outer.d * inner.d,
+  e: outer.a * inner.e + outer.c * inner.f + outer.e,
+  f: outer.b * inner.e + outer.d * inner.f + outer.f,
+})
+
+const transformShape = (
+  shape: PathData,
+  matrix: ComponentMatrix
+): PathData => ({
+  ...shape,
+  nodes: shape.nodes.map((node) => ({
+    ...node,
+    x: matrix.a * node.x + matrix.c * node.y + matrix.e,
+    y: matrix.b * node.x + matrix.d * node.y + matrix.f,
+  })),
+})
+
+// opentype.js glyphs only carry an outline path, so component references must be
+// decomposed at export time: each referenced glyph's contours are pulled in with
+// the component's affine transform applied. Recurses through nested components
+// and guards against reference cycles.
+const collectExportShapes = (
+  glyph: GlyphData,
+  glyphsById: Map<string, GlyphData>,
+  matrix: ComponentMatrix,
+  visiting: Set<string>
+): PathData[] => {
+  const layer = activeLayer(glyph)
+  const isIdentity = isIdentityComponentMatrix(matrix)
+  const shapes: PathData[] = layer.paths.map((shape) =>
+    isIdentity ? shape : transformShape(shape, matrix)
+  )
+  for (const ref of layer.componentRefs) {
+    const base = glyphsById.get(ref.glyphId)
+    if (!base || visiting.has(ref.glyphId)) {
+      continue
+    }
+    visiting.add(ref.glyphId)
+    shapes.push(
+      ...collectExportShapes(
+        base,
+        glyphsById,
+        composeMatrices(matrix, getComponentMatrix(ref)),
+        visiting
+      )
+    )
+    visiting.delete(ref.glyphId)
+  }
+  return shapes
+}
+
+const IDENTITY_MATRIX: ComponentMatrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }
+
 export const exportGlyphListAsBinary = (input: {
   fontData: Pick<
     FontData,
@@ -493,9 +561,15 @@ export const exportGlyphListAsBinary = (input: {
   familyName?: string
   styleName?: string
 }) => {
+  const glyphsById = new Map(input.glyphs.map((glyph) => [glyph.id, glyph]))
   const glyphs = input.glyphs.map((glyph) => {
     const path = new opentype.Path()
-    activeLayer(glyph).paths.forEach((shape) => {
+    collectExportShapes(
+      glyph,
+      glyphsById,
+      IDENTITY_MATRIX,
+      new Set([glyph.id])
+    ).forEach((shape) => {
       appendShapeToPath(path, shape)
     })
     const normalizedUnicode = getPrimaryGlyphUnicode(glyph)
