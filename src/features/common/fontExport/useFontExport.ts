@@ -33,6 +33,7 @@ import {
   createFontExportErrorReport,
   type FontExportErrorReport,
 } from 'src/features/common/fontExport/exportErrorReport'
+import { locationsMatch } from 'src/font/designspaceLocation'
 import { useStore } from 'src/store'
 import type {
   FontExportFormat,
@@ -159,9 +160,26 @@ export function useFontExport() {
     persistenceStatus !== 'error' &&
     !hasBlockingOpenTypeWarnings
   )
+  const hasVariableDefaultSource = useMemo(() => {
+    const axes = fontData?.axes?.axes ?? []
+    const sources = Object.values(fontData?.sources ?? {})
+    if (axes.length === 0 || sources.length === 0) {
+      return false
+    }
+    const defaultLocation = Object.fromEntries(
+      axes.map((axis) => [axis.name, axis.defaultValue])
+    )
+    return sources.some((source) =>
+      locationsMatch(source.location, defaultLocation, axes)
+    )
+  }, [fontData])
+  // Only offer variable OTF when the build can actually succeed: at least one
+  // axis, more than one source, and a source at the axis defaults (varLib needs
+  // a default master). Otherwise the option would hard-fail on click.
   const canExportVariableFont = Boolean(
     fontData?.axes?.axes.length &&
-    Object.keys(fontData.sources ?? {}).length > 1
+    Object.keys(fontData.sources ?? {}).length > 1 &&
+    hasVariableDefaultSource
   )
   const loadingText = ufoExportProgress
     ? ufoExportProgress.phase === 'zip'
