@@ -168,19 +168,12 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
 
 const blobToArrayBuffer = (blob: Blob) => blob.arrayBuffer()
 
+// Pass axes through unchanged: discrete `values` are now serialized as a
+// designspaceLib-compatible `values` attribute so varLib treats the axis as
+// discrete instead of interpolating undesigned in-between locations.
 const getVariableBuildAxes = (
   axes: ReturnType<typeof kumikoRecordsToFontData>['axes']
-) =>
-  axes
-    ? {
-        ...axes,
-        axes: axes.axes.map((axis) => {
-          const axisWithoutDiscreteValues = { ...axis }
-          delete axisWithoutDiscreteValues.values
-          return axisWithoutDiscreteValues
-        }),
-      }
-    : undefined
+) => axes
 
 interface VariableMasterSource {
   id: string

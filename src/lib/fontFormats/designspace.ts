@@ -344,7 +344,15 @@ export const serializeDesignspace = (
       const values = (axis.values ?? [])
         .map((value) => `      <value value="${value}"/>`)
         .join('\n')
-      const open = `    <axis tag="${escapeXmlAttr(axis.tag)}" name="${escapeXmlAttr(axis.name)}" minimum="${axis.minValue}" maximum="${axis.maxValue}" default="${axis.defaultValue}">`
+      // designspaceLib (fontTools/varLib) recognizes a discrete axis by the
+      // `values` attribute on <axis>; the <values> child below is this project's
+      // own round-trip convention. Emit both so varLib treats the axis as
+      // discrete while our parser and the GitHub sync keep working.
+      const discreteAttr =
+        axis.values && axis.values.length > 0
+          ? ` values="${axis.values.join(' ')}"`
+          : ''
+      const open = `    <axis tag="${escapeXmlAttr(axis.tag)}" name="${escapeXmlAttr(axis.name)}" minimum="${axis.minValue}" maximum="${axis.maxValue}" default="${axis.defaultValue}"${discreteAttr}>`
       return maps || values
         ? [
             open,

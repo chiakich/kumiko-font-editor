@@ -38,3 +38,37 @@ describe('serializeDesignspace default source marking', () => {
     expect(copies.length).toBe(1)
   })
 })
+
+describe('serializeDesignspace discrete axes', () => {
+  it('emits a designspaceLib values attribute for discrete axes', () => {
+    const discreteAxes: FontAxes = {
+      axes: [
+        {
+          name: 'Italic',
+          label: 'Italic',
+          tag: 'ital',
+          minValue: 0,
+          defaultValue: 0,
+          maxValue: 1,
+          values: [0, 1],
+        },
+      ],
+      mappings: [],
+    }
+    const xml = serializeDesignspace(discreteAxes, [
+      { filename: 'a.otf', name: 'A', location: { Italic: 0 } },
+      { filename: 'b.otf', name: 'B', location: { Italic: 1 } },
+    ])
+    // varLib reads the values attribute; the <values> child stays for our parser.
+    expect(xml).toContain('values="0 1"')
+    expect(xml).toContain('<values>')
+  })
+
+  it('omits the values attribute for continuous axes', () => {
+    const xml = serializeDesignspace(axes, [
+      { filename: 'a.otf', name: 'A', location: { Weight: 400 } },
+      { filename: 'b.otf', name: 'B', location: { Weight: 900 } },
+    ])
+    expect(xml).not.toContain('values=')
+  })
+})
