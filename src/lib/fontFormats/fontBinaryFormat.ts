@@ -362,46 +362,76 @@ export const importBinaryFontFile = async (file: File) => {
   }
 }
 
+// Closed contours store their nodes rotated so a curve segment can wrap back to
+// the start point: the first node is on-curve and its incoming segment's handles
+// sit at the tail of the array (UFO canonical order). Rotating to the first
+// on-curve node keeps moveTo on an on-curve point and lets the wrap-around
+// segment below consume those trailing handles.
+const rotateClosedContourToFirstOnCurve = (nodes: PathNode[]) => {
+  const firstOnCurveIndex = nodes.findIndex((node) => isOnCurveNode(node))
+  if (firstOnCurveIndex <= 0) {
+    return nodes
+  }
+  return [
+    ...nodes.slice(firstOnCurveIndex),
+    ...nodes.slice(0, firstOnCurveIndex),
+  ]
+}
+
 const appendShapeToPath = (path: opentype.Path, shape: PathData) => {
   if (shape.nodes.length === 0) return
 
-  const nodes = shape.nodes
+  const nodes = shape.closed
+    ? rotateClosedContourToFirstOnCurve(shape.nodes)
+    : shape.nodes
   const first = nodes[0]
   path.moveTo(first.x, first.y)
 
   const handles: PathNode[] = []
+  const drawSegment = (target: PathNode) => {
+    const segmentType = getNodeSegmentType(target)
+    if (segmentType === 'cubic') {
+      const [handle1, handle2] = handles
+      if (handle1 && handle2) {
+        path.curveTo(
+          handle1.x,
+          handle1.y,
+          handle2.x,
+          handle2.y,
+          target.x,
+          target.y
+        )
+      } else {
+        path.lineTo(target.x, target.y)
+      }
+    } else if (segmentType === 'quadratic') {
+      const [handle] = handles
+      if (handle) {
+        path.quadraticCurveTo(handle.x, handle.y, target.x, target.y)
+      } else {
+        path.lineTo(target.x, target.y)
+      }
+    } else {
+      path.lineTo(target.x, target.y)
+    }
+    handles.length = 0
+  }
+
   let i = 1
   while (i < nodes.length) {
     const node = nodes[i]
-
     if (isOffCurveNode(node)) {
       handles.push(node)
-      i += 1
-      continue
+    } else if (isOnCurveNode(node)) {
+      drawSegment(node)
     }
-
-    if (isOnCurveNode(node) && getNodeSegmentType(node) === 'cubic') {
-      const [handle1, handle2] = handles
-      if (handle1 && handle2) {
-        path.curveTo(handle1.x, handle1.y, handle2.x, handle2.y, node.x, node.y)
-      } else {
-        path.lineTo(node.x, node.y)
-      }
-    } else if (
-      isOnCurveNode(node) &&
-      getNodeSegmentType(node) === 'quadratic'
-    ) {
-      const [handle] = handles
-      if (handle) {
-        path.quadraticCurveTo(handle.x, handle.y, node.x, node.y)
-      } else {
-        path.lineTo(node.x, node.y)
-      }
-    } else {
-      path.lineTo(node.x, node.y)
-    }
-    handles.length = 0
     i += 1
+  }
+
+  // Trailing off-curve handles form the segment that wraps back to the start
+  // point; its segment type is recorded on the (rotated) first node.
+  if (shape.closed && handles.length > 0) {
+    drawSegment(first)
   }
 
   if (shape.closed) path.close()
