@@ -215,6 +215,7 @@ export function FontSettingsModal({
                   <Tabs.Content value="1" p={0} h="100%" overflow="auto">
                     <FontSourcesTab
                       fontData={fontData}
+                      axes={axes}
                       sources={sources}
                       onSourcesChange={setSources}
                     />

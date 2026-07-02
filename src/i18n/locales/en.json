@@ -731,6 +731,13 @@
     "italic": "Italic",
     "italicAngle": "Italic angle",
     "addInstancePerMaster": "Add per master",
+    "importMasterFromFont": "Import master from font…",
+    "importMasterTitle": "New master from font file",
+    "importMasterHint": "Outlines are matched by glyph name, then unicode. Point structure may differ from existing masters, so a Variable OTF export will require compatible outlines.",
+    "createMaster": "Create master",
+    "masterImported": "Master imported",
+    "masterImportedDetail": "{{matched}} glyphs imported, {{unmatched}} unmatched.",
+    "masterImportFailed": "Master import failed",
     "workflow": "Workflow",
     "workflowSection": "Workflow"
   },

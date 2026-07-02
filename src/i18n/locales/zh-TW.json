@@ -731,6 +731,13 @@
     "italic": "Italic",
     "italicAngle": "Italic angle",
     "addInstancePerMaster": "依 master 建立",
+    "importMasterFromFont": "從字型檔匯入 master…",
+    "importMasterTitle": "從字型檔新增 master",
+    "importMasterHint": "以字形名稱、其次 unicode 比對輪廓。點結構可能與現有 master 不同,匯出 Variable OTF 時需要相容的輪廓。",
+    "createMaster": "建立 master",
+    "masterImported": "已匯入 master",
+    "masterImportedDetail": "匯入 {{matched}} 個字形,{{unmatched}} 個未對應。",
+    "masterImportFailed": "匯入 master 失敗",
     "workflow": "Workflow",
     "workflowSection": "工作流程"
   },
