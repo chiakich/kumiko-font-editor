@@ -5,6 +5,7 @@ import {
 import { buildVariableFontWithFontTools } from 'src/lib/fontFormats/fontToolsVariableFontExport'
 import {
   serializeDesignspace,
+  type DesignspaceAxisLabelOut,
   type DesignspaceRule,
 } from 'src/lib/fontFormats/designspace'
 import {
@@ -258,6 +259,66 @@ export const makeVariableBuildMasterNames = (
       usedStyleNames
     ),
   }))
+}
+
+// Glyphs custom-parameter names for fine-tuning STAT generation, honored via an
+// instance's customData when present.
+const STAT_ENTRY_PARAM = 'Style Name as STAT entry'
+const STAT_ELIDABLE_PARAM = 'Elidable STAT Axis Value Name'
+const STAT_LOCATION_TOLERANCE = 1e-6
+
+const readInstanceStatTag = (
+  instance: FontExportInstance,
+  key: string
+): string | undefined => {
+  const value = instance.customData?.[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+// Derive per-axis STAT value labels from export instances, mirroring Glyphs:
+// an instance that differs from the origin on only one axis names that axis's
+// value; the value at the axis default is elidable. "Style Name as STAT entry"
+// and "Elidable STAT Axis Value Name" custom parameters override the defaults.
+export const deriveStatAxisLabels = (
+  axes: FontAxis[],
+  instances: FontExportInstance[]
+): Record<string, DesignspaceAxisLabelOut[]> => {
+  const result: Record<string, DesignspaceAxisLabelOut[]> = {}
+  const axisValue = (instance: FontExportInstance, axis: FontAxis) =>
+    instance.location[axis.name] ?? axis.defaultValue
+  const isDefaultOn = (instance: FontExportInstance, axis: FontAxis) =>
+    Math.abs(axisValue(instance, axis) - axis.defaultValue) <=
+    STAT_LOCATION_TOLERANCE
+
+  for (const axis of axes) {
+    const labels: DesignspaceAxisLabelOut[] = []
+    const seenValues = new Set<number>()
+    for (const instance of instances) {
+      const taggedAxis = readInstanceStatTag(instance, STAT_ENTRY_PARAM)
+      const differsOnlyHere = axes.every(
+        (other) => other.name === axis.name || isDefaultOn(instance, other)
+      )
+      if (taggedAxis !== axis.tag && !differsOnlyHere) {
+        continue
+      }
+      const value = axisValue(instance, axis)
+      if (seenValues.has(value)) {
+        continue
+      }
+      seenValues.add(value)
+      const elidableTag = readInstanceStatTag(instance, STAT_ELIDABLE_PARAM)
+      labels.push({
+        name: instance.styleName || instance.name,
+        value,
+        elidable:
+          isDefaultOn(instance, axis) || elidableTag === axis.tag || undefined,
+      })
+    }
+    if (labels.length > 0) {
+      result[axis.name] = labels.sort((a, b) => a.value - b.value)
+    }
+  }
+  return result
 }
 
 const isLocationValueWithinAxisRange = (
@@ -584,11 +645,16 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     })
   )
 
+  const variableExportInstances = getVariableBuildExportInstances(
+    fontData.axes,
+    fontData.exportInstances
+  )
   const designspaceText = serializeDesignspace(
     getVariableBuildAxes(fontData.axes),
     masters.map((master) => master.source),
     bracketRules,
-    getVariableBuildExportInstances(fontData.axes, fontData.exportInstances)
+    variableExportInstances,
+    deriveStatAxisLabels(axes, variableExportInstances)
   )
   const variableBuffer = await buildVariableFontWithFontTools(
     designspaceText,

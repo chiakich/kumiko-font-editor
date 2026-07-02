@@ -320,17 +320,29 @@ export interface DesignspaceSourceOut {
   styleName?: string
 }
 
+export interface DesignspaceAxisLabelOut {
+  name: string
+  value: number
+  elidable?: boolean
+}
+
 // Serialize FontData axes + sources back to a .designspace document. The source
 // at the axis-defaults location is marked default via <info copy="1"/>.
 export const serializeDesignspace = (
   axes: FontAxes | undefined,
   sources: DesignspaceSourceOut[],
   rules: DesignspaceRule[] = [],
-  instances: FontExportInstance[] = []
+  instances: FontExportInstance[] = [],
+  // STAT axis value labels keyed by axis name (designspaceLib format 5). When
+  // present the document is emitted as format 5.0 so varLib builds a STAT table.
+  axisLabels: Record<string, DesignspaceAxisLabelOut[]> = {}
 ): string => {
   const axisEntries = axes?.axes ?? []
   const defaultLocation = Object.fromEntries(
     axisEntries.map((axis) => [axis.name, axis.defaultValue])
+  )
+  const hasAxisLabels = Object.values(axisLabels).some(
+    (labels) => labels.length > 0
   )
 
   const axesXml = axisEntries
@@ -344,6 +356,17 @@ export const serializeDesignspace = (
       const values = (axis.values ?? [])
         .map((value) => `      <value value="${value}"/>`)
         .join('\n')
+      const labels = (axisLabels[axis.name] ?? [])
+        .map(
+          (label) =>
+            `        <label uservalue="${label.value}" name="${escapeXmlAttr(
+              label.name
+            )}"${label.elidable ? ' elidable="true"' : ''}/>`
+        )
+        .join('\n')
+      const labelsBlock = labels
+        ? `      <labels>\n${labels}\n      </labels>`
+        : ''
       // designspaceLib (fontTools/varLib) recognizes a discrete axis by the
       // `values` attribute on <axis>; the <values> child below is this project's
       // own round-trip convention. Emit both so varLib treats the axis as
@@ -353,11 +376,12 @@ export const serializeDesignspace = (
           ? ` values="${axis.values.join(' ')}"`
           : ''
       const open = `    <axis tag="${escapeXmlAttr(axis.tag)}" name="${escapeXmlAttr(axis.name)}" minimum="${axis.minValue}" maximum="${axis.maxValue}" default="${axis.defaultValue}"${discreteAttr}>`
-      return maps || values
+      return maps || values || labelsBlock
         ? [
             open,
             values ? `      <values>\n${values}\n      </values>` : '',
             maps,
+            labelsBlock,
             '    </axis>',
           ]
             .filter(Boolean)
@@ -464,7 +488,7 @@ export const serializeDesignspace = (
     .join('\n')
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<designspace format="4.1">
+<designspace format="${hasAxisLabels ? '5.0' : '4.1'}">
   <axes>
 ${axesXml}
   </axes>

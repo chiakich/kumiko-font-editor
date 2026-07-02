@@ -72,3 +72,37 @@ describe('serializeDesignspace discrete axes', () => {
     expect(xml).not.toContain('values=')
   })
 })
+
+describe('serializeDesignspace STAT axis labels', () => {
+  it('emits <labels> and bumps the document to format 5.0', () => {
+    const xml = serializeDesignspace(
+      axes,
+      [
+        { filename: 'a.otf', name: 'A', location: { Weight: 400 } },
+        { filename: 'b.otf', name: 'B', location: { Weight: 900 } },
+      ],
+      [],
+      [],
+      {
+        Weight: [
+          { name: 'Regular', value: 400, elidable: true },
+          { name: 'Black', value: 900 },
+        ],
+      }
+    )
+    expect(xml).toContain('format="5.0"')
+    expect(xml).toContain('<labels>')
+    expect(xml).toContain(
+      '<label uservalue="400" name="Regular" elidable="true"/>'
+    )
+    expect(xml).toContain('<label uservalue="900" name="Black"/>')
+  })
+
+  it('stays at format 4.1 without labels', () => {
+    const xml = serializeDesignspace(axes, [
+      { filename: 'a.otf', name: 'A', location: { Weight: 400 } },
+    ])
+    expect(xml).toContain('format="4.1"')
+    expect(xml).not.toContain('<labels>')
+  })
+})
