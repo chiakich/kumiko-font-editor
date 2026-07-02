@@ -1,7 +1,10 @@
 import 'fake-indexeddb/auto'
 
 import { describe, it, expect } from 'vitest'
-import { addMasterFromBinaryToProject } from './addMasterFromBinary'
+import {
+  addMasterFromBinaryToProject,
+  addMasterToProject,
+} from './addMasterFromBinary'
 import {
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
@@ -109,5 +112,111 @@ describe('addMasterFromBinaryToProject', () => {
     expect(
       getGlyphMasterLayerForSource(glyphB, 'bold')?.paths[0].nodes[0].x
     ).toBe(222)
+  })
+})
+
+const seedProject = async (projectId: string, glyphIds: string[]) => {
+  await saveKumikoProjectRecord({
+    schemaVersion: 1,
+    projectId,
+    title: 'Test',
+    createdAt: 1,
+    updatedAt: 1,
+    glyphOrder: glyphIds,
+    exportDirty: 0,
+    syncDirty: 0,
+    sources: {
+      'public.default': {
+        id: 'public.default',
+        name: 'Regular',
+        location: { Weight: 400 },
+      },
+    },
+  })
+  await saveKumikoGlyphRecordBatch(
+    glyphIds.map((id, index) =>
+      glyphDataToKumikoGlyphRecord({
+        projectId,
+        glyph: makeGlyph(id, [`004${index + 1}`], 10),
+        updatedAt: 1,
+      })
+    )
+  )
+}
+
+const boldSource: FontSource = {
+  id: 'bold',
+  name: 'Bold',
+  location: { Weight: 700 },
+}
+
+describe('addMasterToProject', () => {
+  it('creates empty master layers from a base master', async () => {
+    const projectId = 'proj-empty'
+    await seedProject(projectId, ['A'])
+    await addMasterToProject({
+      projectId,
+      source: boldSource,
+      now: 2,
+      method: 'empty',
+      baseSourceId: 'public.default',
+    })
+    const glyph = kumikoGlyphRecordToGlyphData(
+      (await loadKumikoGlyphRecord(makeKumikoGlyphKey(projectId, 'A')))!
+    )
+    const layer = getGlyphMasterLayerForSource(glyph, 'bold')
+    expect(layer?.paths).toEqual([])
+    // Advance width carried over from the base master.
+    expect(layer?.metrics.width).toBe(500)
+  })
+
+  it('copies a base master with an outline offset (distance 0 clones)', async () => {
+    const projectId = 'proj-copy'
+    await seedProject(projectId, ['A'])
+    await addMasterToProject({
+      projectId,
+      source: boldSource,
+      now: 2,
+      method: 'copy',
+      baseSourceId: 'public.default',
+      offsetDistance: 0,
+    })
+    const glyph = kumikoGlyphRecordToGlyphData(
+      (await loadKumikoGlyphRecord(makeKumikoGlyphKey(projectId, 'A')))!
+    )
+    expect(
+      getGlyphMasterLayerForSource(glyph, 'bold')?.paths[0].nodes[0].x
+    ).toBe(10)
+  })
+
+  it('creates new glyphs for imported extras when requested', async () => {
+    const projectId = 'proj-extra'
+    await seedProject(projectId, ['A'])
+    const result = await addMasterToProject({
+      projectId,
+      source: boldSource,
+      now: 2,
+      method: 'font',
+      importedGlyphs: {
+        A: makeGlyph('A', ['0041'], 111),
+        C: makeGlyph('C', ['0043'], 222),
+      },
+      createNewGlyphs: true,
+    })
+    expect(result.createdGlyphs.map((glyph) => glyph.id)).toEqual(['C'])
+
+    const project = await loadKumikoProjectRecord(projectId)
+    expect(project?.glyphOrder).toContain('C')
+
+    const created = kumikoGlyphRecordToGlyphData(
+      (await loadKumikoGlyphRecord(makeKumikoGlyphKey(projectId, 'C')))!
+    )
+    // Filled in the new master, empty in the original.
+    expect(
+      getGlyphMasterLayerForSource(created, 'bold')?.paths[0].nodes[0].x
+    ).toBe(222)
+    expect(
+      getGlyphMasterLayerForSource(created, 'public.default')?.paths
+    ).toEqual([])
   })
 })

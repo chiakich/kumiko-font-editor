@@ -15,7 +15,8 @@ export interface MasterFromBinaryResult {
   extraImportedGlyphs: GlyphData[]
 }
 
-const buildMasterLayer = (
+// A master layer keyed by `source.id`, carrying the imported glyph's outline.
+export const buildImportedMasterLayer = (
   source: FontSource,
   imported: GlyphData
 ): GlyphLayerData => {
@@ -32,6 +33,75 @@ const buildMasterLayer = (
     anchors: structuredClone(layer.anchors ?? []),
     guidelines: [],
     metrics: { ...layer.metrics },
+  }
+}
+
+export interface ImportedGlyphIndex {
+  resolve: (
+    glyph: Pick<GlyphData, 'id' | 'name' | 'unicodes'>
+  ) => GlyphData | undefined
+}
+
+// Index imported glyphs for lookup by working name (id/name) then primary unicode.
+export const createImportedGlyphIndex = (
+  glyphs: Record<string, GlyphData>
+): ImportedGlyphIndex => {
+  const byName = new Map<string, GlyphData>()
+  const byUnicode = new Map<string, GlyphData>()
+  for (const imported of Object.values(glyphs ?? {})) {
+    byName.set(imported.id, imported)
+    if (imported.name) {
+      byName.set(imported.name, imported)
+    }
+    const unicode = getPrimaryGlyphUnicode(imported)
+    if (unicode && !byUnicode.has(unicode)) {
+      byUnicode.set(unicode, imported)
+    }
+  }
+  return {
+    resolve: (glyph) => {
+      const unicode = getPrimaryGlyphUnicode(glyph)
+      return (
+        byName.get(glyph.id) ??
+        (glyph.name ? byName.get(glyph.name) : undefined) ??
+        (unicode ? byUnicode.get(unicode) : undefined)
+      )
+    },
+  }
+}
+
+// Build a brand-new project glyph from an imported glyph: filled only in the new
+// master, empty in every existing master (so it renders blank there).
+export const buildNewGlyphFromImported = (
+  imported: GlyphData,
+  source: FontSource,
+  existingSources: FontSource[]
+): GlyphData => {
+  const importedLayer = activeLayer(imported)
+  const emptyMetrics = { lsb: 0, rsb: 0, width: importedLayer.metrics.width }
+  const layers: Record<string, GlyphLayerData> = {
+    [source.id]: buildImportedMasterLayer(source, imported),
+  }
+  for (const existing of existingSources) {
+    layers[existing.id] = {
+      id: existing.id,
+      name: existing.name,
+      type: 'master',
+      associatedMasterId: existing.id,
+      paths: [],
+      componentRefs: [],
+      anchors: [],
+      guidelines: [],
+      metrics: { ...emptyMetrics },
+    }
+  }
+  return {
+    id: imported.id,
+    name: imported.name ?? imported.id,
+    unicodes: imported.unicodes ?? [],
+    activeLayerId: source.id,
+    layerOrder: [...existingSources.map((existing) => existing.id), source.id],
+    layers,
   }
 }
 
@@ -72,7 +142,7 @@ export const buildMasterFromBinaryFont = (input: {
     }
     usedImported.add(imported)
     matchedGlyphIds.push(glyph.id)
-    const layer = buildMasterLayer(input.source, imported)
+    const layer = buildImportedMasterLayer(input.source, imported)
     return {
       ...glyph,
       layers: { ...glyph.layers, [input.source.id]: layer },

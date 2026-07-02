@@ -5,6 +5,7 @@ import type { StateCreator } from 'zustand'
 import type {
   FontData,
   FontSource,
+  GlyphData,
   GlyphLayerData,
   GlobalState,
 } from 'src/store/types'
@@ -537,6 +538,7 @@ export const buildProjectActions = (
   applyImportedMaster: (input: {
     source: FontSource
     layersByGlyphId: Record<string, GlyphLayerData>
+    newGlyphs?: GlyphData[]
   }) =>
     set((state) => {
       if (!state.fontData) {
@@ -562,6 +564,19 @@ export const buildProjectActions = (
           ]
         }
       }
+      for (const glyph of input.newGlyphs ?? []) {
+        if (state.fontData.glyphs[glyph.id]) {
+          continue
+        }
+        state.fontData.glyphs[glyph.id] = glyph
+        if (!state.fontData.glyphOrder?.includes(glyph.id)) {
+          state.fontData.glyphOrder = [
+            ...(state.fontData.glyphOrder ?? []),
+            glyph.id,
+          ]
+        }
+      }
       markProjectDirty(state)
+      syncFilteredGlyphList(state)
     }),
 })

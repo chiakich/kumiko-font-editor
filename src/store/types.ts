@@ -689,6 +689,7 @@ export interface GlobalState {
   applyImportedMaster: (input: {
     source: FontSource
     layersByGlyphId: Record<string, GlyphLayerData>
+    newGlyphs?: GlyphData[]
   }) => void
   setPreviewGlyphMetrics: (glyphId: string, metrics: GlyphMetrics) => void
   setComponentGhostPaths: (paths: PathData[] | null) => void
