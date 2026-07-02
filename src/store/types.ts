@@ -683,6 +683,13 @@ export interface GlobalState {
   markLocalSaved: () => void
   updateFontInfo: (update: { fontInfo: FontInfo; unitsPerEm?: number }) => void
   updateFontSettings: (fontDataUpdate: Partial<FontData>) => void
+  // Reflect an imported binary master in the store: register the source and, for
+  // glyphs whose geometry is currently loaded, attach the pre-built master layer.
+  // Records were already persisted; evicted glyphs re-hydrate them on access.
+  applyImportedMaster: (input: {
+    source: FontSource
+    layersByGlyphId: Record<string, GlyphLayerData>
+  }) => void
   setPreviewGlyphMetrics: (glyphId: string, metrics: GlyphMetrics) => void
   setComponentGhostPaths: (paths: PathData[] | null) => void
   setComponentTargetRect: (

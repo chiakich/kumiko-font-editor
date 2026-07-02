@@ -2,7 +2,12 @@
  * Project-level store actions: load, close, hydrate, and mark save state.
  */
 import type { StateCreator } from 'zustand'
-import type { FontData, GlobalState } from 'src/store/types'
+import type {
+  FontData,
+  FontSource,
+  GlyphLayerData,
+  GlobalState,
+} from 'src/store/types'
 import {
   clearProjectArchive,
   getProjectArchiveFirstMasterId,
@@ -526,6 +531,37 @@ export const buildProjectActions = (
         }
       }
 
+      markProjectDirty(state)
+    }),
+
+  applyImportedMaster: (input: {
+    source: FontSource
+    layersByGlyphId: Record<string, GlyphLayerData>
+  }) =>
+    set((state) => {
+      if (!state.fontData) {
+        return
+      }
+      state.fontData.sources = {
+        ...(state.fontData.sources ?? {}),
+        [input.source.id]: input.source,
+      }
+      for (const [glyphId, layer] of Object.entries(input.layersByGlyphId)) {
+        const glyph = state.fontData.glyphs[glyphId]
+        // Only touch glyphs already in memory; evicted ones load the freshly
+        // written record (with this layer) when next accessed.
+        if (!glyph || !isGlyphGeometryLoaded(glyph)) {
+          continue
+        }
+        glyph.layers = glyph.layers ?? {}
+        glyph.layers[input.source.id] = layer
+        if (!glyph.layerOrder?.includes(input.source.id)) {
+          glyph.layerOrder = [
+            ...(glyph.layerOrder ?? Object.keys(glyph.layers)),
+            input.source.id,
+          ]
+        }
+      }
       markProjectDirty(state)
     }),
 })
