@@ -250,7 +250,43 @@ export function FontExportsTab({
                 updateExport(index, { widthClass: parseInteger(value) })
               }
             />
+            <NumberField
+              label={t('projectControl.italicAngle')}
+              value={instance.italicAngle}
+              onChange={(value) =>
+                updateExport(index, { italicAngle: parseNumber(value) })
+              }
+            />
           </SimpleGrid>
+          <HStack gap={6} mt={3} align="center">
+            <Text fontSize="sm" color="field.muted">
+              {t('projectControl.styleLinking')}
+            </Text>
+            <Checkbox.Root
+              checked={instance.isBold === true}
+              onCheckedChange={(details) =>
+                updateExport(index, { isBold: details.checked === true })
+              }
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>{t('projectControl.bold')}</Checkbox.Label>
+            </Checkbox.Root>
+            <Checkbox.Root
+              checked={instance.isItalic === true}
+              onCheckedChange={(details) =>
+                updateExport(index, { isItalic: details.checked === true })
+              }
+            >
+              <Checkbox.HiddenInput />
+              <Checkbox.Control>
+                <Checkbox.Indicator />
+              </Checkbox.Control>
+              <Checkbox.Label>{t('projectControl.italic')}</Checkbox.Label>
+            </Checkbox.Root>
+          </HStack>
           <HStack justify="space-between" mt={3}>
             <Checkbox.Root
               onCheckedChange={(details) =>
