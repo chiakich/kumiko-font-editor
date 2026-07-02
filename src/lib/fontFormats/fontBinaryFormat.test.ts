@@ -1,6 +1,14 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import opentype from 'opentype.js'
-import { exportGlyphListAsBinary } from './fontBinaryFormat'
+import {
+  exportGlyphListAsBinary,
+  importBinaryFontFile,
+} from './fontBinaryFormat'
+import { activeLayer } from 'src/store/glyphLayer'
+import { isOnCurveNode } from 'src/store'
 import type { GlyphComponentRef, GlyphData, PathNode } from 'src/store'
 
 const on = (
@@ -136,5 +144,37 @@ describe('component decomposition on binary export', () => {
     expect(bbox.x2).toBeCloseTo(300, 0)
     expect(bbox.y1).toBeCloseTo(0, 0)
     expect(bbox.y2).toBeCloseTo(100, 0)
+  })
+})
+
+describe('TrueType import outline reconstruction', () => {
+  const ttfPath = fileURLToPath(
+    new URL('../../../test_glyphs/mutatorsans/MutatorSans.ttf', import.meta.url)
+  )
+
+  it('reconstructs glyf outlines without duplicate/zero-length nodes', async () => {
+    const buffer = readFileSync(ttfPath)
+    const file = new File([buffer], 'MutatorSans.ttf')
+    const { fontData } = await importBinaryFontFile(file)
+
+    const glyphO = Object.values(fontData.glyphs).find((glyph) =>
+      glyph.unicodes?.includes('004F')
+    )
+    expect(glyphO).toBeTruthy()
+
+    const paths = activeLayer(glyphO as GlyphData).paths
+    expect(paths.length).toBeGreaterThan(0)
+
+    for (const path of paths) {
+      // No two consecutive coincident nodes (the opentype.js command stream
+      // emitted duplicated start points and zero-length line segments).
+      for (let i = 0; i < path.nodes.length; i += 1) {
+        const a = path.nodes[i]
+        const b = path.nodes[(i + 1) % path.nodes.length]
+        expect(a.x === b.x && a.y === b.y).toBe(false)
+      }
+      // Every closed contour must begin on-curve.
+      expect(isOnCurveNode(path.nodes[0])).toBe(true)
+    }
   })
 })

@@ -275,6 +275,139 @@ const contourToPath = (
   return { id: `p${contourIndex.toString(36)}`, nodes, closed }
 }
 
+interface TrueTypeRawPoint {
+  x: number
+  y: number
+  onCurve: boolean
+  lastPointOfContour?: boolean
+}
+
+const splitTrueTypeContours = (points: TrueTypeRawPoint[]) => {
+  const contours: TrueTypeRawPoint[][] = []
+  let current: TrueTypeRawPoint[] = []
+  for (const point of points) {
+    current.push(point)
+    if (point.lastPointOfContour) {
+      contours.push(current)
+      current = []
+    }
+  }
+  if (current.length > 0) {
+    contours.push(current)
+  }
+  return contours
+}
+
+// TrueType stores quadratic splines with the on-curve point between two
+// off-curve controls left implicit (their midpoint). Materialize those implied
+// on-curve points, including the one wrapping the last control back to the first.
+const insertImpliedOnCurvePoints = (
+  points: TrueTypeRawPoint[]
+): TrueTypeRawPoint[] => {
+  const result: TrueTypeRawPoint[] = []
+  for (let i = 0; i < points.length; i += 1) {
+    const current = points[i]
+    const next = points[(i + 1) % points.length]
+    result.push(current)
+    if (!current.onCurve && !next.onCurve) {
+      result.push({
+        x: (current.x + next.x) / 2,
+        y: (current.y + next.y) / 2,
+        onCurve: true,
+      })
+    }
+  }
+  return result
+}
+
+const rotateTrueTypeToFirstOnCurve = (points: TrueTypeRawPoint[]) => {
+  const firstOnCurveIndex = points.findIndex((point) => point.onCurve)
+  if (firstOnCurveIndex <= 0) {
+    return points
+  }
+  return [
+    ...points.slice(firstOnCurveIndex),
+    ...points.slice(0, firstOnCurveIndex),
+  ]
+}
+
+// Rebuild a contour directly from raw TrueType points rather than opentype.js's
+// flattened path commands, which emit a duplicated start point and zero-length
+// segments (and a fabricated start for off-curve-first contours).
+const trueTypeContourToPath = (
+  rawPoints: TrueTypeRawPoint[],
+  contourIndex: number
+): PathData | null => {
+  const points = rotateTrueTypeToFirstOnCurve(
+    insertImpliedOnCurvePoints(rawPoints)
+  )
+  if (points.length === 0) {
+    return null
+  }
+
+  const nodes: PathNode[] = []
+  let nodeIndex = 0
+  const idBase = contourIndex * 10000
+  const isPrevOffCurve = (index: number) =>
+    !points[(index - 1 + points.length) % points.length].onCurve
+
+  points.forEach((point, index) => {
+    if (!point.onCurve) {
+      nodes.push(createNode(point.x, point.y, 'offcurve', idBase + nodeIndex))
+    } else {
+      // The on-curve node's segment type describes its incoming segment; the
+      // first node's incoming segment wraps around from the tail.
+      const segmentType: PathSegmentType = isPrevOffCurve(index)
+        ? 'quadratic'
+        : 'line'
+      nodes.push(
+        createOnCurveNode(point.x, point.y, segmentType, idBase + nodeIndex)
+      )
+    }
+    nodeIndex += 1
+  })
+
+  if (nodes.length === 0) return null
+  return { id: `p${contourIndex.toString(36)}`, nodes, closed: true }
+}
+
+const buildGlyphPathsFromCommands = (
+  commands: opentype.PathCommand[]
+): PathData[] => {
+  const contours: opentype.PathCommand[][] = []
+  let current: opentype.PathCommand[] = []
+  for (const cmd of commands) {
+    if (cmd.type === 'M' && current.length > 0) {
+      contours.push(current)
+      current = [cmd]
+    } else {
+      current.push(cmd)
+    }
+  }
+  if (current.length > 0) contours.push(current)
+
+  return contours
+    .map((contour, contourIndex) => contourToPath(contour, contourIndex))
+    .filter((path): path is PathData => Boolean(path))
+}
+
+const buildGlyphPaths = (
+  glyph: opentype.Glyph,
+  outlinesFormat: string | undefined
+): PathData[] => {
+  const rawPoints = (glyph as unknown as { points?: TrueTypeRawPoint[] }).points
+  // TrueType outlines: reconstruct from raw points. Composite glyphs have no
+  // own points, so fall back to the command path (already decomposed).
+  if (outlinesFormat === 'truetype' && rawPoints && rawPoints.length > 0) {
+    return splitTrueTypeContours(rawPoints)
+      .map((contour, contourIndex) =>
+        trueTypeContourToPath(contour, contourIndex)
+      )
+      .filter((path): path is PathData => Boolean(path))
+  }
+  return buildGlyphPathsFromCommands(glyph.path.commands)
+}
+
 export const importBinaryFontFile = async (file: File) => {
   const ext = file.name.split('.').pop()?.toLowerCase()
   const rawBuffer = await file.arrayBuffer()
@@ -291,22 +424,7 @@ export const importBinaryFontFile = async (file: File) => {
 
   for (let idx = 0; idx < font.glyphs.length; idx += 1) {
     const glyph = font.glyphs.get(idx)
-    const commands = glyph.path.commands
-    const contours: opentype.PathCommand[][] = []
-    let current: opentype.PathCommand[] = []
-    for (const cmd of commands) {
-      if (cmd.type === 'M' && current.length > 0) {
-        contours.push(current)
-        current = [cmd]
-      } else {
-        current.push(cmd)
-      }
-    }
-    if (current.length > 0) contours.push(current)
-
-    const paths = contours
-      .map((contour, contourIndex) => contourToPath(contour, contourIndex))
-      .filter((path): path is PathData => Boolean(path))
+    const paths = buildGlyphPaths(glyph, font.outlinesFormat)
 
     const width = glyph.advanceWidth ?? font.unitsPerEm
     const metrics = buildGlyphMetrics(glyph, width)
