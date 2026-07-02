@@ -222,6 +222,7 @@ export function FontSettingsModal({
                   <Tabs.Content value="2" p={0} h="100%" overflow="auto">
                     <FontExportsTab
                       axes={axes}
+                      sources={sources}
                       exports={exports}
                       onExportsChange={setExports}
                     />

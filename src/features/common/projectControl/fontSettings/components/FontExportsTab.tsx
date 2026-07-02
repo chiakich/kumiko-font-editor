@@ -18,12 +18,14 @@ import {
   parseNumber,
   stringifyJson,
   type ExportDraft,
+  type SourceDraft,
 } from 'src/features/common/projectControl/fontSettings/utils/model'
 import type { FontAxis } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
 interface FontExportsTabProps {
   axes: FontAxis[]
+  sources: SourceDraft[]
   exports: ExportDraft[]
   onExportsChange: (exports: ExportDraft[]) => void
 }
@@ -102,6 +104,7 @@ function AxisLocationField({ axis, value, onChange }: AxisLocationFieldProps) {
 
 export function FontExportsTab({
   axes,
+  sources,
   exports,
   onExportsChange,
 }: FontExportsTabProps) {
@@ -109,6 +112,34 @@ export function FontExportsTab({
   const defaultLocation = Object.fromEntries(
     axes.map((axis) => [axis.name, axis.defaultValue])
   )
+
+  // Create one export instance per master that doesn't already have an instance
+  // at its location — mirrors Glyphs' "add instance for each master".
+  const addInstancePerMaster = () => {
+    const existingKeys = new Set(
+      exports.map((instance) => stringifyJson(instance.location))
+    )
+    const additions: ExportDraft[] = []
+    for (const source of sources) {
+      const location = parseLocation(source.locationText)
+      const key = stringifyJson(location)
+      if (existingKeys.has(key)) {
+        continue
+      }
+      existingKeys.add(key)
+      additions.push({
+        id: makeId('instance'),
+        name: source.name || 'Instance',
+        styleName: source.name || 'Regular',
+        location,
+        locationText: stringifyJson(location),
+        export: true,
+      })
+    }
+    if (additions.length > 0) {
+      onExportsChange([...exports, ...additions])
+    }
+  }
 
   const updateExport = (index: number, update: Partial<ExportDraft>) => {
     onExportsChange(
@@ -129,24 +160,31 @@ export function FontExportsTab({
     <Stack gap={3}>
       <HStack justify="space-between">
         <Text fontWeight="semibold">{t('projectControl.exportInstances')}</Text>
-        <Button
-          size="sm"
-          onClick={() =>
-            onExportsChange([
-              ...exports,
-              {
-                id: makeId('instance'),
-                name: `Instance ${exports.length + 1}`,
-                styleName: 'Regular',
-                location: defaultLocation,
-                locationText: stringifyJson(defaultLocation),
-                export: true,
-              },
-            ])
-          }
-        >
-          {t('projectControl.add')}
-        </Button>
+        <HStack gap={2}>
+          {sources.length > 0 ? (
+            <Button size="sm" variant="outline" onClick={addInstancePerMaster}>
+              {t('projectControl.addInstancePerMaster')}
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            onClick={() =>
+              onExportsChange([
+                ...exports,
+                {
+                  id: makeId('instance'),
+                  name: `Instance ${exports.length + 1}`,
+                  styleName: 'Regular',
+                  location: defaultLocation,
+                  locationText: stringifyJson(defaultLocation),
+                  export: true,
+                },
+              ])
+            }
+          >
+            {t('projectControl.add')}
+          </Button>
+        </HStack>
       </HStack>
       {exports.map((instance, index) => (
         <Box key={instance.id} borderWidth="1px" p={3}>
