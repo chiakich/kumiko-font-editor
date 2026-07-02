@@ -70,6 +70,19 @@ const isBinaryFormat = (
 const needsFeatureCompileRuntime = (format: FontExportFormat) =>
   isBinaryFormat(format) || format === 'variable-otf'
 
+// The variable OTF build (bake masters + fontTools varLib merge in a worker) is
+// the slowest step with no fine-grained progress, so give it a distinct label
+// instead of the generic spinner text to signal it is still working.
+const exportStageLabelForFormat = (format: FontExportFormat): string => {
+  if (format === 'variable-otf') {
+    return '正在建立 Variable OTF（合併 master 中，可能需要數十秒）...'
+  }
+  if (format === 'zip') {
+    return '正在匯出 UFO...'
+  }
+  return '匯出中...'
+}
+
 const sanitizeFileStem = (value: string, fallback: string) => {
   const sanitized = value
     .trim()
@@ -110,6 +123,7 @@ export function useFontExport() {
   } | null>(null)
   const [exportErrorReport, setExportErrorReport] =
     useState<FontExportErrorReport | null>(null)
+  const [exportStageLabel, setExportStageLabel] = useState<string | null>(null)
   const fontData = useStore((state) => state.fontData)
   const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
@@ -185,7 +199,7 @@ export function useFontExport() {
     ? ufoExportProgress.phase === 'zip'
       ? `壓縮中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
       : `匯出中 ${ufoExportProgress.completed}/${ufoExportProgress.total}`
-    : '匯出中...'
+    : (exportStageLabel ?? '匯出中...')
   const exportPolicy =
     fontData?.openTypeFeatures?.exportPolicy ?? 'rebuild-managed-layout-tables'
 
@@ -396,6 +410,7 @@ export function useFontExport() {
 
       const assets: ExportAsset[] = []
       for (const format of selectedFormats) {
+        setExportStageLabel(exportStageLabelForFormat(format))
         assets.push(...(await buildExportAssets(format)))
       }
       if (assets.length === 0) {
@@ -465,6 +480,7 @@ export function useFontExport() {
     } finally {
       setIsExporting(false)
       setUfoExportProgress(null)
+      setExportStageLabel(null)
     }
   }
 

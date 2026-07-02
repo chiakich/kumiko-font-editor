@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useToast } from '@/components/ui/toast'
 import {
   importLocalProjectFiles,
   listLocalUfoDesignspaceCandidates,
@@ -14,6 +15,15 @@ export const useLocalImport = (input: {
   onProjectImported: (project: LoadedKumikoProject) => Promise<void> | void
   onProjectSummarySaved: (summary: KumikoProjectSummary) => void
 }) => {
+  const toast = useToast()
+  const showImportError = (title: string, error: unknown) =>
+    toast({
+      title,
+      description: getErrorMessage(error),
+      status: 'error',
+      duration: 4200,
+      isClosable: true,
+    })
   const folderInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const localDragDepthRef = useRef(0)
@@ -75,7 +85,7 @@ export const useLocalImport = (input: {
         await importFiles(selectedFiles)
       } catch (error: unknown) {
         console.error(error)
-        alert(`讀取本地專案失敗: ${getErrorMessage(error)}`)
+        showImportError('讀取本地專案失敗', error)
       } finally {
         setIsLoadingLocal(false)
         event.target.value = ''
@@ -107,7 +117,7 @@ export const useLocalImport = (input: {
       await importFiles(pending.files, { designspacePath })
     } catch (error: unknown) {
       console.error(error)
-      alert(`讀取本地專案失敗: ${getErrorMessage(error)}`)
+      showImportError('讀取本地專案失敗', error)
     } finally {
       setIsLoadingLocal(false)
     }
@@ -183,7 +193,7 @@ export const useLocalImport = (input: {
       await importFiles(files)
     } catch (error: unknown) {
       console.error(error)
-      alert(`拖曳匯入失敗: ${getErrorMessage(error)}`)
+      showImportError('拖曳匯入失敗', error)
     } finally {
       setIsLoadingLocal(false)
     }
