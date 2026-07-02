@@ -678,6 +678,11 @@ export const exportGlyphListAsBinary = (input: {
   format: BinaryFontExportFormat
   familyName?: string
   styleName?: string
+  // OS/2 classification for exported instances (e.g. a SemiBold static instance
+  // must report usWeightClass 600, not the default 400).
+  weightClass?: number
+  widthClass?: number
+  italicAngle?: number
 }) => {
   const glyphsById = new Map(input.glyphs.map((glyph) => [glyph.id, glyph]))
   const glyphs = input.glyphs.map((glyph) => {
@@ -722,6 +727,15 @@ export const exportGlyphListAsBinary = (input: {
     descender:
       input.fontData.lineMetricsHorizontalLayout?.descender?.value ?? -200,
     glyphs,
+    // @types/opentype.js types these OS/2 fields as strings, but the runtime
+    // (and the sfnt it writes) expects numbers; cast to satisfy the checker.
+    ...(input.weightClass
+      ? { weightClass: input.weightClass as unknown as string }
+      : {}),
+    ...(input.widthClass
+      ? { widthClass: input.widthClass as unknown as string }
+      : {}),
+    ...(input.italicAngle ? { italicAngle: input.italicAngle } : {}),
   })
   const sfntBuffer = font.toArrayBuffer()
   const getOutputBuffer = async () => {

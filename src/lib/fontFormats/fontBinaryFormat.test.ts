@@ -178,3 +178,27 @@ describe('TrueType import outline reconstruction', () => {
     }
   })
 })
+
+describe('exported OS/2 classification', () => {
+  it('writes usWeightClass / usWidthClass for a static instance', async () => {
+    const blob = await exportGlyphListAsBinary({
+      fontData: { unitsPerEm: 1000 },
+      glyphs: [
+        makeGlyph([
+          on(0, 0, 'line', 'a'),
+          on(100, 0, 'line', 'b'),
+          on(100, 100, 'line', 'c'),
+        ]),
+      ],
+      format: 'otf',
+      styleName: 'SemiBold',
+      weightClass: 600,
+      widthClass: 5,
+    })
+    const font = opentype.parse(await blob.arrayBuffer())
+    const os2 = (font as unknown as { tables: { os2: Record<string, number> } })
+      .tables.os2
+    expect(os2.usWeightClass).toBe(600)
+    expect(os2.usWidthClass).toBe(5)
+  })
+})

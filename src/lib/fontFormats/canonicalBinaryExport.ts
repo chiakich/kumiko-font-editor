@@ -163,6 +163,8 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
     format: input.format,
     familyName: instance.familyName,
     styleName: instance.styleName || instance.name,
+    weightClass: instance.weightClass,
+    widthClass: instance.widthClass,
   })
 }
 
