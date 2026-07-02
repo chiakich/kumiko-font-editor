@@ -7,13 +7,19 @@ const escapeXmlAttr = (value: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 
+// Tolerance matches locationsMatch (designspaceLocation) so a source that the
+// export guard accepts as the default location is also marked as default here;
+// a strict comparison would leave near-default sources without <info copy>,
+// making varLib fail with "no default source".
+const LOCATION_MATCH_TOLERANCE = 1e-6
+
 const sameLocation = (
   a: Record<string, number>,
   b: Record<string, number>
 ): boolean => {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)])
   for (const key of keys) {
-    if ((a[key] ?? 0) !== (b[key] ?? 0)) {
+    if (Math.abs((a[key] ?? 0) - (b[key] ?? 0)) > LOCATION_MATCH_TOLERANCE) {
       return false
     }
   }
@@ -352,15 +358,20 @@ export const serializeDesignspace = (
     })
     .join('\n')
 
+  // Exactly one source may carry <info copy="1"/>; mark only the first source
+  // at the default location even if several coincide there.
+  const defaultSourceIndex = sources.findIndex((source) =>
+    sameLocation(source.location, defaultLocation)
+  )
   const sourcesXml = sources
-    .map((source) => {
+    .map((source, index) => {
       const dimensions = Object.entries(source.location)
         .map(
           ([name, value]) =>
             `      <dimension name="${escapeXmlAttr(name)}" xvalue="${value}"/>`
         )
         .join('\n')
-      const isDefault = sameLocation(source.location, defaultLocation)
+      const isDefault = index === defaultSourceIndex
       const layerAttr = source.layer
         ? ` layer="${escapeXmlAttr(source.layer)}"`
         : ''
