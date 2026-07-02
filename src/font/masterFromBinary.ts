@@ -11,6 +11,8 @@ export interface MasterFromBinaryResult {
   glyphs: GlyphData[]
   matchedGlyphIds: string[]
   unmatchedGlyphIds: string[]
+  // Imported glyphs with no matching project glyph (by name or unicode).
+  extraImportedGlyphs: GlyphData[]
 }
 
 const buildMasterLayer = (
@@ -57,6 +59,7 @@ export const buildMasterFromBinaryFont = (input: {
 
   const matchedGlyphIds: string[] = []
   const unmatchedGlyphIds: string[] = []
+  const usedImported = new Set<GlyphData>()
   const glyphs = input.glyphs.map((glyph) => {
     const unicode = getPrimaryGlyphUnicode(glyph)
     const imported =
@@ -67,6 +70,7 @@ export const buildMasterFromBinaryFont = (input: {
       unmatchedGlyphIds.push(glyph.id)
       return glyph
     }
+    usedImported.add(imported)
     matchedGlyphIds.push(glyph.id)
     const layer = buildMasterLayer(input.source, imported)
     return {
@@ -81,5 +85,9 @@ export const buildMasterFromBinaryFont = (input: {
     }
   })
 
-  return { glyphs, matchedGlyphIds, unmatchedGlyphIds }
+  const extraImportedGlyphs = Object.values(
+    input.binaryFontData.glyphs ?? {}
+  ).filter((imported) => !usedImported.has(imported))
+
+  return { glyphs, matchedGlyphIds, unmatchedGlyphIds, extraImportedGlyphs }
 }
