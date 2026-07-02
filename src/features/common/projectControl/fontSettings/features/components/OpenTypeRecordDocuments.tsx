@@ -57,7 +57,7 @@ export function FeatureDocument({
         />
       </SimpleGrid>
       <Field.Root>
-        <Field.Label fontSize="sm">
+        <Field.Label textStyle="label">
           {t('projectControl.featureBlock')}
         </Field.Label>
         <Textarea

@@ -94,7 +94,7 @@ export function InterpolationDiagnosticsCard({
             <Box
               key={`${issue.code}-${issue.layerId ?? 'font'}-${index}`}
               p={2}
-              bg="blackAlpha.50"
+              bg="field.panelMuted"
               borderRadius="sm"
             >
               <HStack gap={2} mb={locationLabel ? 1 : 0} align="center">

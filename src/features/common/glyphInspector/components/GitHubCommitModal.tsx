@@ -151,7 +151,7 @@ export function GitHubCommitModal({
                           <Text fontWeight="medium">
                             {githubViewer.name || githubViewer.login}
                           </Text>
-                          <Text fontSize="sm" color="gray.500">
+                          <Text fontSize="sm" color="field.muted">
                             @{githubViewer.login}
                           </Text>
                         </Box>
@@ -161,7 +161,7 @@ export function GitHubCommitModal({
                         <Text fontWeight="medium">
                           {t('glyphInspector.notSignedInToGitHub')}
                         </Text>
-                        <Text fontSize="sm" color="gray.500">
+                        <Text fontSize="sm" color="field.muted">
                           {t('glyphInspector.gitHubLoginRequiredDescription')}
                         </Text>
                       </Box>
@@ -200,7 +200,7 @@ export function GitHubCommitModal({
                 {githubViewer ? (
                   <>
                     {isLoadingGitHubForkStatus ? (
-                      <Text fontSize="sm" color="gray.500">
+                      <Text fontSize="sm" color="field.muted">
                         {t('glyphInspector.loadingForkBranch')}
                       </Text>
                     ) : (
@@ -326,12 +326,12 @@ export function GitHubCommitModal({
                             borderWidth={1}
                             borderRadius="lg"
                             p={4}
-                            bg="gray.50"
+                            bg="field.panelMuted"
                           >
                             <Text fontWeight="medium" mb={1}>
                               {t('glyphInspector.noGitHubChanges')}
                             </Text>
-                            <Text fontSize="sm" color="gray.600">
+                            <Text fontSize="sm" color="field.muted">
                               {t('glyphInspector.emptyCommitMessageHint')}
                             </Text>
                           </Box>
@@ -340,11 +340,16 @@ export function GitHubCommitModal({
                     ) : null}
                   </>
                 ) : (
-                  <Box borderWidth={1} borderRadius="lg" p={4} bg="gray.50">
+                  <Box
+                    borderWidth={1}
+                    borderRadius="lg"
+                    p={4}
+                    bg="field.panelMuted"
+                  >
                     <Text fontWeight="medium" mb={1}>
                       {t('glyphInspector.signInFirst')}
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="field.muted">
                       {t('glyphInspector.repoForkHint')}
                     </Text>
                   </Box>
@@ -402,7 +407,7 @@ function QualitySummaryCard({
       : t('qualityCheck.commit.cleanStatus')
 
   return (
-    <Box borderWidth={1} borderRadius="lg" p={4} bg="gray.50">
+    <Box borderWidth={1} borderRadius="lg" p={4} bg="field.panelMuted">
       <HStack justify="space-between" align="center" gap={4}>
         <Box>
           <HStack gap={2} mb={1}>
@@ -413,7 +418,7 @@ function QualitySummaryCard({
                 : t('qualityCheck.commit.pass')}
             </Badge>
           </HStack>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="field.muted">
             {t('qualityCheck.commit.checkedSummary', {
               status: statusText,
               count: summary.glyphCount,

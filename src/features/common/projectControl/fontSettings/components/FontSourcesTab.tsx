@@ -70,7 +70,7 @@ export function FontSourcesTab({
         <Box key={source.id} borderWidth="1px" p={3}>
           <SimpleGrid columns={{ base: 1, lg: 3 }} gap={3}>
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.name')}
               </Field.Label>
               <Input
@@ -90,7 +90,7 @@ export function FontSourcesTab({
               }
             />
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.locationJson')}
               </Field.Label>
               <Input

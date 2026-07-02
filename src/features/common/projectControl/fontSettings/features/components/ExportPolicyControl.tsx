@@ -66,7 +66,7 @@ export function ExportPolicyControl({
   return (
     <Stack gap={3}>
       <Field.Root>
-        <Field.Label fontSize="sm">
+        <Field.Label textStyle="label">
           {t('projectControl.opentypeExportPolicy')}
         </Field.Label>
         <NativeSelect.Root>

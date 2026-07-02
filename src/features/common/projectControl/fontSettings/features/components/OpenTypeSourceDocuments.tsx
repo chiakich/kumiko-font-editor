@@ -30,7 +30,7 @@ export function RawFeatureTextEditor({
 
   return (
     <Field.Root>
-      <Field.Label fontSize="sm">
+      <Field.Label textStyle="label">
         {t('projectControl.rawFeatureText')}
       </Field.Label>
       <Textarea

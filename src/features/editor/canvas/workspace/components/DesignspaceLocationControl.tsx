@@ -124,7 +124,7 @@ export function DesignspaceLocationControl() {
                 onBlur={() => setDesignspaceScrubbing(false)}
               >
                 <Slider.Control>
-                  <Slider.Track bg="blackAlpha.200" position="relative">
+                  <Slider.Track bg="field.panelMuted" position="relative">
                     <Slider.Range bg="field.yellow.400" />
                     {sourceMarkers.map((marker) => {
                       const isActive = isAxisMarkerActive(

@@ -333,9 +333,9 @@ function CustomFilterContextMenu({
   return (
     <Portal>
       <Box
-        bg="white"
+        bg="field.panel"
         border="1px solid"
-        borderColor="gray.200"
+        borderColor="controlBorder"
         borderRadius="6px"
         boxShadow="0 12px 32px rgba(15, 23, 42, 0.18)"
         left={`${position.x}px`}
@@ -354,7 +354,7 @@ function CustomFilterContextMenu({
         <ContextMenuButton onClick={onDuplicate}>
           {t('fontOverview.customFilter.contextDuplicate')}
         </ContextMenuButton>
-        <Box h="1px" my="4px" bg="gray.100" />
+        <Box h="1px" my="4px" bg="field.panelMuted" />
         <ContextMenuButton tone="danger" onClick={onDelete}>
           {t('fontOverview.customFilter.contextDelete')}
         </ContextMenuButton>
@@ -374,7 +374,7 @@ function ContextMenuButton({
 }) {
   return (
     <Box
-      color={tone === 'danger' ? 'red.600' : 'gray.800'}
+      color={tone === 'danger' ? 'red.600' : 'field.ink'}
       display="block"
       fontSize="13px"
       px="12px"

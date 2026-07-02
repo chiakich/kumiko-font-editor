@@ -17,7 +17,7 @@ export function NumberField({
 }: NumberFieldProps) {
   return (
     <Field.Root>
-      <Field.Label fontSize="sm">{label}</Field.Label>
+      <Field.Label textStyle="label">{label}</Field.Label>
       <NumberInput.Root
         min={min}
         max={max}

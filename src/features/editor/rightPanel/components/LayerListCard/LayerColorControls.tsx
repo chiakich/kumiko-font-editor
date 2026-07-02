@@ -49,7 +49,7 @@ function LayerColorButton({
         justifyContent="center"
         title={label}
         w="22px"
-        _hover={{ bg: 'blackAlpha.50' }}
+        _hover={{ bg: 'field.panelMuted' }}
         asChild
       >
         <button type="button" onClick={onClick}>
@@ -127,9 +127,9 @@ export function LayerColorContextMenu({
   return (
     <Portal>
       <Box
-        bg="white"
+        bg="field.panel"
         border="1px solid"
-        borderColor="gray.200"
+        borderColor="controlBorder"
         borderRadius="6px"
         boxShadow="0 12px 32px rgba(15, 23, 42, 0.18)"
         left={`${position.x}px`}
@@ -141,7 +141,7 @@ export function LayerColorContextMenu({
         onContextMenu={(event) => event.preventDefault()}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <Text color="gray.600" fontSize="11px" fontWeight="700" mb="8px">
+        <Text color="field.muted" fontSize="11px" fontWeight="700" mb="8px">
           {t('editor.layerColorLabel')}
         </Text>
         <HStack flexWrap="wrap" gap="3px">

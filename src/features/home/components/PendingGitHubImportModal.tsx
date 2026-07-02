@@ -53,7 +53,7 @@ export function PendingGitHubImportModal({
                   border="1px solid"
                   borderColor="field.line"
                   borderRadius="sm"
-                  bg="white"
+                  bg="field.panel"
                   p={4}
                 >
                   <Text fontSize="xs" color="field.muted" fontFamily="mono">
@@ -63,7 +63,7 @@ export function PendingGitHubImportModal({
                   {importRequest?.repoUrl && (
                     <Box
                       fontSize="lg"
-                      color="black"
+                      color="field.ink"
                       wordBreak="break-all"
                       textTransform="uppercase"
                       fontFamily="'SF Pro Display', 'SF Pro Text', 'Noto Sans TC', sans-serif"

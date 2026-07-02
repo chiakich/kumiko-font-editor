@@ -301,7 +301,7 @@ function SummaryToken({ glyphPackage }: SummaryTokenProps) {
       <Text
         px={2}
         py={1}
-        bg="white"
+        bg="field.panel"
         color="field.ink"
         fontSize="xs"
         fontWeight="900"

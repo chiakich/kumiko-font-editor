@@ -8,6 +8,9 @@ const glyphStack =
   '"PingFang TC", "Noto Sans TC", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Noto Sans HK", "Noto Sans Symbols 2", "PUAExt", "Segoe UI Symbol", sans-serif'
 const plusMarkerPattern =
   "url(\"data:image/svg+xml,%3Csvg width='26' height='26' viewBox='0 0 26 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 8.5V17.5M8.5 13H17.5' stroke='%23080B0D' stroke-opacity='0.18' stroke-width='1'/%3E%3C/svg%3E\")"
+// dark-mode variant of the blueprint grid — light strokes on the near-black bg
+const plusMarkerPatternDark =
+  "url(\"data:image/svg+xml,%3Csvg width='26' height='26' viewBox='0 0 26 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 8.5V17.5M8.5 13H17.5' stroke='%23E7EAE4' stroke-opacity='0.10' stroke-width='1'/%3E%3C/svg%3E\")"
 
 type TokenLeaf = string | { value: string }
 
@@ -37,29 +40,47 @@ const toTokenTree = (tokens: TokenTree): TokenOutputTree =>
     ])
   ) as TokenOutputTree
 
-const toColorSemanticTokenTree = (tokens: TokenTree): TokenOutputTree =>
+// A mode-aware color leaf: literal CSS colors per color mode. `_dark` is
+// applied under the `.dark` class; `base` everywhere else (i.e. light).
+interface ModeColor {
+  base: string
+  _dark: string
+}
+
+const isModeColor = (value: unknown): value is ModeColor =>
+  value != null &&
+  typeof value === 'object' &&
+  'base' in value &&
+  '_dark' in value
+
+const mode = (base: string, _dark: string): ModeColor => ({ base, _dark })
+
+const toColorSemanticTokenTree = (
+  tokens: Record<string, unknown>
+): TokenOutputTree =>
   Object.fromEntries(
     Object.entries(tokens).map(([key, value]) => [
       key,
       typeof value === 'string'
         ? { value: `{colors.${value}}` }
-        : isTokenLeaf(value)
-          ? { value: `{colors.${value.value}}` }
-          : toColorSemanticTokenTree(value),
+        : isModeColor(value)
+          ? { value: { base: value.base, _dark: value._dark } }
+          : isTokenLeaf(value)
+            ? { value: `{colors.${value.value}}` }
+            : toColorSemanticTokenTree(value as Record<string, unknown>),
     ])
   ) as TokenOutputTree
 
 const colors = {
   field: {
-    ink: '#080B0D',
+    // fixed palette — never flips between modes (brand hues + neutral anchors)
     graphite: '#12171A',
     steel: '#252B2E',
     line: '#31383C',
-    paper: '#f8f8f8',
-    panel: '#FFFFFF',
-    panelMuted: '#E5E7E2',
-    haze: '#B8BDB3',
-    muted: '#5F675D',
+    // fixed foregrounds for text that always sits on a colored chip:
+    // dark ink on yellow/green, white on red — must not follow color mode
+    onColor: '#080B0D',
+    onDanger: '#FFFFFF',
     yellow: {
       200: {
         value: '#FFFD8F',
@@ -139,8 +160,32 @@ const colors = {
   },
 }
 
+// Mode-aware chrome tokens keep their original `field.*` names so the ~300
+// existing direct usages (color="field.muted", bg="field.panel", …) light up
+// dark mode with zero call-site changes. Dark values follow astryx's
+// muted-neutral approach: soft near-black surfaces, low-contrast hairlines.
+// The editing canvas is deliberately NOT driven by these (it uses a literal
+// white bg + its own paper.js colors), so it stays black-on-white in any mode.
+const fieldChrome = {
+  field: {
+    // Neither end is stark: light is a faintly warm off-white/grey, dark is a
+    // soft charcoal (never pure black) — astryx's muted-neutral feel. Surfaces
+    // step up in lightness (paper → panel) so cards read as gently raised.
+    paper: mode('#F4F5F2', '#17191A'), // page background
+    panel: mode('#FCFCFB', '#1F2223'), // cards / panels / popovers
+    panelMuted: mode('#E7E9E3', '#292D2E'), // quiet fills
+    ink: mode('#0B0F11', '#E9ECE6'), // primary text (flips)
+    muted: mode('#5F675D', '#98A199'), // secondary text (flips)
+    haze: mode('#B4B9AF', '#6E776E'), // faint text / placeholder
+    // soft control edges — harmonize with the blueprint plus-pattern
+    hairline: mode('rgba(11, 15, 17, 0.14)', 'rgba(233, 236, 230, 0.13)'),
+    hairlineStrong: mode('rgba(11, 15, 17, 0.28)', 'rgba(233, 236, 230, 0.24)'),
+  },
+}
+
 const semanticTokens = {
   colors: {
+    ...fieldChrome,
     // surfaces
     background: 'field.paper',
     foreground: 'field.ink',
@@ -148,9 +193,9 @@ const semanticTokens = {
     cardForeground: 'field.ink',
     popover: 'field.panel',
     popoverForeground: 'field.ink',
-    // brand / interactive
+    // brand / interactive — yellow stays yellow in both modes
     primary: 'field.yellow.400',
-    primaryForeground: 'field.ink',
+    primaryForeground: 'field.onColor', // fixed dark ink on yellow
     primaryHover: 'field.yellow.300',
     primaryActive: 'field.yellow.500',
     secondary: 'field.panelMuted',
@@ -159,20 +204,24 @@ const semanticTokens = {
     muted: 'field.panelMuted',
     mutedForeground: 'field.muted',
     haze: 'field.haze',
-    // accent = the "inverted" hover state (dark chip, bright text)
-    accent: 'field.ink',
-    accentForeground: 'field.yellow.300',
+    // accent = the "inverted" hover chip — dark-on-light flips to light-on-dark
+    accent: mode('#0B0F11', '#E9ECE6'),
+    accentForeground: mode('#FFFB42', '#0B0F11'),
     // status
     destructive: 'field.red.500',
     destructiveHover: 'field.red.400',
-    destructiveForeground: 'field.panel',
+    destructiveForeground: 'field.onDanger', // fixed white on red
     success: 'field.green.500',
-    successForeground: 'field.ink',
+    successForeground: 'field.onColor', // fixed dark ink on green
     warning: 'field.yellow.500',
     // lines & focus
-    border: 'field.line',
-    input: 'field.line',
+    border: mode('#31383C', '#3A4042'),
+    input: mode('#31383C', '#3A4042'),
     ring: 'field.cyan.400',
+    // refined control edges — softer than the structural `border`
+    controlBorder: 'field.hairline',
+    controlBorderHover: 'field.hairlineStrong',
+    placeholder: 'field.haze',
     // data visualization
     'chart.1': 'field.yellow.400',
     'chart.2': 'field.cyan.400',
@@ -183,8 +232,104 @@ const semanticTokens = {
 }
 
 const shadows = {
+  // layered elevation — hairline + ambient, each level lifts a bit further
+  low: '0 1px 2px rgba(8, 11, 13, 0.06), 0 1px 1px rgba(8, 11, 13, 0.04)',
+  med: '0 4px 12px rgba(8, 11, 13, 0.08), 0 2px 4px rgba(8, 11, 13, 0.05)',
+  high: '0 14px 34px rgba(8, 11, 13, 0.12), 0 4px 12px rgba(8, 11, 13, 0.08)',
+  // kept for backwards-compat with existing references
   floating:
     '0 14px 34px rgba(8, 11, 13, 0.12), 0 4px 12px rgba(8, 11, 13, 0.08)',
+}
+
+// motion — astryx's standard easing + fast/normal durations for controls
+const durations = {
+  fast: '150ms',
+  normal: '220ms',
+  slow: '400ms',
+}
+
+const easings = {
+  standard: 'cubic-bezier(0.24, 1, 0.4, 1)',
+  emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
+}
+
+// role-tuned line-heights (行距) — tight for headings, relaxed for small copy
+const lineHeights = {
+  none: '1',
+  tight: '1.25',
+  snug: '1.35',
+  normal: '1.5',
+  relaxed: '1.65',
+}
+
+const letterSpacings = {
+  tight: '-0.01em',
+  normal: '0',
+  wide: '0.02em',
+  // tiny all-caps labels breathe better with extra tracking
+  caps: '0.06em',
+}
+
+// opt-in named type styles — bundle size + weight + 行距 + tracking so text
+// picks up consistent leading without per-usage tuning (usage: textStyle="body")
+const textStyles = {
+  display: {
+    value: {
+      fontSize: '2xl',
+      fontWeight: '700',
+      lineHeight: 'tight',
+      letterSpacing: 'tight',
+    },
+  },
+  heading: {
+    value: {
+      fontSize: 'lg',
+      fontWeight: '700',
+      lineHeight: 'snug',
+      letterSpacing: 'tight',
+    },
+  },
+  body: {
+    value: {
+      fontSize: 'sm',
+      fontWeight: '400',
+      lineHeight: 'normal',
+      letterSpacing: 'normal',
+    },
+  },
+  label: {
+    value: {
+      fontSize: 'sm',
+      fontWeight: '600',
+      lineHeight: 'normal',
+      letterSpacing: 'normal',
+    },
+  },
+  supporting: {
+    value: {
+      fontSize: 'xs',
+      fontWeight: '400',
+      lineHeight: 'relaxed',
+      letterSpacing: 'normal',
+    },
+  },
+  caps: {
+    value: {
+      fontSize: '10px',
+      fontWeight: '700',
+      lineHeight: 'none',
+      letterSpacing: 'caps',
+      textTransform: 'uppercase',
+    },
+  },
+  code: {
+    value: {
+      fontFamily: 'mono',
+      fontSize: 'sm',
+      fontWeight: '400',
+      lineHeight: 'normal',
+    },
+  },
 }
 
 const components = {
@@ -192,12 +337,16 @@ const components = {
     baseStyle: {
       borderRadius: '2px',
       fontFamily: sansStack,
-      fontWeight: 800,
+      fontWeight: 700,
+      lineHeight: '1',
       letterSpacing: '0.02em',
-      transitionProperty: 'background, color, border-color',
-      transitionDuration: '120ms',
+      transitionProperty: 'background-color, color, border-color, box-shadow',
+      transitionDuration: 'fast',
+      transitionTimingFunction: 'standard',
       _focusVisible: {
-        boxShadow: '0 0 0 2px var(--chakra-colors-ring)',
+        outline: 'none',
+        boxShadow:
+          '0 0 0 2px var(--chakra-colors-background), 0 0 0 4px var(--chakra-colors-ring)',
       },
       _disabled: {
         opacity: 0.42,
@@ -253,13 +402,21 @@ const components = {
     sizes: {
       xs: {
         h: 7,
+        minW: 7,
         px: 2,
         fontSize: '10px',
       },
       sm: {
         h: 8,
+        minW: 8,
         px: 3,
         fontSize: '12px',
+      },
+      md: {
+        h: 9,
+        minW: 9,
+        px: 4,
+        fontSize: 'sm',
       },
     },
     defaultProps: {
@@ -271,21 +428,44 @@ const components = {
       outline: {
         field: {
           bg: 'card',
-          borderRadius: '2px',
-          borderColor: 'input',
+          borderRadius: 'control',
+          borderWidth: '1px',
+          borderColor: 'controlBorder',
+          color: 'foreground',
           fontFamily: monoStack,
+          lineHeight: 'normal',
+          transitionProperty: 'border-color, box-shadow',
+          transitionDuration: 'fast',
+          transitionTimingFunction: 'standard',
+          _placeholder: {
+            color: 'placeholder',
+          },
           _hover: {
-            borderColor: 'foreground',
+            borderColor: 'controlBorderHover',
           },
           _focusVisible: {
             borderColor: 'ring',
             boxShadow: '0 0 0 1px var(--chakra-colors-ring)',
           },
+          _disabled: {
+            opacity: 0.5,
+            cursor: 'not-allowed',
+            bg: 'secondary',
+          },
         },
+      },
+    },
+    sizes: {
+      sm: {
+        field: { h: 8, px: 3, fontSize: 'xs', borderRadius: 'control' },
+      },
+      md: {
+        field: { h: 9, px: 3, fontSize: 'sm', borderRadius: 'control' },
       },
     },
     defaultProps: {
       variant: 'outline',
+      size: 'md',
     },
   },
   Select: {
@@ -293,9 +473,18 @@ const components = {
       outline: {
         field: {
           bg: 'card',
-          borderRadius: '2px',
-          borderColor: 'input',
+          borderRadius: 'control',
+          borderWidth: '1px',
+          borderColor: 'controlBorder',
+          color: 'foreground',
           fontFamily: monoStack,
+          lineHeight: 'normal',
+          transitionProperty: 'border-color, box-shadow',
+          transitionDuration: 'fast',
+          transitionTimingFunction: 'standard',
+          _hover: {
+            borderColor: 'controlBorderHover',
+          },
           _focusVisible: {
             borderColor: 'ring',
             boxShadow: '0 0 0 1px var(--chakra-colors-ring)',
@@ -312,21 +501,24 @@ const components = {
         bg: 'secondary',
         color: 'secondaryForeground',
         fontFamily: monoStack,
-        fontWeight: 800,
+        fontWeight: 700,
       },
     },
   },
   Menu: {
     baseStyle: {
       list: {
-        borderRadius: '2px',
+        borderRadius: '3px',
         bg: 'popover',
         p: 1,
-        boxShadow: 'floating',
+        boxShadow: 'med',
       },
       item: {
-        borderRadius: '1px',
-        fontWeight: 800,
+        borderRadius: '2px',
+        fontWeight: 700,
+        transitionProperty: 'background-color, color',
+        transitionDuration: 'fast',
+        transitionTimingFunction: 'standard',
         _hover: {
           bg: 'accent',
           color: 'accentForeground',
@@ -373,8 +565,13 @@ const components = {
       color: 'white',
       bg: 'foreground',
       fontSize: '10px',
-      fontWeight: 800,
+      fontWeight: 700,
+      lineHeight: 'snug',
+      letterSpacing: 'wide',
+      px: 2,
+      py: 1,
       borderRadius: '2px',
+      boxShadow: 'med',
       _disabled: {
         pointerEvents: 'none',
       },
@@ -396,8 +593,41 @@ const recipes = {
       variant: {
         outline: components.Input.variants.outline.field,
       },
+      size: {
+        sm: components.Input.sizes.sm.field,
+        md: components.Input.sizes.md.field,
+      },
     },
     defaultVariants: components.Input.defaultProps,
+  },
+  textarea: {
+    base: {
+      borderRadius: 'control',
+      lineHeight: 'normal',
+      transitionProperty: 'border-color, box-shadow',
+      transitionDuration: 'fast',
+      transitionTimingFunction: 'standard',
+      _placeholder: { color: 'placeholder' },
+    },
+    variants: {
+      variant: {
+        // mirror the input outline so textareas match rounded inputs in both modes
+        outline: {
+          bg: 'card',
+          borderRadius: 'control',
+          borderWidth: '1px',
+          borderColor: 'controlBorder',
+          color: 'foreground',
+          _hover: { borderColor: 'controlBorderHover' },
+          _focusVisible: {
+            borderColor: 'ring',
+            boxShadow: '0 0 0 1px var(--chakra-colors-ring)',
+          },
+          _disabled: { opacity: 0.5, cursor: 'not-allowed', bg: 'secondary' },
+        },
+      },
+    },
+    defaultVariants: { variant: 'outline' },
   },
   tooltip: {
     base: components.Tooltip.baseStyle,
@@ -445,6 +675,11 @@ const customConfig = defineConfig({
   globalCss: {
     ':root': {
       '--field-plus-pattern': plusMarkerPattern,
+      colorScheme: 'light',
+    },
+    '.dark': {
+      '--field-plus-pattern': plusMarkerPatternDark,
+      colorScheme: 'dark',
     },
     '*': {
       boxSizing: 'border-box',
@@ -464,6 +699,8 @@ const customConfig = defineConfig({
       backgroundRepeat: 'repeat',
       fontSynthesis: 'none',
       textRendering: 'optimizeLegibility',
+      lineHeight: 'normal',
+      letterSpacing: 'normal',
     },
     canvas: {
       touchAction: 'none',
@@ -472,12 +709,25 @@ const customConfig = defineConfig({
       bg: 'primary',
       color: 'primaryForeground',
     },
+    // honor OS reduced-motion — collapse transitions to instant state changes
+    '*, *::before, *::after': {
+      '@media (prefers-reduced-motion: reduce)': {
+        transitionDuration: '0.01ms !important',
+        animationDuration: '0.01ms !important',
+        animationIterationCount: '1 !important',
+        scrollBehavior: 'auto !important',
+      },
+    },
   },
 
   theme: {
     tokens: {
       colors: toTokenTree(colors),
       shadows: toTokenTree(shadows),
+      durations: toTokenTree(durations),
+      easings: toTokenTree(easings),
+      lineHeights: toTokenTree(lineHeights),
+      letterSpacings: toTokenTree(letterSpacings),
 
       fonts: {
         heading: {
@@ -510,10 +760,17 @@ const customConfig = defineConfig({
         xl: {
           value: '4px',
         },
+        // inputs/selects adopt astryx's softer, rounded control shape while
+        // buttons & structural chrome keep the signature small radius
+        control: {
+          value: '8px',
+        },
       },
     },
 
     semanticTokens: toColorSemanticTokenTree(semanticTokens),
+
+    textStyles,
 
     recipes,
     slotRecipes,

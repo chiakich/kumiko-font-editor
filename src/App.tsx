@@ -3,6 +3,7 @@ import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
 import { OverviewReturnHeroOverlay } from 'src/features/common/viewTransition/OverviewReturnHeroOverlay'
 import { useAutoDraftSave } from 'src/hooks/useAutoDraftSave'
 import { useProjectBroadcastSync } from 'src/hooks/useProjectBroadcastSync'
+import { useApplyColorMode } from 'src/lib/preferences/colorMode'
 import { useStore } from 'src/store'
 
 const Home = lazy(() =>
@@ -21,6 +22,7 @@ function App() {
   const fontData = useStore((state) => state.fontData)
   const workspaceView = useStore((state) => state.workspaceView)
 
+  useApplyColorMode()
   useAutoDraftSave()
   useProjectBroadcastSync()
 

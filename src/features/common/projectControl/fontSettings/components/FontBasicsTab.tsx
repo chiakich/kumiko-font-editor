@@ -106,7 +106,7 @@ export function FontBasicsTab({
               />
             ) : (
               <Field.Root key={field.key}>
-                <Field.Label fontSize="sm">{field.label}</Field.Label>
+                <Field.Label textStyle="label">{field.label}</Field.Label>
                 <Input
                   maxW={field.width}
                   value={generalDraft[field.key]}
@@ -164,7 +164,7 @@ export function FontBasicsTab({
             <Box key={`${axis.name}-${index}`} borderWidth="1px" p={3}>
               <SimpleGrid columns={{ base: 1, lg: 7 }} gap={3}>
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('projectControl.name')}
                   </Field.Label>
                   <Input
@@ -175,7 +175,7 @@ export function FontBasicsTab({
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('projectControl.tag')}
                   </Field.Label>
                   <Input
@@ -187,7 +187,7 @@ export function FontBasicsTab({
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('projectControl.label')}
                   </Field.Label>
                   <Input
@@ -212,7 +212,7 @@ export function FontBasicsTab({
                   )
                 )}
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('projectControl.axisValues')}
                   </Field.Label>
                   <Input
@@ -256,7 +256,7 @@ export function FontBasicsTab({
         </Stack>
       </Box>
       <Field.Root>
-        <Field.Label fontSize="sm">
+        <Field.Label textStyle="label">
           {t('projectControl.crossAxisMapping')}
         </Field.Label>
         <Textarea
@@ -288,7 +288,7 @@ export function FontBasicsTab({
               />
             ) : (
               <Field.Root key={setting.key}>
-                <Field.Label fontSize="sm">{setting.label}</Field.Label>
+                <Field.Label textStyle="label">{setting.label}</Field.Label>
                 <Input
                   value={openTypeDraft[setting.key]}
                   placeholder={
@@ -309,7 +309,7 @@ export function FontBasicsTab({
         </SimpleGrid>
       </Box>
       <Field.Root>
-        <Field.Label fontSize="sm">
+        <Field.Label textStyle="label">
           {t('projectControl.customParameters')}
         </Field.Label>
         <Textarea

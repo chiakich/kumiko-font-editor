@@ -15,7 +15,7 @@ export function GeneratedFeaPreview({
 
   return (
     <Field.Root>
-      <Field.Label fontSize="sm">
+      <Field.Label textStyle="label">
         {t('projectControl.generatedDisposableFea')}
       </Field.Label>
       <Textarea minH="280px" fontFamily="mono" value={feaText} readOnly />

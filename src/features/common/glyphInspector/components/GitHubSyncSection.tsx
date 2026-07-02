@@ -149,7 +149,7 @@ export function GitHubSyncSection({
 
   if (isLoading && !report) {
     return (
-      <HStack gap={2} color="gray.500">
+      <HStack gap={2} color="field.muted">
         <Spinner size="xs" />
         <Text fontSize="sm">{t('glyphInspector.syncChecking')}</Text>
       </HStack>
@@ -221,7 +221,7 @@ export function GitHubSyncSection({
         ) : null}
 
         <HStack justify="space-between">
-          <Text fontSize="xs" color="gray.500">
+          <Text fontSize="xs" color="field.muted">
             {report.target.owner}/{report.target.repo}@{report.target.ref}
           </Text>
           <Button

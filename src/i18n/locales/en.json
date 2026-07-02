@@ -755,6 +755,10 @@
     "workflowSection": "Workflow"
   },
   "settings": {
+    "appearance": "Appearance",
+    "appearanceDark": "Dark",
+    "appearanceLight": "Light",
+    "appearanceSystem": "Follow system",
     "glyphColorLabelDisplay": "Glyph color label display",
     "glyphColorLabelDisplayCard": "Fill card",
     "glyphColorLabelDisplayDot": "Top-right dot",

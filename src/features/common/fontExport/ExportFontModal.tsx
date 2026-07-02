@@ -506,7 +506,7 @@ export function ExportFontModal({
           <Separator />
           <Stack gap={3}>
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 OpenType features 輸出方式
               </Field.Label>
               <NativeSelect.Root

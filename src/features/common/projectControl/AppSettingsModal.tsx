@@ -6,6 +6,11 @@ import {
   type GlyphColorLabelDisplayMode,
 } from 'src/lib/preferences/appPreferences'
 import {
+  saveColorMode,
+  useColorModePreference,
+  type ColorModePreference,
+} from 'src/lib/preferences/colorMode'
+import {
   languageNames,
   supportedLanguages,
   type SupportedLanguage,
@@ -21,9 +26,14 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
   const { i18n, t } = useTranslation()
   const activeLanguage = i18n.resolvedLanguage ?? i18n.language
   const glyphColorLabelDisplayMode = useGlyphColorLabelDisplayMode()
+  const colorMode = useColorModePreference()
 
   const changeLanguage = (language: SupportedLanguage) => {
     void i18n.changeLanguage(language)
+  }
+
+  const changeColorMode = (mode: ColorModePreference) => {
+    saveColorMode(mode)
   }
 
   const changeGlyphColorLabelDisplayMode = (
@@ -51,7 +61,33 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
             <Dialog.Body pb={6}>
               <Stack gap={4}>
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
+                    {t('settings.appearance')}
+                  </Field.Label>
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      value={colorMode}
+                      onChange={(event) =>
+                        changeColorMode(
+                          event.target.value as ColorModePreference
+                        )
+                      }
+                    >
+                      <option value="light">
+                        {t('settings.appearanceLight')}
+                      </option>
+                      <option value="dark">
+                        {t('settings.appearanceDark')}
+                      </option>
+                      <option value="system">
+                        {t('settings.appearanceSystem')}
+                      </option>
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                  </NativeSelect.Root>
+                </Field.Root>
+                <Field.Root>
+                  <Field.Label textStyle="label">
                     {t('settings.language')}
                   </Field.Label>
                   <NativeSelect.Root>
@@ -71,7 +107,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
                   </NativeSelect.Root>
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('settings.glyphColorLabelDisplay')}
                   </Field.Label>
                   <NativeSelect.Root>

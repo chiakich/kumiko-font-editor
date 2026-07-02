@@ -308,7 +308,14 @@ export function OverviewSidebar({
         </Text>
       </VStack>
       <Separator mb={4} borderColor="field.haze" opacity={0.55} />
-      <Box flex={1} minH={0} bg="white" borderRadius="sm" overflow="auto" p={2}>
+      <Box
+        flex={1}
+        minH={0}
+        bg="field.panel"
+        borderRadius="sm"
+        overflow="auto"
+        p={2}
+      >
         <OverviewTreeNav
           nodes={treeNodes}
           selectedSectionId={selectedSectionId}

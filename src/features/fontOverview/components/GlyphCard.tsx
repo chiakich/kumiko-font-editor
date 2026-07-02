@@ -87,6 +87,9 @@ export const GlyphCard = memo(function GlyphCard({
       position="relative"
       borderRadius="sm"
       bg={isSelected ? 'field.yellow.400' : 'field.panel'}
+      // selected chip is always yellow → force fixed dark ink so the glyph
+      // (fill=currentColor) and label stay readable in dark mode too
+      color={isSelected ? 'field.onColor' : undefined}
       bgImage={hasFullCardColor && !isSelected ? cardColorOverlay : undefined}
       boxShadow="none"
       transition="background 60ms ease"
@@ -140,7 +143,7 @@ export const GlyphCard = memo(function GlyphCard({
         {showGlyphName ? (
           <Text
             fontSize="xs"
-            color="field.muted"
+            color={isSelected ? 'field.onColor' : 'field.muted'}
             lineClamp={1}
             textAlign="center"
             fontFamily="mono"

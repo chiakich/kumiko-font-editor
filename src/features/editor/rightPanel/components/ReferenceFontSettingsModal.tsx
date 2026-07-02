@@ -336,7 +336,7 @@ export function ReferenceFontSettingsModal({
                                     }
                                   >
                                     <Slider.Control>
-                                      <Slider.Track bg="blackAlpha.200">
+                                      <Slider.Track bg="field.panelMuted">
                                         <Slider.Range bg="field.yellow.400" />
                                       </Slider.Track>
                                       <Slider.Thumb index={0} />

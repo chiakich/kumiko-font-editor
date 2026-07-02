@@ -60,7 +60,7 @@ export function FontOtherTab({
     <Stack gap={5}>
       <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
         <Field.Root>
-          <Field.Label fontSize="sm">
+          <Field.Label textStyle="label">
             {t('projectControl.fontType')}
           </Field.Label>
           <NativeSelect.Root>
@@ -79,7 +79,7 @@ export function FontOtherTab({
           </NativeSelect.Root>
         </Field.Root>
         <Field.Root>
-          <Field.Label fontSize="sm">
+          <Field.Label textStyle="label">
             {t('projectControl.outlineType')}
           </Field.Label>
           <NativeSelect.Root>
@@ -136,7 +136,7 @@ export function FontOtherTab({
               }
             />
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.label')}
               </Field.Label>
               <Input

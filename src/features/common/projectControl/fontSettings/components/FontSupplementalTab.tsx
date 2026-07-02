@@ -19,7 +19,7 @@ export function FontSupplementalTab({
   return (
     <Stack gap={4}>
       <Field.Root>
-        <Field.Label fontSize="sm">{t('projectControl.notes')}</Field.Label>
+        <Field.Label textStyle="label">{t('projectControl.notes')}</Field.Label>
         <Textarea
           minH="180px"
           value={notes}
@@ -27,7 +27,7 @@ export function FontSupplementalTab({
         />
       </Field.Root>
       <Field.Root>
-        <Field.Label fontSize="sm">
+        <Field.Label textStyle="label">
           {t('projectControl.supplemental')}
         </Field.Label>
         <Textarea

@@ -13,6 +13,9 @@ export function HomeHeader() {
         boxSize={{ base: '72px', md: '112px' }}
         flexShrink={0}
         mt="15px"
+        // logo.svg is monochrome black line-art rendered as <img> (can't use
+        // currentColor) — invert it in dark mode to a soft near-white
+        _dark={{ filter: 'invert(0.9)' }}
       />
       <Box minW={0}>
         <Text

@@ -755,6 +755,10 @@
     "workflowSection": "工作流程"
   },
   "settings": {
+    "appearance": "外觀主題",
+    "appearanceDark": "深色",
+    "appearanceLight": "淺色",
+    "appearanceSystem": "跟隨系統",
     "glyphColorLabelDisplay": "字符色彩標籤顯示",
     "glyphColorLabelDisplayCard": "鋪滿卡片",
     "glyphColorLabelDisplayDot": "右上小點",

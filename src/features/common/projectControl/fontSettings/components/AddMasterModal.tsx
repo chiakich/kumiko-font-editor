@@ -267,7 +267,7 @@ export function AddMasterModal({
               />
               <Stack gap={4}>
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('projectControl.addMasterMethod')}
                   </Field.Label>
                   <NativeSelect.Root size="sm">
@@ -313,7 +313,7 @@ export function AddMasterModal({
                     </HStack>
                     {candidates.length > 1 ? (
                       <Field.Root>
-                        <Field.Label fontSize="sm">
+                        <Field.Label textStyle="label">
                           {t('projectControl.chooseMaster')}
                         </Field.Label>
                         <NativeSelect.Root size="sm">
@@ -363,7 +363,7 @@ export function AddMasterModal({
                   </Stack>
                 ) : (
                   <Field.Root>
-                    <Field.Label fontSize="sm">
+                    <Field.Label textStyle="label">
                       {t('projectControl.baseMaster')}
                     </Field.Label>
                     <NativeSelect.Root size="sm">
@@ -386,7 +386,7 @@ export function AddMasterModal({
 
                 {method === 'copy' ? (
                   <Field.Root>
-                    <Field.Label fontSize="sm">
+                    <Field.Label textStyle="label">
                       {t('projectControl.outlineOffset')}
                     </Field.Label>
                     <Input
@@ -399,7 +399,7 @@ export function AddMasterModal({
                 ) : null}
 
                 <Field.Root>
-                  <Field.Label fontSize="sm">
+                  <Field.Label textStyle="label">
                     {t('projectControl.name')}
                   </Field.Label>
                   <Input
@@ -412,7 +412,7 @@ export function AddMasterModal({
                   <SimpleGrid columns={{ base: 1, lg: 3 }} gap={3}>
                     {axes.map((axis) => (
                       <Field.Root key={axis.name}>
-                        <Field.Label fontSize="sm">
+                        <Field.Label textStyle="label">
                           {axis.label || axis.name}
                         </Field.Label>
                         <Input

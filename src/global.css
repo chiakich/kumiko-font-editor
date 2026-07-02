@@ -6,6 +6,11 @@
   font-display: swap;
 }
 
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* View Transition: root cross-fade */
 ::view-transition-group(root) {
   z-index: 0;

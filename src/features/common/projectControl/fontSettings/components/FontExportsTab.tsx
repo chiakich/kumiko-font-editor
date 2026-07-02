@@ -52,7 +52,7 @@ function AxisLocationField({ axis, value, onChange }: AxisLocationFieldProps) {
   return (
     <Field.Root>
       <HStack justify="space-between" align="baseline">
-        <Field.Label fontSize="sm">{axis.label || axis.name}</Field.Label>
+        <Field.Label textStyle="label">{axis.label || axis.name}</Field.Label>
         <Text
           fontSize="xs"
           fontFamily="mono"
@@ -72,7 +72,7 @@ function AxisLocationField({ axis, value, onChange }: AxisLocationFieldProps) {
           onValueChange={(details) => onChange(details.value[0] ?? value)}
         >
           <Slider.Control>
-            <Slider.Track bg="blackAlpha.200">
+            <Slider.Track bg="field.panelMuted">
               <Slider.Range bg="field.accent" />
             </Slider.Track>
             <Slider.Thumb index={0} boxSize={3} />
@@ -190,7 +190,7 @@ export function FontExportsTab({
         <Box key={instance.id} borderWidth="1px" p={3}>
           <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3}>
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.name')}
               </Field.Label>
               <Input
@@ -201,7 +201,7 @@ export function FontExportsTab({
               />
             </Field.Root>
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.familyName')}
               </Field.Label>
               <Input
@@ -212,7 +212,7 @@ export function FontExportsTab({
               />
             </Field.Root>
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.styleName')}
               </Field.Label>
               <Input
@@ -223,7 +223,7 @@ export function FontExportsTab({
               />
             </Field.Root>
             <Field.Root>
-              <Field.Label fontSize="sm">
+              <Field.Label textStyle="label">
                 {t('projectControl.fileName')}
               </Field.Label>
               <Input
@@ -253,7 +253,7 @@ export function FontExportsTab({
           ) : (
             <SimpleGrid columns={{ base: 1, lg: 4 }} gap={3} mt={3}>
               <Field.Root>
-                <Field.Label fontSize="sm">
+                <Field.Label textStyle="label">
                   {t('projectControl.locationJson')}
                 </Field.Label>
                 <Input
