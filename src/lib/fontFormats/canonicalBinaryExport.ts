@@ -30,6 +30,8 @@ import {
   compileManagedFontFeatures,
   needsOpenTypeFeatureCompilationForBinaryExport,
 } from 'src/lib/openTypeFeatures'
+import { checkGlyphInterpolationCompatibility } from 'src/font/glyphCompatibility'
+import { activeLayer } from 'src/store/glyphLayer'
 import type {
   FontAxes,
   FontAxis,
@@ -415,6 +417,49 @@ const getVariableMasterSources = (
   return masterSources
 }
 
+interface BakedMaster {
+  fileName: string
+  buildNames: { familyName: string; styleName: string }
+  glyphs: GlyphData[]
+  source: {
+    filename: string
+    name: string
+    styleName: string
+    familyName: string
+    location: Record<string, number>
+  }
+}
+
+// varLib requires every master to share each glyph's point/component structure.
+// Exact-source masters bypass the interpolation compatibility gate, so check the
+// baked masters here and surface a readable error instead of a raw fontTools
+// traceback deep inside the varLib merge.
+export const findIncompatibleMasterGlyphs = (
+  glyphs: GlyphData[],
+  bakedMasters: Array<{ glyphs: GlyphData[] }>
+): string[] => {
+  if (bakedMasters.length < 2) {
+    return []
+  }
+  const incompatible: string[] = []
+  glyphs.forEach((glyph, index) => {
+    const layers = bakedMasters.map((master) =>
+      master.glyphs[index] ? activeLayer(master.glyphs[index]) : undefined
+    )
+    if (!checkGlyphInterpolationCompatibility(layers).compatible) {
+      incompatible.push(glyph.displayName ?? glyph.name ?? glyph.id)
+    }
+  })
+  return incompatible
+}
+
+const formatIncompatibleMasterError = (glyphNames: string[]) => {
+  const preview = glyphNames.slice(0, 5).join('、')
+  const suffix =
+    glyphNames.length > 5 ? ` 等 ${glyphNames.length} 個 glyph` : ''
+  return `無法匯出 Variable OTF：${glyphNames.length} 個 glyph 各 master 結構不相容（節點/component 數量或順序不一致）：${preview}${suffix}`
+}
+
 export const exportCanonicalProjectAsVariableOtf = async (input: {
   projectId: string
   batchSize?: number
@@ -470,43 +515,57 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
       ? fontData.openTypeFeatures
       : undefined,
   }
+  const bakedMasters: BakedMaster[] = variableSources.map((source, index) => {
+    const buildNames = variableBuildMasterNames[index]
+    const baked = bakeStaticInstanceGlyphs({
+      fontData,
+      glyphs,
+      instance: {
+        id: `source-${source.id}`,
+        name: source.name,
+        styleName: source.name,
+        familyName,
+        location: source.location,
+        export: true,
+      },
+      includeBracketLayers: false,
+    })
+    if (baked.errors.length > 0) {
+      throw new Error(formatVariableMasterBakeError(source, baked.errors))
+    }
+    const fileName = `master-${index + 1}.otf`
+    return {
+      fileName,
+      buildNames,
+      glyphs: baked.glyphs,
+      source: {
+        filename: fileName,
+        name: buildNames.styleName,
+        styleName: buildNames.styleName,
+        familyName: buildNames.familyName,
+        location: source.location,
+      },
+    }
+  })
+
+  const incompatibleGlyphs = findIncompatibleMasterGlyphs(glyphs, bakedMasters)
+  if (incompatibleGlyphs.length > 0) {
+    throw new Error(formatIncompatibleMasterError(incompatibleGlyphs))
+  }
+
   const masters = await Promise.all(
-    variableSources.map(async (source, index) => {
-      const buildNames = variableBuildMasterNames[index]
-      const baked = bakeStaticInstanceGlyphs({
-        fontData,
-        glyphs,
-        instance: {
-          id: `source-${source.id}`,
-          name: source.name,
-          styleName: source.name,
-          familyName,
-          location: source.location,
-          export: true,
-        },
-        includeBracketLayers: false,
-      })
-      if (baked.errors.length > 0) {
-        throw new Error(formatVariableMasterBakeError(source, baked.errors))
-      }
-      const fileName = `master-${index + 1}.otf`
+    bakedMasters.map(async (master) => {
       const blob = await exportGlyphListAsBinary({
         fontData: masterFontData,
-        glyphs: [...baked.glyphs, ...bracketAlternateGlyphs],
+        glyphs: [...master.glyphs, ...bracketAlternateGlyphs],
         format: 'otf',
-        familyName: buildNames.familyName,
-        styleName: buildNames.styleName,
+        familyName: master.buildNames.familyName,
+        styleName: master.buildNames.styleName,
       })
       return {
-        fileName,
+        fileName: master.fileName,
         fontBuffer: await blobToArrayBuffer(blob),
-        source: {
-          filename: fileName,
-          name: buildNames.styleName,
-          styleName: buildNames.styleName,
-          familyName: buildNames.familyName,
-          location: source.location,
-        },
+        source: master.source,
       }
     })
   )
@@ -523,7 +582,12 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
       fileName: master.fileName,
       fontBuffer: master.fontBuffer,
     }))
-  )
+  ).catch((error: unknown) => {
+    const detail = error instanceof Error ? error.message : String(error)
+    throw new Error(
+      `無法建立 Variable OTF（fontTools varLib 合併失敗）：${detail}`
+    )
+  })
   const compiledBuffer = shouldCompileFeaturesBeforeVariableBuild
     ? variableBuffer
     : await compileManagedFontFeatures(
