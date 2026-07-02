@@ -459,6 +459,11 @@ export const exportInstancesFromLib = (
     widthClass: isFiniteNumber(instance.widthClass)
       ? instance.widthClass
       : undefined,
+    isBold: instance.isBold === true ? true : undefined,
+    isItalic: instance.isItalic === true ? true : undefined,
+    italicAngle: isFiniteNumber(instance.italicAngle)
+      ? instance.italicAngle
+      : undefined,
     customData: isRecord(instance.customData) ? instance.customData : {},
   }))
 }

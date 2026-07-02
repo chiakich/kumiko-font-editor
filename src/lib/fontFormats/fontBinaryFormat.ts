@@ -683,6 +683,9 @@ export const exportGlyphListAsBinary = (input: {
   weightClass?: number
   widthClass?: number
   italicAngle?: number
+  // Explicit OS/2.fsSelection bits for style linking; when omitted opentype.js
+  // derives them from weightClass/italicAngle.
+  fsSelection?: number
 }) => {
   const glyphsById = new Map(input.glyphs.map((glyph) => [glyph.id, glyph]))
   const glyphs = input.glyphs.map((glyph) => {
@@ -736,6 +739,9 @@ export const exportGlyphListAsBinary = (input: {
       ? { widthClass: input.widthClass as unknown as string }
       : {}),
     ...(input.italicAngle ? { italicAngle: input.italicAngle } : {}),
+    ...(input.fsSelection !== undefined
+      ? { fsSelection: input.fsSelection as unknown as string }
+      : {}),
   })
   const sfntBuffer = font.toArrayBuffer()
   const getOutputBuffer = async () => {

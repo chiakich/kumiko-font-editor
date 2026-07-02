@@ -165,10 +165,29 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
     styleName: instance.styleName || instance.name,
     weightClass: instance.weightClass,
     widthClass: instance.widthClass,
+    italicAngle: instance.italicAngle,
+    fsSelection: styleLinkingFsSelection(instance),
   })
 }
 
 const blobToArrayBuffer = (blob: Blob) => blob.arrayBuffer()
+
+// OS/2.fsSelection bits. Returns undefined when no style linking is set so the
+// binary exporter falls back to deriving bits from weightClass/italicAngle.
+const FS_SELECTION_ITALIC = 0x01
+const FS_SELECTION_BOLD = 0x20
+const FS_SELECTION_REGULAR = 0x40
+const styleLinkingFsSelection = (
+  instance: Pick<FontExportInstance, 'isBold' | 'isItalic'>
+): number | undefined => {
+  if (!instance.isBold && !instance.isItalic) {
+    return undefined
+  }
+  let selection = 0
+  if (instance.isBold) selection |= FS_SELECTION_BOLD
+  if (instance.isItalic) selection |= FS_SELECTION_ITALIC
+  return selection === 0 ? FS_SELECTION_REGULAR : selection
+}
 
 // Pass axes through unchanged: discrete `values` are now serialized as a
 // designspaceLib-compatible `values` attribute so varLib treats the axis as

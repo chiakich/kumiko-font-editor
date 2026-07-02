@@ -317,6 +317,10 @@ export interface FontExportInstance {
   familyName?: string
   weightClass?: number
   widthClass?: number
+  // Style linking (bold/italic bits in OS/2.fsSelection and head.macStyle).
+  isBold?: boolean
+  isItalic?: boolean
+  italicAngle?: number
   customData?: Record<string, unknown>
 }
 

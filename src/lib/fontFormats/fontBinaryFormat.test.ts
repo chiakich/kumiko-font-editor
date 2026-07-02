@@ -201,4 +201,25 @@ describe('exported OS/2 classification', () => {
     expect(os2.usWeightClass).toBe(600)
     expect(os2.usWidthClass).toBe(5)
   })
+
+  it('writes explicit fsSelection bits for style linking', async () => {
+    const blob = await exportGlyphListAsBinary({
+      fontData: { unitsPerEm: 1000 },
+      glyphs: [
+        makeGlyph([
+          on(0, 0, 'line', 'a'),
+          on(100, 0, 'line', 'b'),
+          on(100, 100, 'line', 'c'),
+        ]),
+      ],
+      format: 'otf',
+      styleName: 'Bold Italic',
+      fsSelection: 0x01 | 0x20, // ITALIC | BOLD
+    })
+    const font = opentype.parse(await blob.arrayBuffer())
+    const os2 = (font as unknown as { tables: { os2: Record<string, number> } })
+      .tables.os2
+    expect(os2.fsSelection & 0x20).toBe(0x20) // bold bit
+    expect(os2.fsSelection & 0x01).toBe(0x01) // italic bit
+  })
 })
