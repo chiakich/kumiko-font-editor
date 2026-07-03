@@ -6,10 +6,13 @@
   font-display: swap;
 }
 
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/*
+ * This file holds STATIC css only — font loading (@import must be the first
+ * statement in a stylesheet, so it can't move into JS-injected globalCss) and
+ * the View Transition animations below. Token-driven global styles (bg, colors,
+ * ::selection, overlays, corner-shape, reduced-motion) live in
+ * src/design/globalCss.ts.
+ */
 
 /* View Transition: root cross-fade */
 ::view-transition-group(root) {
