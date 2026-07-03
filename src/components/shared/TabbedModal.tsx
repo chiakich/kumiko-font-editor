@@ -81,9 +81,9 @@ export function TabbedModal({
                 gap={4}
                 justify="space-between"
                 pb={3}
-                pr={14}
+                pr={12}
                 pt={5}
-                px={6}
+                pl={6}
                 {...headerProps}
               >
                 <Text as="h2" fontSize="xl" fontWeight="900">
