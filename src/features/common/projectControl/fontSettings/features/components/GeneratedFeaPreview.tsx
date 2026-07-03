@@ -19,7 +19,7 @@ export function GeneratedFeaPreview({
         {t('projectControl.generatedDisposableFea')}
       </Field.Label>
       <Textarea minH="280px" fontFamily="mono" value={feaText} readOnly />
-      <Text mt={2} fontSize="xs" color="field.muted">
+      <Text mt={2} fontSize="xs" color="mutedForeground">
         {sourceMap.entries.length} {t('projectControl.sourceMapEntries')}
       </Text>
     </Field.Root>

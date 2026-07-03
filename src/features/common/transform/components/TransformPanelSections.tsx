@@ -37,7 +37,7 @@ export function OriginPicker({
 
   return (
     <Box minW="72px">
-      <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+      <Text fontSize="xs" color="mutedForeground" mb={1} fontFamily="mono">
         {t('editor.origin')}
       </Text>
       <Grid templateColumns="repeat(3, 18px)" gap="3px">
@@ -71,7 +71,7 @@ export function OriginPicker({
                 <Box
                   w="5px"
                   h="5px"
-                  bg={isActive ? 'field.ink' : 'field.muted'}
+                  bg={isActive ? 'foreground' : 'mutedForeground'}
                 />
               </Button>
             </Tooltip>
@@ -87,7 +87,7 @@ export function MirrorControls({ isDisabled, onMirror }: MirrorControlsProps) {
 
   return (
     <Stack gap={2}>
-      <Text fontSize="xs" color="field.muted" fontFamily="mono">
+      <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
         {t('editor.mirror')}
       </Text>
       <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap={2}>
@@ -145,7 +145,7 @@ export function OffsetControls({
       headerRight={
         <Tooltip content={t('editor.cleanupOverlapsHint')}>
           <HStack gap={1}>
-            <Text fontSize="10px" color="field.muted" fontFamily="mono">
+            <Text fontSize="10px" color="mutedForeground" fontFamily="mono">
               {t('editor.cleanupOverlaps')}
             </Text>
             <Switch

@@ -184,13 +184,13 @@ export function BatchTransformCard({
   }
 
   return (
-    <Box p={4} bg="field.panel" borderRadius="sm">
+    <Box p={4} bg="card" borderRadius="sm">
       <HStack justify="space-between" align="start" mb={3}>
         <Box>
-          <Heading size="sm" textTransform="uppercase" color="field.ink">
+          <Heading size="sm" textTransform="uppercase" color="foreground">
             {t('editor.transform')}
           </Heading>
-          <Text fontSize="xs" color="field.muted" fontFamily="mono">
+          <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
             {t('fontOverview.selection.selectedGlyphs', {
               count: selectedGlyphIds.length,
             })}
@@ -206,7 +206,7 @@ export function BatchTransformCard({
           />
         </Box>
 
-        <Separator borderColor="field.panelMuted" />
+        <Separator borderColor="muted" />
 
         <Stack gap={3}>
           <ScaleActionGroup
@@ -295,7 +295,12 @@ export function BatchTransformCard({
           />
 
           <Box>
-            <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+            <Text
+              fontSize="xs"
+              color="mutedForeground"
+              mb={1}
+              fontFamily="mono"
+            >
               {t('editor.quick')}
             </Text>
             <Tooltip content={t('editor.rotate90Degrees')}>
@@ -317,7 +322,7 @@ export function BatchTransformCard({
           </Box>
         </Stack>
 
-        <Separator borderColor="field.panelMuted" />
+        <Separator borderColor="muted" />
 
         <MirrorControls isDisabled={isDisabled} onMirror={applyMirror} />
       </Stack>

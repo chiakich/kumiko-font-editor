@@ -65,9 +65,9 @@ function PackageCard({
 }: PackageCardProps) {
   const { t } = useTranslation()
 
-  const selectedBg = 'field.ink'
-  const selectedColor = 'field.yellow.300'
-  const mutedColor = isSelected ? 'field.panelMuted' : 'field.muted'
+  const selectedBg = 'foreground'
+  const selectedColor = 'yellow.300'
+  const mutedColor = isSelected ? 'muted' : 'mutedForeground'
   const percent = Math.floor(coverage.drawnRatio * 100)
 
   return (
@@ -79,19 +79,19 @@ function PackageCard({
       whiteSpace="normal"
       variant="outline"
       borderWidth={2}
-      borderColor={isSelected ? 'field.ink' : 'field.haze'}
+      borderColor={isSelected ? 'foreground' : 'haze'}
       bg={isSelected ? selectedBg : 'white'}
-      color={isSelected ? selectedColor : 'field.ink'}
+      color={isSelected ? selectedColor : 'foreground'}
       _hover={{
-        bg: isSelected ? selectedBg : 'field.panel',
-        borderColor: 'field.ink',
-        color: isSelected ? selectedColor : 'field.ink',
+        bg: isSelected ? selectedBg : 'card',
+        borderColor: 'foreground',
+        color: isSelected ? selectedColor : 'foreground',
       }}
       _active={{
-        bg: isSelected ? selectedBg : 'field.panel',
-        color: isSelected ? selectedColor : 'field.ink',
+        bg: isSelected ? selectedBg : 'card',
+        color: isSelected ? selectedColor : 'foreground',
       }}
-      _focusVisible={{ boxShadow: '0 0 0 2px var(--chakra-colors-field-ink)' }}
+      _focusVisible={{ boxShadow: '0 0 0 2px var(--chakra-colors-foreground)' }}
       onClick={onToggle}
       p={3}
       position="relative"
@@ -103,8 +103,8 @@ function PackageCard({
           </Text>
           {isSelected && (
             <Badge
-              bg="field.yellow.300"
-              color="field.ink"
+              bg="yellow.300"
+              color="foreground"
               variant="solid"
               top={1}
               right={1}
@@ -164,13 +164,13 @@ function PackageGroupSidebar({
             key={group.id}
             justifyContent="flex-start"
             variant="outline"
-            bg={isActive ? 'field.ink' : 'field.panelMuted'}
-            color={isActive ? 'field.yellow.300' : 'field.ink'}
-            borderColor={isActive ? 'field.ink' : 'transparent'}
+            bg={isActive ? 'foreground' : 'muted'}
+            color={isActive ? 'yellow.300' : 'foreground'}
+            borderColor={isActive ? 'foreground' : 'transparent'}
             _hover={{
-              bg: isActive ? 'field.ink' : 'field.panel',
-              color: isActive ? 'field.yellow.300' : 'field.ink',
-              borderColor: 'field.ink',
+              bg: isActive ? 'foreground' : 'card',
+              color: isActive ? 'yellow.300' : 'foreground',
+              borderColor: 'foreground',
             }}
             onClick={() => onSelectGroup(group.id)}
           >
@@ -194,12 +194,12 @@ function PackageGroupSource({ groupId }: PackageGroupSourceProps) {
   }
 
   return (
-    <Text fontSize="xs" color="field.muted">
+    <Text fontSize="xs" color="mutedForeground">
       {t('fontOverview.sourceLabel')}
       <Link
         href="https://justfont.com/jf7000"
         fontWeight="900"
-        color="field.ink"
+        color="foreground"
         textDecoration="underline"
         target="_blank"
         rel="noopener noreferrer"
@@ -229,7 +229,7 @@ function PackageCardSection({
     <Stack gap={2}>
       <Text
         fontSize="xs"
-        color="field.muted"
+        color="mutedForeground"
         fontFamily="mono"
         fontWeight="900"
       >
@@ -294,15 +294,15 @@ function SummaryToken({ glyphPackage }: SummaryTokenProps) {
     <HStack
       gap={0}
       border="2px solid"
-      borderColor="field.ink"
+      borderColor="foreground"
       borderRadius="2px"
       overflow="hidden"
     >
       <Text
         px={2}
         py={1}
-        bg="field.panel"
-        color="field.ink"
+        bg="card"
+        color="foreground"
         fontSize="xs"
         fontWeight="900"
         whiteSpace="nowrap"
@@ -312,7 +312,7 @@ function SummaryToken({ glyphPackage }: SummaryTokenProps) {
       <Text
         px={2}
         py={1}
-        bg="field.ink"
+        bg="foreground"
         color="white"
         fontSize="xs"
         fontWeight="900"
@@ -333,7 +333,7 @@ function SummaryFormula({ packages }: SummaryFormulaProps) {
 
   if (packages.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('fontOverview.noneSelected')}
       </Text>
     )
@@ -365,7 +365,7 @@ export function GlyphPackageSelectionSummary({
   return (
     <Box minW={0}>
       <SummaryFormula packages={selection.packages} />
-      <Text fontSize="xl" fontWeight={500} color="field.steel" mt={2}>
+      <Text fontSize="xl" fontWeight={500} color="mutedForeground" mt={2}>
         {t('fontOverview.total')}
         <Box as="span" fontWeight={700} mx={1}>
           {selection.glyphNames.length.toLocaleString()}
@@ -418,12 +418,7 @@ export function GlyphPackagePicker({
       h="100%"
       minH={0}
     >
-      <GridItem
-        borderRight="1px solid"
-        borderColor="field.panelMuted"
-        pr={3}
-        minH={0}
-      >
+      <GridItem borderRight="1px solid" borderColor="muted" pr={3} minH={0}>
         <PackageGroupSidebar
           activeGroupId={activeGroupId}
           onSelectGroup={setActiveGroupId}
@@ -443,7 +438,7 @@ export function GlyphPackagePicker({
                 {activeGroupError}
               </Text>
             ) : isLoadingActiveGroup && activeGroupPackages.length === 0 ? (
-              <Text color="field.muted" fontSize="sm">
+              <Text color="mutedForeground" fontSize="sm">
                 字集載入中...
               </Text>
             ) : (

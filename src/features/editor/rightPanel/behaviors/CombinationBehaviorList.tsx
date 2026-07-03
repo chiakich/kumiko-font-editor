@@ -61,10 +61,10 @@ export function CombinationBehaviorList({
           </Tooltip>
         </HStack>
       </HStack>
-      <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
+      <Box borderWidth="1px" borderColor="border" bg="card">
         <CombinationHeader />
         {rows.length === 0 && draftRowIds.length === 0 ? (
-          <Text fontSize="xs" color="field.muted" px={3} py={3}>
+          <Text fontSize="xs" color="mutedForeground" px={3} py={3}>
             {t('editor.noCombinationsForThisGlyphYet')}
           </Text>
         ) : null}
@@ -111,17 +111,17 @@ function CombinationHeader() {
       gap={1}
       px={3}
       py={2}
-      bg="field.panelMuted"
+      bg="muted"
       borderBottomWidth="1px"
-      borderColor="field.line"
+      borderColor="border"
     >
-      <Text fontSize="10px" fontWeight="bold" color="field.muted">
+      <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
         {t('editor.input')}
       </Text>
-      <Text fontSize="10px" fontWeight="bold" color="field.muted">
+      <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
         →
       </Text>
-      <Text fontSize="10px" fontWeight="bold" color="field.muted">
+      <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
         {t('editor.output')}
       </Text>
     </Box>

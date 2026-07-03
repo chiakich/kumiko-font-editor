@@ -13,7 +13,7 @@ export function FeatureDiagnosticsList({
 
   if (diagnostics.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.noFeatureDiagnostics')}
       </Text>
     )

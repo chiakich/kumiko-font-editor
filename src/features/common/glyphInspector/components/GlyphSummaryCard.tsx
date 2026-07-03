@@ -61,21 +61,21 @@ export function GlyphSummaryCard({
   return (
     <Box
       p={4}
-      bg="field.panel"
+      bg="card"
       borderRadius="sm"
       boxShadow="inset 0 6px 0 rgba(247, 235, 64, 0.9)"
     >
       <Stack gap={2}>
         <Text
           fontWeight="900"
-          color="field.ink"
+          color="foreground"
           fontSize="3xl"
           lineHeight="0.88"
           pt={2}
         >
           {glyph.name}
         </Text>
-        <Text fontSize="xs" color="field.muted" fontFamily="mono">
+        <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
           {glyph.id}
         </Text>
         {workspaceView === 'overview' && (
@@ -84,13 +84,13 @@ export function GlyphSummaryCard({
             px={3}
             py={4}
             borderRadius="sm"
-            bg="field.paper"
+            bg="background"
             textAlign="center"
           >
             <Text
               fontSize={glyphDisplayCharacter ? '8xl' : '4xl'}
               lineHeight={0.82}
-              color="field.ink"
+              color="foreground"
               fontWeight="900"
             >
               {glyphDisplayCharacter ?? glyph.name}
@@ -112,7 +112,12 @@ export function GlyphSummaryCard({
         />
         {showLayerSelect && availableLayers.length > 0 && (
           <Box>
-            <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+            <Text
+              fontSize="xs"
+              color="mutedForeground"
+              mb={1}
+              fontFamily="mono"
+            >
               {t('glyphInspector.layerMaster')}
             </Text>
             <NativeSelect.Root size="sm">
@@ -134,34 +139,34 @@ export function GlyphSummaryCard({
           <>
             <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap={2}>
               <GridItem>
-                <Text fontSize="xs" color="field.muted" fontFamily="mono">
+                <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
                   {t('glyphInspector.unicode')}
                 </Text>
-                <Text fontSize="sm" color="field.ink" fontFamily="mono">
+                <Text fontSize="sm" color="foreground" fontFamily="mono">
                   {getPrimaryGlyphUnicode(glyph) ?? '未編碼'}
                 </Text>
               </GridItem>
               <GridItem>
-                <Text fontSize="xs" color="field.muted" fontFamily="mono">
+                <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
                   {t('glyphInspector.script')}
                 </Text>
-                <Text fontSize="sm" color="field.ink">
+                <Text fontSize="sm" color="foreground">
                   {getGlyphScriptLabel(glyph)}
                 </Text>
               </GridItem>
               <GridItem>
-                <Text fontSize="xs" color="field.muted" fontFamily="mono">
+                <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
                   {t('glyphInspector.block')}
                 </Text>
-                <Text fontSize="sm" color="field.ink">
+                <Text fontSize="sm" color="foreground">
                   {getGlyphBlockLabel(glyph)}
                 </Text>
               </GridItem>
               <GridItem>
-                <Text fontSize="xs" color="field.muted" fontFamily="mono">
+                <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
                   {t('glyphInspector.contoursComponents')}
                 </Text>
-                <Text fontSize="sm" color="field.ink" fontFamily="mono">
+                <Text fontSize="sm" color="foreground" fontFamily="mono">
                   {overviewStats?.contourCount ?? 0} /{' '}
                   {overviewStats?.componentCount ?? 0}
                 </Text>

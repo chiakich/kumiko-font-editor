@@ -17,7 +17,7 @@ export function UnsupportedLookupList({
         <Text fontWeight="semibold">
           {t('projectControl.unsupportedImportedLookups')}
         </Text>
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           {t('projectControl.noUnsupportedImportedLookupsAreRecorded')}
         </Text>
       </Stack>
@@ -46,16 +46,16 @@ export function UnsupportedLookupList({
               </Badge>
               <Badge colorPalette="orange">{lookup.preserveMode}</Badge>
             </HStack>
-            <Text fontSize="xs" color="field.muted">
+            <Text fontSize="xs" color="mutedForeground">
               {t('projectControl.lookup')}
               {lookup.lookupIndex}
             </Text>
           </HStack>
           <Text fontSize="sm">{lookup.reason}</Text>
-          <Text fontSize="xs" color="field.muted">
+          <Text fontSize="xs" color="mutedForeground">
             {lookup.rawSummary}
           </Text>
-          <Text fontSize="xs" color="field.muted">
+          <Text fontSize="xs" color="mutedForeground">
             {t('projectControl.subtableFormats')}
             {lookup.subtableFormats.join(', ') || 'unknown'}
           </Text>

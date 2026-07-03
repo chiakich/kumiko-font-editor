@@ -280,7 +280,7 @@ function QualityCheckDialog({
                   </HStack>
                   <Text
                     fontSize="xs"
-                    color="field.muted"
+                    color="mutedForeground"
                     fontWeight="800"
                     mt={1}
                   >
@@ -412,11 +412,11 @@ function SummaryTile({
   return (
     <Box
       borderWidth={1}
-      borderColor="field.line"
-      bg={tone ? `${tone}.50` : 'field.panel'}
+      borderColor="border"
+      bg={tone ? `${tone}.50` : 'card'}
       p={3}
     >
-      <Text fontSize="xs" color="field.muted" fontWeight="800">
+      <Text fontSize="xs" color="mutedForeground" fontWeight="800">
         {label}
       </Text>
       <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
@@ -430,8 +430,8 @@ function ReportLoadingPanel() {
   const { t } = useTranslation()
 
   return (
-    <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={6}>
-      <Text fontSize="sm" color="field.muted" fontWeight="800">
+    <Box borderWidth={1} borderColor="border" bg="card" p={6}>
+      <Text fontSize="sm" color="mutedForeground" fontWeight="800">
         {t('qualityCheck.loadingReport')}
       </Text>
     </Box>
@@ -450,7 +450,7 @@ function ScopeSelector({
   return (
     <HStack
       gap={1}
-      bg="field.panelMuted"
+      bg="muted"
       borderRadius="full"
       p={1}
       w={{ base: '100%', md: 'fit-content' }}

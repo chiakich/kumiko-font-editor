@@ -35,7 +35,7 @@ export const GlyphPreviewArtwork = memo(function GlyphPreviewArtwork({
           textAlign="center"
           fontSize={displayCharacter.length > 1 ? 'sm' : '6xl'}
           fontWeight="900"
-          color={inheritFallbackColor ? 'currentColor' : 'field.haze'}
+          color={inheritFallbackColor ? 'currentColor' : 'haze'}
           lineHeight={1}
           userSelect="none"
         >

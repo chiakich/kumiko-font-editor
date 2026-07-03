@@ -93,7 +93,7 @@ export function OpenTypeOutline({
       </OutlineSection>
       <OutlineSection title={t('projectControl.featuresSection')}>
         {state.features.length === 0 ? (
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {t('projectControl.noFeaturesYet')}
           </Text>
         ) : (
@@ -116,7 +116,7 @@ export function OpenTypeOutline({
       </OutlineSection>
       <OutlineSection title={t('projectControl.usedLayoutTables')}>
         {tableSummaries.length === 0 ? (
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {t('projectControl.noUsedLayoutTables')}
           </Text>
         ) : (
@@ -174,7 +174,7 @@ function OutlineSection({
 }) {
   return (
     <Stack gap={2}>
-      <Text fontSize="xs" fontWeight="900" color="field.muted">
+      <Text fontSize="xs" fontWeight="900" color="mutedForeground">
         {title}
       </Text>
       {children}
@@ -225,7 +225,7 @@ function OutlineButton({
             </Badge>
           ) : null}
         </HStack>
-        <Text fontSize="xs" color={isSelected ? undefined : 'field.muted'}>
+        <Text fontSize="xs" color={isSelected ? undefined : 'mutedForeground'}>
           {detail}
         </Text>
       </Stack>

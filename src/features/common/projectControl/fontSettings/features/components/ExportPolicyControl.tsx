@@ -83,7 +83,7 @@ export function ExportPolicyControl({
           <NativeSelect.Indicator />
         </NativeSelect.Root>
       </Field.Root>
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.exportBehaviorIsExplicitBecauseCompiling')}
       </Text>
       <ExportImpactSummary items={impactItems} />

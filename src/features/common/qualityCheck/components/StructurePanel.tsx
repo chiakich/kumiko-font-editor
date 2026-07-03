@@ -97,16 +97,16 @@ export function StructurePanel({
 
   if (!baseline) {
     return (
-      <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={6}>
+      <Box borderWidth={1} borderColor="border" bg="card" p={6}>
         {isAnalyzing ? (
           <HStack gap={3}>
-            <Spinner size="sm" color="field.yellow.400" />
-            <Text fontSize="sm" color="field.muted" fontWeight="800">
+            <Spinner size="sm" color="primary" />
+            <Text fontSize="sm" color="mutedForeground" fontWeight="800">
               正在背景分析字體幾何…
             </Text>
           </HStack>
         ) : (
-          <Text fontSize="sm" color="field.muted" fontWeight="800">
+          <Text fontSize="sm" color="mutedForeground" fontWeight="800">
             字體中還沒有可分析的漢字輪廓，無法推導結構基準值。
           </Text>
         )}
@@ -134,19 +134,19 @@ export function StructurePanel({
           ))}
         </SimpleGrid>
       ) : !radar ? (
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
-          <Text fontSize="sm" color="field.muted">
+        <Box borderWidth={1} borderColor="border" bg="card" p={4}>
+          <Text fontSize="sm" color="mutedForeground">
             漢字樣本不足（需 20 個以上），尚無法建立統計基準。
           </Text>
         </Box>
       ) : null}
       {isFocusedScope ? (
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           以整套字體現有 {baseline.sampleCount}{' '}
           個漢字推導結構基準，再檢查範圍內的字是否偏離群體統計。
         </Text>
       ) : (
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           依
           3type《中文字体解密组报告》：每個漢字的真實字面框由最外側的「邊界筆畫」定義，
           以線定義的是<b>框架筆畫</b>（粉紅），以點定義的是<b>樹枝筆畫</b>
@@ -161,8 +161,8 @@ export function StructurePanel({
             <Box
               key={side}
               borderWidth={1}
-              borderColor="field.line"
-              bg="field.panel"
+              borderColor="border"
+              bg="card"
               p={3}
             >
               <Text fontSize="xs" fontWeight="900" mb={2}>
@@ -195,13 +195,8 @@ export function StructurePanel({
             範圍內字的邊界筆畫分析（{scopedSamples.length} 個漢字）
           </Text>
           {scopedSamples.length === 0 ? (
-            <Box
-              borderWidth={1}
-              borderColor="field.line"
-              bg="field.panel"
-              p={4}
-            >
-              <Text fontSize="sm" color="field.muted">
+            <Box borderWidth={1} borderColor="border" bg="card" p={4}>
+              <Text fontSize="sm" color="mutedForeground">
                 檢查範圍內沒有可分析的漢字輪廓。
               </Text>
             </Box>
@@ -210,8 +205,8 @@ export function StructurePanel({
               <Box
                 key={sample.glyphId}
                 borderWidth={1}
-                borderColor="field.line"
-                bg="field.panel"
+                borderColor="border"
+                bg="card"
                 p={3}
               >
                 <HStack justify="space-between" mb={2}>
@@ -238,8 +233,8 @@ export function StructurePanel({
         </Stack>
       ) : null}
       {radar ? (
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel">
-          <HStack justify="space-between" px={3} py={2} bg="field.panelMuted">
+        <Box borderWidth={1} borderColor="border" bg="card">
+          <HStack justify="space-between" px={3} py={2} bg="muted">
             <Text fontSize="sm" fontWeight="900">
               {isFocusedScope
                 ? '範圍內字的離群分析'
@@ -258,7 +253,7 @@ export function StructurePanel({
           </HStack>
           {visibleEvaluations.length === 0 ? (
             <Box p={4}>
-              <Text fontSize="sm" color="field.muted">
+              <Text fontSize="sm" color="mutedForeground">
                 {isFocusedScope
                   ? '檢查範圍內沒有可分析的漢字。'
                   : '沒有偏離群體統計基準的字。'}
@@ -277,7 +272,7 @@ export function StructurePanel({
               <Separator />
               {!isFocusedScope &&
               radar.suspects.length > visibleEvaluations.length ? (
-                <Text fontSize="xs" color="field.muted" px={3} py={2}>
+                <Text fontSize="xs" color="mutedForeground" px={3} py={2}>
                   其餘 {radar.suspects.length - visibleEvaluations.length}{' '}
                   個可疑字已省略。
                 </Text>

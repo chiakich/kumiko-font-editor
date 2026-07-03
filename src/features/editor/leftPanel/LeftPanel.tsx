@@ -21,7 +21,7 @@ export function LeftPanel() {
       h="100%"
       display="flex"
       flexDirection="column"
-      bg="field.paper"
+      bg="background"
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
     >

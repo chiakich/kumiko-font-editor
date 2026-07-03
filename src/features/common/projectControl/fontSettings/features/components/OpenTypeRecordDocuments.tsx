@@ -109,7 +109,7 @@ export function TableDocument({
           {t('projectControl.lookups')}
         </Text>
         {lookups.length === 0 ? (
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {t('projectControl.none')}
           </Text>
         ) : (

@@ -63,9 +63,9 @@ export function ContextualBehaviorList({
           </Tooltip>
         </HStack>
       </HStack>
-      <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
+      <Box borderWidth="1px" borderColor="border" bg="card">
         {rows.length === 0 && draftRowIds.length === 0 ? (
-          <Text fontSize="xs" color="field.muted" px={3} py={3}>
+          <Text fontSize="xs" color="mutedForeground" px={3} py={3}>
             {t('editor.noContextualRulesForThisGlyph')}
           </Text>
         ) : null}

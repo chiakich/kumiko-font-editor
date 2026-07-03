@@ -65,7 +65,7 @@ export function AnchorBehaviorTableRow({
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
-      borderColor="field.panelMuted"
+      borderColor="muted"
     >
       <Box
         display="grid"
@@ -105,7 +105,7 @@ export function AnchorBehaviorTableRow({
             aria-label={t('editor.deleteAnchor')}
             size="xs"
             variant="ghost"
-            color="field.red.500"
+            color="destructive"
             onClick={onDelete}
           >
             <Trash width={15} height={15} aria-hidden="true" />

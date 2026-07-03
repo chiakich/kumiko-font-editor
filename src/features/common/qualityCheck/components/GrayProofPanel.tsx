@@ -131,7 +131,7 @@ export function GrayProofPanel({
 
   return (
     <Stack gap={4}>
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {isFocusedScope
           ? t('qualityCheck.grayProof.focusedDescription')
           : t('qualityCheck.grayProof.description')}
@@ -159,15 +159,15 @@ export function GrayProofPanel({
               checked={showHighlight}
               onCheckedChange={(details) => setShowHighlight(details.checked)}
             />
-            <Text fontSize="xs" color="field.muted" fontWeight="800">
+            <Text fontSize="xs" color="mutedForeground" fontWeight="800">
               {t('qualityCheck.highlightScopedGlyphs')}
             </Text>
           </HStack>
         ) : null}
       </HStack>
       <SimpleGrid columns={{ base: 1, md: 3 }} gap={3}>
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={3}>
-          <Text fontSize="xs" color="field.muted" fontWeight="800">
+        <Box borderWidth={1} borderColor="border" bg="card" p={3}>
+          <Text fontSize="xs" color="mutedForeground" fontWeight="800">
             整段平均灰度
           </Text>
           <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
@@ -183,16 +183,16 @@ export function GrayProofPanel({
             </Progress.Track>
           </Progress.Root>
         </Box>
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={3}>
-          <Text fontSize="xs" color="field.muted" fontWeight="800">
+        <Box borderWidth={1} borderColor="border" bg="card" p={3}>
+          <Text fontSize="xs" color="mutedForeground" fontWeight="800">
             灰度標準差（越小越均勻）
           </Text>
           <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
             {stdPercent === null ? 'N/A' : `${stdPercent}%`}
           </Text>
         </Box>
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={3}>
-          <Text fontSize="xs" color="field.muted" fontWeight="800">
+        <Box borderWidth={1} borderColor="border" bg="card" p={3}>
+          <Text fontSize="xs" color="mutedForeground" fontWeight="800">
             灰度離群字
           </Text>
           <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
@@ -205,8 +205,8 @@ export function GrayProofPanel({
           <Box
             key={fontSize}
             borderWidth={1}
-            borderColor="field.line"
-            bg="field.panel"
+            borderColor="border"
+            bg="card"
             p={4}
             overflowX="auto"
           >
@@ -222,12 +222,12 @@ export function GrayProofPanel({
         ))}
       </Stack>
       {isFocusedScope ? (
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
+        <Box borderWidth={1} borderColor="border" bg="card" p={4}>
           <Text fontSize="sm" fontWeight="900" mb={3}>
             範圍內字 vs 文章平均灰度
           </Text>
           {selectedComparisons.length === 0 ? (
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               檢查範圍內沒有可估算灰度的輪廓，或不在文章中。
             </Text>
           ) : (
@@ -243,7 +243,11 @@ export function GrayProofPanel({
                     </Text>
                   </HStack>
                   <HStack gap={2}>
-                    <Text fontFamily="mono" fontSize="xs" color="field.muted">
+                    <Text
+                      fontFamily="mono"
+                      fontSize="xs"
+                      color="mutedForeground"
+                    >
                       {comparison.inkPercent === null
                         ? 'N/A'
                         : `${comparison.inkPercent}%`}
@@ -277,12 +281,12 @@ export function GrayProofPanel({
           )}
         </Box>
       ) : (
-        <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
+        <Box borderWidth={1} borderColor="border" bg="card" p={4}>
           <Text fontSize="sm" fontWeight="900" mb={3}>
             灰度離群字（與整段平均差異顯著）
           </Text>
           {grayStats.outliers.length === 0 ? (
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               這段文章中沒有灰度明顯偏離的字。
             </Text>
           ) : (
@@ -298,7 +302,11 @@ export function GrayProofPanel({
                     </Text>
                   </HStack>
                   <HStack gap={2}>
-                    <Text fontFamily="mono" fontSize="xs" color="field.muted">
+                    <Text
+                      fontFamily="mono"
+                      fontSize="xs"
+                      color="mutedForeground"
+                    >
                       {outlier.inkRatio === null
                         ? 'N/A'
                         : `${toPercent(outlier.inkRatio)}%`}

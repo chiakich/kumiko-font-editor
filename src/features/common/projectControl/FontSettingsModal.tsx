@@ -159,7 +159,7 @@ export function FontSettingsModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content borderRadius="sm" h="90vh">
+          <Dialog.Content borderRadius="lg" h="90vh">
             <DialogCloseButton zIndex={2} />
             <SlidingTabsRoot
               size="sm"

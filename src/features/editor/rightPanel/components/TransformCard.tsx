@@ -283,13 +283,13 @@ export function TransformCard({
   const canApplyPathOps = selectedClosedPathIds.length >= 2
 
   return (
-    <Box p={4} bg="field.panel" borderRadius="sm">
+    <Box p={4} bg="card" borderRadius="sm">
       <HStack justify="space-between" align="start" mb={3}>
         <Box>
-          <Heading size="sm" textTransform="uppercase" color="field.ink">
+          <Heading size="sm" textTransform="uppercase" color="foreground">
             {t('editor.transform')}
           </Heading>
-          <Text fontSize="xs" color="field.muted" fontFamily="mono">
+          <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
             {selectedNodes.length > 0
               ? `${selectedNodes.length} nodes selected`
               : 'No editable selection'}
@@ -313,7 +313,7 @@ export function TransformCard({
           onStep={stepField}
         />
 
-        <Separator borderColor="field.panelMuted" />
+        <Separator borderColor="muted" />
 
         <Stack gap={3}>
           <ScaleActionGroup
@@ -402,7 +402,12 @@ export function TransformCard({
           />
 
           <Box>
-            <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+            <Text
+              fontSize="xs"
+              color="mutedForeground"
+              mb={1}
+              fontFamily="mono"
+            >
               {t('editor.quick')}
             </Text>
             <Tooltip content={t('editor.rotate90Degrees')}>
@@ -426,13 +431,13 @@ export function TransformCard({
           </Box>
         </Stack>
 
-        <Separator borderColor="field.panelMuted" />
+        <Separator borderColor="muted" />
 
         <MirrorControls isDisabled={isDisabled} onMirror={applyMirror} />
 
         <AlignControls isDisabled={isDisabled} onAlign={applyAlign} />
 
-        <Separator borderColor="field.panelMuted" />
+        <Separator borderColor="muted" />
 
         <PathOpsControls
           canApply={canApplyPathOps}

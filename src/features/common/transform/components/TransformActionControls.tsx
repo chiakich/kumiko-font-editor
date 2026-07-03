@@ -78,13 +78,13 @@ export function TransformActionRow({
     <Box>
       {headerRight ? (
         <HStack justify="space-between" mb={1}>
-          <Text fontSize="xs" color="field.muted" fontFamily="mono">
+          <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
             {label}
           </Text>
           {headerRight}
         </HStack>
       ) : (
-        <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+        <Text fontSize="xs" color="mutedForeground" mb={1} fontFamily="mono">
           {label}
         </Text>
       )}
@@ -212,7 +212,7 @@ function ScaleActionLine({
 }: ScaleActionLineProps) {
   return (
     <Box>
-      <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+      <Text fontSize="xs" color="mutedForeground" mb={1} fontFamily="mono">
         {label}
       </Text>
       <Grid templateColumns="32px 88px 32px" gap={1} justifyContent="center">
@@ -294,7 +294,7 @@ function ActionValueInput({
         right="25px"
         transform="translateY(-50%)"
         fontSize="10px"
-        color="field.muted"
+        color="mutedForeground"
         pointerEvents="none"
       >
         {unit}
@@ -308,7 +308,7 @@ function ActionValueInput({
         display="grid"
         gridTemplateRows="1fr 1fr"
         borderLeft="1px solid"
-        borderColor="field.panelMuted"
+        borderColor="muted"
         pointerEvents={isDisabled ? 'none' : 'auto'}
         opacity={isDisabled ? 0.35 : 1}
       >
@@ -316,9 +316,9 @@ function ActionValueInput({
           aria-label={t('editor.incrementActionValue')}
           fontSize="7px"
           lineHeight="1"
-          color="field.muted"
+          color="mutedForeground"
           borderTopRightRadius="3px"
-          _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
+          _hover={{ bg: 'muted', color: 'foreground' }}
           asChild
         >
           <button
@@ -335,9 +335,9 @@ function ActionValueInput({
           aria-label={t('editor.decrementActionValue')}
           fontSize="7px"
           lineHeight="1"
-          color="field.muted"
+          color="mutedForeground"
           borderBottomRightRadius="3px"
-          _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
+          _hover={{ bg: 'muted', color: 'foreground' }}
           asChild
         >
           <button

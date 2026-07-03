@@ -60,7 +60,7 @@ export function GlyphPreviewStrip({
 
   return (
     <Box
-      bg="field.panelMuted"
+      bg="muted"
       borderRadius="sm"
       p="5px"
       flex="1"
@@ -84,10 +84,11 @@ export function GlyphPreviewStrip({
                 minW="unset"
                 p="3px"
                 h="auto"
-                bg={isActive ? 'field.yellow.400' : 'transparent'}
+                bg={isActive ? 'primary' : 'transparent'}
+                color={isActive ? 'primaryForeground' : 'foreground'}
                 _hover={{
-                  bg: isActive ? 'field.yellow.400' : 'field.panelMuted',
-                  color: 'field.ink',
+                  bg: isActive ? 'primary' : 'muted',
+                  color: isActive ? 'primaryForeground' : 'foreground',
                 }}
                 onClick={() => onPreviewGlyphChange(glyph.id)}
                 title={glyph.id}
@@ -98,7 +99,7 @@ export function GlyphPreviewStrip({
           }}
         />
       ) : (
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           {t('editor.noDisplayableGlyphs')}
         </Text>
       )}

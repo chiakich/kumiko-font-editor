@@ -146,7 +146,7 @@ export function StructureRangeSvg({
       viewBox="-20 -20 1040 1040"
       w="100%"
       maxW="340px"
-      color="field.ink"
+      color="foreground"
       role="img"
       aria-label="structure ranges"
     >
@@ -201,7 +201,7 @@ export function DistributionRow({
           {distribution.count} 字
         </Text>
       ) : (
-        <Text fontFamily="mono" fontSize="xs" color="field.muted">
+        <Text fontFamily="mono" fontSize="xs" color="mutedForeground">
           無樣本
         </Text>
       )}
@@ -225,7 +225,7 @@ export function SuspectRow({
           <Text
             fontFamily="mono"
             fontSize="xs"
-            color="field.muted"
+            color="mutedForeground"
             fontWeight="900"
             w="28px"
             pt={1}
@@ -260,7 +260,7 @@ export function SuspectRow({
               </Tag.Root>
             ))}
             {evaluation.reasons.length > 3 ? (
-              <Tag.Root size="sm" variant="subtle" color="field.muted">
+              <Tag.Root size="sm" variant="subtle" color="mutedForeground">
                 +{evaluation.reasons.length - 3}
               </Tag.Root>
             ) : null}
@@ -321,17 +321,17 @@ export function RadarScoreTile({
   return (
     <Box
       borderWidth={emphasized ? 2 : 1}
-      borderColor={emphasized ? 'field.ink' : 'field.line'}
+      borderColor={emphasized ? 'foreground' : 'border'}
       bg={`${tone}.50`}
       p={3}
     >
-      <Text fontSize="xs" color="field.muted" fontWeight="800">
+      <Text fontSize="xs" color="mutedForeground" fontWeight="800">
         {label}
       </Text>
       <Text fontSize="2xl" fontFamily="mono" fontWeight="900">
         {score}
       </Text>
-      <Text fontSize="xs" color="field.muted">
+      <Text fontSize="xs" color="mutedForeground">
         {detail}
       </Text>
     </Box>

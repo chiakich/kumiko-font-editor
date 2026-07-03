@@ -75,10 +75,10 @@ export function ContextualBehaviorTableRow({
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
-      borderColor="field.panelMuted"
+      borderColor="muted"
     >
       <Stack gap={1}>
-        <Text fontSize="10px" fontWeight="bold" color="field.muted">
+        <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
           {t('editor.when')}
         </Text>
         <Box
@@ -119,7 +119,7 @@ export function ContextualBehaviorTableRow({
               aria-label={t('editor.deleteContextualRule')}
               size="xs"
               variant="ghost"
-              color="field.red.500"
+              color="destructive"
               onClick={onDelete}
             >
               <Trash width={15} height={15} aria-hidden="true" />
@@ -133,7 +133,7 @@ export function ContextualBehaviorTableRow({
         gap={1}
         alignItems="center"
       >
-        <Box px={2} py={1} bg="field.panelMuted" borderRadius="2px">
+        <Box px={2} py={1} bg="muted" borderRadius="2px">
           <Text fontSize="xs" fontFamily="mono" truncate>
             {source || 'glyph'}
           </Text>

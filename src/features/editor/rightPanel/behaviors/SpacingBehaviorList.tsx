@@ -90,14 +90,14 @@ function SpacingBehaviorGroup({
     setDraftRowIds((rowIds) => rowIds.filter((id) => id !== rowId))
 
   return (
-    <Box borderWidth="1px" borderColor="field.line" bg="field.panel">
+    <Box borderWidth="1px" borderColor="border" bg="card">
       <HStack
         justify="space-between"
         px={3}
         py={2}
-        bg="field.panelMuted"
+        bg="muted"
         borderBottomWidth="1px"
-        borderColor="field.line"
+        borderColor="border"
       >
         <HStack gap={2}>
           <Text fontSize="xs" fontWeight="bold">
@@ -131,7 +131,7 @@ function SpacingBehaviorGroup({
       </HStack>
       <SpacingHeader side={side} />
       {rows.length === 0 && draftRowIds.length === 0 ? (
-        <Text fontSize="xs" color="field.muted" px={3} py={3}>
+        <Text fontSize="xs" color="mutedForeground" px={3} py={3}>
           {emptyLabel}
         </Text>
       ) : null}
@@ -181,17 +181,17 @@ function SpacingHeader({ side }: { side: 'left' | 'right' }) {
       gap={1}
       px={3}
       py={2}
-      bg="field.panelMuted"
+      bg="muted"
       borderBottomWidth="1px"
-      borderColor="field.line"
+      borderColor="border"
     >
-      <Text fontSize="10px" fontWeight="bold" color="field.muted">
+      <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
         {side === 'left' ? 'Editable left' : 'Fixed left'}
       </Text>
-      <Text fontSize="10px" fontWeight="bold" color="field.muted">
+      <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
         {side === 'left' ? 'Fixed right' : 'Editable right'}
       </Text>
-      <Text fontSize="10px" fontWeight="bold" color="field.muted">
+      <Text fontSize="10px" fontWeight="bold" color="mutedForeground">
         {t('editor.value')}
       </Text>
     </Box>

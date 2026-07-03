@@ -46,7 +46,7 @@ export function OverviewReturnHeroOverlay() {
     const fieldInkColor =
       window
         .getComputedStyle(element)
-        .getPropertyValue('--chakra-colors-field-ink')
+        .getPropertyValue('--chakra-colors-foreground')
         .trim() || '#080b0d'
 
     element.style.width = `${sourceRect.width}px`
@@ -146,7 +146,7 @@ export function OverviewReturnHeroOverlay() {
       top={0}
       left={0}
       zIndex={2147483647}
-      color="field.ink"
+      color="foreground"
       pointerEvents="none"
       aria-hidden="true"
       css={{

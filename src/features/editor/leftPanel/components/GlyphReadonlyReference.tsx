@@ -519,14 +519,14 @@ export function GlyphReadonlyReference({
 
   return (
     <Box
-      bg="field.panel"
+      bg="card"
       borderRadius="sm"
       overflow="hidden"
       px={2}
       py={2}
       userSelect="none"
     >
-      <Text fontSize="xs" color="field.muted" mb={2} fontFamily="mono">
+      <Text fontSize="xs" color="mutedForeground" mb={2} fontFamily="mono">
         {t('editor.componentSearchHint')}
       </Text>
       <Box display="block" w="100%" h="220px" cursor="pointer" asChild>

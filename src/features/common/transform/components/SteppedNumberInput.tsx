@@ -58,7 +58,7 @@ export function SteppedNumberInput({
         display="grid"
         gridTemplateRows="1fr 1fr"
         borderLeft="1px solid"
-        borderColor="field.panelMuted"
+        borderColor="muted"
         pointerEvents={isDisabled ? 'none' : 'auto'}
         opacity={isDisabled ? 0.35 : 1}
       >
@@ -66,9 +66,9 @@ export function SteppedNumberInput({
           aria-label={t('editor.incrementValue')}
           fontSize="8px"
           lineHeight="1"
-          color="field.muted"
+          color="mutedForeground"
           borderTopRightRadius="3px"
-          _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
+          _hover={{ bg: 'muted', color: 'foreground' }}
           asChild
         >
           <button
@@ -85,9 +85,9 @@ export function SteppedNumberInput({
           aria-label={t('editor.decrementValue')}
           fontSize="8px"
           lineHeight="1"
-          color="field.muted"
+          color="mutedForeground"
           borderBottomRightRadius="3px"
-          _hover={{ bg: 'field.panelMuted', color: 'field.ink' }}
+          _hover={{ bg: 'muted', color: 'foreground' }}
           asChild
         >
           <button

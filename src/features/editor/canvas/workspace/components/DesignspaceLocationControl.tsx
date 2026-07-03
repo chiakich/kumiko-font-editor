@@ -54,14 +54,14 @@ export function DesignspaceLocationControl() {
       px={3}
       py={2}
       borderRadius="sm"
-      bg="field.panel"
+      bg="card"
       border="1px solid"
       borderColor="transparent"
-      color="field.ink"
+      color="foreground"
     >
       <VStack gap={2} align="stretch">
         <HStack justify="space-between" gap={2}>
-          <Heading size="sm" textTransform="uppercase" color="field.ink">
+          <Heading size="sm" textTransform="uppercase" color="foreground">
             {t('editor.designspace')}
           </Heading>
           {isInstancePreview ? (
@@ -124,8 +124,8 @@ export function DesignspaceLocationControl() {
                 onBlur={() => setDesignspaceScrubbing(false)}
               >
                 <Slider.Control>
-                  <Slider.Track bg="field.panelMuted" position="relative">
-                    <Slider.Range bg="field.yellow.400" />
+                  <Slider.Track bg="muted" position="relative">
+                    <Slider.Range bg="primary" />
                     {sourceMarkers.map((marker) => {
                       const isActive = isAxisMarkerActive(
                         axis,
@@ -143,10 +143,10 @@ export function DesignspaceLocationControl() {
                           w={isActive ? '3px' : '2px'}
                           h={isActive ? '16px' : '10px'}
                           borderRadius="full"
-                          bg={isActive ? 'field.ink' : 'blackAlpha.500'}
+                          bg={isActive ? 'foreground' : 'blackAlpha.500'}
                           boxShadow={
                             isActive
-                              ? '0 0 0 3px var(--chakra-colors-field-yellow-200)'
+                              ? '0 0 0 3px var(--chakra-colors-yellow-200)'
                               : 'none'
                           }
                           pointerEvents="none"
@@ -158,10 +158,10 @@ export function DesignspaceLocationControl() {
                   <Slider.Thumb
                     index={0}
                     boxSize={3}
-                    bg={hasActiveMarker ? 'field.yellow.400' : 'white'}
+                    bg={hasActiveMarker ? 'primary' : 'white'}
                     border="1px solid"
                     borderColor={
-                      hasActiveMarker ? 'field.ink' : 'blackAlpha.300'
+                      hasActiveMarker ? 'foreground' : 'blackAlpha.300'
                     }
                   />
                 </Slider.Control>

@@ -78,11 +78,11 @@ export function DesignspaceImportChoiceModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content borderRadius="sm">
+          <Dialog.Content borderRadius="lg">
             <Dialog.Header>{t('home.chooseDesignspaceTitle')}</Dialog.Header>
             <Dialog.Body>
               <Stack gap={4}>
-                <Text fontSize="sm" color="field.muted">
+                <Text fontSize="sm" color="mutedForeground">
                   {t('home.chooseDesignspaceDescription')}
                 </Text>
 
@@ -105,13 +105,13 @@ export function DesignspaceImportChoiceModal({
                           border="1px solid"
                           borderColor={
                             candidate.relativePath === selectedPath
-                              ? 'field.red.500'
-                              : 'field.line'
+                              ? 'destructive'
+                              : 'border'
                           }
                           bg={
                             candidate.relativePath === selectedPath
-                              ? 'field.yellow.300'
-                              : 'field.paper'
+                              ? 'yellow.300'
+                              : 'background'
                           }
                           borderRadius="sm"
                           p={3}
@@ -140,31 +140,31 @@ export function DesignspaceImportChoiceModal({
                                 )}
                               </HStack>
                               <HStack gap={3} wrap="wrap">
-                                <Text fontSize="xs" color="field.muted">
+                                <Text fontSize="xs" color="mutedForeground">
                                   {t('home.designspaceAxes', { axes })}
                                 </Text>
-                                <Text fontSize="xs" color="field.muted">
+                                <Text fontSize="xs" color="mutedForeground">
                                   {t('home.designspaceSources', {
                                     count: candidate.sourceCount,
                                     matched: candidate.matchedSourceCount,
                                   })}
                                 </Text>
                                 {!candidate.hasDefaultSource && !disabled && (
-                                  <Text fontSize="xs" color="field.red.500">
+                                  <Text fontSize="xs" color="destructive">
                                     {t('home.designspaceNoDefaultSource')}
                                   </Text>
                                 )}
                               </HStack>
                               {candidate.missingSourceCount > 0 &&
                                 !disabled && (
-                                  <Text fontSize="xs" color="field.red.500">
+                                  <Text fontSize="xs" color="destructive">
                                     {t('home.designspaceMissingSources', {
                                       count: candidate.missingSourceCount,
                                     })}
                                   </Text>
                                 )}
                               {candidate.parseError && (
-                                <Text fontSize="xs" color="field.red.500">
+                                <Text fontSize="xs" color="destructive">
                                   {candidate.parseError}
                                 </Text>
                               )}

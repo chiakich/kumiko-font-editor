@@ -21,7 +21,7 @@ export function SourceReferenceSummary({
 
   return (
     <Stack gap={2}>
-      <Text fontSize="xs" color="field.muted">
+      <Text fontSize="xs" color="mutedForeground">
         {t('projectControl.sourceSections')}
       </Text>
       <Stack gap={2}>
@@ -78,7 +78,7 @@ function SourceReferenceCard({
             />
           ))}
           {hiddenCount > 0 ? (
-            <Text fontSize="xs" color="field.muted">
+            <Text fontSize="xs" color="mutedForeground">
               +{hiddenCount}
             </Text>
           ) : null}
@@ -115,7 +115,7 @@ function SourceRecordLine({ record }: { record: SourceSectionRecordSummary }) {
           {record.label}
         </Text>
       </HStack>
-      <Text fontSize="xs" color="field.muted" lineClamp={1}>
+      <Text fontSize="xs" color="mutedForeground" lineClamp={1}>
         {record.detail}
       </Text>
     </Stack>

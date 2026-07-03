@@ -32,11 +32,11 @@ function AdviceRow({ advice }: { advice: RadarAdvice }) {
           <Text fontSize="sm" fontWeight="700">
             {advice.title}
           </Text>
-          <Text fontSize="xs" color="field.muted" fontFamily="mono">
+          <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
             {advice.detail}
           </Text>
           {advice.action ? (
-            <Text fontSize="xs" color="field.muted">
+            <Text fontSize="xs" color="mutedForeground">
               建議：{advice.action}
             </Text>
           ) : null}
@@ -59,9 +59,9 @@ export function GlyphInsightCard() {
   }
 
   return (
-    <Box p={4} bg="field.panel" borderRadius="sm">
+    <Box p={4} bg="card" borderRadius="sm">
       <HStack justify="space-between" mb={3}>
-        <Heading size="sm" textTransform="uppercase" color="field.ink">
+        <Heading size="sm" textTransform="uppercase" color="foreground">
           品質提示
         </Heading>
         {insight.status === 'ready' ? (
@@ -73,18 +73,18 @@ export function GlyphInsightCard() {
       {insight.status === 'analyzing' ? (
         <HStack gap={2}>
           <Spinner size="xs" />
-          <Text fontSize="xs" color="field.muted">
+          <Text fontSize="xs" color="mutedForeground">
             正在背景分析字體統計基準…
           </Text>
         </HStack>
       ) : insight.status === 'insufficient' ? (
-        <Text fontSize="xs" color="field.muted">
+        <Text fontSize="xs" color="mutedForeground">
           漢字樣本不足（需 20 個以上），尚無法跟群體比較。
         </Text>
       ) : (
         <Stack gap={3}>
           {advices.length === 0 ? (
-            <Text fontSize="xs" color="field.muted">
+            <Text fontSize="xs" color="mutedForeground">
               這個字的邊界、比例、墨量與重心都落在這套字的常見範圍內。
             </Text>
           ) : (
@@ -93,7 +93,7 @@ export function GlyphInsightCard() {
                 <AdviceRow key={advice.key} advice={advice} />
               ))}
               {advices.length > MAX_VISIBLE_ADVICES ? (
-                <Text fontSize="xs" color="field.muted">
+                <Text fontSize="xs" color="mutedForeground">
                   其餘 {advices.length - MAX_VISIBLE_ADVICES} 項已省略。
                 </Text>
               ) : null}

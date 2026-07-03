@@ -17,7 +17,7 @@ export function WorkspaceHeader({
         <Text fontSize="lg" fontWeight="900">
           {title}
         </Text>
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           {description}
         </Text>
       </Stack>
@@ -31,7 +31,7 @@ export function WorkspaceHeader({
             px={2}
             py={0.5}
             fontSize="xs"
-            color="field.muted"
+            color="mutedForeground"
           >
             {badge}
           </Text>
@@ -50,7 +50,7 @@ export function SourceSectionsDocument({
 }) {
   if (sourceSectionRecords.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {emptyText}
       </Text>
     )
@@ -62,7 +62,7 @@ export function SourceSectionsDocument({
 export function Metric({ label, value }: { label: string; value: number }) {
   return (
     <Stack borderWidth="1px" borderRadius="sm" p={3} gap={1}>
-      <Text fontSize="xs" color="field.muted">
+      <Text fontSize="xs" color="mutedForeground">
         {label}
       </Text>
       <Text fontSize="2xl" fontWeight="900">

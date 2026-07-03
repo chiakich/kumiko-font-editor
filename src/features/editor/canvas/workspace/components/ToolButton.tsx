@@ -36,7 +36,7 @@ export function ToolButton({
             ? undefined
             : status === 'ready'
               ? 'whiteAlpha.100'
-              : 'field.red.400'
+              : 'destructive'
         }
         color={
           isActive ? undefined : status === 'ready' ? 'whiteAlpha.900' : 'black'

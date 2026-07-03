@@ -25,7 +25,7 @@ export function EditorLayout() {
         h="100vh"
         w="100vw"
         overflow="hidden"
-        bg="field.ink"
+        bg="foreground"
       >
         <GridItem area="left" minW={0} minH={0}>
           <LeftPanel />

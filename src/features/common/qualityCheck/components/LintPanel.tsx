@@ -43,13 +43,8 @@ export function LintPanel({
   return (
     <Stack gap={3}>
       {Object.entries(groupedIssues).map(([group, groupIssues]) => (
-        <Box
-          key={group}
-          borderWidth={1}
-          borderColor="field.line"
-          bg="field.panel"
-        >
-          <HStack justify="space-between" px={3} py={2} bg="field.panelMuted">
+        <Box key={group} borderWidth={1} borderColor="border" bg="card">
+          <HStack justify="space-between" px={3} py={2} bg="muted">
             <Text fontSize="sm" fontWeight="900">
               {group}
             </Text>
@@ -72,7 +67,7 @@ export function LintPanel({
                     <Text fontFamily="mono" fontSize="sm" fontWeight="900">
                       {issue.glyphName}
                     </Text>
-                    <Text fontSize="sm" color="field.muted" lineClamp={1}>
+                    <Text fontSize="sm" color="mutedForeground" lineClamp={1}>
                       {issue.message}
                     </Text>
                   </HStack>
@@ -100,8 +95,8 @@ export function LintPanel({
 
 function EmptyPanel({ title }: { title: string }) {
   return (
-    <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={6}>
-      <Text fontSize="sm" color="field.muted" fontWeight="800">
+    <Box borderWidth={1} borderColor="border" bg="card" p={6}>
+      <Text fontSize="sm" color="mutedForeground" fontWeight="800">
         {title}
       </Text>
     </Box>

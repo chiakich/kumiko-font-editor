@@ -99,7 +99,7 @@ function RuleGroupEditor({
   updateRule: RuleConditionUpdater
 }) {
   return (
-    <Box border="1px solid" borderColor="field.haze" borderRadius="2px" p={2}>
+    <Box border="1px solid" borderColor="haze" borderRadius="2px" p={2}>
       <RuleGroupHeader
         addGroup={addGroup}
         addRule={addRule}
@@ -405,21 +405,14 @@ function ColorLabelValueControl({
         <Box
           alignItems="center"
           border="1px solid"
-          borderColor={
-            selectedValue === 'none' ? 'field.ink' : 'field.gray.300'
-          }
+          borderColor={selectedValue === 'none' ? 'foreground' : 'gray.300'}
           borderRadius="full"
           display="flex"
           h={selectedValue === 'none' ? '18px' : '16px'}
           justifyContent="center"
           w={selectedValue === 'none' ? '18px' : '16px'}
         >
-          <Box
-            h="2px"
-            w="10px"
-            bg="field.gray.400"
-            transform="rotate(-45deg)"
-          />
+          <Box h="2px" w="10px" bg="gray.400" transform="rotate(-45deg)" />
         </Box>
       </ColorLabelButton>
       {GLYPHS_LABEL_COLORS.map((color, colorIndex) => {
@@ -436,7 +429,7 @@ function ColorLabelValueControl({
             <Box
               bg={kumikoColorToCssRgba(color)}
               border={isSelected ? '1px solid' : 'none'}
-              borderColor="field.ink"
+              borderColor="foreground"
               borderRadius="full"
               boxShadow={
                 isSelected ? 'none' : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'

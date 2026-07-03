@@ -27,12 +27,12 @@ export function GlyphPreviewCard({
       <VStack align="stretch" gap={2} h="100%">
         <HStack justify="space-between" align="center">
           <Box minW={0}>
-            <Text fontSize="sm" color="field.ink" fontWeight="900">
+            <Text fontSize="sm" color="foreground" fontWeight="900">
               {t('editor.componentPreview')}
             </Text>
             <Text
               fontSize="xs"
-              color="field.muted"
+              color="mutedForeground"
               lineClamp={1}
               fontFamily="mono"
             >

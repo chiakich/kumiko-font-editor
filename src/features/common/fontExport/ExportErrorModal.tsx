@@ -116,7 +116,7 @@ function DetailBlock({ label, text }: { label: string; text: string }) {
         overflowY="auto"
         overscrollBehavior="contain"
         resize="vertical"
-        bg="field.panelMuted"
+        bg="muted"
         borderWidth="1px"
         borderRadius="sm"
         fontFamily="mono"
@@ -224,7 +224,7 @@ export function ExportErrorModal({ report, onClose }: ExportErrorModalProps) {
                           </Badge>
                           <Text
                             fontSize="xs"
-                            color="field.muted"
+                            color="mutedForeground"
                             fontFamily="mono"
                           >
                             {targetLabel(diagnostic)}

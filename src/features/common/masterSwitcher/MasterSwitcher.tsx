@@ -61,7 +61,7 @@ export function MasterSwitcher() {
             {sourceList.map((source) => (
               <Menu.Item
                 key={source.id}
-                bg={source.id === currentId ? 'field.yellow.100' : undefined}
+                bg={source.id === currentId ? 'yellow.100' : undefined}
                 onSelect={() => setActiveMasterId(source.id)}
                 value="item-0"
               >
@@ -73,7 +73,7 @@ export function MasterSwitcher() {
                     {source.name}
                     {isSparse(source.id) ? ' +' : ''}
                   </Text>
-                  <Text fontSize="xs" color="field.muted" flexShrink={0}>
+                  <Text fontSize="xs" color="mutedForeground" flexShrink={0}>
                     {locationLabel(source)}
                   </Text>
                 </HStack>

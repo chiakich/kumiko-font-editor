@@ -54,7 +54,7 @@ export function OverviewGlyphContextMenu({
   return (
     <Portal>
       <Box
-        bg="field.panel"
+        bg="card"
         border="1px solid"
         borderColor="controlBorder"
         borderRadius="6px"
@@ -75,9 +75,14 @@ export function OverviewGlyphContextMenu({
         <ContextMenuButton isDisabled={!canPaste} onClick={onPaste}>
           {t('editor.paste')}
         </ContextMenuButton>
-        <Box h="1px" my="4px" bg="field.panelMuted" />
+        <Box h="1px" my="4px" bg="muted" />
         <Box px="12px" py="7px">
-          <Text color="field.muted" fontSize="11px" fontWeight="700" mb="8px">
+          <Text
+            color="mutedForeground"
+            fontSize="11px"
+            fontWeight="700"
+            mb="8px"
+          >
             {t('glyphInspector.colorLabel')}
           </Text>
           <HStack flexWrap="wrap" gap="3px">
@@ -106,7 +111,7 @@ export function OverviewGlyphContextMenu({
             })}
           </HStack>
         </Box>
-        <Box h="1px" my="4px" bg="field.panelMuted" />
+        <Box h="1px" my="4px" bg="muted" />
         <ContextMenuButton tone="danger" onClick={onDelete}>
           {t('editor.delete')}
         </ContextMenuButton>
@@ -128,9 +133,7 @@ function ContextMenuButton({
 }) {
   return (
     <Box
-      color={
-        isDisabled ? 'field.haze' : tone === 'danger' ? 'red.600' : 'field.ink'
-      }
+      color={isDisabled ? 'haze' : tone === 'danger' ? 'red.600' : 'foreground'}
       cursor={isDisabled ? 'default' : 'pointer'}
       display="block"
       fontSize="13px"
@@ -185,7 +188,7 @@ function GlyphColorButton({
         justifyContent="center"
         title={label}
         w="22px"
-        _hover={{ bg: 'field.panelMuted' }}
+        _hover={{ bg: 'muted' }}
         asChild
       >
         <button type="button" onClick={onClick}>
@@ -193,7 +196,7 @@ function GlyphColorButton({
             <Box
               bg={kumikoColorToCssRgba(color)}
               border={isSelected ? '1px solid' : 'none'}
-              borderColor="field.ink"
+              borderColor="foreground"
               borderRadius="full"
               boxShadow={
                 isSelected ? undefined : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
@@ -205,19 +208,14 @@ function GlyphColorButton({
             <Box
               alignItems="center"
               border="1px solid"
-              borderColor={isSelected ? 'field.ink' : 'field.gray.300'}
+              borderColor={isSelected ? 'foreground' : 'gray.300'}
               borderRadius="full"
               display="flex"
               h={swatchSize}
               justifyContent="center"
               w={swatchSize}
             >
-              <Box
-                bg="field.gray.400"
-                h="2px"
-                transform="rotate(-45deg)"
-                w="11px"
-              />
+              <Box bg="gray.400" h="2px" transform="rotate(-45deg)" w="11px" />
             </Box>
           )}
         </button>

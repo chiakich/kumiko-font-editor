@@ -58,13 +58,13 @@ export function GitHubRepoCard({
                 >
                   {repo.fullName}
                 </Link>
-                <Text fontSize="sm" color="field.muted">
+                <Text fontSize="sm" color="mutedForeground">
                   {t('glyphInspector.defaultBranchLabel')}
                   {repo.defaultBranch}
                 </Text>
               </Stack>
             ) : (
-              <Text fontSize="sm" color="field.muted">
+              <Text fontSize="sm" color="mutedForeground">
                 {t('glyphInspector.repoUnavailable')}
               </Text>
             )}
@@ -84,13 +84,13 @@ export function GitHubRepoCard({
           ) : null}
         </HStack>
         {helperText ? (
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {helperText}
           </Text>
         ) : null}
         {statusText ? (
           <HStack justify="space-between" align="center" gap={3}>
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               {statusText}
             </Text>
             {statusActionLabel ? (

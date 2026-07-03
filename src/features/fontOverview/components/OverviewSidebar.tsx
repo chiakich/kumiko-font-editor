@@ -137,7 +137,7 @@ export function OverviewSidebar({
       h="100%"
       display="flex"
       flexDirection="column"
-      bg="field.paper"
+      bg="background"
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
     >
@@ -148,7 +148,7 @@ export function OverviewSidebar({
               fontSize="xs"
               textTransform="uppercase"
               letterSpacing="0.16em"
-              color="field.muted"
+              color="mutedForeground"
               mb={1}
               fontFamily="mono"
               fontWeight="900"
@@ -156,14 +156,14 @@ export function OverviewSidebar({
               {t('fontOverview.kumikoFontEditor')}
             </Text>
             <Heading
-              color="field.ink"
+              color="foreground"
               fontSize="28px"
               lineHeight="0.98"
               letterSpacing="0"
             >
               {t('fontOverview.glyphOverview')}
             </Heading>
-            <Text fontSize="sm" color="field.muted" mt={2} lineClamp={2}>
+            <Text fontSize="sm" color="mutedForeground" mt={2} lineClamp={2}>
               {projectTitle}
             </Text>
           </Box>
@@ -300,22 +300,15 @@ export function OverviewSidebar({
           />
         </InputGroup>
 
-        <Text fontSize="sm" color="field.muted" fontFamily="mono">
+        <Text fontSize="sm" color="mutedForeground" fontFamily="mono">
           {t('fontOverview.visibleTotalCount', {
             total: totalGlyphCount.toLocaleString(),
             visible: visibleGlyphCount.toLocaleString(),
           })}
         </Text>
       </VStack>
-      <Separator mb={4} borderColor="field.haze" opacity={0.55} />
-      <Box
-        flex={1}
-        minH={0}
-        bg="field.panel"
-        borderRadius="sm"
-        overflow="auto"
-        p={2}
-      >
+      <Separator mb={4} borderColor="haze" opacity={0.55} />
+      <Box flex={1} minH={0} bg="card" borderRadius="sm" overflow="auto" p={2}>
         <OverviewTreeNav
           nodes={treeNodes}
           selectedSectionId={selectedSectionId}

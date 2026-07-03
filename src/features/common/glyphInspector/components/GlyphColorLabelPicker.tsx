@@ -23,7 +23,7 @@ export function GlyphColorLabelPicker({
 
   return (
     <Box>
-      <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+      <Text fontSize="xs" color="mutedForeground" mb={1} fontFamily="mono">
         {t('glyphInspector.colorLabel')}
       </Text>
       <Flex gap="5px" wrap="wrap">
@@ -46,7 +46,7 @@ export function GlyphColorLabelPicker({
               w={hasNoColor ? '14px' : '12px'}
               borderRadius="full"
               border="1px solid"
-              borderColor={hasNoColor ? 'field.ink' : 'field.gray.300'}
+              borderColor={hasNoColor ? 'foreground' : 'gray.300'}
               display="flex"
               alignItems="center"
               justifyContent="center"
@@ -54,7 +54,7 @@ export function GlyphColorLabelPicker({
               <Box
                 h="2px"
                 w={hasNoColor ? '9px' : '8px'}
-                bg="field.gray.400"
+                bg="gray.400"
                 transform="rotate(-45deg)"
               />
             </Box>
@@ -85,7 +85,7 @@ export function GlyphColorLabelPicker({
                   w={isSelected ? '14px' : '12px'}
                   borderRadius="full"
                   border={isSelected ? '1px solid' : 'none'}
-                  borderColor="field.ink"
+                  borderColor="foreground"
                   bg={kumikoColorToCssRgba(color)}
                   opacity={isSelected ? 1 : 0.74}
                   boxShadow={

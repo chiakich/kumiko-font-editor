@@ -51,7 +51,7 @@ export function Home() {
       justifyContent="center"
       px={{ base: 4, md: 8 }}
       py={{ base: 6, md: 10 }}
-      bg="field.paper"
+      bg="background"
       backgroundImage="var(--field-plus-pattern)"
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
@@ -84,7 +84,7 @@ export function Home() {
         boxShadow="lg"
         w="100%"
         maxW="880px"
-        bg="field.panel"
+        bg="card"
         position="relative"
         _before={{
           content: '""',
@@ -93,9 +93,9 @@ export function Home() {
           left: 0,
           right: 0,
           h: '7px',
-          bg: 'field.yellow.400',
+          bg: 'primary',
           borderBottom: '1px solid',
-          borderColor: 'field.ink',
+          borderColor: 'foreground',
         }}
       >
         <HomeHeader />
@@ -129,7 +129,7 @@ export function Home() {
             />
           </Grid>
 
-          <Separator borderColor="field.line" />
+          <Separator borderColor="border" />
 
           <RecentProjectsList
             projects={projects}

@@ -66,7 +66,7 @@ export function MixedProofPanel({
 
   return (
     <Stack gap={4}>
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {isFocusedScope
           ? t('qualityCheck.mixedProof.focusedDescription')
           : t('qualityCheck.mixedProof.description')}
@@ -92,7 +92,7 @@ export function MixedProofPanel({
               checked={showHighlight}
               onCheckedChange={(details) => setShowHighlight(details.checked)}
             />
-            <Text fontSize="xs" color="field.muted" fontWeight="800">
+            <Text fontSize="xs" color="mutedForeground" fontWeight="800">
               {t('qualityCheck.highlightScopedGlyphs')}
             </Text>
           </HStack>
@@ -115,13 +115,7 @@ export function MixedProofPanel({
           數字高/漢字字面 {digitRatio === null ? 'N/A' : `${digitRatio}%`}
         </Tag.Root>
       </HStack>
-      <Stack
-        gap={3}
-        bg="field.panel"
-        borderWidth={1}
-        borderColor="field.line"
-        p={4}
-      >
+      <Stack gap={3} bg="card" borderWidth={1} borderColor="border" p={4}>
         {proofSizes.map((fontSize) => (
           <Box key={fontSize} overflowX="auto">
             <Text fontFamily="mono" fontSize="xs" fontWeight="900" mb={1}>

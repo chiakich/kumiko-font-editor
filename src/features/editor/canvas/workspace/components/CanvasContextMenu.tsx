@@ -143,7 +143,7 @@ export function CanvasContextMenu({
       zIndex={20}
       minW="168px"
       py="4px"
-      bg="field.panel"
+      bg="card"
       border="1px solid"
       borderColor="controlBorder"
       borderRadius="6px"
@@ -168,7 +168,7 @@ export function CanvasContextMenu({
       <ContextMenuButton onClick={handlePasteSelection}>
         {t('editor.paste')}
       </ContextMenuButton>
-      <Box h="1px" my="4px" bg="field.panelMuted" />
+      <Box h="1px" my="4px" bg="muted" />
       <ContextMenuButton
         isDisabled={selectedReversiblePathIds.length === 0}
         onClick={handleReverseSelectedPaths}
@@ -208,9 +208,9 @@ function ContextMenuButton({
       py="8px"
       textAlign="left"
       fontSize="13px"
-      color={isDisabled ? 'field.haze' : 'field.ink'}
+      color={isDisabled ? 'haze' : 'foreground'}
       cursor={isDisabled ? 'default' : 'pointer'}
-      _hover={isDisabled ? undefined : { bg: 'field.panelMuted' }}
+      _hover={isDisabled ? undefined : { bg: 'muted' }}
       asChild
     >
       <button

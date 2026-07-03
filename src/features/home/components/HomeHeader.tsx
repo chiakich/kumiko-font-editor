@@ -23,7 +23,7 @@ export function HomeHeader() {
           fontSize="10px"
           fontWeight="900"
           letterSpacing="0.16em"
-          color="field.muted"
+          color="mutedForeground"
         >
           {t('home.fullWebBasedFontEditor')}
         </Text>
@@ -32,7 +32,7 @@ export function HomeHeader() {
           fontSize={{ base: '46px', md: '76px' }}
           lineHeight="0.82"
           letterSpacing="0"
-          color="field.ink"
+          color="foreground"
           fontWeight="700"
           fontFamily="'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont,'Noto Sans TC', sans-serif"
         >

@@ -35,15 +35,15 @@ export function GitHubImportCard({
   return (
     <Box
       border="1px solid"
-      borderColor="field.line"
+      borderColor="border"
       p={6}
       borderRadius="sm"
-      bg="field.panel"
+      bg="card"
     >
       <Heading size="sm" mb={2} textTransform="uppercase">
         {t('home.loadFromGitHub')}
       </Heading>
-      <Text fontSize="sm" color="field.muted" mb={4}>
+      <Text fontSize="sm" color="mutedForeground" mb={4}>
         {t('home.repoInputHint')}
       </Text>
       <VStack gap={3} align="stretch">

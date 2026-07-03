@@ -71,7 +71,7 @@ export function OverviewRightPanel({
       p={4}
       h="100%"
       overflowY="auto"
-      bg="field.paper"
+      bg="background"
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
     >
@@ -98,7 +98,7 @@ export function OverviewRightPanel({
             <BatchTransformCard selectedGlyphIds={selectedGlyphIds} />
           </>
         ) : !panel.glyph ? (
-          <Text fontSize="sm" color="field.muted" fontFamily="mono">
+          <Text fontSize="sm" color="mutedForeground" fontFamily="mono">
             {t('fontOverview.noGlyphSelected')}
           </Text>
         ) : (

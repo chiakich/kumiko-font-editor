@@ -141,13 +141,13 @@ export function LeftPanelContent({
         ) : null}
 
         <HStack justify="space-between" align="center">
-          <Text fontSize="sm" color="field.muted" fontFamily="mono">
+          <Text fontSize="sm" color="mutedForeground" fontFamily="mono">
             {isCjkGlyph ? '含此部件的字符' : '相關字符'}{' '}
             {resultGlyphs.length.toLocaleString()}
           </Text>
         </HStack>
       </VStack>
-      <Separator mb={4} borderColor="field.haze" opacity={0.55} />
+      <Separator mb={4} borderColor="haze" opacity={0.55} />
       <Stack height="100%" minH={0} gap={3}>
         <GlyphPreviewStrip
           glyphMap={glyphMap}
@@ -164,7 +164,7 @@ export function LeftPanelContent({
         />
       </Stack>
       {searchState.error ? (
-        <Text mt={3} fontSize="sm" color="field.red.400">
+        <Text mt={3} fontSize="sm" color="destructive">
           {searchState.error}
         </Text>
       ) : null}

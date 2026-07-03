@@ -137,7 +137,7 @@ function SelectionView({
         state={state}
       />
     ) : (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.noFeaturesYet')}
       </Text>
     )

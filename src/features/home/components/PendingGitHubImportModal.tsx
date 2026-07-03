@@ -39,31 +39,31 @@ export function PendingGitHubImportModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content borderRadius="sm">
+          <Dialog.Content borderRadius="lg">
             <Dialog.Header fontWeight={800}>
               {t('home.loadGitHubProject')}
             </Dialog.Header>
             <DialogCloseButton />
             <Dialog.Body>
               <VStack align="stretch" gap={4}>
-                <Text fontSize="sm" color="field.muted">
+                <Text fontSize="sm" color="mutedForeground">
                   {t('home.loadGitHubProjectPrompt')}
                 </Text>
                 <Box
                   border="1px solid"
-                  borderColor="field.line"
+                  borderColor="border"
                   borderRadius="sm"
-                  bg="field.panel"
+                  bg="card"
                   p={4}
                 >
-                  <Text fontSize="xs" color="field.muted" fontFamily="mono">
+                  <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
                     {t('home.repository')}
                   </Text>
 
                   {importRequest?.repoUrl && (
                     <Box
                       fontSize="lg"
-                      color="field.ink"
+                      color="foreground"
                       wordBreak="break-all"
                       textTransform="uppercase"
                       fontFamily="'SF Pro Display', 'SF Pro Text', 'Noto Sans TC', sans-serif"
@@ -87,7 +87,7 @@ export function PendingGitHubImportModal({
                   <Text
                     mt={3}
                     fontSize="xs"
-                    color="field.muted"
+                    color="mutedForeground"
                     fontFamily="mono"
                   >
                     {t('home.ref')}

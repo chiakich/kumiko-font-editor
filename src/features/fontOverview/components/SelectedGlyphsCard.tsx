@@ -18,16 +18,16 @@ export function SelectedGlyphsCard({
   const { t } = useTranslation()
 
   return (
-    <Box borderWidth={1} borderColor="field.line" bg="field.panel" p={4}>
+    <Box borderWidth={1} borderColor="border" bg="card" p={4}>
       <Stack gap={3}>
         <HStack justify="space-between" gap={3} align="start">
           <Box>
-            <Text fontSize="lg" fontWeight="900" color="field.ink">
+            <Text fontSize="lg" fontWeight="900" color="foreground">
               {t('fontOverview.selection.selectedGlyphs', {
                 count: selectedGlyphCount,
               })}
             </Text>
-            <Text fontSize="xs" color="field.muted" mt={1}>
+            <Text fontSize="xs" color="mutedForeground" mt={1}>
               {t('fontOverview.selection.description')}
             </Text>
           </Box>

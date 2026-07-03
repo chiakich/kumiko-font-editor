@@ -21,7 +21,7 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
           <Text fontWeight="semibold">
             {t('projectControl.behaviorLibraryExportView')}
           </Text>
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {t('projectControl.importedTablesAreTreatedAsPreserved')}
           </Text>
         </Stack>
@@ -80,7 +80,7 @@ export function ImportExportOverview({ state }: ImportExportOverviewProps) {
           tone={summary.unsupportedLookups > 0 ? 'orange' : 'gray'}
         />
       </SimpleGrid>
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t(`projectControl.exportMode.${state.exportPolicy}.description`)}
       </Text>
     </Stack>
@@ -101,7 +101,7 @@ function OverviewTile({
   return (
     <Stack borderWidth="1px" borderRadius="sm" p={3} gap={2}>
       <HStack justify="space-between">
-        <Text fontSize="xs" color="field.muted">
+        <Text fontSize="xs" color="mutedForeground">
           {label}
         </Text>
         <Badge variant="subtle">{accent}</Badge>
@@ -109,7 +109,7 @@ function OverviewTile({
       <Text fontSize="2xl" fontWeight="900">
         {value}
       </Text>
-      <Text fontSize="xs" color="field.muted">
+      <Text fontSize="xs" color="mutedForeground">
         {detail}
       </Text>
     </Stack>
@@ -133,7 +133,7 @@ function StatusLine({
       px={3}
       py={2}
     >
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {label}
       </Text>
       <Badge colorPalette={tone}>{value}</Badge>

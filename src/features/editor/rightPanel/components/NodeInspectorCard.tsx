@@ -40,20 +40,20 @@ export function NodeInspectorCard({
   const { t } = useTranslation()
 
   return (
-    <Box p={4} bg="field.panel" borderRadius="sm">
-      <Heading size="sm" mb={3} textTransform="uppercase" color="field.ink">
+    <Box p={4} bg="card" borderRadius="sm">
+      <Heading size="sm" mb={3} textTransform="uppercase" color="foreground">
         {t('editor.nodeView')}
       </Heading>
       {!selectedNode || !nodeRef ? (
         selectedSegment ? (
           <Stack gap={3}>
-            <Text fontSize="sm" color="field.ink" fontFamily="mono">
+            <Text fontSize="sm" color="foreground" fontFamily="mono">
               {t('editor.segment')}{' '}
               <Tag.Root size="sm" ml={2}>
                 {selectedSegment.pathId}
               </Tag.Root>
             </Text>
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               {t('editor.highlightedSegmentPrefix')}
               {selectedSegment.type === 'line' ? '直線' : '曲線'}。
             </Text>
@@ -62,19 +62,19 @@ export function NodeInspectorCard({
                 {t('editor.convertToCurve')}
               </Button>
             ) : (
-              <Text fontSize="sm" color="field.muted">
+              <Text fontSize="sm" color="mutedForeground">
                 {t('editor.segmentAlreadyCurve')}
               </Text>
             )}
           </Stack>
         ) : (
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {t('editor.noNodeSelectedHint')}
           </Text>
         )
       ) : (
         <Stack gap={3}>
-          <Text fontSize="sm" color="field.ink" fontFamily="mono">
+          <Text fontSize="sm" color="foreground" fontFamily="mono">
             {t('editor.path')}{' '}
             <Tag.Root size="sm" ml={2}>
               {nodeRef.pathId}
@@ -83,7 +83,12 @@ export function NodeInspectorCard({
 
           <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap={3}>
             <GridItem>
-              <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+              <Text
+                fontSize="xs"
+                color="mutedForeground"
+                mb={1}
+                fontFamily="mono"
+              >
                 X
               </Text>
               <Input
@@ -96,7 +101,12 @@ export function NodeInspectorCard({
               />
             </GridItem>
             <GridItem>
-              <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+              <Text
+                fontSize="xs"
+                color="mutedForeground"
+                mb={1}
+                fontFamily="mono"
+              >
                 Y
               </Text>
               <Input
@@ -111,7 +121,7 @@ export function NodeInspectorCard({
           </Grid>
 
           {!isOnCurveNode ? (
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               {t('editor.selectedHandleNoNodeType')}
             </Text>
           ) : (
@@ -135,7 +145,7 @@ export function NodeInspectorCard({
                   {t('editor.smooth')}
                 </Button>
               </Grid>
-              <Text fontSize="xs" color="field.muted">
+              <Text fontSize="xs" color="mutedForeground">
                 {isEndpointNode
                   ? '開放路徑的起點與終點只有一根手把，所以固定為折線。'
                   : effectiveNodeType === 'smooth'

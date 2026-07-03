@@ -28,7 +28,7 @@ export function OpenTypeStatusBar({
       gap={2}
       borderBottomWidth="1px"
       pb={3}
-      color="field.muted"
+      color="mutedForeground"
     >
       <StatusItem
         label={t('projectControl.features')}

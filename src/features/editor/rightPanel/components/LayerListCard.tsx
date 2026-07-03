@@ -53,7 +53,7 @@ function EyeToggle({
     <Box
       lineHeight={0}
       flexShrink={0}
-      color={isDisabled ? 'field.muted' : 'field.ink'}
+      color={isDisabled ? 'mutedForeground' : 'foreground'}
       opacity={isDisabled ? 0.4 : 1}
       cursor={isDisabled ? 'default' : 'pointer'}
       asChild
@@ -126,9 +126,9 @@ export function LayerListCard({
   }
 
   return (
-    <Box p={4} bg="field.panel" borderRadius="sm">
+    <Box p={4} bg="card" borderRadius="sm">
       <HStack justify="space-between" mb={3}>
-        <Heading size="sm" textTransform="uppercase" color="field.ink">
+        <Heading size="sm" textTransform="uppercase" color="foreground">
           {t('editor.layers')}
         </Heading>
         <Button
@@ -147,7 +147,7 @@ export function LayerListCard({
             ? !hideActiveLayer
             : visibleBackdropLayerIds.includes(layer.id)
           const rowBg = isActive ? 'blackAlpha.100' : 'transparent'
-          const rowBorderColor = isActive ? 'field.yellow.400' : 'transparent'
+          const rowBorderColor = isActive ? 'primary' : 'transparent'
 
           return (
             <HStack
@@ -216,7 +216,7 @@ export function LayerListCard({
                       minW={0}
                       textAlign="left"
                       fontSize="sm"
-                      color="field.ink"
+                      color="foreground"
                       lineClamp={1}
                       asChild
                     >
@@ -303,7 +303,7 @@ export function LayerListCard({
                 minW={0}
                 fontSize="sm"
                 fontStyle="italic"
-                color="field.muted"
+                color="mutedForeground"
                 lineClamp={1}
               >
                 {source.name}
@@ -332,7 +332,7 @@ export function LayerListCard({
           />
           <Text
             fontSize="sm"
-            color="field.muted"
+            color="mutedForeground"
             lineClamp={1}
             flex="1"
             minW={0}

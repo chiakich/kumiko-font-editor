@@ -73,7 +73,7 @@ export function LanguageSystemDocument({
 
   if (state.languagesystems.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.noLanguageSystems')}
       </Text>
     )
@@ -99,7 +99,7 @@ export function GlyphClassDocument({
 
   if (glyphClasses.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.noGlyphClasses')}
       </Text>
     )
@@ -115,7 +115,7 @@ export function GlyphClassDocument({
             </Text>
             <Badge flexShrink={0}>{glyphClass.glyphs.length}</Badge>
           </HStack>
-          <Text fontSize="xs" color="field.muted" lineClamp={2}>
+          <Text fontSize="xs" color="mutedForeground" lineClamp={2}>
             {glyphClass.glyphs.slice(0, 48).join(' ')}
             {glyphClass.glyphs.length > 48 ? ' ...' : ''}
           </Text>
@@ -134,7 +134,7 @@ export function MarkClassDocument({
 
   if (markClasses.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.noMarkClasses')}
       </Text>
     )
@@ -150,7 +150,7 @@ export function MarkClassDocument({
             </Text>
             <Badge flexShrink={0}>{markClass.marks.length}</Badge>
           </HStack>
-          <Text fontSize="xs" color="field.muted" lineClamp={2}>
+          <Text fontSize="xs" color="mutedForeground" lineClamp={2}>
             {markClass.marks
               .slice(0, 48)
               .map((mark) => mark.glyph)
@@ -171,7 +171,7 @@ export function GdefDocument({ state }: { state: OpenTypeFeaturesState }) {
 
   if (!state.gdef && sourceSectionRecords.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.noGdefData')}
       </Text>
     )

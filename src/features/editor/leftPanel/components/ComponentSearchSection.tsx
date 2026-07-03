@@ -76,14 +76,14 @@ export function ComponentSearchSection({
 
   return (
     <VStack align="stretch" gap={2}>
-      <Text fontSize="sm" color="field.muted" fontFamily="mono">
+      <Text fontSize="sm" color="mutedForeground" fontFamily="mono">
         {t('editor.decompositionComponents')}
       </Text>
       <HStack gap={2} flexWrap="wrap">
         {loading && components.length === 0 ? (
           <HStack gap={2}>
-            <Spinner size="sm" color="field.yellow.400" />
-            <Text fontSize="sm" color="field.muted">
+            <Spinner size="sm" color="primary" />
+            <Text fontSize="sm" color="mutedForeground">
               {t('editor.analyzing')}
             </Text>
           </HStack>
@@ -111,7 +111,7 @@ export function ComponentSearchSection({
             )
           })
         ) : (
-          <Text fontSize="sm" color="field.muted">
+          <Text fontSize="sm" color="mutedForeground">
             {t('editor.noComponentsAvailable')}
           </Text>
         )}

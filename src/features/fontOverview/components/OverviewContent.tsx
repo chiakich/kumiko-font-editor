@@ -168,7 +168,7 @@ export function OverviewContent({
       h="100%"
       overflow="hidden"
       position="relative"
-      bg="field.paper"
+      bg="background"
       backgroundImage="var(--field-plus-pattern)"
       backgroundSize="26px 26px"
       backgroundRepeat="repeat"
@@ -179,7 +179,7 @@ export function OverviewContent({
             <Box>
               <Text
                 fontSize="10px"
-                color="field.muted"
+                color="mutedForeground"
                 fontFamily="mono"
                 fontWeight="900"
                 letterSpacing="0.16em"
@@ -187,14 +187,14 @@ export function OverviewContent({
                 {t('fontOverview.glyphIndexTotalField')}
               </Text>
               <Heading
-                color="field.ink"
+                color="foreground"
                 fontSize="52px"
                 lineHeight="0.86"
                 letterSpacing="0"
               >
                 {t('fontOverview.glyphOverview')}
               </Heading>
-              <Text fontSize="sm" color="field.muted" mt={2}>
+              <Text fontSize="sm" color="mutedForeground" mt={2}>
                 {t('fontOverview.glyphCardHint')}
               </Text>
             </Box>
@@ -205,8 +205,8 @@ export function OverviewContent({
                 flexShrink={0}
                 variant="solid"
                 fontWeight="900"
-                _hover={{ bg: 'field.yellow.200' }}
-                _active={{ bg: 'field.yellow.400' }}
+                _hover={{ bg: 'yellow.200' }}
+                _active={{ bg: 'primary' }}
                 onClick={onOpenAddGlyphModal}
               >
                 {t('fontOverview.addGlyphButton')}
@@ -215,22 +215,22 @@ export function OverviewContent({
           </HStack>
 
           {visibleSections.length === 0 ? (
-            <Box p={10} bg="field.panel" borderRadius="sm">
-              <Text color="field.muted">
+            <Box p={10} bg="card" borderRadius="sm">
+              <Text color="mutedForeground">
                 {t('fontOverview.noMatchingGlyphs')}
               </Text>
             </Box>
           ) : (
             <Box
               p={4}
-              bg="field.panel"
+              bg="card"
               borderRadius="sm"
               h="calc(100vh - 140px)"
               display="flex"
               flexDirection="column"
             >
               <HStack justify="space-between" mb={4}>
-                <Heading size="sm" color="field.ink" textTransform="uppercase">
+                <Heading size="sm" color="foreground" textTransform="uppercase">
                   {activeSection.label}
                 </Heading>
                 <Tag.Root size="sm" variant="subtle">
@@ -295,9 +295,9 @@ export function OverviewContent({
         zIndex={2}
         gap={1}
         p={1}
-        bg="field.panel"
+        bg="card"
         border="1px solid"
-        borderColor="field.line"
+        borderColor="border"
         borderRadius="sm"
         boxShadow="floating"
       >

@@ -90,7 +90,7 @@ export function ProjectControlActions({
         alignSelf="flex-end"
         px={2}
         py={1}
-        bg="field.panelMuted"
+        bg="muted"
         borderRadius="full"
       >
         {hasGitHubSource ? (
@@ -103,8 +103,8 @@ export function ProjectControlActions({
               px={0}
               borderRadius="full"
               variant="ghost"
-              color="field.ink"
-              _hover={{ bg: 'field.ink', color: 'field.paper' }}
+              color="foreground"
+              _hover={{ bg: 'foreground', color: 'background' }}
               onClick={onOpenGitHubModal}
             >
               <Github
@@ -125,8 +125,8 @@ export function ProjectControlActions({
             px={0}
             borderRadius="full"
             variant="ghost"
-            color="field.ink"
-            _hover={{ bg: 'field.ink', color: 'field.paper' }}
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
             onClick={onOpenQualityCheckModal}
           >
             <PageSearch
@@ -146,8 +146,8 @@ export function ProjectControlActions({
             px={0}
             borderRadius="full"
             variant="ghost"
-            color="field.ink"
-            _hover={{ bg: 'field.ink', color: 'field.paper' }}
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
             onClick={appSettingsModal.onOpen}
           >
             <Settings
@@ -167,8 +167,8 @@ export function ProjectControlActions({
             px={0}
             borderRadius="full"
             variant="ghost"
-            color="field.ink"
-            _hover={{ bg: 'field.ink', color: 'field.paper' }}
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
             onClick={onOpenFontSettingsModal}
           >
             <FontQuestion
@@ -193,8 +193,8 @@ export function ProjectControlActions({
               px={0}
               borderRadius="full"
               variant="ghost"
-              color="field.red.500"
-              _hover={{ bg: 'field.red.500', color: 'field.panel' }}
+              color="destructive"
+              _hover={{ bg: 'destructive', color: 'card' }}
               onClick={() => void handleRetryLocalSave()}
               loading={isRetryingLocalSave}
             >
@@ -218,7 +218,7 @@ export function ProjectControlActions({
               alignItems="center"
               justifyContent="center"
               color={
-                localSaveStatus === 'saved' ? 'field.green.500' : 'field.muted'
+                localSaveStatus === 'saved' ? 'success' : 'mutedForeground'
               }
             >
               {localSaveStatus === 'saved' ? (
@@ -248,8 +248,8 @@ export function ProjectControlActions({
             px={0}
             borderRadius="full"
             variant="ghost"
-            color="field.ink"
-            _hover={{ bg: 'field.ink', color: 'field.paper' }}
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
             onClick={onOpenExportModal}
             disabled={isSavingToLocal}
           >

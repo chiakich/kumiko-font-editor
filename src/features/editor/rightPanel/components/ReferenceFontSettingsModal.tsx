@@ -179,7 +179,7 @@ export function ReferenceFontSettingsModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content bg="field.paper">
+          <Dialog.Content bg="background">
             <Dialog.Header>{t('editor.referenceFontSettings')}</Dialog.Header>
             <DialogCloseButton disabled={isComputingResidual} />
             <Dialog.Body>
@@ -196,7 +196,7 @@ export function ReferenceFontSettingsModal({
                   {referenceFontName ? (
                     <HStack justify="space-between" align="flex-start">
                       <Box minW={0}>
-                        <Text fontSize="xs" color="field.muted" mb={1}>
+                        <Text fontSize="xs" color="mutedForeground" mb={1}>
                           {t('editor.referenceFontCurrent')}
                         </Text>
                         <Text fontSize="sm" fontWeight="800" lineClamp={2}>
@@ -213,7 +213,7 @@ export function ReferenceFontSettingsModal({
                       </Button>
                     </HStack>
                   ) : (
-                    <Text fontSize="sm" color="field.muted">
+                    <Text fontSize="sm" color="mutedForeground">
                       {t('editor.referenceFontNoFontLoaded')}
                     </Text>
                   )}
@@ -231,7 +231,7 @@ export function ReferenceFontSettingsModal({
                 </Stack>
 
                 <Box>
-                  <Text fontSize="xs" color="field.muted" mb={1}>
+                  <Text fontSize="xs" color="mutedForeground" mb={1}>
                     {t('editor.referenceFontCharOverride')}
                   </Text>
                   <Input
@@ -249,7 +249,7 @@ export function ReferenceFontSettingsModal({
                 </Box>
 
                 <Box>
-                  <Text fontSize="xs" color="field.muted" mb={2}>
+                  <Text fontSize="xs" color="mutedForeground" mb={2}>
                     {t('editor.referenceFontAppearance')}
                   </Text>
                   <Stack gap={2}>
@@ -274,7 +274,7 @@ export function ReferenceFontSettingsModal({
                                 h="18px"
                                 borderRadius="sm"
                                 borderWidth={1}
-                                borderColor="field.line"
+                                borderColor="border"
                                 bg={referenceFontColor}
                                 opacity={referenceFontOpacity}
                               />
@@ -286,11 +286,11 @@ export function ReferenceFontSettingsModal({
                         </Popover.Trigger>
                         <Popover.Positioner>
                           <Popover.Content
-                            bg="field.paper"
-                            borderColor="field.line"
+                            bg="background"
+                            borderColor="border"
                             w="240px"
                           >
-                            <Popover.Arrow bg="field.paper" />
+                            <Popover.Arrow bg="background" />
                             <Popover.Body>
                               <Stack gap={3}>
                                 <HStack justify="space-between">
@@ -317,7 +317,7 @@ export function ReferenceFontSettingsModal({
                                     <Text
                                       fontFamily="mono"
                                       fontSize="xs"
-                                      color="field.muted"
+                                      color="mutedForeground"
                                     >
                                       {Math.round(referenceFontOpacity * 100)}%
                                     </Text>
@@ -336,8 +336,8 @@ export function ReferenceFontSettingsModal({
                                     }
                                   >
                                     <Slider.Control>
-                                      <Slider.Track bg="field.panelMuted">
-                                        <Slider.Range bg="field.yellow.400" />
+                                      <Slider.Track bg="muted">
+                                        <Slider.Range bg="primary" />
                                       </Slider.Track>
                                       <Slider.Thumb index={0} />
                                     </Slider.Control>
@@ -371,10 +371,10 @@ export function ReferenceFontSettingsModal({
                       </Checkbox.Label>
                     </Checkbox.Root>
                     {isComputingResidual ? (
-                      <Spinner size="sm" color="field.yellow.400" />
+                      <Spinner size="sm" color="primary" />
                     ) : null}
                   </HStack>
-                  <Text fontSize="xs" color="field.muted">
+                  <Text fontSize="xs" color="mutedForeground">
                     {t('editor.referenceFontResidualDescription')}
                   </Text>
                   {residualSummary && isResidualChecked ? (

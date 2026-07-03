@@ -22,7 +22,7 @@ export function LeftPanelHeader({
             fontSize="xs"
             textTransform="uppercase"
             letterSpacing="0.16em"
-            color="field.muted"
+            color="mutedForeground"
             mb={1}
             fontFamily="mono"
             fontWeight="900"
@@ -30,7 +30,7 @@ export function LeftPanelHeader({
             {t('editor.kumikoFontEditor')}
           </Text>
           <Heading
-            color="field.ink"
+            color="foreground"
             fontSize="34px"
             lineHeight="0.86"
             letterSpacing="0"
@@ -45,7 +45,7 @@ export function LeftPanelHeader({
       </HStack>
 
       {!hasSelectedGlyph ? (
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           {t('editor.selectGlyphFirst')}
         </Text>
       ) : null}

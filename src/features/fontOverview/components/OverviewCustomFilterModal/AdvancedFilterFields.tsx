@@ -173,7 +173,7 @@ function FilterRulesPanel({
   const { t } = useTranslation()
 
   return (
-    <Box border="2px solid" borderColor="field.haze" borderRadius="2px" p={3}>
+    <Box border="2px solid" borderColor="haze" borderRadius="2px" p={3}>
       <HStack justify="space-between" mb={2}>
         <Text fontWeight="900">{t('fontOverview.customFilter.rules')}</Text>
         <HStack gap={2}>

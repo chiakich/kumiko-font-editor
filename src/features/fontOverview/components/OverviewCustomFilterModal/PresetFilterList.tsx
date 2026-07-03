@@ -41,7 +41,7 @@ function PresetFilterButton({
       bg="transparent"
       borderRadius="sm"
       className="group"
-      color="field.ink"
+      color="foreground"
       h="58px"
       justifyContent="flex-start"
       overflow="visible"
@@ -53,14 +53,14 @@ function PresetFilterButton({
       whiteSpace="normal"
       _active={{
         bg: 'transparent',
-        color: 'field.ink',
+        color: 'foreground',
       }}
       _focusVisible={{
-        boxShadow: '0 0 0 2px var(--chakra-colors-field-ink)',
+        boxShadow: '0 0 0 2px var(--chakra-colors-foreground)',
       }}
       _hover={{
         bg: 'transparent',
-        color: 'field.ink',
+        color: 'foreground',
       }}
       onClick={() => onCreatePreset(preset)}
     >
@@ -87,7 +87,7 @@ function PresetHoverBackground() {
       transition="background-color 160ms ease, transform 180ms ease"
       zIndex={0}
       _groupHover={{
-        bg: 'field.panelMuted',
+        bg: 'muted',
         transform: 'scaleY(1.28)',
       }}
     />
@@ -111,7 +111,7 @@ function PresetTitle({ children }: { children: string }) {
 function PresetSummary({ children }: { children: string }) {
   return (
     <Text
-      color="field.muted"
+      color="mutedForeground"
       flex={1}
       fontFamily="mono"
       fontSize="xs"
@@ -129,14 +129,14 @@ function PresetSummary({ children }: { children: string }) {
 function PresetArrow() {
   return (
     <Box
-      color="field.muted"
+      color="mutedForeground"
       flexShrink={0}
       opacity={0.45}
       transform="scale(1)"
       transformOrigin="center"
       transition="color 180ms ease, opacity 180ms ease, transform 180ms ease"
       _groupHover={{
-        color: 'field.ink',
+        color: 'foreground',
         opacity: 1,
         transform: 'scale(1.16)',
       }}

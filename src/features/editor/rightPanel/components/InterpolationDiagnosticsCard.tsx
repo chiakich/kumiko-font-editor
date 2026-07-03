@@ -59,13 +59,13 @@ export function InterpolationDiagnosticsCard({
   return (
     <Box
       p={4}
-      bg="field.panel"
+      bg="card"
       border="1px solid"
       borderColor={borderColor}
       borderRadius="sm"
     >
       <HStack justify="space-between" gap={2} mb={2} align="center">
-        <Heading size="sm" textTransform="uppercase" color="field.ink">
+        <Heading size="sm" textTransform="uppercase" color="foreground">
           {t('editor.interpolationDiagnostics')}
         </Heading>
         <Badge colorPalette={colorScheme} fontSize="2xs">
@@ -74,7 +74,7 @@ export function InterpolationDiagnosticsCard({
             : t('editor.interpolationWarning')}
         </Badge>
       </HStack>
-      <Text fontSize="xs" color="field.muted" mb={3}>
+      <Text fontSize="xs" color="mutedForeground" mb={3}>
         {t('editor.interpolationDiagnosticsSummary', {
           issues: diagnostics.issues.length,
           errors: diagnostics.modelErrors.length,
@@ -94,7 +94,7 @@ export function InterpolationDiagnosticsCard({
             <Box
               key={`${issue.code}-${issue.layerId ?? 'font'}-${index}`}
               p={2}
-              bg="field.panelMuted"
+              bg="muted"
               borderRadius="sm"
             >
               <HStack gap={2} mb={locationLabel ? 1 : 0} align="center">
@@ -105,7 +105,7 @@ export function InterpolationDiagnosticsCard({
                   <Text
                     minW={0}
                     fontSize="2xs"
-                    color="field.muted"
+                    color="mutedForeground"
                     fontFamily="mono"
                     lineClamp={1}
                   >
@@ -113,7 +113,7 @@ export function InterpolationDiagnosticsCard({
                   </Text>
                 ) : null}
               </HStack>
-              <Text fontSize="xs" color="field.ink">
+              <Text fontSize="xs" color="foreground">
                 {issue.message}
               </Text>
             </Box>
@@ -127,14 +127,14 @@ export function InterpolationDiagnosticsCard({
                 {error.type ?? 'model-error'}
               </Badge>
             </HStack>
-            <Text fontSize="xs" color="field.ink">
+            <Text fontSize="xs" color="foreground">
               {error.message}
             </Text>
           </Box>
         ))}
 
         {remainingCount > 0 ? (
-          <Text fontSize="xs" color="field.muted" fontFamily="mono">
+          <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
             {t('editor.interpolationMoreDiagnostics', {
               count: remainingCount,
             })}

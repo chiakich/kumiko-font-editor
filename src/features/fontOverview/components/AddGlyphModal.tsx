@@ -94,7 +94,7 @@ export function AddGlyphModal({
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
-            <Dialog.Content borderRadius="sm" h="800px">
+            <Dialog.Content borderRadius="lg" h="800px">
               <DialogCloseButton zIndex={2} />
               <SlidingTabsRoot
                 size="sm"
@@ -159,7 +159,7 @@ export function AddGlyphModal({
                             }
                           }}
                         />
-                        <Text fontSize="sm" color="field.muted">
+                        <Text fontSize="sm" color="mutedForeground">
                           {t('fontOverview.glyphInputHint')}
                         </Text>
                       </Stack>
@@ -215,7 +215,7 @@ export function AddGlyphModal({
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
-            <Dialog.Content borderRadius="sm" maxH="80vh">
+            <Dialog.Content borderRadius="lg" maxH="80vh">
               <DialogCloseButton />
               <Dialog.Body pt={6} pb={4} minH={0}>
                 <Stack gap={3} minH={0}>
@@ -228,13 +228,13 @@ export function AddGlyphModal({
                     overscrollBehavior="contain"
                     onWheel={(event) => event.stopPropagation()}
                     border="2px solid"
-                    borderColor="field.haze"
+                    borderColor="haze"
                     borderRadius="2px"
                     p={3}
                   >
                     {missingGlyphText.length > 0 ? (
                       <Text
-                        color="field.ink"
+                        color="foreground"
                         fontSize="lg"
                         lineHeight="1.45"
                         wordBreak="break-all"
@@ -242,7 +242,7 @@ export function AddGlyphModal({
                         {missingGlyphText}
                       </Text>
                     ) : (
-                      <Text color="field.muted">
+                      <Text color="mutedForeground">
                         {t('fontOverview.noGlyphsToAdd')}
                       </Text>
                     )}

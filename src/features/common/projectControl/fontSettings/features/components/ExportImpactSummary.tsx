@@ -24,7 +24,7 @@ export function ExportImpactSummary({ items }: ExportImpactSummaryProps) {
 
   return (
     <Stack gap={2}>
-      <Text fontSize="xs" fontWeight="900" color="field.muted">
+      <Text fontSize="xs" fontWeight="900" color="mutedForeground">
         {t('projectControl.exportImpact')}
       </Text>
       <Stack gap={2}>
@@ -42,14 +42,14 @@ export function ExportImpactSummary({ items }: ExportImpactSummaryProps) {
                   {item.title}
                 </Text>
               </HStack>
-              <Text fontSize="xs" color="field.muted">
+              <Text fontSize="xs" color="mutedForeground">
                 {getImpactDetail(item, t)}
               </Text>
             </Stack>
           </HStack>
         ))}
         {items.length > 10 ? (
-          <Text fontSize="xs" color="field.muted">
+          <Text fontSize="xs" color="mutedForeground">
             +{items.length - 10} {t('projectControl.more')}
           </Text>
         ) : null}

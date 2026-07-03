@@ -82,7 +82,7 @@ export function ProofLineSvg({
 }: ProofLineSvgProps) {
   if (proofRun.glyphs.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         沒有可顯示的 proof 文字。
       </Text>
     )
@@ -104,7 +104,7 @@ export function ProofLineSvg({
       height={`${Math.max(28, fontSize * 1.8)}px`}
       display="block"
       preserveAspectRatio="xMinYMid meet"
-      color="field.ink"
+      color="foreground"
       role="img"
       aria-label="proof line"
     >
@@ -167,7 +167,7 @@ export function ProofParagraphSvg({
 
   if (lines.length === 0) {
     return (
-      <Text fontSize="sm" color="field.muted">
+      <Text fontSize="sm" color="mutedForeground">
         沒有可顯示的 proof 文字。
       </Text>
     )
@@ -183,7 +183,7 @@ export function ProofParagraphSvg({
       maxW="100%"
       display="block"
       preserveAspectRatio="xMinYMin meet"
-      color="field.ink"
+      color="foreground"
       role="img"
       aria-label="proof paragraph"
     >

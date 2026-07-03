@@ -32,10 +32,10 @@ export function LocalImportCard({
   return (
     <Flex
       border="1px dashed"
-      borderColor={isDragging ? 'field.red.500' : 'field.line'}
+      borderColor={isDragging ? 'destructive' : 'border'}
       p={6}
       borderRadius="sm"
-      bg={isDragging ? 'field.yellow.300' : 'field.paper'}
+      bg={isDragging ? 'yellow.300' : 'background'}
       direction="column"
       justifyContent="center"
       transition="background-color 120ms ease, border-color 120ms ease"
@@ -47,7 +47,7 @@ export function LocalImportCard({
       <Heading size="sm" mb={2} textTransform="uppercase">
         {t('home.localImport')}
       </Heading>
-      <Text fontSize="sm" color="field.muted" mb={4}>
+      <Text fontSize="sm" color="mutedForeground" mb={4}>
         {t('home.localImportDescription')}
       </Text>
       <Input type="file" onChange={onFileUpload} display="none" />
@@ -85,7 +85,7 @@ export function LocalImportCard({
         </Button>
       </Flex>
       {isLoading && (
-        <Text fontSize="xs" color="field.red.500" mt={3} fontFamily="mono">
+        <Text fontSize="xs" color="destructive" mt={3} fontFamily="mono">
           {t('home.largeFontImportNotice')}
         </Text>
       )}

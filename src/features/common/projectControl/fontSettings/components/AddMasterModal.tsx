@@ -236,7 +236,7 @@ export function AddMasterModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content borderRadius="sm">
+          <Dialog.Content borderRadius="lg">
             <DialogCloseButton zIndex={2} />
             <Dialog.Header>
               <Dialog.Title>{t('projectControl.addMaster')}</Dialog.Title>
@@ -434,7 +434,7 @@ export function AddMasterModal({
                 ) : null}
 
                 {method === 'font' ? (
-                  <Text fontSize="xs" color="field.muted">
+                  <Text fontSize="xs" color="mutedForeground">
                     {t('projectControl.importMasterHint')}
                   </Text>
                 ) : null}

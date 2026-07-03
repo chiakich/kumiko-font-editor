@@ -446,7 +446,7 @@ export function ExportFontModal({
           <Text fontSize="sm" fontWeight="semibold">
             {group.label}
           </Text>
-          <Text fontSize="xs" color="field.muted">
+          <Text fontSize="xs" color="mutedForeground">
             {group.description}
           </Text>
         </Stack>
@@ -463,10 +463,10 @@ export function ExportFontModal({
                 whiteSpace="normal"
                 p={3}
                 borderRadius="md"
-                bg={isSelected ? 'field.panelMuted' : 'transparent'}
-                _hover={{ bg: 'field.panelMuted' }}
+                bg={isSelected ? 'muted' : 'transparent'}
+                _hover={{ bg: 'muted' }}
                 _focusVisible={{
-                  boxShadow: '0 0 0 2px var(--chakra-colors-field-accent)',
+                  boxShadow: '0 0 0 2px var(--chakra-colors-primary)',
                 }}
                 disabled={!canExport || isExporting}
                 onClick={() => toggleFormat(option.format)}
@@ -486,7 +486,7 @@ export function ExportFontModal({
                     pl={6}
                     fontSize="xs"
                     fontWeight="normal"
-                    color="field.muted"
+                    color="mutedForeground"
                   >
                     {option.description}
                   </Text>
@@ -527,7 +527,7 @@ export function ExportFontModal({
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
-              <Text mt={1.5} fontSize="xs" color="field.muted">
+              <Text mt={1.5} fontSize="xs" color="mutedForeground">
                 {selectedExportPolicy?.description ??
                   '選擇字型檔匯出時，決定 OpenType features 要如何寫進輸出字型。'}
               </Text>
@@ -542,7 +542,7 @@ export function ExportFontModal({
           </Stack>
         </>
       ) : !hasSelectedFontOutputFormat ? (
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           選擇字型檔後，可設定 OpenType features 的輸出方式與靜態 instance。
         </Text>
       ) : null}
@@ -591,7 +591,7 @@ export function ExportFontModal({
                       <Text
                         as="span"
                         fontSize="xs"
-                        color="field.muted"
+                        color="mutedForeground"
                         fontFamily="mono"
                       >
                         {JSON.stringify(instance.location)}

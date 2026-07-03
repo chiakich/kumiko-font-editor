@@ -56,7 +56,7 @@ function AxisLocationField({ axis, value, onChange }: AxisLocationFieldProps) {
         <Text
           fontSize="xs"
           fontFamily="mono"
-          color={outOfRange ? 'red.500' : 'field.muted'}
+          color={outOfRange ? 'red.500' : 'mutedForeground'}
         >
           {value}
         </Text>
@@ -72,8 +72,8 @@ function AxisLocationField({ axis, value, onChange }: AxisLocationFieldProps) {
           onValueChange={(details) => onChange(details.value[0] ?? value)}
         >
           <Slider.Control>
-            <Slider.Track bg="field.panelMuted">
-              <Slider.Range bg="field.accent" />
+            <Slider.Track bg="muted">
+              <Slider.Range bg="primary" />
             </Slider.Track>
             <Slider.Thumb index={0} boxSize={3} />
           </Slider.Control>
@@ -297,7 +297,7 @@ export function FontExportsTab({
             />
           </SimpleGrid>
           <HStack gap={6} mt={3} align="center">
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               {t('projectControl.styleLinking')}
             </Text>
             <Checkbox.Root

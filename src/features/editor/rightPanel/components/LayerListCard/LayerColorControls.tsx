@@ -49,7 +49,7 @@ function LayerColorButton({
         justifyContent="center"
         title={label}
         w="22px"
-        _hover={{ bg: 'field.panelMuted' }}
+        _hover={{ bg: 'muted' }}
         asChild
       >
         <button type="button" onClick={onClick}>
@@ -60,7 +60,7 @@ function LayerColorButton({
               borderRadius="full"
               bg={kumikoColorToCssRgba(color)}
               border={isSelected ? '1px solid' : 'none'}
-              borderColor="field.ink"
+              borderColor="foreground"
               boxShadow={
                 isSelected ? undefined : 'inset 0 0 0 1px rgba(8, 11, 13, 0.18)'
               }
@@ -71,17 +71,12 @@ function LayerColorButton({
               w={swatchSize}
               borderRadius="full"
               border="1px solid"
-              borderColor={isSelected ? 'field.ink' : 'field.gray.300'}
+              borderColor={isSelected ? 'foreground' : 'gray.300'}
               display="flex"
               alignItems="center"
               justifyContent="center"
             >
-              <Box
-                h="2px"
-                w="11px"
-                bg="field.gray.400"
-                transform="rotate(-45deg)"
-              />
+              <Box h="2px" w="11px" bg="gray.400" transform="rotate(-45deg)" />
             </Box>
           )}
         </button>
@@ -127,7 +122,7 @@ export function LayerColorContextMenu({
   return (
     <Portal>
       <Box
-        bg="field.panel"
+        bg="card"
         border="1px solid"
         borderColor="controlBorder"
         borderRadius="6px"
@@ -141,7 +136,7 @@ export function LayerColorContextMenu({
         onContextMenu={(event) => event.preventDefault()}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <Text color="field.muted" fontSize="11px" fontWeight="700" mb="8px">
+        <Text color="mutedForeground" fontSize="11px" fontWeight="700" mb="8px">
           {t('editor.layerColorLabel')}
         </Text>
         <HStack flexWrap="wrap" gap="3px">

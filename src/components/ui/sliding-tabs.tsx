@@ -29,20 +29,22 @@ function SlidingTab({
   return (
     <Tabs.Trigger
       value={value}
+      className="corner-round"
       alignItems="center"
       border={0}
       borderRadius="full"
-      color={isSelected ? 'field.yellow.300' : 'field.ink'}
+      color={isSelected ? 'primaryForeground' : 'foreground'}
       cursor="pointer"
       display="inline-flex"
       flexShrink={0}
-      fontWeight="900"
-      h={8}
+      fontWeight="600"
+      h={7}
       justifyContent="center"
+      letterSpacing="wide"
       lineHeight={1}
       minW={0}
       overflow="visible"
-      px={4}
+      px={3.5}
       position="relative"
       transition="color 160ms ease"
       whiteSpace="nowrap"
@@ -50,26 +52,28 @@ function SlidingTab({
         bg: 'transparent',
       }}
       _focusVisible={{
-        boxShadow: '0 0 0 2px var(--chakra-colors-field-cyan-400)',
+        boxShadow: '0 0 0 2px var(--chakra-colors-cyan-400)',
       }}
       _hover={{
         bg: 'transparent',
-        color: isSelected ? 'field.yellow.300' : 'field.ink',
+        color: isSelected ? 'primaryForeground' : 'foreground',
       }}
       _selected={{
         bg: 'transparent',
-        color: 'field.yellow.300',
+        color: 'primaryForeground',
       }}
     >
       {isSelected ? (
         <motion.span
           layoutId={layoutId}
+          className="corner-round"
           transition={tabHighlightTransition}
           style={{
             position: 'absolute',
             inset: 0,
             borderRadius: 9999,
-            background: 'var(--chakra-colors-field-ink)',
+            background: 'var(--chakra-colors-primary)',
+            boxShadow: '0 1px 2px rgba(8, 11, 13, 0.16)',
           }}
         />
       ) : null}
@@ -119,13 +123,14 @@ export function SlidingTabList({
   return (
     <LayoutGroup id={layoutGroupId}>
       <Tabs.List
+        className="corner-round"
         alignItems="center"
-        bg="field.panelMuted"
+        bg="muted"
         borderRadius="full"
         display="inline-flex"
         gap={1}
         maxW="100%"
-        minH={10}
+        minH={9}
         overflowX="auto"
         overflowY="hidden"
         p={1}

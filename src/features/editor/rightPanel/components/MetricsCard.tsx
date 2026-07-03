@@ -64,14 +64,19 @@ export function MetricsCard({
   }
 
   return (
-    <Box p={4} bg="field.panel" borderRadius="sm">
-      <Heading size="sm" mb={3} textTransform="uppercase" color="field.ink">
+    <Box p={4} bg="card" borderRadius="sm">
+      <Heading size="sm" mb={3} textTransform="uppercase" color="foreground">
         {t('editor.metrics')}
       </Heading>
       <Grid templateColumns="repeat(3, minmax(0, 1fr))" gap={3}>
         {metricFields.map((field) => (
           <GridItem key={field}>
-            <Text fontSize="xs" color="field.muted" mb={1} fontFamily="mono">
+            <Text
+              fontSize="xs"
+              color="mutedForeground"
+              mb={1}
+              fontFamily="mono"
+            >
               {field === 'lsb' ? 'LSB' : field === 'rsb' ? 'RSB' : 'Width'}
             </Text>
             <Input

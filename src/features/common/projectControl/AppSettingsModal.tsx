@@ -55,7 +55,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content borderRadius="sm">
+          <Dialog.Content borderRadius="lg">
             <Dialog.Header>{t('settings.title')}</Dialog.Header>
             <DialogCloseButton />
             <Dialog.Body pb={6}>

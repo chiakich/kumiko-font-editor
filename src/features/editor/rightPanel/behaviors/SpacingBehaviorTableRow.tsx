@@ -107,7 +107,7 @@ export function SpacingBehaviorTableRow({
       px={3}
       py={2}
       borderTopWidth={row || rowId ? '1px' : 0}
-      borderColor="field.panelMuted"
+      borderColor="muted"
     >
       <HStack justify="space-between" align="center">
         <HStack gap={1} minW={0} flex={1}>
@@ -229,7 +229,7 @@ export function SpacingBehaviorTableRow({
             aria-label={t('editor.deleteSpacingPair')}
             size="xs"
             variant="ghost"
-            color="field.red.500"
+            color="destructive"
             onClick={onDelete}
           >
             <Trash width={15} height={15} aria-hidden="true" />
@@ -270,7 +270,7 @@ function FixedGlyphCell({ label }: { label: string }) {
       px={2}
       display="flex"
       alignItems="center"
-      bg="field.panelMuted"
+      bg="muted"
       borderRadius="2px"
       fontFamily="mono"
       fontSize="xs"
@@ -306,7 +306,7 @@ function PairLabel({
       maxW="100%"
       px={2}
       py={1}
-      bg="field.panelMuted"
+      bg="muted"
       borderRadius="2px"
       fontFamily="mono"
       fontSize="xs"
@@ -317,14 +317,14 @@ function PairLabel({
       <Text as="span" minW={0} truncate title={leftLabel ?? leftText}>
         {leftText}
       </Text>
-      <Text as="span" flexShrink={0} color="field.muted">
+      <Text as="span" flexShrink={0} color="mutedForeground">
         +
       </Text>
       <Text as="span" minW={0} truncate title={rightLabel ?? rightText}>
         {rightText}
       </Text>
       {isClassPair ? (
-        <Text as="span" flexShrink={0} color="field.muted">
+        <Text as="span" flexShrink={0} color="mutedForeground">
           {t('editor.class')}
         </Text>
       ) : null}
@@ -392,9 +392,14 @@ function ClassMemberList({
   )
 
   return (
-    <Box borderWidth="1px" borderColor="field.line" bg="field.panelMuted">
+    <Box borderWidth="1px" borderColor="border" bg="muted">
       <HStack px={2} py={1} justify="space-between">
-        <Text fontSize="10px" fontWeight="bold" color="field.muted" truncate>
+        <Text
+          fontSize="10px"
+          fontWeight="bold"
+          color="mutedForeground"
+          truncate
+        >
           {title}
         </Text>
         <Badge size="sm" colorPalette="gray">

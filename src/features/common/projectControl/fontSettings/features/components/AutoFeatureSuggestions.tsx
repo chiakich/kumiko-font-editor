@@ -28,7 +28,7 @@ export function AutoFeatureSuggestions({
         </Button>
       </HStack>
       {suggestions.length === 0 ? (
-        <Text fontSize="sm" color="field.muted">
+        <Text fontSize="sm" color="mutedForeground">
           {t('projectControl.noPendingSuggestions')}
         </Text>
       ) : (
@@ -59,7 +59,7 @@ export function AutoFeatureSuggestions({
                 </Button>
               </HStack>
             </HStack>
-            <Text fontSize="sm" color="field.muted">
+            <Text fontSize="sm" color="mutedForeground">
               {suggestion.reason}
             </Text>
           </Stack>

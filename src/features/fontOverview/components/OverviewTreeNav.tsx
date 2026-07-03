@@ -177,7 +177,7 @@ function OverviewTreeRow({
         pl={2}
         size="sm"
         variant={isSelected ? 'solid' : 'ghost'}
-        color="field.ink"
+        color={isSelected ? 'primaryForeground' : 'foreground'}
         fontWeight="900"
         onClick={() => onSectionSelect(node.id)}
       >
@@ -333,7 +333,7 @@ function CustomFilterContextMenu({
   return (
     <Portal>
       <Box
-        bg="field.panel"
+        bg="card"
         border="1px solid"
         borderColor="controlBorder"
         borderRadius="6px"
@@ -354,7 +354,7 @@ function CustomFilterContextMenu({
         <ContextMenuButton onClick={onDuplicate}>
           {t('fontOverview.customFilter.contextDuplicate')}
         </ContextMenuButton>
-        <Box h="1px" my="4px" bg="field.panelMuted" />
+        <Box h="1px" my="4px" bg="muted" />
         <ContextMenuButton tone="danger" onClick={onDelete}>
           {t('fontOverview.customFilter.contextDelete')}
         </ContextMenuButton>
@@ -374,7 +374,7 @@ function ContextMenuButton({
 }) {
   return (
     <Box
-      color={tone === 'danger' ? 'red.600' : 'field.ink'}
+      color={tone === 'danger' ? 'red.600' : 'foreground'}
       display="block"
       fontSize="13px"
       px="12px"
