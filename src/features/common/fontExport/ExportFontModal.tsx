@@ -1,9 +1,7 @@
 import {
   Alert,
   Button,
-  Checkbox,
   HStack,
-  NativeSelect,
   Stack,
   Tabs,
   Text,
@@ -12,7 +10,9 @@ import {
   Dialog,
   Portal,
 } from '@chakra-ui/react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
+import { NativeSelect } from '@/components/ui/native-select'
 import { useMemo, useState } from 'react'
 import {
   SlidingTabList,
@@ -314,21 +314,15 @@ function DropUnsupportedConfirmation({
   const { t } = useTranslation()
 
   return (
-    <Checkbox.Root
+    <Checkbox
       colorPalette="red"
       onCheckedChange={(details) => onChange(details.checked === true)}
       checked={isChecked}
     >
-      <Checkbox.HiddenInput />
-      <Checkbox.Control>
-        <Checkbox.Indicator />
-      </Checkbox.Control>
-      <Checkbox.Label>
-        <Text as="span" fontSize="sm">
-          {t('fontExport.iUnderstandUnsupportedImportedOpentypeLookups')}
-        </Text>
-      </Checkbox.Label>
-    </Checkbox.Root>
+      <Text as="span" fontSize="sm">
+        {t('fontExport.iUnderstandUnsupportedImportedOpentypeLookups')}
+      </Text>
+    </Checkbox>
   )
 }
 
@@ -474,12 +468,7 @@ export function ExportFontModal({
               >
                 <Stack gap={0.5} align="flex-start" textAlign="left">
                   <HStack gap={2}>
-                    <Checkbox.Root pointerEvents="none" checked={isSelected}>
-                      <Checkbox.HiddenInput />
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                    </Checkbox.Root>
+                    <Checkbox pointerEvents="none" checked={isSelected} />
                     <Text fontWeight="semibold">{option.label}</Text>
                   </HStack>
                   <Text
@@ -509,24 +498,21 @@ export function ExportFontModal({
               <Field.Label textStyle="label">
                 OpenType features 輸出方式
               </Field.Label>
-              <NativeSelect.Root
+              <NativeSelect
                 size="sm"
                 disabled={!canExport || isExporting || !onExportPolicyChange}
+                fieldProps={{
+                  value: exportPolicy,
+                  onChange: (event) =>
+                    onExportPolicyChange?.(event.target.value as ExportPolicy),
+                }}
               >
-                <NativeSelect.Field
-                  value={exportPolicy}
-                  onChange={(event) =>
-                    onExportPolicyChange?.(event.target.value as ExportPolicy)
-                  }
-                >
-                  {exportPolicies.map((policy) => (
-                    <option key={policy.value} value={policy.value}>
-                      {policy.label}
-                    </option>
-                  ))}
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
+                {exportPolicies.map((policy) => (
+                  <option key={policy.value} value={policy.value}>
+                    {policy.label}
+                  </option>
+                ))}
+              </NativeSelect>
               <Text mt={1.5} fontSize="xs" color="mutedForeground">
                 {selectedExportPolicy?.description ??
                   '選擇字型檔匯出時，決定 OpenType features 要如何寫進輸出字型。'}
@@ -554,51 +540,39 @@ export function ExportFontModal({
             <Text fontSize="sm" fontWeight="semibold">
               靜態 instance
             </Text>
-            <Checkbox.Root
+            <Checkbox
               disabled={!canExport || isExporting}
               onCheckedChange={(details) =>
                 setIncludeDefaultBinary(details.checked === true)
               }
               checked={includeDefaultBinary}
             >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Label>
-                <Text as="span" fontSize="sm">
-                  目前字型
-                </Text>
-              </Checkbox.Label>
-            </Checkbox.Root>
+              <Text as="span" fontSize="sm">
+                目前字型
+              </Text>
+            </Checkbox>
             <Stack gap={2}>
               {exportableInstances.map((instance) => (
-                <Checkbox.Root
+                <Checkbox
                   key={instance.id}
                   disabled={!canExport || isExporting}
                   onCheckedChange={() => toggleInstance(instance.id)}
                   checked={selectedInstanceIds.includes(instance.id)}
                 >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Label>
-                    <Stack gap={0}>
-                      <Text as="span" fontSize="sm">
-                        {instance.name || instance.styleName}
-                      </Text>
-                      <Text
-                        as="span"
-                        fontSize="xs"
-                        color="mutedForeground"
-                        fontFamily="mono"
-                      >
-                        {JSON.stringify(instance.location)}
-                      </Text>
-                    </Stack>
-                  </Checkbox.Label>
-                </Checkbox.Root>
+                  <Stack gap={0}>
+                    <Text as="span" fontSize="sm">
+                      {instance.name || instance.styleName}
+                    </Text>
+                    <Text
+                      as="span"
+                      fontSize="xs"
+                      color="mutedForeground"
+                      fontFamily="mono"
+                    >
+                      {JSON.stringify(instance.location)}
+                    </Text>
+                  </Stack>
+                </Checkbox>
               ))}
             </Stack>
           </Stack>

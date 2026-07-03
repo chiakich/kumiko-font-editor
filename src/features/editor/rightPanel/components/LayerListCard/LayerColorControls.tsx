@@ -6,18 +6,21 @@ import {
   GLYPHS_LABEL_COLOR_KEYS,
   GLYPHS_LABEL_COLORS,
   areKumikoColorsEqual,
-  kumikoColorToCssRgba,
+  kumikoColorToDisplayCssRgba,
 } from 'src/lib/color/kumikoColor'
+import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
 import type { GlyphLayerData, KumikoColor } from 'src/store'
 
 export function LayerColorDot({ color }: { color?: KumikoColor | null }) {
+  const colorMode = useResolvedColorMode()
+
   return (
     <Box
       h="8px"
       w="8px"
       flexShrink={0}
       borderRadius="full"
-      bg={kumikoColorToCssRgba(color)}
+      bg={kumikoColorToDisplayCssRgba(color, colorMode)}
       boxShadow={color ? 'inset 0 0 0 1px rgba(8, 11, 13, 0.2)' : undefined}
       opacity={color ? 1 : 0}
     />
@@ -36,6 +39,7 @@ function LayerColorButton({
   onClick: () => void
 }) {
   const swatchSize = isSelected ? '18px' : '15px'
+  const colorMode = useResolvedColorMode()
 
   return (
     <Tooltip content={label}>
@@ -58,7 +62,7 @@ function LayerColorButton({
               h={swatchSize}
               w={swatchSize}
               borderRadius="full"
-              bg={kumikoColorToCssRgba(color)}
+              bg={kumikoColorToDisplayCssRgba(color, colorMode)}
               border={isSelected ? '1px solid' : 'none'}
               borderColor="foreground"
               boxShadow={

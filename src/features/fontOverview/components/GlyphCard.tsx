@@ -4,7 +4,8 @@ import {
   GlyphPreview,
   GlyphPreviewArtwork,
 } from 'src/features/common/glyphPreview/GlyphPreview'
-import { kumikoColorToCssRgba } from 'src/lib/color/kumikoColor'
+import { kumikoColorToDisplayCssRgba } from 'src/lib/color/kumikoColor'
+import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
 import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
 import type { GlyphColorLabelDisplayMode } from 'src/lib/preferences/appPreferences'
 import type { GlyphData } from 'src/store'
@@ -69,11 +70,13 @@ export const GlyphCard = memo(function GlyphCard({
     glyph.color && colorLabelDisplayMode === 'card'
   )
   const showColorDot = Boolean(glyph.color && colorLabelDisplayMode === 'dot')
+  const colorMode = useResolvedColorMode()
   const cardColorOverlay = glyph.color
-    ? `linear-gradient(${kumikoColorToCssRgba(
+    ? `linear-gradient(${kumikoColorToDisplayCssRgba(
         glyph.color,
+        colorMode,
         0.6
-      )}, ${kumikoColorToCssRgba(glyph.color, 0.6)})`
+      )}, ${kumikoColorToDisplayCssRgba(glyph.color, colorMode, 0.6)})`
     : undefined
 
   return (
@@ -85,7 +88,7 @@ export const GlyphCard = memo(function GlyphCard({
         contain: 'layout paint style',
       }}
       position="relative"
-      borderRadius="sm"
+      borderRadius="control"
       bg={isSelected ? 'primary' : 'card'}
       // selected chip is always yellow → force fixed dark ink so the glyph
       // (fill=currentColor) and label stay readable in dark mode too
@@ -108,7 +111,7 @@ export const GlyphCard = memo(function GlyphCard({
           w="10px"
           h="10px"
           borderRadius="full"
-          bg={kumikoColorToCssRgba(glyph.color)}
+          bg={kumikoColorToDisplayCssRgba(glyph.color, colorMode)}
           boxShadow="0 0 0 1px rgba(8, 11, 13, 0.36), 0 0 0 2px rgba(255, 255, 255, 0.72)"
           pointerEvents="none"
         />
@@ -120,7 +123,7 @@ export const GlyphCard = memo(function GlyphCard({
           h={`${previewHeight}px`}
           minH={0}
           overflow="hidden"
-          borderRadius="sm"
+          borderRadius="control"
         >
           <Box
             data-overview-glyph-preview-id={glyph.id}

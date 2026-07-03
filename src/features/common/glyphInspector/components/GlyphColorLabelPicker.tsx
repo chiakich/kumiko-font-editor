@@ -4,8 +4,9 @@ import {
   GLYPHS_LABEL_COLOR_KEYS,
   GLYPHS_LABEL_COLORS,
   areKumikoColorsEqual,
-  kumikoColorToCssRgba,
+  kumikoColorToDisplayCssRgba,
 } from 'src/lib/color/kumikoColor'
+import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
 import type { KumikoColor } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
@@ -19,6 +20,7 @@ export function GlyphColorLabelPicker({
   onChange,
 }: GlyphColorLabelPickerProps) {
   const { t } = useTranslation()
+  const colorMode = useResolvedColorMode()
   const hasNoColor = !value
 
   return (
@@ -86,7 +88,7 @@ export function GlyphColorLabelPicker({
                   borderRadius="full"
                   border={isSelected ? '1px solid' : 'none'}
                   borderColor="foreground"
-                  bg={kumikoColorToCssRgba(color)}
+                  bg={kumikoColorToDisplayCssRgba(color, colorMode)}
                   opacity={isSelected ? 1 : 0.74}
                   boxShadow={
                     isSelected

@@ -7,9 +7,9 @@ import {
   Stack,
   Text,
   IconButton,
-  NativeSelect,
   Field,
 } from '@chakra-ui/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { XmarkCircle } from 'iconoir-react'
 import { Fragment } from 'react'
 
@@ -101,25 +101,23 @@ export function LocalizedNamesEditor({
                     <Field.Label fontSize="xs">
                       {t('projectControl.language')}
                     </Field.Label>
-                    <NativeSelect.Root>
-                      <NativeSelect.Field
-                        value={language}
-                        onChange={(event) =>
-                          updateLanguage(nameKey, language, event.target.value)
-                        }
-                      >
-                        {!COMMON_LANGUAGES.some((l) => l.tag === language) &&
-                          language && (
-                            <option value={language}>{language}</option>
-                          )}
-                        {COMMON_LANGUAGES.map((lang) => (
-                          <option key={lang.tag} value={lang.tag}>
-                            {lang.label} ({lang.tag})
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
+                    <NativeSelect
+                      fieldProps={{
+                        value: language,
+                        onChange: (event) =>
+                          updateLanguage(nameKey, language, event.target.value),
+                      }}
+                    >
+                      {!COMMON_LANGUAGES.some((l) => l.tag === language) &&
+                        language && (
+                          <option value={language}>{language}</option>
+                        )}
+                      {COMMON_LANGUAGES.map((lang) => (
+                        <option key={lang.tag} value={lang.tag}>
+                          {lang.label} ({lang.tag})
+                        </option>
+                      ))}
+                    </NativeSelect>
                   </Field.Root>
                   <Field.Root>
                     <Field.Label fontSize="xs">

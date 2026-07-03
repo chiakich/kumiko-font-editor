@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   HStack,
   Input,
   SimpleGrid,
@@ -10,6 +9,7 @@ import {
   Textarea,
   Field,
 } from '@chakra-ui/react'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   generalFontInfoFields,
   openTypeFontInfoSettings,
@@ -227,18 +227,14 @@ export function FontBasicsTab({
                 </Field.Root>
               </SimpleGrid>
               <HStack mt={3} justify="space-between">
-                <Checkbox.Root
+                <Checkbox
                   onCheckedChange={(details) =>
                     updateAxis(index, { hidden: details.checked === true })
                   }
                   checked={axis.hidden ?? false}
                 >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Label>{t('projectControl.hidden')}</Checkbox.Label>
-                </Checkbox.Root>
+                  {t('projectControl.hidden')}
+                </Checkbox>
                 <Button
                   size="sm"
                   variant="ghost"

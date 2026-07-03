@@ -6,8 +6,9 @@ import {
   GLYPHS_LABEL_COLOR_KEYS,
   GLYPHS_LABEL_COLORS,
   areKumikoColorsEqual,
-  kumikoColorToCssRgba,
+  kumikoColorToDisplayCssRgba,
 } from 'src/lib/color/kumikoColor'
+import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
 import type { KumikoColor } from 'src/store'
 
 export type OverviewGlyphContextMenuColor = KumikoColor | null | 'mixed'
@@ -175,6 +176,7 @@ function GlyphColorButton({
   onClick: () => void
 }) {
   const swatchSize = isSelected ? '18px' : '15px'
+  const colorMode = useResolvedColorMode()
 
   return (
     <Tooltip content={label}>
@@ -194,7 +196,7 @@ function GlyphColorButton({
         <button type="button" onClick={onClick}>
           {color ? (
             <Box
-              bg={kumikoColorToCssRgba(color)}
+              bg={kumikoColorToDisplayCssRgba(color, colorMode)}
               border={isSelected ? '1px solid' : 'none'}
               borderColor="foreground"
               borderRadius="full"

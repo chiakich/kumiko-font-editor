@@ -1,14 +1,14 @@
 import {
   Button,
-  Checkbox,
   HStack,
   Input,
-  NativeSelect,
   SimpleGrid,
   Stack,
   Text,
   Field,
 } from '@chakra-ui/react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { NativeSelect } from '@/components/ui/native-select'
 import type {
   DevelopmentStatusDefinition,
   FontProjectSettings,
@@ -63,39 +63,35 @@ export function FontOtherTab({
           <Field.Label textStyle="label">
             {t('projectControl.fontType')}
           </Field.Label>
-          <NativeSelect.Root>
-            <NativeSelect.Field
-              value={fontType}
-              onChange={(event) =>
+          <NativeSelect
+            fieldProps={{
+              value: fontType,
+              onChange: (event) =>
                 onFontTypeChange(
                   event.target.value === 'variable' ? 'variable' : 'static'
-                )
-              }
-            >
-              <option value="static">{t('projectControl.static')}</option>
-              <option value="variable">{t('projectControl.variable')}</option>
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
+                ),
+            }}
+          >
+            <option value="static">{t('projectControl.static')}</option>
+            <option value="variable">{t('projectControl.variable')}</option>
+          </NativeSelect>
         </Field.Root>
         <Field.Root>
           <Field.Label textStyle="label">
             {t('projectControl.outlineType')}
           </Field.Label>
-          <NativeSelect.Root>
-            <NativeSelect.Field
-              value={outlineType}
-              onChange={(event) =>
+          <NativeSelect
+            fieldProps={{
+              value: outlineType,
+              onChange: (event) =>
                 onOutlineTypeChange(
                   event.target.value === 'quadratic' ? 'quadratic' : 'cubic'
-                )
-              }
-            >
-              <option value="cubic">{t('projectControl.cubic')}</option>
-              <option value="quadratic">{t('projectControl.quadratic')}</option>
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
+                ),
+            }}
+          >
+            <option value="cubic">{t('projectControl.cubic')}</option>
+            <option value="quadratic">{t('projectControl.quadratic')}</option>
+          </NativeSelect>
         </Field.Root>
       </SimpleGrid>
       <HStack justify="space-between">
@@ -165,19 +161,15 @@ export function FontOtherTab({
                 }}
               />
             ))}
-            <Checkbox.Root
+            <Checkbox
               alignSelf="end"
               onCheckedChange={(details) =>
                 updateStatus(index, { isDefault: details.checked === true })
               }
               checked={status.isDefault ?? false}
             >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Label>{t('projectControl.default')}</Checkbox.Label>
-            </Checkbox.Root>
+              {t('projectControl.default')}
+            </Checkbox>
           </SimpleGrid>
         ))}
       </Stack>

@@ -126,6 +126,9 @@ export const useColorModePreference = (): ColorModePreference =>
     () => DEFAULT_COLOR_MODE
   )
 
+export const useResolvedColorMode = (): ResolvedColorMode =>
+  resolveColorMode(useColorModePreference())
+
 /**
  * Mount once near the app root: applies the stored preference on load and keeps
  * <html> in sync as the preference or OS scheme changes.

@@ -1,13 +1,5 @@
-import {
-  Box,
-  Button,
-  Grid,
-  GridItem,
-  NativeSelect,
-  Stack,
-  Tag,
-  Text,
-} from '@chakra-ui/react'
+import { Box, Button, Grid, GridItem, Stack, Tag, Text } from '@chakra-ui/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { GlyphColorLabelPicker } from 'src/features/common/glyphInspector/components/GlyphColorLabelPicker'
 import {
   getGlyphBlockLabel,
@@ -120,19 +112,19 @@ export function GlyphSummaryCard({
             >
               {t('glyphInspector.layerMaster')}
             </Text>
-            <NativeSelect.Root size="sm">
-              <NativeSelect.Field
-                value={activeLayer?.id ?? ''}
-                onChange={(event) => onLayerChange(event.target.value)}
-              >
-                {availableLayers.map((layer) => (
-                  <option key={layer.id} value={layer.id}>
-                    {layer.name || layer.id}
-                  </option>
-                ))}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
+            <NativeSelect
+              size="sm"
+              fieldProps={{
+                value: activeLayer?.id ?? '',
+                onChange: (event) => onLayerChange(event.target.value),
+              }}
+            >
+              {availableLayers.map((layer) => (
+                <option key={layer.id} value={layer.id}>
+                  {layer.name || layer.id}
+                </option>
+              ))}
+            </NativeSelect>
           </Box>
         )}
         {workspaceView === 'overview' && (

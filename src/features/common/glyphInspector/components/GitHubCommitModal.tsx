@@ -6,7 +6,6 @@ import {
   HStack,
   IconButton,
   Input,
-  NativeSelect,
   Stack,
   Text,
   Field,
@@ -14,6 +13,7 @@ import {
   Portal,
 } from '@chakra-ui/react'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
+import { NativeSelect } from '@/components/ui/native-select'
 import type { GitHubForkStatus, GitHubViewer } from 'src/lib/github/githubAuth'
 import { GitHubRepoCard } from 'src/features/common/glyphInspector/components/GitHubRepoCard'
 import { GitHubSyncSectionContainer } from 'src/features/common/glyphInspector/components/GitHubSyncSection'
@@ -254,31 +254,28 @@ export function GitHubCommitModal({
                               {t('glyphInspector.branch')}
                             </Field.Label>
                             <HStack align="end">
-                              <NativeSelect.Root>
-                                <NativeSelect.Field
-                                  value={
+                              <NativeSelect
+                                fieldProps={{
+                                  value:
                                     !isCreatingNewBranch &&
                                     githubForkStatus.branches.includes(
                                       gitHubBranchName.trim()
                                     )
                                       ? gitHubBranchName.trim()
-                                      : ''
-                                  }
-                                  onChange={(event) =>
-                                    onBranchSelect(event.target.value)
-                                  }
-                                >
-                                  <option value="">
-                                    {t('glyphInspector.selectBranch')}
+                                      : '',
+                                  onChange: (event) =>
+                                    onBranchSelect(event.target.value),
+                                }}
+                              >
+                                <option value="">
+                                  {t('glyphInspector.selectBranch')}
+                                </option>
+                                {githubForkStatus.branches.map((branch) => (
+                                  <option key={branch} value={branch}>
+                                    {branch}
                                   </option>
-                                  {githubForkStatus.branches.map((branch) => (
-                                    <option key={branch} value={branch}>
-                                      {branch}
-                                    </option>
-                                  ))}
-                                </NativeSelect.Field>
-                                <NativeSelect.Indicator />
-                              </NativeSelect.Root>
+                                ))}
+                              </NativeSelect>
                               <IconButton
                                 aria-label={t('glyphInspector.createBranch')}
                                 size="sm"

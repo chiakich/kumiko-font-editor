@@ -3,12 +3,12 @@ import {
   Button,
   HStack,
   Input,
-  NativeSelect,
   Stack,
   Text,
   VStack,
   Field,
 } from '@chakra-ui/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Plus } from 'iconoir-react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -98,24 +98,20 @@ function FilterModeSelect({
   return (
     <Field.Root>
       <Field.Label>{t('fontOverview.customFilter.matchMode')}</Field.Label>
-      <NativeSelect.Root>
-        <NativeSelect.Field
-          value={draft.mode}
-          onChange={(event) =>
+      <NativeSelect
+        fieldProps={{
+          value: draft.mode,
+          onChange: (event) =>
             setDraft((current) => ({
               ...current,
               mode: event.target.value as OverviewCustomFilterMode,
-            }))
-          }
-        >
-          <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
-          <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
-          <option value="none">
-            {t('fontOverview.customFilter.matchNone')}
-          </option>
-        </NativeSelect.Field>
-        <NativeSelect.Indicator />
-      </NativeSelect.Root>
+            })),
+        }}
+      >
+        <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
+        <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
+        <option value="none">{t('fontOverview.customFilter.matchNone')}</option>
+      </NativeSelect>
     </Field.Root>
   )
 }
@@ -132,25 +128,23 @@ function FilterSortSelect({
   return (
     <Field.Root>
       <Field.Label>{t('fontOverview.customFilter.sort')}</Field.Label>
-      <NativeSelect.Root>
-        <NativeSelect.Field
-          value={draft.sort ?? 'codePoint'}
-          onChange={(event) =>
+      <NativeSelect
+        fieldProps={{
+          value: draft.sort ?? 'codePoint',
+          onChange: (event) =>
             setDraft((current) => ({
               ...current,
               sort: event.target.value as OverviewCustomFilterSort,
-            }))
-          }
-        >
-          <option value="codePoint">
-            {t('fontOverview.customFilter.sortCodePoint')}
-          </option>
-          <option value="recentEdit">
-            {t('fontOverview.customFilter.sortRecentEdit')}
-          </option>
-        </NativeSelect.Field>
-        <NativeSelect.Indicator />
-      </NativeSelect.Root>
+            })),
+        }}
+      >
+        <option value="codePoint">
+          {t('fontOverview.customFilter.sortCodePoint')}
+        </option>
+        <option value="recentEdit">
+          {t('fontOverview.customFilter.sortRecentEdit')}
+        </option>
+      </NativeSelect>
     </Field.Root>
   )
 }

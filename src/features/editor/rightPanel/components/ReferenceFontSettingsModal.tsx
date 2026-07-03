@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   HStack,
   Input,
   Popover,
@@ -12,6 +11,7 @@ import {
   Dialog,
   Portal,
 } from '@chakra-ui/react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -354,7 +354,7 @@ export function ReferenceFontSettingsModal({
 
                 <Box opacity={isComputingResidual ? 0.65 : 1}>
                   <HStack justify="space-between" align="center" mb={1}>
-                    <Checkbox.Root
+                    <Checkbox
                       size="sm"
                       disabled={!referenceFontName || isComputingResidual}
                       onCheckedChange={(details) =>
@@ -362,14 +362,8 @@ export function ReferenceFontSettingsModal({
                       }
                       checked={isResidualChecked || isComputingResidual}
                     >
-                      <Checkbox.HiddenInput />
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                      <Checkbox.Label>
-                        {t('editor.referenceFontResidualUse')}
-                      </Checkbox.Label>
-                    </Checkbox.Root>
+                      {t('editor.referenceFontResidualUse')}
+                    </Checkbox>
                     {isComputingResidual ? (
                       <Spinner size="sm" color="primary" />
                     ) : null}

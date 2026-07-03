@@ -24,7 +24,26 @@ export function NumberField({
         value={String(value ?? '')}
         onValueChange={(details) => onChange(details.value)}
       >
-        <NumberInput.Input />
+        <NumberInput.Input
+          bg="card"
+          borderColor="controlBorder"
+          borderRadius="control"
+          color="foreground"
+          fontFamily="mono"
+          fontSize="sm"
+          h={9}
+          lineHeight="normal"
+          px={3}
+          transitionDuration="fast"
+          transitionProperty="border-color, box-shadow"
+          transitionTimingFunction="standard"
+          _disabled={{ opacity: 0.5, cursor: 'not-allowed', bg: 'secondary' }}
+          _focusVisible={{
+            borderColor: 'ring',
+            boxShadow: '0 0 0 1px var(--chakra-colors-ring)',
+          }}
+          _hover={{ borderColor: 'controlBorderHover' }}
+        />
       </NumberInput.Root>
     </Field.Root>
   )

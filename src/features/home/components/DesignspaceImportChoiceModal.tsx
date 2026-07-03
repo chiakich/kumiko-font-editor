@@ -10,6 +10,7 @@ import {
   Dialog,
   Portal,
 } from '@chakra-ui/react'
+import { RadioItem } from '@/components/ui/radio'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { DesignspaceCandidate } from 'src/lib/fontFormats/adapters/ufo'
@@ -116,13 +117,12 @@ export function DesignspaceImportChoiceModal({
                           borderRadius="sm"
                           p={3}
                         >
-                          <RadioGroup.Item
+                          <RadioItem
                             value={candidate.relativePath}
                             disabled={disabled}
                             alignItems="flex-start"
+                            controlProps={{ mt: 1 }}
                           >
-                            <RadioGroup.ItemHiddenInput />
-                            <RadioGroup.ItemControl mt={1} />
                             <Stack gap={2} pl={1}>
                               <HStack gap={2} align="center" wrap="wrap">
                                 <Code fontSize="xs">
@@ -169,7 +169,7 @@ export function DesignspaceImportChoiceModal({
                                 </Text>
                               )}
                             </Stack>
-                          </RadioGroup.Item>
+                          </RadioItem>
                         </Box>
                       )
                     })}

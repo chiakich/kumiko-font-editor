@@ -1,12 +1,5 @@
-import {
-  Badge,
-  Box,
-  HStack,
-  IconButton,
-  Input,
-  NativeSelect,
-  Stack,
-} from '@chakra-ui/react'
+import { Badge, Box, HStack, IconButton, Input, Stack } from '@chakra-ui/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Tooltip } from '@/components/ui/tooltip'
 import { NavArrowRight, Trash } from 'iconoir-react'
 import { useState } from 'react'
@@ -158,27 +151,27 @@ export function AlternateBehaviorTableRow({
         }
         gap={1}
       >
-        <NativeSelect.Root size="xs">
-          <NativeSelect.Field
-            aria-label={t('editor.alternateBehaviorType')}
-            value={type}
-            onBlur={commit}
-            onChange={(event) => {
+        <NativeSelect
+          size="xs"
+          fieldProps={{
+            'aria-label': t('editor.alternateBehaviorType'),
+            value: type,
+            onBlur: commit,
+            onChange: (event) => {
               const nextType = event.target.value as AlternateBehaviorType
               setType(nextType)
               if (nextType !== 'customFeature') {
                 setCustomFeatureTag('')
               }
-            }}
-          >
-            {ALTERNATE_BEHAVIOR_TYPES.map((behaviorType) => (
-              <option key={behaviorType} value={behaviorType}>
-                {ALTERNATE_BEHAVIOR_TYPE_LABELS[behaviorType]}
-              </option>
-            ))}
-          </NativeSelect.Field>
-          <NativeSelect.Indicator />
-        </NativeSelect.Root>
+            },
+          }}
+        >
+          {ALTERNATE_BEHAVIOR_TYPES.map((behaviorType) => (
+            <option key={behaviorType} value={behaviorType}>
+              {ALTERNATE_BEHAVIOR_TYPE_LABELS[behaviorType]}
+            </option>
+          ))}
+        </NativeSelect>
         {type === 'customFeature' ? (
           <Input
             aria-label={t('editor.customAlternateFeatureTag')}

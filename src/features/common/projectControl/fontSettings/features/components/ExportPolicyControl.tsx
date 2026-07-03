@@ -1,4 +1,5 @@
-import { Alert, NativeSelect, Stack, Text, Field } from '@chakra-ui/react'
+import { Alert, Stack, Text, Field } from '@chakra-ui/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import type {
   ExportPolicy,
   FeatureDiagnostic,
@@ -69,19 +70,18 @@ export function ExportPolicyControl({
         <Field.Label textStyle="label">
           {t('projectControl.opentypeExportPolicy')}
         </Field.Label>
-        <NativeSelect.Root>
-          <NativeSelect.Field
-            value={state.exportPolicy}
-            onChange={(event) => onChange(event.target.value as ExportPolicy)}
-          >
-            {EXPORT_POLICIES.map((policy) => (
-              <option key={policy} value={policy}>
-                {getExportPolicyLabel(policy, t)}
-              </option>
-            ))}
-          </NativeSelect.Field>
-          <NativeSelect.Indicator />
-        </NativeSelect.Root>
+        <NativeSelect
+          fieldProps={{
+            value: state.exportPolicy,
+            onChange: (event) => onChange(event.target.value as ExportPolicy),
+          }}
+        >
+          {EXPORT_POLICIES.map((policy) => (
+            <option key={policy} value={policy}>
+              {getExportPolicyLabel(policy, t)}
+            </option>
+          ))}
+        </NativeSelect>
       </Field.Root>
       <Text fontSize="sm" color="mutedForeground">
         {t('projectControl.exportBehaviorIsExplicitBecauseCompiling')}

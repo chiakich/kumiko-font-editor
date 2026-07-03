@@ -4,11 +4,11 @@ import {
   HStack,
   IconButton,
   Input,
-  NativeSelect,
   Stack,
   VStack,
   Field,
 } from '@chakra-ui/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Tooltip } from '@/components/ui/tooltip'
 import { Trash } from 'iconoir-react'
 import type { ReactElement } from 'react'
@@ -24,8 +24,9 @@ import type {
 import {
   GLYPHS_LABEL_COLOR_KEYS,
   GLYPHS_LABEL_COLORS,
-  kumikoColorToCssRgba,
+  kumikoColorToDisplayCssRgba,
 } from 'src/lib/color/kumikoColor'
+import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
 import {
   getOperatorsForField,
   isBooleanField,
@@ -145,28 +146,23 @@ function RuleGroupHeader({
         <Field.Label fontSize="xs" mb={1}>
           {t('fontOverview.customFilter.groupMode')}
         </Field.Label>
-        <NativeSelect.Root size="sm">
-          <NativeSelect.Field
-            value={rule.mode}
-            onChange={(event) =>
+        <NativeSelect
+          size="sm"
+          fieldProps={{
+            value: rule.mode,
+            onChange: (event) =>
               updateGroupMode(
                 rule.id,
                 event.target.value as OverviewCustomFilterMode
-              )
-            }
-          >
-            <option value="all">
-              {t('fontOverview.customFilter.matchAll')}
-            </option>
-            <option value="any">
-              {t('fontOverview.customFilter.matchAny')}
-            </option>
-            <option value="none">
-              {t('fontOverview.customFilter.matchNone')}
-            </option>
-          </NativeSelect.Field>
-          <NativeSelect.Indicator />
-        </NativeSelect.Root>
+              ),
+          }}
+        >
+          <option value="all">{t('fontOverview.customFilter.matchAll')}</option>
+          <option value="any">{t('fontOverview.customFilter.matchAny')}</option>
+          <option value="none">
+            {t('fontOverview.customFilter.matchNone')}
+          </option>
+        </NativeSelect>
       </Field.Root>
       <RuleGroupActions
         addGroup={addGroup}
@@ -268,24 +264,22 @@ function RuleFieldSelect({
   const { t } = useTranslation()
 
   return (
-    <NativeSelect.Root>
-      <NativeSelect.Field
-        flex="1"
-        value={rule.field}
-        onChange={(event) =>
+    <NativeSelect
+      fieldProps={{
+        flex: '1',
+        value: rule.field,
+        onChange: (event) =>
           updateRule(rule.id, {
             field: event.target.value as OverviewCustomFilterRuleField,
-          })
-        }
-      >
-        {RULE_FIELDS.map((field) => (
-          <option key={field} value={field}>
-            {t(`fontOverview.customFilter.fields.${field}`)}
-          </option>
-        ))}
-      </NativeSelect.Field>
-      <NativeSelect.Indicator />
-    </NativeSelect.Root>
+          }),
+      }}
+    >
+      {RULE_FIELDS.map((field) => (
+        <option key={field} value={field}>
+          {t(`fontOverview.customFilter.fields.${field}`)}
+        </option>
+      ))}
+    </NativeSelect>
   )
 }
 
@@ -301,11 +295,11 @@ function RuleOperatorSelect({
   const { t } = useTranslation()
 
   return (
-    <NativeSelect.Root>
-      <NativeSelect.Field
-        flex="1"
-        value={rule.operator}
-        onChange={(event) =>
+    <NativeSelect
+      fieldProps={{
+        flex: '1',
+        value: rule.operator,
+        onChange: (event) =>
           updateRule(rule.id, {
             operator: event.target.value as OverviewCustomFilterRuleOperator,
             value:
@@ -313,17 +307,15 @@ function RuleOperatorSelect({
               event.target.value === 'exists'
                 ? ''
                 : rule.value,
-          })
-        }
-      >
-        {operators.map((operator) => (
-          <option key={operator} value={operator}>
-            {t(`fontOverview.customFilter.operators.${operator}`)}
-          </option>
-        ))}
-      </NativeSelect.Field>
-      <NativeSelect.Indicator />
-    </NativeSelect.Root>
+          }),
+      }}
+    >
+      {operators.map((operator) => (
+        <option key={operator} value={operator}>
+          {t(`fontOverview.customFilter.operators.${operator}`)}
+        </option>
+      ))}
+    </NativeSelect>
   )
 }
 
@@ -354,23 +346,21 @@ function RuleValueControl({
 
   if (booleanField) {
     return (
-      <NativeSelect.Root>
-        <NativeSelect.Field
-          flex="1"
-          value={rule.value === 'false' ? 'false' : 'true'}
-          onChange={(event) =>
-            updateRule(rule.id, { value: event.target.value })
-          }
-        >
-          <option value="true">
-            {t('fontOverview.customFilter.booleanTrue')}
-          </option>
-          <option value="false">
-            {t('fontOverview.customFilter.booleanFalse')}
-          </option>
-        </NativeSelect.Field>
-        <NativeSelect.Indicator />
-      </NativeSelect.Root>
+      <NativeSelect
+        fieldProps={{
+          flex: '1',
+          value: rule.value === 'false' ? 'false' : 'true',
+          onChange: (event) =>
+            updateRule(rule.id, { value: event.target.value }),
+        }}
+      >
+        <option value="true">
+          {t('fontOverview.customFilter.booleanTrue')}
+        </option>
+        <option value="false">
+          {t('fontOverview.customFilter.booleanFalse')}
+        </option>
+      </NativeSelect>
     )
   }
 
@@ -393,6 +383,7 @@ function ColorLabelValueControl({
   updateRule: RuleConditionUpdater
 }) {
   const { t } = useTranslation()
+  const colorMode = useResolvedColorMode()
   const selectedValue = rule.value || 'none'
 
   return (
@@ -427,7 +418,7 @@ function ColorLabelValueControl({
             onClick={() => updateRule(rule.id, { value: colorKey })}
           >
             <Box
-              bg={kumikoColorToCssRgba(color)}
+              bg={kumikoColorToDisplayCssRgba(color, colorMode)}
               border={isSelected ? '1px solid' : 'none'}
               borderColor="foreground"
               borderRadius="full"

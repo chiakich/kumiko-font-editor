@@ -1,4 +1,5 @@
 import type { KumikoColor } from 'src/store'
+import type { ResolvedColorMode } from 'src/lib/preferences/colorMode'
 
 const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 
@@ -15,6 +16,21 @@ export const GLYPHS_LABEL_COLORS: KumikoColor[] = [
   [0.9922, 0.7451, 0.8706, 1],
   [0.902, 0.898, 0.902, 1],
   [0.698, 0.698, 0.698, 1],
+]
+
+const GLYPHS_LABEL_COLORS_DARK: KumikoColor[] = [
+  [0.62, 0.25, 0.21, 1],
+  [0.62, 0.38, 0.16, 1],
+  [0.47, 0.37, 0.26, 1],
+  [0.61, 0.56, 0.16, 1],
+  [0.38, 0.53, 0.24, 1],
+  [0.22, 0.48, 0.29, 1],
+  [0.23, 0.47, 0.61, 1],
+  [0.25, 0.34, 0.64, 1],
+  [0.42, 0.3, 0.59, 1],
+  [0.56, 0.25, 0.43, 1],
+  [0.5, 0.5, 0.52, 1],
+  [0.26, 0.27, 0.29, 1],
 ]
 
 export const GLYPHS_LABEL_COLOR_KEYS = [
@@ -94,6 +110,22 @@ export const areKumikoColorsEqual = (
   return left.every((value, index) => value === right[index])
 }
 
+export const getDisplayKumikoColor = (
+  color: KumikoColor | null | undefined,
+  mode: ResolvedColorMode
+): KumikoColor | null => {
+  if (!color || mode === 'light') {
+    return color ?? null
+  }
+
+  const labelColorIndex = GLYPHS_LABEL_COLORS.findIndex((candidate) =>
+    areKumikoColorsEqual(candidate, color)
+  )
+  return labelColorIndex >= 0
+    ? (GLYPHS_LABEL_COLORS_DARK[labelColorIndex] ?? color)
+    : color
+}
+
 export const kumikoColorToCssRgba = (
   color: KumikoColor | null | undefined,
   alphaOverride?: number
@@ -107,3 +139,9 @@ export const kumikoColorToCssRgba = (
     clampUnit(green) * 255
   )}, ${Math.round(clampUnit(blue) * 255)}, ${clampUnit(resolvedAlpha)})`
 }
+
+export const kumikoColorToDisplayCssRgba = (
+  color: KumikoColor | null | undefined,
+  mode: ResolvedColorMode,
+  alphaOverride?: number
+) => kumikoColorToCssRgba(getDisplayKumikoColor(color, mode), alphaOverride)

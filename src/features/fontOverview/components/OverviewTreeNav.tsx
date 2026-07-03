@@ -81,37 +81,26 @@ const getNextExpandedIds = (expandedIds: string[], nodeId: string): string[] =>
     ? expandedIds.filter((id) => id !== nodeId)
     : [...expandedIds, nodeId]
 
-function ExpandToggle({
-  isExpanded,
-  label,
-  onToggle,
-}: {
-  isExpanded: boolean
-  label: string
-  onToggle: () => void
-}) {
+function ExpandToggle({ isExpanded }: { isExpanded: boolean }) {
   const Icon = isExpanded ? NavArrowDown : NavArrowRight
 
   return (
-    <IconButton
-      aria-label={isExpanded ? `收合 ${label}` : `展開 ${label}`}
-      size="xs"
-      variant="ghost"
-      minW="22px"
-      w="22px"
-      h="28px"
-      onClick={(event) => {
-        event.stopPropagation()
-        onToggle()
-      }}
+    <Box
+      aria-hidden
+      alignItems="center"
+      display="flex"
+      flexShrink={0}
+      h="26px"
+      justifyContent="center"
+      w="18px"
     >
-      <Icon width={20} height={20} strokeWidth={2.25} />
-    </IconButton>
+      <Icon width={16} height={16} strokeWidth={2.25} />
+    </Box>
   )
 }
 
 function TreeIndentSpacer() {
-  return <Box w="22px" flexShrink={0} />
+  return <Box w="18px" flexShrink={0} />
 }
 
 function OverviewTreeRow({
@@ -152,7 +141,7 @@ function OverviewTreeRow({
   return (
     <HStack
       gap={0}
-      pl={depth * 2.5}
+      pl={depth * 2}
       onContextMenu={(event) => {
         if (!customFilterId) {
           return
@@ -160,29 +149,33 @@ function OverviewTreeRow({
         onOpenCustomFilterContextMenu(customFilterId, label, event)
       }}
     >
-      {hasChildren ? (
-        <ExpandToggle
-          isExpanded={isExpanded}
-          label={label}
-          onToggle={() => onToggle(node.id)}
-        />
-      ) : (
-        <TreeIndentSpacer />
-      )}
       <Button
         flex={1}
         justifyContent="space-between"
         minW={0}
-        ml={0.5}
-        pl={2}
+        pl={1}
+        pr={2}
         size="sm"
         variant={isSelected ? 'solid' : 'ghost'}
         color={isSelected ? 'primaryForeground' : 'foreground'}
         fontWeight="900"
-        onClick={() => onSectionSelect(node.id)}
+        onClick={() => {
+          if (hasChildren) {
+            onToggle(node.id)
+            return
+          }
+          onSectionSelect(node.id)
+        }}
       >
-        <Text lineClamp={1}>{label}</Text>
-        {node.id !== 'filters' ? (
+        <HStack gap={1.5} minW={0}>
+          {hasChildren ? (
+            <ExpandToggle isExpanded={isExpanded} />
+          ) : (
+            <TreeIndentSpacer />
+          )}
+          <Text lineClamp={1}>{label}</Text>
+        </HStack>
+        {!hasChildren && node.id !== 'filters' ? (
           <Tag.Root size="sm">{node.glyphs.length}</Tag.Root>
         ) : null}
       </Button>

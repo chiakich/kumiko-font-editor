@@ -1,5 +1,6 @@
-import { NativeSelect, Stack, Field, Dialog, Portal } from '@chakra-ui/react'
+import { Stack, Field, Dialog, Portal } from '@chakra-ui/react'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
+import { NativeSelect } from '@/components/ui/native-select'
 import {
   saveGlyphColorLabelDisplayMode,
   useGlyphColorLabelDisplayMode,
@@ -64,70 +65,62 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
                   <Field.Label textStyle="label">
                     {t('settings.appearance')}
                   </Field.Label>
-                  <NativeSelect.Root>
-                    <NativeSelect.Field
-                      value={colorMode}
-                      onChange={(event) =>
+                  <NativeSelect
+                    fieldProps={{
+                      value: colorMode,
+                      onChange: (event) =>
                         changeColorMode(
                           event.target.value as ColorModePreference
-                        )
-                      }
-                    >
-                      <option value="light">
-                        {t('settings.appearanceLight')}
-                      </option>
-                      <option value="dark">
-                        {t('settings.appearanceDark')}
-                      </option>
-                      <option value="system">
-                        {t('settings.appearanceSystem')}
-                      </option>
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                        ),
+                    }}
+                  >
+                    <option value="light">
+                      {t('settings.appearanceLight')}
+                    </option>
+                    <option value="dark">{t('settings.appearanceDark')}</option>
+                    <option value="system">
+                      {t('settings.appearanceSystem')}
+                    </option>
+                  </NativeSelect>
                 </Field.Root>
                 <Field.Root>
                   <Field.Label textStyle="label">
                     {t('settings.language')}
                   </Field.Label>
-                  <NativeSelect.Root>
-                    <NativeSelect.Field
-                      value={activeLanguage}
-                      onChange={(event) =>
-                        changeLanguage(event.target.value as SupportedLanguage)
-                      }
-                    >
-                      {supportedLanguages.map((language) => (
-                        <option key={language} value={language}>
-                          {languageNames[language]}
-                        </option>
-                      ))}
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                  <NativeSelect
+                    fieldProps={{
+                      value: activeLanguage,
+                      onChange: (event) =>
+                        changeLanguage(event.target.value as SupportedLanguage),
+                    }}
+                  >
+                    {supportedLanguages.map((language) => (
+                      <option key={language} value={language}>
+                        {languageNames[language]}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 </Field.Root>
                 <Field.Root>
                   <Field.Label textStyle="label">
                     {t('settings.glyphColorLabelDisplay')}
                   </Field.Label>
-                  <NativeSelect.Root>
-                    <NativeSelect.Field
-                      value={glyphColorLabelDisplayMode}
-                      onChange={(event) =>
+                  <NativeSelect
+                    fieldProps={{
+                      value: glyphColorLabelDisplayMode,
+                      onChange: (event) =>
                         changeGlyphColorLabelDisplayMode(
                           event.target.value as GlyphColorLabelDisplayMode
-                        )
-                      }
-                    >
-                      <option value="card">
-                        {t('settings.glyphColorLabelDisplayCard')}
-                      </option>
-                      <option value="dot">
-                        {t('settings.glyphColorLabelDisplayDot')}
-                      </option>
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                        ),
+                    }}
+                  >
+                    <option value="card">
+                      {t('settings.glyphColorLabelDisplayCard')}
+                    </option>
+                    <option value="dot">
+                      {t('settings.glyphColorLabelDisplayDot')}
+                    </option>
+                  </NativeSelect>
                 </Field.Root>
               </Stack>
             </Dialog.Body>

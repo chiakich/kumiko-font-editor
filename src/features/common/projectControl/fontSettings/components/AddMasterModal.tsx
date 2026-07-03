@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
 import {
   Button,
-  Checkbox,
   Dialog,
   Field,
   HStack,
@@ -10,9 +9,10 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  NativeSelect,
 } from '@chakra-ui/react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
+import { NativeSelect } from '@/components/ui/native-select'
 import { useToast } from '@/components/ui/toast'
 import { useStore } from 'src/store'
 import type { FontAxis, FontData, FontSource } from 'src/store'
@@ -270,25 +270,24 @@ export function AddMasterModal({
                   <Field.Label textStyle="label">
                     {t('projectControl.addMasterMethod')}
                   </Field.Label>
-                  <NativeSelect.Root size="sm">
-                    <NativeSelect.Field
-                      value={method}
-                      onChange={(event) =>
-                        setMethod(event.target.value as AddMasterMethod)
-                      }
-                    >
-                      <option value="font">
-                        {t('projectControl.addMasterFromFont')}
-                      </option>
-                      <option value="empty">
-                        {t('projectControl.addMasterEmpty')}
-                      </option>
-                      <option value="copy">
-                        {t('projectControl.addMasterCopy')}
-                      </option>
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                  </NativeSelect.Root>
+                  <NativeSelect
+                    size="sm"
+                    fieldProps={{
+                      value: method,
+                      onChange: (event) =>
+                        setMethod(event.target.value as AddMasterMethod),
+                    }}
+                  >
+                    <option value="font">
+                      {t('projectControl.addMasterFromFont')}
+                    </option>
+                    <option value="empty">
+                      {t('projectControl.addMasterEmpty')}
+                    </option>
+                    <option value="copy">
+                      {t('projectControl.addMasterCopy')}
+                    </option>
+                  </NativeSelect>
                 </Field.Root>
 
                 {method === 'font' ? (
@@ -316,10 +315,11 @@ export function AddMasterModal({
                         <Field.Label textStyle="label">
                           {t('projectControl.chooseMaster')}
                         </Field.Label>
-                        <NativeSelect.Root size="sm">
-                          <NativeSelect.Field
-                            value={candidateId}
-                            onChange={(event) => {
+                        <NativeSelect
+                          size="sm"
+                          fieldProps={{
+                            value: candidateId,
+                            onChange: (event) => {
                               setCandidateId(event.target.value)
                               const next = candidates.find(
                                 (candidate) =>
@@ -334,53 +334,45 @@ export function AddMasterModal({
                                   }))
                                 }
                               }
-                            }}
-                          >
-                            {candidates.map((candidate) => (
-                              <option key={candidate.id} value={candidate.id}>
-                                {candidate.name}
-                              </option>
-                            ))}
-                          </NativeSelect.Field>
-                          <NativeSelect.Indicator />
-                        </NativeSelect.Root>
+                            },
+                          }}
+                        >
+                          {candidates.map((candidate) => (
+                            <option key={candidate.id} value={candidate.id}>
+                              {candidate.name}
+                            </option>
+                          ))}
+                        </NativeSelect>
                       </Field.Root>
                     ) : null}
-                    <Checkbox.Root
+                    <Checkbox
                       checked={createNewGlyphs}
                       onCheckedChange={(details) =>
                         setCreateNewGlyphs(details.checked === true)
                       }
                     >
-                      <Checkbox.HiddenInput />
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                      <Checkbox.Label>
-                        {t('projectControl.createNewGlyphsForExtras')}
-                      </Checkbox.Label>
-                    </Checkbox.Root>
+                      {t('projectControl.createNewGlyphsForExtras')}
+                    </Checkbox>
                   </Stack>
                 ) : (
                   <Field.Root>
                     <Field.Label textStyle="label">
                       {t('projectControl.baseMaster')}
                     </Field.Label>
-                    <NativeSelect.Root size="sm">
-                      <NativeSelect.Field
-                        value={baseSourceId}
-                        onChange={(event) =>
-                          setBaseSourceId(event.target.value)
-                        }
-                      >
-                        {sources.map((source) => (
-                          <option key={source.id} value={source.id}>
-                            {source.name}
-                          </option>
-                        ))}
-                      </NativeSelect.Field>
-                      <NativeSelect.Indicator />
-                    </NativeSelect.Root>
+                    <NativeSelect
+                      size="sm"
+                      fieldProps={{
+                        value: baseSourceId,
+                        onChange: (event) =>
+                          setBaseSourceId(event.target.value),
+                      }}
+                    >
+                      {sources.map((source) => (
+                        <option key={source.id} value={source.id}>
+                          {source.name}
+                        </option>
+                      ))}
+                    </NativeSelect>
                   </Field.Root>
                 )}
 

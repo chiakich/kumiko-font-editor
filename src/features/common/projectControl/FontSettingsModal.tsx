@@ -1,11 +1,6 @@
-import { Button, HStack, Tabs, Text, Dialog, Portal } from '@chakra-ui/react'
-import { DialogCloseButton } from '@/components/ui/dialog-close-button'
+import { Button, Tabs } from '@chakra-ui/react'
+import { TabbedModal } from '@/components/shared/TabbedModal'
 import { useState } from 'react'
-import {
-  SlidingTabList,
-  SlidingTabsContentGroup,
-  SlidingTabsRoot,
-} from 'src/features/common/SlidingTabList'
 import { FontBasicsTab } from 'src/features/common/projectControl/fontSettings/components/FontBasicsTab'
 import { FontExportsTab } from 'src/features/common/projectControl/fontSettings/components/FontExportsTab'
 import { FontFeaturesTab } from 'src/features/common/projectControl/fontSettings/components/FontFeaturesTab'
@@ -146,128 +141,92 @@ export function FontSettingsModal({
   }
 
   return (
-    <Dialog.Root
+    <TabbedModal
       open={isOpen}
       size="xl"
       scrollBehavior="inside"
-      onOpenChange={(e) => {
-        if (!e.open) {
-          onClose()
-        }
-      }}
+      activeTabIndex={activeTabIndex}
+      contentProps={{ h: '90vh' }}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {t('projectControl.close')}
+          </Button>
+          <Button onClick={handleSave} disabled={!fontData}>
+            {t('projectControl.apply')}
+          </Button>
+        </>
+      }
+      layoutGroupId="font-settings-modal-tabs"
+      tabs={tabLabels}
+      title={
+        <>
+          {t('projectControl.fontSettings')}
+          {projectTitle ? ` · ${projectTitle}` : ''}
+        </>
+      }
+      onActiveTabIndexChange={setActiveTabIndex}
+      onClose={onClose}
     >
-      <Portal>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content borderRadius="lg" h="90vh">
-            <DialogCloseButton zIndex={2} />
-            <SlidingTabsRoot
-              size="sm"
-              display="flex"
-              flex={1}
-              flexDirection="column"
-              minH={0}
-              value={String(activeTabIndex)}
-              onValueChange={(details) =>
-                setActiveTabIndex(Number(details.value))
-              }
-            >
-              <HStack
-                align="center"
-                justify="space-between"
-                gap={4}
-                px={6}
-                pt={5}
-                pb={3}
-                pr={14}
-              >
-                <Text as="h2" fontSize="xl" fontWeight="900">
-                  {t('projectControl.fontSettings')}
-                  {projectTitle ? ` · ${projectTitle}` : ''}
-                </Text>
-                <SlidingTabList
-                  activeIndex={activeTabIndex}
-                  labels={tabLabels}
-                  layoutGroupId="font-settings-modal-tabs"
-                />
-              </HStack>
-
-              <Dialog.Body pb={5} flex={1} minH={0}>
-                <SlidingTabsContentGroup h="100%" mt={0}>
-                  <Tabs.Content value="0" p={0} h="100%" overflow="auto">
-                    <FontBasicsTab
-                      axes={axes}
-                      customParametersText={customParametersText}
-                      generalDraft={generalDraft}
-                      mappingsText={mappingsText}
-                      openTypeDraft={openTypeDraft}
-                      unitsPerEm={unitsPerEm}
-                      localizedNames={localizedNames}
-                      onAxesChange={setAxes}
-                      onCustomParametersTextChange={setCustomParametersText}
-                      onGeneralDraftChange={setGeneralDraft}
-                      onMappingsTextChange={setMappingsText}
-                      onOpenTypeDraftChange={setOpenTypeDraft}
-                      onUnitsPerEmChange={setUnitsPerEm}
-                      onLocalizedNamesChange={setLocalizedNames}
-                    />
-                  </Tabs.Content>
-                  <Tabs.Content value="1" p={0} h="100%" overflow="auto">
-                    <FontSourcesTab
-                      fontData={fontData}
-                      axes={axes}
-                      sources={sources}
-                      onSourcesChange={setSources}
-                    />
-                  </Tabs.Content>
-                  <Tabs.Content value="2" p={0} h="100%" overflow="auto">
-                    <FontExportsTab
-                      axes={axes}
-                      sources={sources}
-                      exports={exports}
-                      onExportsChange={setExports}
-                    />
-                  </Tabs.Content>
-                  <Tabs.Content value="3" p={0} h="100%" overflow="hidden">
-                    <FontFeaturesTab
-                      fontData={fontData}
-                      openTypeFeatures={openTypeFeatures}
-                      onOpenTypeFeaturesChange={setOpenTypeFeatures}
-                    />
-                  </Tabs.Content>
-                  <Tabs.Content value="4" p={0} h="100%" overflow="auto">
-                    <FontOtherTab
-                      fontType={fontType}
-                      outlineType={outlineType}
-                      statusDefinitions={statusDefinitions}
-                      onFontTypeChange={setFontType}
-                      onOutlineTypeChange={setOutlineType}
-                      onStatusDefinitionsChange={setStatusDefinitions}
-                    />
-                  </Tabs.Content>
-                  <Tabs.Content value="5" p={0} h="100%" overflow="auto">
-                    <FontSupplementalTab
-                      notes={notes}
-                      supplementalText={supplementalText}
-                      onNotesChange={setNotes}
-                      onSupplementalTextChange={setSupplementalText}
-                    />
-                  </Tabs.Content>
-                </SlidingTabsContentGroup>
-              </Dialog.Body>
-
-              <Dialog.Footer gap={3}>
-                <Button variant="ghost" onClick={onClose}>
-                  {t('projectControl.close')}
-                </Button>
-                <Button onClick={handleSave} disabled={!fontData}>
-                  {t('projectControl.apply')}
-                </Button>
-              </Dialog.Footer>
-            </SlidingTabsRoot>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
+      <Tabs.Content value="0" p={0} h="100%" overflow="auto">
+        <FontBasicsTab
+          axes={axes}
+          customParametersText={customParametersText}
+          generalDraft={generalDraft}
+          mappingsText={mappingsText}
+          openTypeDraft={openTypeDraft}
+          unitsPerEm={unitsPerEm}
+          localizedNames={localizedNames}
+          onAxesChange={setAxes}
+          onCustomParametersTextChange={setCustomParametersText}
+          onGeneralDraftChange={setGeneralDraft}
+          onMappingsTextChange={setMappingsText}
+          onOpenTypeDraftChange={setOpenTypeDraft}
+          onUnitsPerEmChange={setUnitsPerEm}
+          onLocalizedNamesChange={setLocalizedNames}
+        />
+      </Tabs.Content>
+      <Tabs.Content value="1" p={0} h="100%" overflow="auto">
+        <FontSourcesTab
+          fontData={fontData}
+          axes={axes}
+          sources={sources}
+          onSourcesChange={setSources}
+        />
+      </Tabs.Content>
+      <Tabs.Content value="2" p={0} h="100%" overflow="auto">
+        <FontExportsTab
+          axes={axes}
+          sources={sources}
+          exports={exports}
+          onExportsChange={setExports}
+        />
+      </Tabs.Content>
+      <Tabs.Content value="3" p={0} h="100%" overflow="hidden">
+        <FontFeaturesTab
+          fontData={fontData}
+          openTypeFeatures={openTypeFeatures}
+          onOpenTypeFeaturesChange={setOpenTypeFeatures}
+        />
+      </Tabs.Content>
+      <Tabs.Content value="4" p={0} h="100%" overflow="auto">
+        <FontOtherTab
+          fontType={fontType}
+          outlineType={outlineType}
+          statusDefinitions={statusDefinitions}
+          onFontTypeChange={setFontType}
+          onOutlineTypeChange={setOutlineType}
+          onStatusDefinitionsChange={setStatusDefinitions}
+        />
+      </Tabs.Content>
+      <Tabs.Content value="5" p={0} h="100%" overflow="auto">
+        <FontSupplementalTab
+          notes={notes}
+          supplementalText={supplementalText}
+          onNotesChange={setNotes}
+          onSupplementalTextChange={setSupplementalText}
+        />
+      </Tabs.Content>
+    </TabbedModal>
   )
 }

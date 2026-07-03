@@ -1,7 +1,6 @@
 import {
   Box,
   Button,
-  Checkbox,
   HStack,
   Input,
   SimpleGrid,
@@ -10,6 +9,7 @@ import {
   Text,
   Field,
 } from '@chakra-ui/react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { NumberField } from 'src/features/common/projectControl/fontSettings/components/fields'
 import {
   makeId,
@@ -300,44 +300,32 @@ export function FontExportsTab({
             <Text fontSize="sm" color="mutedForeground">
               {t('projectControl.styleLinking')}
             </Text>
-            <Checkbox.Root
+            <Checkbox
               checked={instance.isBold === true}
               onCheckedChange={(details) =>
                 updateExport(index, { isBold: details.checked === true })
               }
             >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Label>{t('projectControl.bold')}</Checkbox.Label>
-            </Checkbox.Root>
-            <Checkbox.Root
+              {t('projectControl.bold')}
+            </Checkbox>
+            <Checkbox
               checked={instance.isItalic === true}
               onCheckedChange={(details) =>
                 updateExport(index, { isItalic: details.checked === true })
               }
             >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Label>{t('projectControl.italic')}</Checkbox.Label>
-            </Checkbox.Root>
+              {t('projectControl.italic')}
+            </Checkbox>
           </HStack>
           <HStack justify="space-between" mt={3}>
-            <Checkbox.Root
+            <Checkbox
               onCheckedChange={(details) =>
                 updateExport(index, { export: details.checked === true })
               }
               checked={instance.export}
             >
-              <Checkbox.HiddenInput />
-              <Checkbox.Control>
-                <Checkbox.Indicator />
-              </Checkbox.Control>
-              <Checkbox.Label>{t('projectControl.export')}</Checkbox.Label>
-            </Checkbox.Root>
+              {t('projectControl.export')}
+            </Checkbox>
             <Button
               size="sm"
               variant="ghost"
