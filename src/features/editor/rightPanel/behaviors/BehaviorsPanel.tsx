@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { Button, Stack, useDisclosure, Dialog, Portal } from '@chakra-ui/react'
 import { useMemo, useRef, useState } from 'react'
 import {
@@ -30,7 +30,6 @@ interface BehaviorsPanelProps {
 
 export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const { t } = useTranslation()
-  const toast = useToast()
 
   const [unusedGlyphPrompt, setUnusedGlyphPrompt] =
     useState<UnusedGlyphPrompt | null>(null)
@@ -117,12 +116,12 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
       await flushCurrentDraft()
       closeUnusedGlyphDialog()
     } catch (error) {
-      toast({
+      toaster.create({
         title: '刪除後儲存失敗',
         description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
-        status: 'error',
+        type: 'error',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
       console.warn('Flush after unused glyph deletion failed.', error)
     }

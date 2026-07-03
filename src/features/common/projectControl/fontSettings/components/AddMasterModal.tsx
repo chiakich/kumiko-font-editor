@@ -13,7 +13,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { NativeSelect } from '@/components/ui/native-select'
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useStore } from 'src/store'
 import type { FontAxis, FontData, FontSource } from 'src/store'
 import {
@@ -100,7 +100,6 @@ export function AddMasterModal({
   onMasterAdded,
 }: AddMasterModalProps) {
   const { t } = useTranslation()
-  const toast = useToast()
   const projectId = useStore((state) => state.projectId)
   const applyImportedMaster = useStore((state) => state.applyImportedMaster)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -139,12 +138,12 @@ export function AddMasterModal({
         }
       }
     } catch (error) {
-      toast({
+      toaster.create({
         title: t('projectControl.masterImportFailed'),
         description: error instanceof Error ? error.message : String(error),
-        status: 'error',
+        type: 'error',
         duration: 4200,
-        isClosable: true,
+        closable: true,
       })
     } finally {
       setIsBusy(false)
@@ -199,24 +198,24 @@ export function AddMasterModal({
         newGlyphs: result.createdGlyphs,
       })
       onMasterAdded(source)
-      toast({
+      toaster.create({
         title: t('projectControl.masterAdded'),
         description: t('projectControl.masterAddedDetail', {
           matched: result.matchedCount,
           created: result.createdGlyphs.length,
         }),
-        status: 'success',
+        type: 'success',
         duration: 4200,
-        isClosable: true,
+        closable: true,
       })
       onClose()
     } catch (error) {
-      toast({
+      toaster.create({
         title: t('projectControl.masterImportFailed'),
         description: error instanceof Error ? error.message : String(error),
-        status: 'error',
+        type: 'error',
         duration: 4200,
-        isClosable: true,
+        closable: true,
       })
     } finally {
       setIsBusy(false)

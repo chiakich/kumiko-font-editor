@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useDisclosure } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -94,7 +94,6 @@ export const useGitHubCommitFlow = ({
   glyphEditTimes,
   markDraftSaved,
 }: UseGitHubCommitFlowInput) => {
-  const toast = useToast()
   const { t } = useTranslation()
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
   const persistenceStatus = useStore((state) => state.persistenceStatus)
@@ -195,12 +194,12 @@ export const useGitHubCommitFlow = ({
         return null
       }
 
-      toast({
+      toaster.create({
         title: '讀取 GitHub 狀態失敗',
         description: message,
-        status: 'error',
+        type: 'error',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
       return null
     }
@@ -236,20 +235,20 @@ export const useGitHubCommitFlow = ({
       if (githubRepoFullName) {
         await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
       }
-      toast({
+      toaster.create({
         title: 'GitHub 已登入',
         description: `目前登入帳號：${viewer.login}`,
-        status: 'success',
+        type: 'success',
         duration: 2600,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'GitHub 登入失敗',
         description: getErrorMessage(error, '目前無法完成 GitHub 登入。'),
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
     }
   }
@@ -262,20 +261,20 @@ export const useGitHubCommitFlow = ({
     try {
       await logoutMutation.mutateAsync()
       setForkStatusOverride(null)
-      toast({
+      toaster.create({
         title: 'GitHub 已登出',
         description: '目前 session 已清除。',
-        status: 'success',
+        type: 'success',
         duration: 2200,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'GitHub 登出失敗',
         description: getErrorMessage(error, '目前無法登出 GitHub。'),
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
     }
   }
@@ -290,12 +289,12 @@ export const useGitHubCommitFlow = ({
     const activeUfoId = getActiveUfoIdFromArchive()
 
     if (!activeUfoId) {
-      toast({
+      toaster.create({
         title: '無法準備 GitHub 提交',
         description: '找不到目前啟用的 UFO 字重。',
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
       return
     }
@@ -352,12 +351,12 @@ export const useGitHubCommitFlow = ({
       }
       updateGitHubCommitDraft(nextDraft)
     } catch (error) {
-      toast({
+      toaster.create({
         title: '無法準備 GitHub commit',
         description: getErrorMessage(error, '目前沒有可提交到 GitHub 的變更。'),
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
     } finally {
       setIsPreparingGitHubCommit(false)
@@ -378,20 +377,20 @@ export const useGitHubCommitFlow = ({
           isCreatingNewBranch: false,
         })
       }
-      toast({
+      toaster.create({
         title: 'GitHub fork 已建立',
         description: result.targetRepo?.fullName ?? githubRepoFullName,
-        status: 'success',
+        type: 'success',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: '建立 fork 失敗',
         description: getErrorMessage(error, '目前無法建立 GitHub fork。'),
-        status: 'error',
+        type: 'error',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
     }
   }
@@ -410,46 +409,46 @@ export const useGitHubCommitFlow = ({
     const activeLayerId = selectedLayerId ?? 'public.default'
 
     if (!activeUfoId) {
-      toast({
+      toaster.create({
         title: '無法建立 commit',
         description: '找不到目前啟用的 UFO 字重。',
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
       return
     }
 
     if (!gitHubBranchName.trim()) {
-      toast({
+      toaster.create({
         title: '請先指定 branch',
         description: '你可以選現有 branch，或輸入一個新的 branch 名稱。',
-        status: 'warning',
+        type: 'warning',
         duration: 2800,
-        isClosable: true,
+        closable: true,
       })
       return
     }
 
     if (hasBlockingSyncConflicts) {
-      toast({
+      toaster.create({
         title: '有尚未處理的同步衝突',
         description:
           '請先在上方選擇每個衝突字符要保留哪個版本，再套用遠端更新。',
-        status: 'warning',
+        type: 'warning',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
       return
     }
 
     if (hasBlockingQualityIssues) {
-      toast({
+      toaster.create({
         title: t('qualityCheck.commit.blockingToastTitle'),
         description: t('qualityCheck.commit.blockingToastDescription'),
-        status: 'warning',
+        type: 'warning',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
       return
     }
@@ -522,34 +521,34 @@ export const useGitHubCommitFlow = ({
         branchName: result.branchName,
         isCreatingNewBranch: false,
       })
-      toast({
+      toaster.create({
         title: 'GitHub commit 已推送',
         description: `已更新 ${result.headOwner}:${result.branchName}`,
-        status: 'success',
+        type: 'success',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
       const message = getErrorMessage(error, '目前無法建立 GitHub commit。')
 
       if (isMissingGitHubTokenError(message)) {
-        toast({
+        toaster.create({
           title: '需要 GitHub 登入',
           description: '請先登入 GitHub，再重新提交 commit。',
-          status: 'warning',
+          type: 'warning',
           duration: 3200,
-          isClosable: true,
+          closable: true,
         })
         void handleLoginGitHub()
         return
       }
 
-      toast({
+      toaster.create({
         title: '建立 commit 失敗',
         description: message,
-        status: 'error',
+        type: 'error',
         duration: 4200,
-        isClosable: true,
+        closable: true,
       })
       console.warn('GitHub commit failed.', error)
     }
@@ -570,20 +569,20 @@ export const useGitHubCommitFlow = ({
         branchName: gitHubBranchName.trim(),
       })
       await refreshGitHubCompareStatus(result.branchName)
-      toast({
+      toaster.create({
         title: '已合併上游變更',
         description: result.message,
-        status: 'success',
+        type: 'success',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: '合併上游失敗',
         description: getErrorMessage(error, '目前無法合併上游變更。'),
-        status: 'error',
+        type: 'error',
         duration: 4200,
-        isClosable: true,
+        closable: true,
       })
     }
   }

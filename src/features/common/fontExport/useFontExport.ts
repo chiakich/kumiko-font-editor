@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { zipSync } from 'fflate'
 import { useMemo, useState } from 'react'
 import {
@@ -114,7 +114,6 @@ interface ExportAsset {
 }
 
 export function useFontExport() {
-  const toast = useToast()
   const [isExporting, setIsExporting] = useState(false)
   const [ufoExportProgress, setUfoExportProgress] = useState<{
     completed: number
@@ -444,37 +443,37 @@ export function useFontExport() {
             )
           : 0
       if (glyphs3WarningCount > 0) {
-        toast({
+        toaster.create({
           title: 'Glyphs export warning',
           description: `匯出的 Glyphs 3 資料包含 ${glyphs3WarningCount} 個 sheared component，已用 matrix transform 保留；請在 Glyphs 重新開啟確認。`,
-          status: 'warning',
+          type: 'warning',
           duration: 5200,
-          isClosable: true,
+          closable: true,
         })
       }
 
       const totalUfoGlyphs = assets.find(
         (asset) => asset.totalGlyphs !== null
       )?.totalGlyphs
-      toast({
+      toaster.create({
         title: assets.length > 1 ? '已匯出 ZIP' : `已匯出 ${assets[0].label}`,
         description:
           totalUfoGlyphs != null
             ? `已匯出 ${assets.length} 個檔案，包含 ${totalUfoGlyphs} 個 glyph。`
             : `已匯出 ${assets.length} 個檔案。`,
-        status: 'success',
+        type: 'success',
         duration: 2400,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
       const report = createFontExportErrorReport(error, selectedFormats)
       setExportErrorReport(report)
-      toast({
+      toaster.create({
         title: '匯出失敗',
         description: report.message,
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
       console.warn('Font export failed.', error)
     } finally {

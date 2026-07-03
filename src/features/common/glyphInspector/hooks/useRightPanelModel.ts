@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useMemo } from 'react'
 import { getProjectArchiveMetadata } from 'src/lib/project/projectArchive'
 import { listGlyphLayers } from 'src/store/glyphLayerOps'
@@ -32,7 +32,6 @@ export interface InterpolationDiagnostics {
 }
 
 export function useRightPanelModel() {
-  const toast = useToast()
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const selectedLayerId = useStore((state) => state.selectedLayerId)
   const workspaceView = useStore((state) => state.workspaceView)
@@ -303,20 +302,20 @@ export function useRightPanelModel() {
     try {
       deleteGlyph(glyphId)
       await flushCurrentDraft()
-      toast({
+      toaster.create({
         title: '已刪除字符',
         description: `${glyphId} 已從目前專案移除。`,
-        status: 'success',
+        type: 'success',
         duration: 2200,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: '刪除後儲存失敗',
         description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
-        status: 'error',
+        type: 'error',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
       console.warn('Flush after glyph deletion failed.', error)
     }

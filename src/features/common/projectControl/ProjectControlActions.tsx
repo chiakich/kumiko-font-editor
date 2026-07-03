@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { Box, HStack, IconButton, useDisclosure } from '@chakra-ui/react'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
@@ -35,7 +35,6 @@ export function ProjectControlActions({
   onOpenQualityCheckModal,
 }: ProjectControlActionsProps) {
   const appSettingsModal = useDisclosure()
-  const toast = useToast()
   const { t } = useTranslation()
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const persistenceError = useStore((state) => state.persistenceError)
@@ -62,20 +61,20 @@ export function ProjectControlActions({
     setIsRetryingLocalSave(true)
     try {
       await retryLocalSave()
-      toast({
+      toaster.create({
         title: t('projectControl.localSaveRetrySucceeded'),
-        status: 'success',
+        type: 'success',
         duration: 1800,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: t('projectControl.localSaveRetryFailed'),
         description:
           error instanceof Error ? error.message : localSaveErrorMessage,
-        status: 'error',
+        type: 'error',
         duration: 3600,
-        isClosable: true,
+        closable: true,
       })
     } finally {
       setIsRetryingLocalSave(false)

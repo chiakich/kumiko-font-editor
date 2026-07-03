@@ -65,9 +65,10 @@ function PackageCard({
 }: PackageCardProps) {
   const { t } = useTranslation()
 
-  const selectedBg = 'foreground'
+  const selectedBg = 'black'
   const selectedColor = 'yellow.300'
-  const mutedColor = isSelected ? 'muted' : 'mutedForeground'
+  const selectedMutedColor = 'gray.300'
+  const mutedColor = isSelected ? selectedMutedColor : 'mutedForeground'
   const percent = Math.floor(coverage.drawnRatio * 100)
 
   return (
@@ -79,16 +80,16 @@ function PackageCard({
       whiteSpace="normal"
       variant="outline"
       borderWidth={2}
-      borderColor={isSelected ? 'foreground' : 'haze'}
-      bg={isSelected ? selectedBg : 'white'}
+      borderColor={isSelected ? 'yellow.300' : 'haze'}
+      bg={isSelected ? selectedBg : 'card'}
       color={isSelected ? selectedColor : 'foreground'}
       _hover={{
-        bg: isSelected ? selectedBg : 'card',
-        borderColor: 'foreground',
+        bg: isSelected ? selectedBg : 'muted',
+        borderColor: isSelected ? 'yellow.300' : 'foreground',
         color: isSelected ? selectedColor : 'foreground',
       }}
       _active={{
-        bg: isSelected ? selectedBg : 'card',
+        bg: isSelected ? selectedBg : 'muted',
         color: isSelected ? selectedColor : 'foreground',
       }}
       _focusVisible={{ boxShadow: '0 0 0 2px var(--chakra-colors-foreground)' }}
@@ -104,7 +105,7 @@ function PackageCard({
           {isSelected && (
             <Badge
               bg="yellow.300"
-              color="foreground"
+              color="black"
               variant="solid"
               top={1}
               right={1}
@@ -132,7 +133,7 @@ function PackageCard({
             borderRadius="full"
             colorPalette={percent >= 100 ? 'green' : 'yellow'}
           >
-            <Progress.Track>
+            <Progress.Track bg={isSelected ? 'gray.800' : undefined}>
               <Progress.Range />
             </Progress.Track>
           </Progress.Root>
@@ -164,13 +165,13 @@ function PackageGroupSidebar({
             key={group.id}
             justifyContent="flex-start"
             variant="outline"
-            bg={isActive ? 'foreground' : 'muted'}
+            bg={isActive ? 'black' : 'muted'}
             color={isActive ? 'yellow.300' : 'foreground'}
-            borderColor={isActive ? 'foreground' : 'transparent'}
+            borderColor={isActive ? 'black' : 'transparent'}
             _hover={{
-              bg: isActive ? 'foreground' : 'card',
+              bg: isActive ? 'black' : 'card',
               color: isActive ? 'yellow.300' : 'foreground',
-              borderColor: 'foreground',
+              borderColor: isActive ? 'black' : 'foreground',
             }}
             onClick={() => onSelectGroup(group.id)}
           >
@@ -294,15 +295,18 @@ function SummaryToken({ glyphPackage }: SummaryTokenProps) {
     <HStack
       gap={0}
       border="2px solid"
-      borderColor="foreground"
+      borderColor="black"
       borderRadius="2px"
       overflow="hidden"
+      _dark={{
+        borderColor: 'white',
+      }}
     >
       <Text
         px={2}
         py={1}
-        bg="card"
-        color="foreground"
+        bg="white"
+        color="black"
         fontSize="xs"
         fontWeight="900"
         whiteSpace="nowrap"
@@ -312,7 +316,7 @@ function SummaryToken({ glyphPackage }: SummaryTokenProps) {
       <Text
         px={2}
         py={1}
-        bg="foreground"
+        bg="black"
         color="white"
         fontSize="xs"
         fontWeight="900"

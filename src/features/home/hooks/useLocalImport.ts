@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import {
   importLocalProjectFiles,
   listLocalUfoDesignspaceCandidates,
@@ -15,14 +15,13 @@ export const useLocalImport = (input: {
   onProjectImported: (project: LoadedKumikoProject) => Promise<void> | void
   onProjectSummarySaved: (summary: KumikoProjectSummary) => void
 }) => {
-  const toast = useToast()
   const showImportError = (title: string, error: unknown) =>
-    toast({
+    toaster.create({
       title,
       description: getErrorMessage(error),
-      status: 'error',
+      type: 'error',
       duration: 4200,
-      isClosable: true,
+      closable: true,
     })
   const folderInputRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)

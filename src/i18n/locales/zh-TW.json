@@ -456,6 +456,8 @@
   },
   "home": {
     "cancel": "取消",
+    "createNewProject": "建立新專案",
+    "creatingNewProject": "建立中...",
     "delete": "刪除",
     "fontEditor": "Font Editor",
     "fullWebBasedFontEditor": "FULL WEB BASED / FONT EDITOR",
@@ -488,7 +490,8 @@
     "repoInputHint": "輸入 `owner/repo` 或 GitHub URL。",
     "repository": "Repository",
     "uploadFile": "上傳檔案",
-    "uploadFolder": "上傳資料夾"
+    "uploadFolder": "上傳資料夾",
+    "untitledNewProject": "未命名字體"
   },
   "projectControl": {
     "accept": "Accept",

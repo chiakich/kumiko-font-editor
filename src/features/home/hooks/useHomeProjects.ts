@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
@@ -14,8 +14,13 @@ import {
   type LoadedKumikoProject,
   useProjectList,
 } from 'src/features/home/hooks/useProjectList'
+import { createNewBlankProject } from 'src/features/home/utils/createNewProject'
+import { requestAddGlyphModalForNewProject } from 'src/features/home/utils/newProjectIntent'
+import { useTranslation } from 'react-i18next'
 
 export function useHomeProjects() {
+  const { t } = useTranslation()
+  const [isCreatingNewProject, setIsCreatingNewProject] = useState(false)
   const loadProjectState = useStore((state) => state.loadProjectState)
   const hydratePersistedLocalChanges = useStore(
     (state) => state.hydratePersistedLocalChanges
@@ -67,6 +72,34 @@ export function useHomeProjects() {
   const localImport = useLocalImport(importHandlers)
   const githubImport = useGitHubImport(importHandlers)
 
+  const handleCreateNewProject = async () => {
+    if (isCreatingNewProject) {
+      return
+    }
+
+    setIsCreatingNewProject(true)
+    try {
+      const createdProject = await createNewBlankProject(
+        t('home.untitledNewProject')
+      )
+      upsertProjectSummary(createdProject.summary)
+      requestAddGlyphModalForNewProject(createdProject.id)
+      loadProjectState(
+        createdProject.id,
+        createdProject.title,
+        createdProject.fontData,
+        createdProject.projectMetadata,
+        createdProject.projectSourceFormat,
+        createdProject.projectRoundTripFormat
+      )
+    } catch (err) {
+      console.error(err)
+      alert(err instanceof Error ? err.message : '建立專案失敗')
+    } finally {
+      setIsCreatingNewProject(false)
+    }
+  }
+
   const handleOpenProject = async (project: (typeof projects)[number]) => {
     try {
       const loadedProject = await openProject(project)
@@ -109,7 +142,9 @@ export function useHomeProjects() {
   return {
     ...githubImport,
     ...localImport,
+    isCreatingNewProject,
     projects,
+    handleCreateNewProject,
     handleRenameProject,
     handleDeleteProject,
     handleOpenProject,

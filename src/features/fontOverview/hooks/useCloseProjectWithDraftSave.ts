@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
@@ -7,7 +7,6 @@ import { useStore } from 'src/store'
 
 export function useCloseProjectWithDraftSave() {
   const { t } = useTranslation()
-  const toast = useToast()
   const closeProjectState = useStore((state) => state.closeProjectState)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
   const setPersistenceStatus = useStore((state) => state.setPersistenceStatus)
@@ -45,13 +44,13 @@ export function useCloseProjectWithDraftSave() {
     }
 
     if (persistenceStatus === 'error') {
-      toast({
+      toaster.create({
         title: t('fontOverview.closeProjectSaveFailed'),
         description:
           'This project has a pending save conflict. Reload or resolve it before closing.',
-        status: 'warning',
+        type: 'warning',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
       return
     }
@@ -84,12 +83,12 @@ export function useCloseProjectWithDraftSave() {
       closeProjectState()
     } catch (error) {
       console.warn('Save before closing project failed.', error)
-      toast({
+      toaster.create({
         title: t('fontOverview.closeProjectSaveFailed'),
         description: t('fontOverview.closeProjectSaveFailedDescription'),
-        status: 'error',
+        type: 'error',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
     } finally {
       setIsClosingProject(false)
@@ -118,7 +117,6 @@ export function useCloseProjectWithDraftSave() {
     selectedLayerId,
     setPersistenceStatus,
     t,
-    toast,
   ])
 
   return { closeProject, isClosingProject }

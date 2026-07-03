@@ -72,7 +72,7 @@ export function useGlyphPackageSelection({
   onSelectionChange,
 }: UseGlyphPackageSelectionOptions) {
   const [selectedPackageIds, setSelectedPackageIds] = useState<Set<string>>(
-    () => new Set(['zh-basic'])
+    () => new Set()
   )
   const [packagesByGroup, setPackagesByGroup] = useState<
     Partial<Record<GlyphPackageGroup, DefaultGlyphPackage[]>>

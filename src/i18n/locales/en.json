@@ -456,6 +456,8 @@
   },
   "home": {
     "cancel": "Cancel",
+    "createNewProject": "Create new project",
+    "creatingNewProject": "Creating...",
     "delete": "Delete",
     "fontEditor": "Font Editor",
     "fullWebBasedFontEditor": "FULL WEB BASED / FONT EDITOR",
@@ -488,7 +490,8 @@
     "repoInputHint": "Enter `owner/repo` or a GitHub URL.",
     "repository": "Repository",
     "uploadFile": "Upload file",
-    "uploadFolder": "Upload folder"
+    "uploadFolder": "Upload folder",
+    "untitledNewProject": "Untitled Font"
   },
   "projectControl": {
     "accept": "Accept",

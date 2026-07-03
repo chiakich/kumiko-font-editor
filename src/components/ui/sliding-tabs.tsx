@@ -33,7 +33,7 @@ function SlidingTab({
       alignItems="center"
       border={0}
       borderRadius="full"
-      color={isSelected ? 'primaryForeground' : 'foreground'}
+      color={isSelected ? 'var(--sliding-tab-active-color)' : 'foreground'}
       cursor="pointer"
       display="inline-flex"
       flexShrink={0}
@@ -56,11 +56,11 @@ function SlidingTab({
       }}
       _hover={{
         bg: 'transparent',
-        color: isSelected ? 'primaryForeground' : 'foreground',
+        color: isSelected ? 'var(--sliding-tab-active-color)' : 'foreground',
       }}
       _selected={{
         bg: 'transparent',
-        color: 'primaryForeground',
+        color: 'var(--sliding-tab-active-color)',
       }}
     >
       {isSelected ? (
@@ -72,7 +72,7 @@ function SlidingTab({
             position: 'absolute',
             inset: 0,
             borderRadius: 9999,
-            background: 'var(--chakra-colors-primary)',
+            background: 'var(--sliding-tab-active-bg)',
             boxShadow: '0 1px 2px rgba(8, 11, 13, 0.16)',
           }}
         />
@@ -134,6 +134,15 @@ export function SlidingTabList({
         overflowX="auto"
         overflowY="hidden"
         p={1}
+        css={{
+          '--sliding-tab-active-bg': 'var(--chakra-colors-primary)',
+          '--sliding-tab-active-color':
+            'var(--chakra-colors-primaryForeground)',
+        }}
+        _dark={{
+          '--sliding-tab-active-bg': 'var(--chakra-colors-black)',
+          '--sliding-tab-active-color': 'var(--chakra-colors-yellow-300)',
+        }}
         {...listProps}
       >
         {labels.map((label, index) => (

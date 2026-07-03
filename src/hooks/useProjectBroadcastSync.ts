@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useEffect } from 'react'
 import { sanitizeGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
@@ -33,8 +33,6 @@ const getOpenGlyphIds = () => {
 }
 
 export function useProjectBroadcastSync() {
-  const toast = useToast()
-
   useEffect(
     () =>
       subscribeToProjectBroadcasts((message) => {
@@ -52,13 +50,13 @@ export function useProjectBroadcastSync() {
             'error',
             'This project was updated in another window. Save or reload before continuing.'
           )
-          toast({
+          toaster.create({
             title: 'Project updated elsewhere',
             description:
               'Another window saved changes to this project. Finish or reload your local edits before continuing.',
-            status: 'warning',
+            type: 'warning',
             duration: 5200,
-            isClosable: true,
+            closable: true,
           })
           return
         }
@@ -79,15 +77,15 @@ export function useProjectBroadcastSync() {
                 .getState()
                 .hydrateExternalGlyphDeletions(message.deletedGlyphIds)
             }
-            toast({
+            toaster.create({
               title: 'Project updated',
               description:
                 message.deletedGlyphIds.length > 0
                   ? 'Independent glyph changes and deletions from another window were loaded.'
                   : 'Independent glyph changes from another window were loaded.',
-              status: 'info',
+              type: 'info',
               duration: 2400,
-              isClosable: true,
+              closable: true,
             })
           })().catch((error) => {
             useStore
@@ -148,12 +146,12 @@ export function useProjectBroadcastSync() {
             useStore.getState().hydrateGlyphGeometry(glyphs)
           }
 
-          toast({
+          toaster.create({
             title: 'Project updated',
             description: 'Changes from another window were loaded.',
-            status: 'info',
+            type: 'info',
             duration: 2400,
-            isClosable: true,
+            closable: true,
           })
         })().catch((error) => {
           useStore
@@ -167,6 +165,6 @@ export function useProjectBroadcastSync() {
           console.warn('Project broadcast reload failed.', error)
         })
       }),
-    [toast]
+    []
   )
 }

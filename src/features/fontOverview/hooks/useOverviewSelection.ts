@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useStore, type GlyphData } from 'src/store'
@@ -14,7 +14,6 @@ export function useOverviewSelection({
   selectedGlyphId,
 }: UseOverviewSelectionOptions) {
   const { t } = useTranslation()
-  const toast = useToast()
   const setSelectedGlyphId = useStore((state) => state.setSelectedGlyphId)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
   const flushCurrentDraft = useFlushCurrentDraft()
@@ -148,27 +147,27 @@ export function useOverviewSelection({
         await flushCurrentDraft()
         selectGlyphs([], null)
         selectionAnchorGlyphIdRef.current = null
-        toast({
+        toaster.create({
           title: t('fontOverview.selection.deletedToastTitle'),
           description: t('fontOverview.selection.deletedToastDescription', {
             count: uniqueGlyphIds.length,
           }),
-          status: 'success',
+          type: 'success',
           duration: 2200,
-          isClosable: true,
+          closable: true,
         })
       } catch (error) {
-        toast({
+        toaster.create({
           title: '刪除後儲存失敗',
           description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
-          status: 'error',
+          type: 'error',
           duration: 3600,
-          isClosable: true,
+          closable: true,
         })
         console.warn('Flush after glyph selection deletion failed.', error)
       }
     },
-    [deleteGlyph, flushCurrentDraft, selectGlyphs, t, toast]
+    [deleteGlyph, flushCurrentDraft, selectGlyphs, t]
   )
 
   const handleDeleteSelectedGlyphs = useCallback(async () => {

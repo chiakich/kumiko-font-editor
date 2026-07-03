@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -24,7 +24,6 @@ export function useAddGlyphsFlow({
   onGlyphsAdded,
 }: UseAddGlyphsFlowOptions) {
   const { t } = useTranslation()
-  const toast = useToast()
   const addGlyphs = useStore((state) => state.addGlyphs)
   const [isAddingGlyphs, setIsAddingGlyphs] = useState(false)
   const [glyphInputValue, setGlyphInputValue] = useState('')
@@ -47,12 +46,12 @@ export function useAddGlyphsFlow({
     const infoMap = await getGlyphNameInfoMap().catch(() => undefined)
     const candidates = parseGlyphAdditionInput(inputValue, infoMap)
     if (candidates.length === 0) {
-      toast({
+      toaster.create({
         title: t('fontOverview.noGlyphsToAdd'),
         description: t('fontOverview.addGlyphEmptyWarningDescription'),
-        status: 'warning',
+        type: 'warning',
         duration: 2200,
-        isClosable: true,
+        closable: true,
       })
       return
     }
@@ -81,15 +80,15 @@ export function useAddGlyphsFlow({
     }
 
     const skippedCount = candidates.length - addedGlyphIds.length
-    toast({
+    toaster.create({
       title: addedGlyphIds.length > 0 ? '已新增字符' : '沒有新增字符',
       description:
         addedGlyphIds.length > 0
           ? `新增 ${addedGlyphIds.length} 個字符${skippedCount > 0 ? `，略過 ${skippedCount} 個已存在字符` : ''}。`
           : '輸入的字符都已經存在於專案中。',
-      status: addedGlyphIds.length > 0 ? 'success' : 'info',
+      type: addedGlyphIds.length > 0 ? 'success' : 'info',
       duration: 2600,
-      isClosable: true,
+      closable: true,
     })
   }
 

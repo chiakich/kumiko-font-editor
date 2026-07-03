@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import { Grid, GridItem } from '@chakra-ui/react'
 import {
   useCallback,
@@ -39,6 +39,7 @@ import { useOverviewGridPersistence } from 'src/features/fontOverview/hooks/useO
 import { useOverviewGlyphPreviews } from 'src/features/fontOverview/hooks/useOverviewGlyphPreviews'
 import { useOverviewSections } from 'src/features/fontOverview/hooks/useOverviewSections'
 import { useOverviewSelection } from 'src/features/fontOverview/hooks/useOverviewSelection'
+import { consumeAddGlyphModalForNewProject } from 'src/features/home/utils/newProjectIntent'
 import {
   collectOverviewGeometryGlyphIds,
   collectUnloadedOverviewGeometryGlyphIds,
@@ -63,7 +64,6 @@ const OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS = 250
 export function FontOverviewScreen() {
   useHistoryShortcuts()
   const { t } = useTranslation()
-  const toast = useToast()
 
   const [overviewGridSizePx, setOverviewGridSizePx] = useState(
     DEFAULT_OVERVIEW_GRID_SIZE_PX
@@ -98,6 +98,7 @@ export function FontOverviewScreen() {
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const setEditorTextState = useStore((state) => state.setEditorTextState)
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
+  const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
   const fontData = useStore((state) => state.fontData)
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
@@ -221,6 +222,12 @@ export function FontOverviewScreen() {
     glyphMap,
     onGlyphsAdded: selectAddedGlyphs,
   })
+
+  useEffect(() => {
+    if (consumeAddGlyphModalForNewProject(projectId)) {
+      openAddGlyphModal()
+    }
+  }, [openAddGlyphModal, projectId])
 
   const getEditorTextForGlyphIds = useCallback(
     (glyphIds: string[]) =>
@@ -527,20 +534,20 @@ export function FontOverviewScreen() {
           .filter((glyph): glyph is GlyphData => Boolean(glyph))
           .map((glyph) => structuredClone(glyph))
         setGlyphClipboard(copiedGlyphs)
-        toast({
+        toaster.create({
           title: t('fontOverview.glyphContext.copiedToastTitle'),
           description: t('fontOverview.glyphContext.copiedToastDescription', {
             count: copiedGlyphs.length,
           }),
-          status: 'success',
+          type: 'success',
           duration: 1800,
-          isClosable: true,
+          closable: true,
         })
       } catch (error) {
         console.warn('Copying overview glyphs failed.', error)
       }
     },
-    [ensureGlyphGeometryLoaded, t, toast]
+    [ensureGlyphGeometryLoaded, t]
   )
 
   const pasteOverviewClipboard = useCallback(
@@ -552,18 +559,18 @@ export function FontOverviewScreen() {
       const pastedGlyphIds = pasteGlyphCopies(glyphClipboard, { afterGlyphId })
       if (pastedGlyphIds.length > 0) {
         selectAddedGlyphs(pastedGlyphIds)
-        toast({
+        toaster.create({
           title: t('fontOverview.glyphContext.pastedToastTitle'),
           description: t('fontOverview.glyphContext.pastedToastDescription', {
             count: pastedGlyphIds.length,
           }),
-          status: 'success',
+          type: 'success',
           duration: 2200,
-          isClosable: true,
+          closable: true,
         })
       }
     },
-    [glyphClipboard, pasteGlyphCopies, selectAddedGlyphs, t, toast]
+    [glyphClipboard, pasteGlyphCopies, selectAddedGlyphs, t]
   )
 
   const handleCopyContextGlyphs = useCallback(async () => {

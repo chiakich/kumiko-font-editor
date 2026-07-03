@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import {
   Alert,
   Badge,
@@ -129,7 +129,6 @@ function DetailBlock({ label, text }: { label: string; text: string }) {
 }
 
 export function ExportErrorModal({ report, onClose }: ExportErrorModalProps) {
-  const toast = useToast()
   const detailsText = useMemo(
     () => (report ? formatFontExportErrorReport(report) : ''),
     [report]
@@ -142,18 +141,18 @@ export function ExportErrorModal({ report, onClose }: ExportErrorModalProps) {
   const handleCopyDetails = async () => {
     try {
       await navigator.clipboard.writeText(detailsText)
-      toast({
+      toaster.create({
         title: '已複製錯誤詳情',
-        status: 'success',
+        type: 'success',
         duration: 1600,
-        isClosable: true,
+        closable: true,
       })
     } catch {
-      toast({
+      toaster.create({
         title: '無法複製錯誤詳情',
-        status: 'warning',
+        type: 'warning',
         duration: 2200,
-        isClosable: true,
+        closable: true,
       })
     }
   }

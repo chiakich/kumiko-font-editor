@@ -13,6 +13,7 @@ export function Home() {
     githubRepoInput,
     isLoadingGitHub,
     isLoadingLocal,
+    isCreatingNewProject,
     isDraggingLocal,
     folderInputRef,
     fileInputRef,
@@ -30,6 +31,7 @@ export function Home() {
     handleConfirmGitHubDesignspaceImport,
     handleCancelLocalDesignspaceImport,
     handleConfirmLocalDesignspaceImport,
+    handleCreateNewProject,
     handleRenameProject,
     handleDeleteProject,
     handleLocalDragEnter,
@@ -98,7 +100,10 @@ export function Home() {
           borderColor: 'foreground',
         }}
       >
-        <HomeHeader />
+        <HomeHeader
+          isCreatingNewProject={isCreatingNewProject}
+          onCreateNewProject={handleCreateNewProject}
+        />
 
         <VStack gap={6} align="stretch">
           <Grid templateColumns="1fr 1fr" gap={6}>

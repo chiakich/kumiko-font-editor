@@ -1,4 +1,4 @@
-import { useToast } from '@/components/ui/toast'
+import { toaster } from '@/components/ui/toaster'
 import {
   Badge,
   Box,
@@ -42,7 +42,6 @@ export function GitHubSyncSectionContainer({
   projectId,
   onBlockingSyncConflictsChange,
 }: GitHubSyncSectionContainerProps) {
-  const toast = useToast()
   const queryClient = useQueryClient()
   const syncStatus = useGitHubSyncStatus({ projectId, enabled })
   const hasBlockingSyncConflicts = Boolean(
@@ -59,21 +58,21 @@ export function GitHubSyncSectionContainer({
       void queryClient.invalidateQueries({
         queryKey: projectSyncDirtyStatusQueryKey(projectId),
       })
-      toast({
+      toaster.create({
         title: '已套用遠端更新',
         description: `更新了 ${result.appliedCount} 個檔案。`,
-        status: 'success',
+        type: 'success',
         duration: 3200,
-        isClosable: true,
+        closable: true,
       })
     } catch (error) {
-      toast({
+      toaster.create({
         title: '套用遠端更新失敗',
         description:
           error instanceof Error ? error.message : '目前無法套用遠端更新。',
-        status: 'error',
+        type: 'error',
         duration: 4200,
-        isClosable: true,
+        closable: true,
       })
     }
   }
