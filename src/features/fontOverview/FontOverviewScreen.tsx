@@ -30,8 +30,8 @@ import {
   type OverviewGlyphContextMenuColor,
 } from 'src/features/fontOverview/components/OverviewGlyphContextMenu/OverviewGlyphContextMenu'
 import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
-import { OverviewRightPanel } from 'src/features/fontOverview/components/OverviewRightPanel'
-import { OverviewSidebar } from 'src/features/fontOverview/components/OverviewSidebar'
+import { OverviewSidebar } from 'src/features/fontOverview/components/leftPanel/OverviewSidebar'
+import { OverviewRightPanel } from 'src/features/fontOverview/components/rightPanel/OverviewRightPanel'
 import { useAddGlyphsFlow } from 'src/features/fontOverview/hooks/useAddGlyphsFlow'
 import { useCloseProjectWithDraftSave } from 'src/features/fontOverview/hooks/useCloseProjectWithDraftSave'
 import { useHistoryShortcuts } from 'src/features/fontOverview/hooks/useHistoryShortcuts'
