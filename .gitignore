@@ -29,3 +29,8 @@ test_glyphs
 .env.*.local
 .dev.vars
 .wrangler
+
+# Tools
+.cache
+.vscode
+.claude
