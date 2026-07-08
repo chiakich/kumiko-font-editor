@@ -533,6 +533,19 @@ export interface GlobalState {
     counterpartGlyphId: string
     value: number
   }) => void
+  upsertKerningPair: (
+    left: GlyphSelector,
+    right: GlyphSelector,
+    value: number
+  ) => void
+  deleteKerningPair: (left: GlyphSelector, right: GlyphSelector) => void
+  upsertKerningGroup: (draft: {
+    id?: string
+    side: 'left' | 'right'
+    name: string
+    glyphs: string[]
+  }) => void
+  deleteKerningGroup: (groupId: string) => void
   upsertContextualBehavior: (draft: ContextualBehaviorDraft) => void
   deleteContextualBehavior: (lookupId: string, ruleId: string) => void
   upsertAnchorBehavior: (draft: AnchorBehaviorDraft) => void

@@ -36,6 +36,7 @@ import {
   settingsFromLib,
 } from 'src/lib/fontFormats/fontInfoSettings'
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { parseUfoKerning } from 'src/lib/fontFormats/ufoKerning'
 import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
 import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
 import type {
@@ -777,7 +778,10 @@ const buildFontDataFromUfoGlyphs = (
       ? metadata.fontinfo.styleName
       : 'Regular'
   const masterId = metadata.ufoId
+  const ufoKerning = parseUfoKerning(metadata.groups, metadata.kerning)
   return {
+    kerningGroups: ufoKerning.kerningGroups,
+    kerningPairs: ufoKerning.kerningPairs,
     glyphs: Object.fromEntries(
       glyphRecords.map((record) => {
         const glyphId = record.glyphName

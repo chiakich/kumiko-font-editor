@@ -32,14 +32,19 @@
 - canonical project persistence 與 GitHub/UFO sync 會保存 project-level kerning data。
 - `buildKerningSuggestions` 可把 `FontData.kerningGroups / kerningPairs` 轉成 `kern` feature 的 pair positioning suggestion。
 - `openTypeFeatures` 裡已有 Spacing behavior UI，但它是 GPOS IR 的編輯器，不是 UFO kerning canonical model。
+- pair resolution engine：`src/lib/kerning/resolveKerning.ts` 依 UFO priority 回答 effective kerning 的值與來源層級，並支援 group 以 id / name / `@name` 三種引用方式。
+- Kerning 專用 UI：editor 右側面板 Kerning tab（`src/features/editor/rightPanel/kerning/`），含目前 pair 檢視與數值編輯（step 1/5/10）、pair 清單、group 管理（左右側、membership、同側重複警告）、class exception 建立與還原。
+- editor line 即時預覽：`getTextKerningValue` 以 canonical kerning resolver 優先，GPOS `kern` lookup 作為 fallback。
+- store actions：`upsertKerningPair` / `deleteKerningPair` / `upsertKerningGroup` / `deleteKerningGroup`，經 zundo 支援 undo/redo。
+- UFO kerning I/O：`src/lib/fontFormats/ufoKerning.ts` 解析 / 序列化 `groups.plist` 與 `kerning.plist`；import 時填入 `FontData.kerningGroups / kerningPairs`（`public.kern1.*` / `public.kern2.*` 的完整 key 作為 group id），export（ZIP、GitHub commit、binary export 皆經 `buildMetadata`）由 canonical kerning data 重新產生 plist，非 kerning groups 以 `groupsExtra` 保留 round-trip。
+- validation：`validateKerning` 涵蓋空 group、missing glyph、同側重複 membership、pair 引用不存在 group，於 Kerning panel 顯示警告卡片。
+- pair 巡覽：pair 清單可一鍵載入編輯列；巡覽字串卡片支援 word list（每行一組字串，點擊載入）。
 
 缺口：
 
-- UFO `groups.plist` / `kerning.plist` parser 與 serializer 尚未接到 import/export。
-- 尚無 pair resolution engine：無法回答「glyph A + glyph V 的 effective kerning 是來自 glyph pair、glyph/group、group/glyph 還是 group/group」。
-- 尚無 class exception UI：不能把 class pair 裡的個別 glyph pair 拆成例外。
-- canvas / editor line 尚未套用 project kerning 即時預覽。
-- 尚無 kerning 專用 UI；目前只能透過 feature suggestion 間接產生 `kern`。
+- before/after compare、feature toggle 預覽尚未實作（編輯列本身已走 HarfBuzz shaping）。
+- 多 source kerning 仍是 project-level 單一資料，尚未 source-aware（多 master 匯入時取 default master 的 kerning）。
+- binary font（ttf/otf）匯入不解析既有 `kern`/GPOS 回 canonical kerning data。
 
 ## UI 原則
 

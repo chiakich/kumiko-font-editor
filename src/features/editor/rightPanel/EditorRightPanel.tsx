@@ -22,6 +22,7 @@ import { LayerListCard } from 'src/features/editor/rightPanel/components/LayerLi
 import { NodeInspectorCard } from 'src/features/editor/rightPanel/components/NodeInspectorCard'
 import { TransformCard } from 'src/features/editor/rightPanel/components/TransformCard'
 import { BehaviorsPanel } from 'src/features/editor/rightPanel/behaviors/BehaviorsPanel'
+import { KerningPanel } from 'src/features/editor/rightPanel/kerning/KerningPanel'
 import { useStore } from 'src/store'
 import { useTranslation } from 'react-i18next'
 
@@ -143,6 +144,9 @@ export function EditorRightPanel() {
               <Tabs.Content value="2" px={0} pb={0}>
                 <BehaviorsPanel fontData={panel.fontData} glyph={panel.glyph} />
               </Tabs.Content>
+              <Tabs.Content value="3" px={0} pb={0}>
+                <KerningPanel fontData={panel.fontData} />
+              </Tabs.Content>
             </SlidingTabsContentGroup>
           </SlidingTabsRoot>
         )}
@@ -223,5 +227,16 @@ const rightPanelTabLabels = [
     lineHeight={1}
   >
     Behaviors
+  </Text>,
+  <Text
+    key="kerning"
+    as="span"
+    display="inline-flex"
+    alignItems="center"
+    fontSize="xs"
+    fontWeight="800"
+    lineHeight={1}
+  >
+    Kerning
   </Text>,
 ]

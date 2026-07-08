@@ -43,6 +43,7 @@ import {
 } from 'src/lib/fontFormats/fontInfoSettings'
 import { selectUfoFeatureText } from 'src/lib/openTypeFeatures'
 import { userNameToFileName } from 'src/lib/fontFormats/ufoFileNames'
+import { serializeUfoKerning } from 'src/lib/fontFormats/ufoKerning'
 import {
   buildBoundsResolver,
   buildWorkspaceFileMapFromEntries,
@@ -799,6 +800,10 @@ const buildMetadata = (
     project,
     glyphMetadata
   )
+  // Canonical project kerning wins; imported non-kerning groups survive.
+  const ufoKerning = serializeUfoKerning(metadataFontData, {
+    groups: source.groupsExtra,
+  })
   return {
     projectId: project.projectId,
     ufoId: source.ufoId,
@@ -808,8 +813,8 @@ const buildMetadata = (
       source.fontinfoExtra ??
       buildUfoFontInfoFromProject(project, project.title || project.projectId),
     lib: buildUfoLibFromFontData(metadataFontData, source.libExtra),
-    groups: source.groupsExtra ?? {},
-    kerning: source.kerningExtra ?? {},
+    groups: ufoKerning.groups,
+    kerning: ufoKerning.kerning,
     featuresText: selectUfoFeatureText(metadataFontData),
     layers: source.layers,
     contents,
@@ -1150,6 +1155,25 @@ export const prepareKumikoGitHubCommit = async (input: {
       ),
       content: serializeXmlPlist(metadata.contents),
     })
+
+    // Only write kerning plists when the project has kerning data or the
+    // imported UFO already had content there, so untouched repos stay untouched.
+    const hasKerningData =
+      Object.keys(metadata.groups ?? {}).length > 0 ||
+      Object.keys(metadata.kerning ?? {}).length > 0
+    const hadKerningContent =
+      Object.keys(source.groupsExtra ?? {}).length > 0 ||
+      Object.keys(source.kerningExtra ?? {}).length > 0
+    if (hasKerningData || hadKerningContent) {
+      files.push({
+        path: joinRepoPath(source.relativePath, 'groups.plist'),
+        content: serializeXmlPlist(metadata.groups ?? {}),
+      })
+      files.push({
+        path: joinRepoPath(source.relativePath, 'kerning.plist'),
+        content: serializeXmlPlist(metadata.kerning ?? {}),
+      })
+    }
   }
 
   if (files.length === 0) {

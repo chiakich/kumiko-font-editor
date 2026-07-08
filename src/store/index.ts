@@ -13,6 +13,7 @@ import { buildGlyphActions } from 'src/store/actions/glyphActions'
 import { buildPathActions } from 'src/store/actions/pathActions'
 import { buildProjectActions } from 'src/store/actions/projectActions'
 import { buildBehaviorActions } from 'src/store/actions/behaviorActions'
+import { buildKerningActions } from 'src/store/actions/kerningActions'
 import {
   areTemporalTrackedStatesEqual,
   partializeTemporalState,
@@ -168,6 +169,7 @@ export const useStore = create<GlobalState>()(
       // ── Glyph-level actions ──────────────────────────────────────────────
       ...buildGlyphActions(set),
       ...buildBehaviorActions(set),
+      ...buildKerningActions(set),
 
       // setSelectedLayerId needs access to temporal store, so wire it here
       setSelectedLayerId: (id: string | null) => {

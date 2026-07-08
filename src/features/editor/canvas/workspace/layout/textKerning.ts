@@ -5,6 +5,7 @@ import type {
   OpenTypeFeaturesState,
   PairPositioningRule,
 } from 'src/lib/openTypeFeatures'
+import { resolveKerningPair } from 'src/lib/kerning/resolveKerning'
 
 export function getTextKerningValue(
   fontData: FontData,
@@ -12,6 +13,13 @@ export function getTextKerningValue(
   rightGlyphId: string | null
 ) {
   if (!leftGlyphId || !rightGlyphId) return 0
+
+  // Canonical project kerning wins over derived GPOS rules so edits in the
+  // Kerning panel preview immediately, following UFO pair priority.
+  const resolved = resolveKerningPair(fontData, leftGlyphId, rightGlyphId)
+  if (resolved.priority !== 'none') {
+    return resolved.value
+  }
 
   const featureKerning = getFeatureKerningValue(
     fontData.openTypeFeatures,
@@ -22,7 +30,7 @@ export function getTextKerningValue(
     return featureKerning
   }
 
-  return getProjectKerningValue(fontData, leftGlyphId, rightGlyphId)
+  return 0
 }
 
 export function getGlyphInkBounds(glyph: {
@@ -67,37 +75,6 @@ function getFeatureKerningValue(
       ) {
         value = rule.firstValue?.xAdvance ?? 0
       }
-    }
-  }
-
-  return value
-}
-
-function getProjectKerningValue(
-  fontData: FontData,
-  leftGlyphId: string,
-  rightGlyphId: string
-) {
-  const groups = fontData.kerningGroups ?? []
-  const classById = new Map(
-    groups.map((group): [string, GlyphClass] => [
-      group.id,
-      {
-        id: group.id,
-        name: group.name,
-        glyphs: group.glyphs,
-        origin: 'manual',
-      },
-    ])
-  )
-
-  let value = 0
-  for (const pair of fontData.kerningPairs ?? []) {
-    if (
-      selectorContainsGlyph(pair.left, leftGlyphId, classById) &&
-      selectorContainsGlyph(pair.right, rightGlyphId, classById)
-    ) {
-      value = pair.value
     }
   }
 
