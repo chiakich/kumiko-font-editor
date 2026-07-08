@@ -56,9 +56,17 @@ export {
   RAW_FEATURE_TEXT_SOURCE_ID,
   createCompiledTableSourceSection,
   createRawFeatureTextSourceSection,
+  setRawFeatureSnippetsSource,
   setRawFeatureTextSource,
 } from 'src/lib/openTypeFeatures/featureSourceSections'
 export { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
+export {
+  getRawFeatureText,
+  hasRawFeatureText,
+  joinRawFeatureSnippets,
+  normalizeRawFeatureSnippets,
+  splitRawFeatureTextIntoSnippets,
+} from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
 export { parseGdefTable } from 'src/lib/openTypeFeatures/gdefParser'
 export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'

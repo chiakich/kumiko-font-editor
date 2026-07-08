@@ -12,6 +12,7 @@ import {
   buildAutoFeatureSuggestions,
   classifyRawFeatureTextSource,
   generateFea,
+  getRawFeatureText,
   ignoreAutoFeatureSuggestion,
   mergeFeatureDiagnostics,
   setRawFeatureTextSource,
@@ -109,7 +110,7 @@ export function FontFeaturesTab({
             <OpenTypeDocumentWorkspace
               diagnostics={diagnostics}
               generatedFea={generatedFea}
-              rawFeatureText={openTypeFeatures.rawFeatureText ?? ''}
+              rawFeatureText={getRawFeatureText(openTypeFeatures) ?? ''}
               selection={activeSelection}
               state={openTypeFeatures}
               suggestions={suggestions}

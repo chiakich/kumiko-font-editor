@@ -6,6 +6,8 @@ import {
   partitionLookupCandidates,
   type LookupDependencyCandidate,
 } from 'src/lib/openTypeFeatures/rawFeatureLookupParser'
+import { extractFeatureParamsFromBody } from 'src/lib/openTypeFeatures/rawFeatureParamsParser'
+import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import type { InlineGlyphClassRegistrar } from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
 import {
   glyphsForGdefClassToken,
@@ -370,6 +372,9 @@ const parseRawFeatureText = (
   for (const block of collectNamedBlocks(workingText, 'feature')) {
     const tag = block.name
     let featureBody = block.body
+    const extractedParams = extractFeatureParamsFromBody(featureBody, tag)
+    featureBody = extractedParams.body
+    unsupportedStatements.push(...extractedParams.unsupportedStatements)
     const scripts = [...featureBody.matchAll(/\bscript\s+([A-Za-z]{4})\s*;/g)]
     const languages = [
       ...featureBody.matchAll(/\blanguage\s+([A-Za-z0-9_.-]{4})\s*;/g),
@@ -486,6 +491,9 @@ const parseRawFeatureText = (
       id: `feature_raw_${toStableIdPart(tag)}`,
       tag,
       isActive: true,
+      ...(extractedParams.featureParams
+        ? { featureParams: extractedParams.featureParams }
+        : {}),
       entries: [
         {
           id: `feature_entry_raw_${toStableIdPart(tag)}_${toStableIdPart(script)}_${toStableIdPart(language)}`,
@@ -575,7 +583,9 @@ export const classifyRawFeatureTextSource = (
   state: OpenTypeFeaturesState,
   options: ClassifyRawFeatureTextOptions = {}
 ): OpenTypeFeaturesState => {
-  const rawFeatureText = state.rawFeatureText?.trim()
+  const rawFeatureText = getRawFeatureText(state, {
+    includeDisabled: false,
+  })?.trim()
   const baseState = removePreviousRawFeatureTextClassification(state)
   const sourceSections = baseState.sourceSections ?? []
   const sourceSection = sourceSections.find(

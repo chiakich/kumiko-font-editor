@@ -43,13 +43,13 @@ const pushClassGlyph = (
   classes[className] = [...(classes[className] ?? []), glyphName]
 }
 
-const parseClassDef = (
+const readClassDefValues = (
   tableReader: BinaryReader,
   classDefOffset: number,
   glyphOrder: string[],
   diagnostics: FeatureDiagnostic[],
   idPrefix: string
-) => {
+): Map<number, string[]> | null => {
   const reader = tableReader.at(classDefOffset)
   const format = reader?.uint16(0)
   if (!reader || format === null || format === undefined) {
@@ -63,7 +63,13 @@ const parseClassDef = (
     return null
   }
 
-  const classes: NonNullable<GdefState['glyphClasses']> = {}
+  const glyphsByClassValue = new Map<number, string[]>()
+  const pushGlyph = (classValue: number, glyphName: string) => {
+    glyphsByClassValue.set(classValue, [
+      ...(glyphsByClassValue.get(classValue) ?? []),
+      glyphName,
+    ])
+  }
 
   if (format === 1) {
     const startGlyphId = reader.uint16(2)
@@ -74,9 +80,9 @@ const parseClassDef = (
       const classValue = reader.uint16(6 + index * 2)
       const glyphName = glyphNameForId(glyphOrder, startGlyphId + index)
       if (classValue === null || !glyphName) return null
-      pushClassGlyph(classes, classValue, glyphName)
+      pushGlyph(classValue, glyphName)
     }
-    return classes
+    return glyphsByClassValue
   }
 
   if (format === 2) {
@@ -94,10 +100,10 @@ const parseClassDef = (
       for (let glyphId = startGlyphId; glyphId <= endGlyphId; glyphId += 1) {
         const glyphName = glyphNameForId(glyphOrder, glyphId)
         if (!glyphName) return null
-        pushClassGlyph(classes, classValue, glyphName)
+        pushGlyph(classValue, glyphName)
       }
     }
-    return classes
+    return glyphsByClassValue
   }
 
   diagnostics.push(
@@ -108,6 +114,57 @@ const parseClassDef = (
     )
   )
   return null
+}
+
+const parseClassDef = (
+  tableReader: BinaryReader,
+  classDefOffset: number,
+  glyphOrder: string[],
+  diagnostics: FeatureDiagnostic[],
+  idPrefix: string
+) => {
+  const glyphsByClassValue = readClassDefValues(
+    tableReader,
+    classDefOffset,
+    glyphOrder,
+    diagnostics,
+    idPrefix
+  )
+  if (!glyphsByClassValue) return null
+
+  const classes: NonNullable<GdefState['glyphClasses']> = {}
+  for (const [classValue, glyphs] of glyphsByClassValue) {
+    for (const glyphName of glyphs) {
+      pushClassGlyph(classes, classValue, glyphName)
+    }
+  }
+  return classes
+}
+
+const parseMarkAttachClassDef = (
+  tableReader: BinaryReader,
+  markAttachClassDefOffset: number,
+  glyphOrder: string[],
+  diagnostics: FeatureDiagnostic[]
+): GlyphClass[] | null => {
+  const glyphsByClassValue = readClassDefValues(
+    tableReader,
+    markAttachClassDefOffset,
+    glyphOrder,
+    diagnostics,
+    'mark-attach-class-def'
+  )
+  if (!glyphsByClassValue) return null
+
+  return [...glyphsByClassValue.entries()]
+    .filter(([classValue]) => classValue > 0)
+    .sort(([left], [right]) => left - right)
+    .map(([classValue, glyphs]) => ({
+      id: `gdef_mark_attach_class_${classValue}`,
+      name: `@GDEFMarkAttachClass${classValue}`,
+      glyphs,
+      origin: 'imported',
+    }))
 }
 
 const readCoverageGlyphs = (
@@ -333,6 +390,7 @@ export const parseGdefTable = (
   const minorVersion = reader.uint16(2)
   const glyphClassDefOffset = reader.uint16(4)
   const ligCaretListOffset = reader.uint16(8)
+  const markAttachClassDefOffset = reader.uint16(10)
   const markGlyphSetsOffset =
     majorVersion === 1 && minorVersion !== null && minorVersion >= 2
       ? reader.uint16(12)
@@ -349,6 +407,18 @@ export const parseGdefTable = (
       'glyph-class-def'
     )
     if (glyphClasses) gdef.glyphClasses = glyphClasses
+  }
+
+  if (markAttachClassDefOffset && markAttachClassDefOffset > 0) {
+    const markAttachClasses = parseMarkAttachClassDef(
+      reader,
+      markAttachClassDefOffset,
+      glyphOrder,
+      diagnostics
+    )
+    if (markAttachClasses && markAttachClasses.length > 0) {
+      gdef.markAttachClasses = markAttachClasses
+    }
   }
 
   if (markGlyphSetsOffset && markGlyphSetsOffset > 0) {

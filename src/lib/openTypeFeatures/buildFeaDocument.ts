@@ -1,6 +1,10 @@
 import type { FeaNode, MarkAttachment } from 'src/lib/openTypeFeatures/feaAst'
+import { escapeFeaNameString } from 'src/lib/openTypeFeatures/feaFormat'
+import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import type {
   FeatureEntry,
+  FeatureParamName,
+  FeatureParams,
   FeatureRecord,
   LookupFlagIR,
   LookupRecord,
@@ -309,6 +313,70 @@ const lookupReferenceStatement = (lookup: LookupRecord): FeaNode => ({
   value: `  lookup ${lookup.name};`,
 })
 
+const formatNameLine = (name: FeatureParamName, indent: string) =>
+  `${indent}name "${escapeFeaNameString(name.text)}";`
+
+const formatDecipoints = (value: number) => (value / 10).toFixed(1)
+
+const formatCharacter = (codePoint: number) =>
+  `0x${codePoint.toString(16).toUpperCase().padStart(4, '0')}`
+
+const featureParamsStatements = (
+  params: FeatureParams | undefined
+): FeaNode[] => {
+  if (!params) return []
+  const lines: string[] = []
+
+  if (params.kind === 'stylisticSet') {
+    if (params.names.length === 0) return []
+    lines.push('  featureNames {')
+    for (const name of params.names) {
+      lines.push(formatNameLine(name, '    '))
+    }
+    lines.push('  };')
+  }
+
+  if (params.kind === 'characterVariant') {
+    const groupLines: string[] = []
+    const pushNameGroup = (label: string, names: FeatureParamName[]) => {
+      if (names.length === 0) return
+      groupLines.push(`    ${label} {`)
+      for (const name of names) {
+        groupLines.push(formatNameLine(name, '      '))
+      }
+      groupLines.push('    };')
+    }
+    pushNameGroup('FeatUILabelNameID', params.featUiLabelNames)
+    pushNameGroup('FeatUITooltipTextNameID', params.featUiTooltipTextNames)
+    pushNameGroup('SampleTextNameID', params.sampleTextNames)
+    for (const paramName of params.paramUiLabelNames) {
+      pushNameGroup('ParamUILabelNameID', [paramName])
+    }
+    for (const character of params.characters) {
+      groupLines.push(`    Character ${formatCharacter(character)};`)
+    }
+    if (groupLines.length === 0) return []
+    lines.push('  cvParameters {', ...groupLines, '  };')
+  }
+
+  if (params.kind === 'size') {
+    const hasRange =
+      params.subfamilyIdentifier !== 0 ||
+      params.rangeStart !== 0 ||
+      params.rangeEnd !== 0
+    lines.push(
+      hasRange
+        ? `  parameters ${formatDecipoints(params.designSize)} ${params.subfamilyIdentifier} ${formatDecipoints(params.rangeStart)} ${formatDecipoints(params.rangeEnd)};`
+        : `  parameters ${formatDecipoints(params.designSize)} 0;`
+    )
+    for (const name of params.subfamilyNames) {
+      lines.push(`  sizemenuname "${escapeFeaNameString(name.text)}";`)
+    }
+  }
+
+  return lines.length > 0 ? [{ kind: 'Raw', value: lines.join('\n') }] : []
+}
+
 const featureStatements = (
   feature: FeatureRecord,
   lookupById: Map<string, LookupRecord>
@@ -383,7 +451,8 @@ const orderLookupsForSerialization = (
 }
 
 const getRawFeatureTextForOutput = (state: OpenTypeFeaturesState) => {
-  if (!state.rawFeatureText) return null
+  const rawFeatureText = getRawFeatureText(state, { includeDisabled: false })
+  if (!rawFeatureText) return null
 
   const isClassifiedIntoModel = (state.sourceSections ?? []).some(
     (section) =>
@@ -391,7 +460,7 @@ const getRawFeatureTextForOutput = (state: OpenTypeFeaturesState) => {
       section.meta?.classifiedIntoModel === true &&
       section.meta?.preserveRawTextInGeneratedFea === false
   )
-  return isClassifiedIntoModel ? null : state.rawFeatureText
+  return isClassifiedIntoModel ? null : rawFeatureText
 }
 
 export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
@@ -400,9 +469,18 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
   const lookupNameById = new Map(
     state.lookups.map((lookup) => [lookup.id, lookup.name])
   )
-  const glyphClassNameById = new Map(
-    state.glyphClasses.map((glyphClass) => [glyphClass.id, glyphClass.name])
-  )
+  const gdefDerivedGlyphClasses = [
+    ...(state.gdef?.markGlyphSets ?? []),
+    ...(state.gdef?.markAttachClasses ?? []),
+  ]
+  const glyphClassNameById = new Map([
+    ...state.glyphClasses.map(
+      (glyphClass) => [glyphClass.id, glyphClass.name] as const
+    ),
+    ...gdefDerivedGlyphClasses.map(
+      (glyphClass) => [glyphClass.id, glyphClass.name] as const
+    ),
+  ])
   const markClassNameById = new Map(
     state.markClasses.map((markClass) => [markClass.id, markClass.name])
   )
@@ -419,6 +497,23 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
     activeLookupIds
   )
 
+  const referencedGdefClassIds = new Set(
+    orderedLookups.flatMap((lookup) => [
+      ...(lookup.markAttachmentClassId ? [lookup.markAttachmentClassId] : []),
+      ...(lookup.markFilteringSetClassId
+        ? [lookup.markFilteringSetClassId]
+        : []),
+    ])
+  )
+  const stateGlyphClassIds = new Set(
+    state.glyphClasses.map((glyphClass) => glyphClass.id)
+  )
+  const referencedGdefGlyphClasses = gdefDerivedGlyphClasses.filter(
+    (glyphClass) =>
+      referencedGdefClassIds.has(glyphClass.id) &&
+      !stateGlyphClassIds.has(glyphClass.id)
+  )
+
   const statements: FeaNode[] = [
     ...headerComments.map((value) => ({ kind: 'Comment' as const, value })),
     ...(rawFeatureTextForOutput
@@ -430,6 +525,12 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
       language: languageSystem.language,
     })),
     ...state.glyphClasses.map((glyphClass) => ({
+      kind: 'GlyphClass' as const,
+      name: glyphClass.name,
+      glyphs: glyphClass.glyphs,
+      classId: glyphClass.id,
+    })),
+    ...referencedGdefGlyphClasses.map((glyphClass) => ({
       kind: 'GlyphClass' as const,
       name: glyphClass.name,
       glyphs: glyphClass.glyphs,
@@ -465,7 +566,10 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
         kind: 'FeatureBlock' as const,
         tag: feature.tag,
         featureId: feature.id,
-        statements: featureStatements(feature, lookupById),
+        statements: [
+          ...featureParamsStatements(feature.featureParams),
+          ...featureStatements(feature, lookupById),
+        ],
       })),
   ]
 

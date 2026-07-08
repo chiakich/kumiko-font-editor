@@ -32,12 +32,71 @@ export interface LanguageSystem {
   language: string
 }
 
+/**
+ * One block of raw FEA source. Snippets are the storage granularity for
+ * hand-written / imported feature code, mirroring the Glyphs model of
+ * per-feature code plus named prefixes: a 'feature' snippet holds one
+ * complete `feature xxxx { ... } xxxx;` block, a 'prefix' snippet holds the
+ * top-level statements between feature blocks (classes, languagesystems,
+ * GDEF, standalone lookups).
+ */
+export interface RawFeatureSnippet {
+  id: string
+  kind: 'prefix' | 'feature'
+  /** Feature tag when kind === 'feature'. */
+  tag?: string
+  /** Display name, e.g. an imported Glyphs prefix name. */
+  name?: string
+  text: string
+  /**
+   * Disabled snippets stay in the raw source but are excluded from
+   * classification and generated FEA output (mirrors Glyphs' disabled
+   * feature toggle).
+   */
+  disabled?: boolean
+  meta?: Record<string, unknown>
+}
+
+export interface FeatureParamName {
+  text: string
+  nameId?: number
+}
+
+export interface StylisticSetFeatureParams {
+  kind: 'stylisticSet'
+  names: FeatureParamName[]
+}
+
+export interface CharacterVariantFeatureParams {
+  kind: 'characterVariant'
+  featUiLabelNames: FeatureParamName[]
+  featUiTooltipTextNames: FeatureParamName[]
+  sampleTextNames: FeatureParamName[]
+  paramUiLabelNames: FeatureParamName[]
+  characters: number[]
+}
+
+export interface SizeFeatureParams {
+  kind: 'size'
+  designSize: number
+  subfamilyIdentifier: number
+  subfamilyNames: FeatureParamName[]
+  rangeStart: number
+  rangeEnd: number
+}
+
+export type FeatureParams =
+  | StylisticSetFeatureParams
+  | CharacterVariantFeatureParams
+  | SizeFeatureParams
+
 export interface FeatureRecord {
   id: string
   tag: string
   label?: string
   isActive: boolean
   entries: FeatureEntry[]
+  featureParams?: FeatureParams
   origin: FeatureOrigin
   meta?: Record<string, unknown>
 }
@@ -293,6 +352,7 @@ export interface GdefState {
     component?: string[]
   }
   markGlyphSets?: GlyphClass[]
+  markAttachClasses?: GlyphClass[]
   ligatureCarets?: LigatureCaret[]
 }
 
@@ -317,12 +377,14 @@ export interface SourceProvenance {
 export type FeatureSourceKind =
   | 'manual-fea'
   | 'ufo-fea'
+  | 'glyphs-fea'
   | 'compiled-table'
   | 'generated-fea'
 
 export type FeatureSourceOrigin =
   | 'manual-input'
   | 'ufo-import'
+  | 'glyphs-import'
   | 'binary-import'
   | 'kumiko-generated'
 
@@ -463,6 +525,13 @@ export interface OpenTypeFeaturesState {
   autoFeatureConfig: AutoFeatureConfig
   ignoredSuggestionIds: string[]
   exportPolicy: ExportPolicy
+  /** Raw FEA source split into per-feature / per-prefix blocks. */
+  rawFeatureSnippets?: RawFeatureSnippet[]
+  /**
+   * @deprecated Legacy single-blob raw FEA source. Only present in projects
+   * persisted before rawFeatureSnippets existed; normalized into snippets on
+   * load. Read through getRawFeatureText(), never directly.
+   */
   rawFeatureText?: string
   diagnostics?: FeatureDiagnostic[]
 }

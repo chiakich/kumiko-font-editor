@@ -1,8 +1,9 @@
 import { Badge, Button, HStack, Stack, Text } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
-import type {
-  FeatureDiagnostic,
-  OpenTypeFeaturesState,
+import {
+  hasRawFeatureText,
+  type FeatureDiagnostic,
+  type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 import {
   diagnosticsForFeature,
@@ -48,7 +49,7 @@ export function OpenTypeOutline({
           isSelected={isSourceSelected(selected, 'raw-fea')}
           label={t('projectControl.featuresFea')}
           detail={
-            state.rawFeatureText?.trim()
+            hasRawFeatureText(state)
               ? t('projectControl.editable')
               : t('projectControl.none')
           }

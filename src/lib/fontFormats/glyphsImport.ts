@@ -1,4 +1,8 @@
 import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
+import { buildRawFeatureSnippetsFromGlyphsDocument } from 'src/lib/fontFormats/glyphsFeatures'
+import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
+import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { setRawFeatureSnippetsSource } from 'src/lib/openTypeFeatures/featureSourceSections'
 import type {
   FontAxes,
   FontAxis,
@@ -1301,6 +1305,18 @@ export const buildFontDataFromGlyphsDocument = (
   const unitsPerEm = asNumber((document as Raw).unitsPerEm, 1000)
   const defaultMaster = masterEntries[0]?.master
 
+  const featureSnippets = buildRawFeatureSnippetsFromGlyphsDocument(document)
+  const openTypeFeatures =
+    featureSnippets.length > 0
+      ? classifyRawFeatureTextSource(
+          setRawFeatureSnippetsSource(
+            createEmptyOpenTypeFeaturesState(),
+            featureSnippets,
+            { origin: 'glyphs-import' }
+          )
+        )
+      : undefined
+
   return {
     glyphs,
     glyphOrder: mergeGlyphOrder(
@@ -1311,6 +1327,7 @@ export const buildFontDataFromGlyphsDocument = (
     axes,
     sources,
     unitsPerEm,
+    ...(openTypeFeatures ? { openTypeFeatures } : {}),
     ...(familyName ? { fontInfo: { familyName, customData: {} } } : {}),
     lineMetricsHorizontalLayout: buildLineMetrics(defaultMaster),
   }

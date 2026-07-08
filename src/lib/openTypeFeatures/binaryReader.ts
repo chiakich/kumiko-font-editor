@@ -38,9 +38,22 @@ export class BinaryReader {
     )
   }
 
+  uint8(offset: number) {
+    if (!this.hasRange(offset, 1)) return null
+    return this.view.getUint8(this.baseOffset + offset)
+  }
+
   uint16(offset: number) {
     if (!this.hasRange(offset, 2)) return null
     return this.view.getUint16(this.baseOffset + offset, false)
+  }
+
+  uint24(offset: number) {
+    if (!this.hasRange(offset, 3)) return null
+    return (
+      this.view.getUint8(this.baseOffset + offset) * 0x10000 +
+      this.view.getUint16(this.baseOffset + offset + 1, false)
+    )
   }
 
   uint32(offset: number) {

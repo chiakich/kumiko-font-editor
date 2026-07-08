@@ -12,6 +12,7 @@ import {
   type LayoutLookupInventory,
   type LayoutTableInventory,
 } from 'src/lib/openTypeFeatures/layoutTableInventory'
+import { parseNameTableStrings } from 'src/lib/openTypeFeatures/nameTableParser'
 import {
   parseGsubLookupRules,
   type GsubRuleParseResult,
@@ -25,9 +26,12 @@ import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
 import type {
   FeatureDiagnostic,
   FeatureEntry,
+  FeatureParamName,
+  FeatureParams,
   FeatureRecord,
   FeatureSourceSection,
   FontFingerprint,
+  GdefState,
   GlyphClass,
   GposLookupType,
   GsubLookupType,
@@ -98,7 +102,11 @@ const toLookupFlagIr = (lookupFlag: number): LookupFlagIR => ({
   ignoreLigatures: Boolean(lookupFlag & 0x0004) || undefined,
   ignoreMarks: Boolean(lookupFlag & 0x0008) || undefined,
   useMarkFilteringSet: Boolean(lookupFlag & 0x0010) || undefined,
+  markAttachmentType: Boolean(lookupFlag & 0xff00) || undefined,
 })
+
+const getMarkAttachClassNumber = (lookupFlag: number) =>
+  (lookupFlag & 0xff00) >> 8
 
 const getLookupTypeName = (table: 'GSUB' | 'GPOS', lookupType: number) =>
   table === 'GSUB'
@@ -158,8 +166,86 @@ const toLanguageSystems = (
   return Array.from(systems.values())
 }
 
+const toFeatureParams = (
+  inventoryParams: NonNullable<LayoutFeatureInventory['featureParams']>,
+  tag: string,
+  table: 'GSUB' | 'GPOS',
+  featureIndex: number,
+  nameStrings: Map<number, string>,
+  diagnostics: FeatureDiagnostic[]
+): FeatureParams | undefined => {
+  const resolveNames = (nameId: number, role: string): FeatureParamName[] => {
+    if (nameId === 0) return []
+    const text = nameStrings.get(nameId)
+    if (text === undefined) {
+      diagnostics.push(
+        makeExtractorDiagnostic(
+          'warning',
+          `${table} feature ${tag} references name table ID ${nameId} (${role}) that is missing from the name table.`,
+          `${table}-feature-${featureIndex}-missing-name-${nameId}`
+        )
+      )
+      return []
+    }
+    return [{ text, nameId }]
+  }
+
+  if (inventoryParams.kind === 'stylisticSet') {
+    return {
+      kind: 'stylisticSet',
+      names: resolveNames(inventoryParams.uiNameId, 'UI name'),
+    }
+  }
+
+  if (inventoryParams.kind === 'characterVariant') {
+    const paramUiLabelNames: FeatureParamName[] = []
+    for (
+      let index = 0;
+      index < inventoryParams.numNamedParameters;
+      index += 1
+    ) {
+      paramUiLabelNames.push(
+        ...resolveNames(
+          inventoryParams.firstParamUiLabelNameId + index,
+          `parameter UI label ${index + 1}`
+        )
+      )
+    }
+    return {
+      kind: 'characterVariant',
+      featUiLabelNames: resolveNames(
+        inventoryParams.featUiLabelNameId,
+        'feature UI label'
+      ),
+      featUiTooltipTextNames: resolveNames(
+        inventoryParams.featUiTooltipTextNameId,
+        'feature UI tooltip'
+      ),
+      sampleTextNames: resolveNames(
+        inventoryParams.sampleTextNameId,
+        'sample text'
+      ),
+      paramUiLabelNames,
+      characters: inventoryParams.characters,
+    }
+  }
+
+  return {
+    kind: 'size',
+    designSize: inventoryParams.designSize,
+    subfamilyIdentifier: inventoryParams.subfamilyIdentifier,
+    subfamilyNames: resolveNames(
+      inventoryParams.subfamilyNameId,
+      'size subfamily name'
+    ),
+    rangeStart: inventoryParams.rangeStart,
+    rangeEnd: inventoryParams.rangeEnd,
+  }
+}
+
 const toFeatureRecords = (
   inventory: LayoutTableInventory,
+  nameStrings: Map<number, string>,
   diagnostics: FeatureDiagnostic[]
 ): FeatureRecord[] => {
   const featureByIndex = new Map(
@@ -204,11 +290,23 @@ const toFeatureRecords = (
       )
     }
 
+    const featureParams = feature.featureParams
+      ? toFeatureParams(
+          feature.featureParams,
+          feature.tag,
+          inventory.table,
+          feature.featureIndex,
+          nameStrings,
+          diagnostics
+        )
+      : undefined
+
     return {
       id: makeFeatureId(inventory.table, feature),
       tag: feature.tag,
       isActive: true,
       entries,
+      ...(featureParams ? { featureParams } : {}),
       origin: 'imported',
       meta: {
         table: inventory.table,
@@ -221,10 +319,46 @@ const toFeatureRecords = (
 
 const toLookupRecord = (
   table: 'GSUB' | 'GPOS',
-  parsedLookup: ParsedLookupState
+  parsedLookup: ParsedLookupState,
+  gdef: GdefState | null
 ): LookupRecord => {
   const { lookup, parseResult } = parsedLookup
   const lookupId = makeLookupId(table, lookup.lookupIndex)
+  const gdefClassDiagnostics: FeatureDiagnostic[] = []
+
+  const markAttachClassNumber = getMarkAttachClassNumber(lookup.lookupFlag)
+  let markAttachmentClassId: string | undefined
+  if (markAttachClassNumber > 0) {
+    markAttachmentClassId = `gdef_mark_attach_class_${markAttachClassNumber}`
+    const classExists = (gdef?.markAttachClasses ?? []).some(
+      (glyphClass) => glyphClass.id === markAttachmentClassId
+    )
+    if (!classExists) {
+      gdefClassDiagnostics.push({
+        id: `feature-diagnostic-warning-${table}-lookup-${lookup.lookupIndex}-missing-mark-attach-class`,
+        severity: 'warning',
+        message: `Lookup uses MarkAttachmentType class ${markAttachClassNumber}, but the GDEF MarkAttachClassDef did not provide that class. The flag will be dropped when rebuilding layout tables.`,
+        target: { kind: 'lookup', lookupId },
+      })
+    }
+  }
+
+  let markFilteringSetClassId: string | undefined
+  if (lookup.markFilteringSet !== undefined) {
+    markFilteringSetClassId = `gdef_mark_glyph_set_${lookup.markFilteringSet}`
+    const setExists = (gdef?.markGlyphSets ?? []).some(
+      (glyphClass) => glyphClass.id === markFilteringSetClassId
+    )
+    if (!setExists) {
+      gdefClassDiagnostics.push({
+        id: `feature-diagnostic-warning-${table}-lookup-${lookup.lookupIndex}-missing-mark-filtering-set`,
+        severity: 'warning',
+        message: `Lookup uses mark filtering set ${lookup.markFilteringSet}, but the GDEF MarkGlyphSets table did not provide that set. The flag will be dropped when rebuilding layout tables.`,
+        target: { kind: 'lookup', lookupId },
+      })
+    }
+  }
+
   const isEditable = Boolean(parseResult && !parseResult.unsupportedReason)
   const extensionLookupUnwrappedForEditing =
     isEditable && isExtensionLookupType(table, lookup.lookupType)
@@ -245,10 +379,8 @@ const toLookupRecord = (
     table,
     lookupType: getLookupTypeName(table, lookup.lookupType),
     lookupFlag: toLookupFlagIr(lookup.lookupFlag),
-    markFilteringSetClassId:
-      lookup.markFilteringSet === undefined
-        ? undefined
-        : `mark_filtering_set_${lookup.markFilteringSet}`,
+    markAttachmentClassId,
+    markFilteringSetClassId,
     rules: isEditable && parseResult ? parseResult.rules : [],
     editable: isEditable,
     origin: isEditable ? 'imported' : 'unsupported',
@@ -266,9 +398,11 @@ const toLookupRecord = (
           }
         : {}),
     },
-    diagnostics: isEditable
-      ? (parseResult?.diagnostics ?? [])
-      : [readonlyDiagnostic, ...(parseResult?.diagnostics ?? [])],
+    diagnostics: [
+      ...(isEditable ? [] : [readonlyDiagnostic]),
+      ...gdefClassDiagnostics,
+      ...(parseResult?.diagnostics ?? []),
+    ],
   }
 }
 
@@ -331,6 +465,7 @@ const mergeFeatureRecords = (records: FeatureRecord[]) => {
     }
 
     existing.entries.push(...record.entries)
+    existing.featureParams = existing.featureParams ?? record.featureParams
     existing.origin =
       existing.origin === record.origin ? existing.origin : 'mixed'
     existing.meta = {
@@ -514,12 +649,27 @@ export const extractBinaryFeatures = (
   }
 
   const state = createEmptyOpenTypeFeaturesState(fontFingerprint)
+  const nameStrings = parseNameTableStrings(buffer)
   state.languagesystems = toLanguageSystems(inventories)
   state.features = mergeFeatureRecords(
-    inventories.flatMap((inventory) => toFeatureRecords(inventory, diagnostics))
+    inventories.flatMap((inventory) =>
+      toFeatureRecords(inventory, nameStrings, diagnostics)
+    )
   )
   state.lookups = parsedLookupEntries.flatMap((entry) =>
-    entry.lookups.map((lookup) => toLookupRecord(entry.inventory.table, lookup))
+    entry.lookups.map((lookup) =>
+      toLookupRecord(entry.inventory.table, lookup, parsedGdef?.gdef ?? null)
+    )
+  )
+  diagnostics.push(
+    ...state.lookups.flatMap(
+      (lookup) =>
+        lookup.diagnostics?.filter(
+          (diagnostic) =>
+            diagnostic.id.endsWith('-missing-mark-attach-class') ||
+            diagnostic.id.endsWith('-missing-mark-filtering-set')
+        ) ?? []
+    )
   )
   state.glyphClasses = parsedLookupEntries.flatMap((entry) =>
     entry.lookups.flatMap((lookup) => getParsedGlyphClasses(lookup.parseResult))

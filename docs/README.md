@@ -10,5 +10,6 @@
 - [與 fontra 的相容與跟進策略](fontra-parity.md) — UFO 互通、演算法層移植、baseline SHA 與 re-sync 流程
 - [Variable Font 支援：設計與實作計畫](variable-fonts.md) — 插值資料流、現況盤點、分階段計畫與 fontra 對應檔案
 - [OpenType feature 工作流](opentype-feature-workflow.md) — `.fea`、反組譯 GDEF/GPOS/GSUB、`openTypeFeatures` 單一資料模型與後續 UI/解析路線
+- [OpenType feature：現況盤點與目標架構](opentype-feature-roadmap.md) — 2026-07 全面盤點、缺口清單、feature workspace 目標架構與施工順序
 - [Kerning Roadmap](kerning.md) — UFO kerning/group model、開源 UI 參考與 Kumiko 導入順序
 - [Kumiko project persistence](kumiko-project-persistence.md) — 格式無關的 project/glyph IndexedDB records 與不重複保存向量資料的規則

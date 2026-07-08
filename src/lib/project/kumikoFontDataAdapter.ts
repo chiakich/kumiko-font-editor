@@ -21,6 +21,7 @@ import type {
   PathSegmentType,
 } from 'src/store'
 import { hashString } from 'src/lib/hash'
+import { normalizeRawFeatureSnippets } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import { deterministicStringify } from 'src/store/deterministicStringify'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import {
@@ -700,7 +701,9 @@ export const kumikoRecordsToFontData = (
   axes: project.axes,
   sources: project.sources,
   exportInstances: project.exportInstances,
-  openTypeFeatures: project.openTypeFeatures,
+  openTypeFeatures: project.openTypeFeatures
+    ? normalizeRawFeatureSnippets(project.openTypeFeatures)
+    : project.openTypeFeatures,
   kerningGroups: project.kerningGroups,
   kerningPairs: project.kerningPairs,
   statusDefinitions: project.statusDefinitions,

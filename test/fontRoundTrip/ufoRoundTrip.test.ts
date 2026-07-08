@@ -17,6 +17,7 @@ import {
   type UfoWorkspaceEntry,
 } from 'src/lib/fontFormats/ufoFormat'
 import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
+import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import type { FontData, GlyphData } from 'src/store'
 import { getGlyphLayer } from 'src/store/glyphLayer'
 import { exportCanonicalFontDataAsUfoZip } from './canonicalUfoExportTestUtils'
@@ -117,9 +118,11 @@ describe('UFO import → export → reimport round-trip', () => {
     const originalFeatureText = entries.find((entry) =>
       entry.relativePath.endsWith('/features.fea')
     )?.text
-    expect(first.fontData.openTypeFeatures?.rawFeatureText).toBe(
-      originalFeatureText
-    )
+    expect(
+      first.fontData.openTypeFeatures
+        ? getRawFeatureText(first.fontData.openTypeFeatures)
+        : undefined
+    ).toBe(originalFeatureText?.trim())
     expect(first.fontData.openTypeFeatures?.sourceSections).toMatchObject([
       {
         id: 'source_raw_feature_text',

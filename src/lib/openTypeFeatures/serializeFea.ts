@@ -285,16 +285,19 @@ const serializeGdefTable = (
   indent: string
 ) => {
   const { gdef } = node
-  const lines: string[] = []
+  const statementLines: string[] = []
+  const commentLines: string[] = []
   if (gdef.glyphClasses) {
     const { base, ligature, mark, component } = gdef.glyphClasses
-    lines.push(
+    statementLines.push(
       `GlyphClassDef ${formatGdefGlyphClass(base)}, ${formatGdefGlyphClass(ligature)}, ${formatGdefGlyphClass(mark)}, ${formatGdefGlyphClass(component)};`
     )
   }
   for (const markGlyphSet of gdef.markGlyphSets ?? []) {
     if (markGlyphSet.glyphs.length > 0) {
-      lines.push(`MarkGlyphSetsDef ${formatGlyphList(markGlyphSet.glyphs)};`)
+      commentLines.push(
+        `# MarkGlyphSets ${markGlyphSet.name} = ${formatGlyphList(markGlyphSet.glyphs)} (MarkGlyphSetsDef is not valid FEA syntax; sets are rebuilt from lookupflag UseMarkFilteringSet references)`
+      )
     }
   }
   for (const caret of gdef.ligatureCarets ?? []) {
@@ -303,13 +306,20 @@ const serializeGdefTable = (
         caret.format === 'pointIndex'
           ? 'LigatureCaretByIndex'
           : 'LigatureCaretByPos'
-      lines.push(`${statement} ${caret.glyph} ${caret.carets.join(' ')};`)
+      statementLines.push(
+        `${statement} ${caret.glyph} ${caret.carets.join(' ')};`
+      )
     }
   }
-  if (lines.length === 0) return
+  if (statementLines.length === 0) {
+    for (const line of commentLines) {
+      pushLine(context, `${indent}${line}`)
+    }
+    return
+  }
 
   pushLine(context, `${indent}table GDEF {`)
-  for (const line of lines) {
+  for (const line of [...commentLines, ...statementLines]) {
     pushLine(context, `${indent}  ${line}`)
   }
   pushLine(context, `${indent}} GDEF;`)

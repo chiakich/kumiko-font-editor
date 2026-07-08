@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -65,5 +66,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       src: fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  test: {
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.claude/**'],
   },
 })

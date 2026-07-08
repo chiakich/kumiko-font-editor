@@ -3,6 +3,7 @@ import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyR
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
 import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
 import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
+import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 
 describe('OpenType raw FEA classifier', () => {
   it('tracks raw .fea text as a formal feature source section', () => {
@@ -11,7 +12,7 @@ describe('OpenType raw FEA classifier', () => {
       '@Code = [hyphen greater];'
     )
 
-    expect(state.rawFeatureText).toBe('@Code = [hyphen greater];')
+    expect(getRawFeatureText(state)).toBe('@Code = [hyphen greater];')
     expect(state.sourceSections).toMatchObject([
       {
         id: 'source_raw_feature_text',

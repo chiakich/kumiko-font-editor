@@ -1,21 +1,33 @@
+import { splitRawFeatureTextIntoSnippets } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import type {
   ClassifiedFeatureRecordRef,
   FeatureSourceOrigin,
   FeatureSourceSection,
   OpenTypeFeaturesState,
   OpenTypeTableTag,
+  RawFeatureSnippet,
 } from 'src/lib/openTypeFeatures/types'
 
 export const RAW_FEATURE_TEXT_SOURCE_ID = 'source_raw_feature_text'
 
 type RawFeatureTextSourceOrigin = Extract<
   FeatureSourceOrigin,
-  'manual-input' | 'ufo-import'
+  'manual-input' | 'ufo-import' | 'glyphs-import'
 >
 
 const RAW_SOURCE_ORIGIN_TITLE: Record<RawFeatureTextSourceOrigin, string> = {
   'manual-input': 'Handwritten .fea source',
   'ufo-import': 'UFO features.fea',
+  'glyphs-import': 'Glyphs features and prefixes',
+}
+
+const RAW_SOURCE_ORIGIN_KIND: Record<
+  RawFeatureTextSourceOrigin,
+  FeatureSourceSection['kind']
+> = {
+  'manual-input': 'manual-fea',
+  'ufo-import': 'ufo-fea',
+  'glyphs-import': 'glyphs-fea',
 }
 
 interface RawFeatureTextSourceOptions {
@@ -31,7 +43,7 @@ export const createRawFeatureTextSourceSection = ({
 }: RawFeatureTextSourceOptions = {}): FeatureSourceSection => ({
   id: RAW_FEATURE_TEXT_SOURCE_ID,
   title: title ?? RAW_SOURCE_ORIGIN_TITLE[origin],
-  kind: origin === 'ufo-import' ? 'ufo-fea' : 'manual-fea',
+  kind: RAW_SOURCE_ORIGIN_KIND[origin],
   origin,
   format: 'fea',
   stage: 'source',
@@ -45,26 +57,54 @@ export const createRawFeatureTextSourceSection = ({
   },
 })
 
+export const setRawFeatureSnippetsSource = (
+  state: OpenTypeFeaturesState,
+  snippets: RawFeatureSnippet[],
+  options: RawFeatureTextSourceOptions = {}
+): OpenTypeFeaturesState => {
+  const sourceSectionsWithoutRawText = (state.sourceSections ?? []).filter(
+    (section) => section.textRef !== 'rawFeatureText'
+  )
+  return {
+    ...state,
+    rawFeatureText: undefined,
+    rawFeatureSnippets: snippets.length > 0 ? snippets : undefined,
+    sourceSections:
+      snippets.length > 0
+        ? [
+            createRawFeatureTextSourceSection(options),
+            ...sourceSectionsWithoutRawText,
+          ]
+        : sourceSectionsWithoutRawText,
+  }
+}
+
 export const setRawFeatureTextSource = (
   state: OpenTypeFeaturesState,
   rawFeatureText: string,
   options: RawFeatureTextSourceOptions = {}
 ): OpenTypeFeaturesState => {
-  const normalizedText = rawFeatureText.length > 0 ? rawFeatureText : undefined
-  const sourceSectionsWithoutRawText = (state.sourceSections ?? []).filter(
-    (section) => section.textRef !== 'rawFeatureText'
+  // Re-splitting fresh text produces new snippet objects; carry over
+  // per-snippet flags and metadata from existing snippets with the same id
+  // so a whole-text edit does not silently drop them.
+  const previousById = new Map(
+    (state.rawFeatureSnippets ?? []).map((snippet) => [snippet.id, snippet])
   )
-
-  return {
-    ...state,
-    rawFeatureText: normalizedText,
-    sourceSections: normalizedText?.trim()
-      ? [
-          createRawFeatureTextSourceSection(options),
-          ...sourceSectionsWithoutRawText,
-        ]
-      : sourceSectionsWithoutRawText,
-  }
+  const snippets = splitRawFeatureTextIntoSnippets(rawFeatureText).map(
+    (snippet) => {
+      const previous = previousById.get(snippet.id)
+      if (!previous) return snippet
+      return {
+        ...snippet,
+        ...(previous.name !== undefined ? { name: previous.name } : {}),
+        ...(previous.disabled !== undefined
+          ? { disabled: previous.disabled }
+          : {}),
+        ...(previous.meta !== undefined ? { meta: previous.meta } : {}),
+      }
+    }
+  )
+  return setRawFeatureSnippetsSource(state, snippets, options)
 }
 
 interface CompiledTableSourceSectionOptions {

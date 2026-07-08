@@ -14,10 +14,32 @@ export interface LayoutLanguageInventory {
   featureIndices: number[]
 }
 
+export type LayoutFeatureParamsInventory =
+  | { kind: 'stylisticSet'; version: number; uiNameId: number }
+  | {
+      kind: 'characterVariant'
+      format: number
+      featUiLabelNameId: number
+      featUiTooltipTextNameId: number
+      sampleTextNameId: number
+      numNamedParameters: number
+      firstParamUiLabelNameId: number
+      characters: number[]
+    }
+  | {
+      kind: 'size'
+      designSize: number
+      subfamilyIdentifier: number
+      subfamilyNameId: number
+      rangeStart: number
+      rangeEnd: number
+    }
+
 export interface LayoutFeatureInventory {
   tag: string
   featureIndex: number
   lookupIndices: number[]
+  featureParams?: LayoutFeatureParamsInventory
 }
 
 export interface LayoutLookupInventory {
@@ -182,6 +204,105 @@ const parseLangSysFeatureIndices = (
   return featureIndices
 }
 
+const STYLISTIC_SET_TAG_PATTERN = /^ss(0[1-9]|1[0-9]|20)$/
+const CHARACTER_VARIANT_TAG_PATTERN = /^cv(0[1-9]|[1-9][0-9])$/
+
+const parseFeatureParams = (
+  featureReader: BinaryReader,
+  featureParamsOffset: number,
+  tag: string,
+  featureIndex: number,
+  table: 'GSUB' | 'GPOS',
+  diagnostics: FeatureDiagnostic[]
+): LayoutFeatureParamsInventory | undefined => {
+  const reportMalformed = () => {
+    diagnostics.push(
+      makeInventoryDiagnostic(
+        'warning',
+        `${table} feature ${tag} has a malformed FeatureParams table; its parameters were skipped.`,
+        table,
+        `feature-${featureIndex}-feature-params-malformed`
+      )
+    )
+    return undefined
+  }
+
+  const paramsReader = featureReader.at(featureParamsOffset)
+  if (!paramsReader) return reportMalformed()
+
+  if (STYLISTIC_SET_TAG_PATTERN.test(tag)) {
+    const version = paramsReader.uint16(0)
+    const uiNameId = paramsReader.uint16(2)
+    if (version === null || uiNameId === null) return reportMalformed()
+    return { kind: 'stylisticSet', version, uiNameId }
+  }
+
+  if (CHARACTER_VARIANT_TAG_PATTERN.test(tag)) {
+    const format = paramsReader.uint16(0)
+    const featUiLabelNameId = paramsReader.uint16(2)
+    const featUiTooltipTextNameId = paramsReader.uint16(4)
+    const sampleTextNameId = paramsReader.uint16(6)
+    const numNamedParameters = paramsReader.uint16(8)
+    const firstParamUiLabelNameId = paramsReader.uint16(10)
+    const charCount = paramsReader.uint16(12)
+    if (
+      format === null ||
+      featUiLabelNameId === null ||
+      featUiTooltipTextNameId === null ||
+      sampleTextNameId === null ||
+      numNamedParameters === null ||
+      firstParamUiLabelNameId === null ||
+      charCount === null
+    ) {
+      return reportMalformed()
+    }
+
+    const characters: number[] = []
+    for (let index = 0; index < charCount; index += 1) {
+      const character = paramsReader.uint24(14 + index * 3)
+      if (character === null) return reportMalformed()
+      characters.push(character)
+    }
+    return {
+      kind: 'characterVariant',
+      format,
+      featUiLabelNameId,
+      featUiTooltipTextNameId,
+      sampleTextNameId,
+      numNamedParameters,
+      firstParamUiLabelNameId,
+      characters,
+    }
+  }
+
+  if (tag === 'size') {
+    const designSize = paramsReader.uint16(0)
+    const subfamilyIdentifier = paramsReader.uint16(2)
+    const subfamilyNameId = paramsReader.uint16(4)
+    const rangeStart = paramsReader.uint16(6)
+    const rangeEnd = paramsReader.uint16(8)
+    if (
+      designSize === null ||
+      subfamilyIdentifier === null ||
+      subfamilyNameId === null ||
+      rangeStart === null ||
+      rangeEnd === null
+    ) {
+      return reportMalformed()
+    }
+    return {
+      kind: 'size',
+      designSize,
+      subfamilyIdentifier,
+      subfamilyNameId,
+      rangeStart,
+      rangeEnd,
+    }
+  }
+
+  return undefined
+}
+
 const parseFeatureList = (
   tableReader: BinaryReader,
   featureListOffset: number,
@@ -235,7 +356,25 @@ const parseFeatureList = (
       continue
     }
 
-    features.push({ tag, featureIndex, lookupIndices })
+    const featureParamsOffset = featureReader.uint16(0)
+    const featureParams =
+      featureParamsOffset !== null && featureParamsOffset > 0
+        ? parseFeatureParams(
+            featureReader,
+            featureParamsOffset,
+            tag,
+            featureIndex,
+            table,
+            diagnostics
+          )
+        : undefined
+
+    features.push({
+      tag,
+      featureIndex,
+      lookupIndices,
+      ...(featureParams ? { featureParams } : {}),
+    })
   }
 
   return features

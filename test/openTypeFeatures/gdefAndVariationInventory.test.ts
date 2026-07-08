@@ -70,13 +70,13 @@ const makeGdefTable = ({
   caretFormat?: number
   caretValue?: number
 } = {}) =>
-  makeBytes(64, (view) => {
+  makeBytes(72, (view) => {
     writeUint16(view, 0, 1)
     writeUint16(view, 2, 2)
     writeUint16(view, 4, 14)
     writeUint16(view, 6, 0)
     writeUint16(view, 8, 28)
-    writeUint16(view, 10, 0)
+    writeUint16(view, 10, 64)
     writeUint16(view, 12, 50)
 
     writeUint16(view, 14, 1)
@@ -104,7 +104,55 @@ const makeGdefTable = ({
     writeUint16(view, 58, 1)
     writeUint16(view, 60, 1)
     writeUint16(view, 62, 3)
+
+    writeUint16(view, 64, 1)
+    writeUint16(view, 66, 3)
+    writeUint16(view, 68, 1)
+    writeUint16(view, 70, 1)
   })
+
+const makeFlaggedLookupTable = (
+  lookupType: number,
+  lookupFlag: number,
+  markFilteringSet: number,
+  subtable: Uint8Array
+) => {
+  const headerLength = 58
+  const bytes = makeBytes(headerLength + subtable.byteLength, (view) => {
+    writeUint16(view, 0, 1)
+    writeUint16(view, 2, 0)
+    writeUint16(view, 4, 10)
+    writeUint16(view, 6, 30)
+    writeUint16(view, 8, 44)
+
+    writeUint16(view, 10, 1)
+    writeTag(view, 12, 'latn')
+    writeUint16(view, 16, 8)
+    writeUint16(view, 18, 4)
+    writeUint16(view, 20, 0)
+    writeUint16(view, 22, 0)
+    writeUint16(view, 24, 0xffff)
+    writeUint16(view, 26, 1)
+    writeUint16(view, 28, 0)
+
+    writeUint16(view, 30, 1)
+    writeTag(view, 32, 'liga')
+    writeUint16(view, 36, 8)
+    writeUint16(view, 38, 0)
+    writeUint16(view, 40, 1)
+    writeUint16(view, 42, 0)
+
+    writeUint16(view, 44, 1)
+    writeUint16(view, 46, 4)
+    writeUint16(view, 48, lookupType)
+    writeUint16(view, 50, lookupFlag)
+    writeUint16(view, 52, 1)
+    writeUint16(view, 54, 10)
+    writeUint16(view, 56, markFilteringSet)
+  })
+  bytes.set(subtable, headerLength)
+  return bytes
+}
 
 describe('GDEF and variation inventory', () => {
   it('imports straightforward GDEF glyph classes, mark glyph sets, and ligature carets', () => {
@@ -125,6 +173,14 @@ describe('GDEF and variation inventory', () => {
         {
           id: 'gdef_mark_glyph_set_0',
           name: '@GDEFMarkGlyphSet0',
+          glyphs: ['acutecomb'],
+          origin: 'imported',
+        },
+      ],
+      markAttachClasses: [
+        {
+          id: 'gdef_mark_attach_class_1',
+          name: '@GDEFMarkAttachClass1',
           glyphs: ['acutecomb'],
           origin: 'imported',
         },
@@ -161,6 +217,78 @@ describe('GDEF and variation inventory', () => {
     ])
     expect(generateFea(state).text).toContain('LigatureCaretByIndex f_i 7;')
     expect(state.diagnostics ?? []).toEqual([])
+  })
+
+  it('resolves MarkAttachmentType and UseMarkFilteringSet lookup flags against GDEF classes', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        { tag: 'GDEF', data: makeGdefTable() },
+        {
+          tag: 'GSUB',
+          data: makeFlaggedLookupTable(
+            1,
+            0x0110,
+            0,
+            makeSingleSubstitutionSubtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'f_i', 'acutecomb', 'componentGlyph']
+    )
+
+    const lookup = state.lookups[0]
+    expect(lookup.lookupFlag).toMatchObject({
+      useMarkFilteringSet: true,
+      markAttachmentType: true,
+    })
+    expect(lookup.markAttachmentClassId).toBe('gdef_mark_attach_class_1')
+    expect(lookup.markFilteringSetClassId).toBe('gdef_mark_glyph_set_0')
+    expect(state.diagnostics ?? []).toEqual([])
+
+    const generated = generateFea(state).text
+    expect(generated).toContain('@GDEFMarkGlyphSet0 = [acutecomb];')
+    expect(generated).toContain('@GDEFMarkAttachClass1 = [acutecomb];')
+    expect(generated).toContain(
+      'lookupflag MarkAttachmentType @GDEFMarkAttachClass1 UseMarkFilteringSet @GDEFMarkGlyphSet0;'
+    )
+    expect(generated).not.toMatch(/^\s*MarkGlyphSetsDef/m)
+  })
+
+  it('warns when lookup flags reference GDEF classes that were not imported', () => {
+    const state = extractBinaryFeatures(
+      makeSfnt([
+        {
+          tag: 'GSUB',
+          data: makeFlaggedLookupTable(
+            1,
+            0x0210,
+            1,
+            makeSingleSubstitutionSubtable()
+          ),
+        },
+      ]),
+      null,
+      ['.notdef', 'A', 'f_i']
+    )
+
+    const diagnosticIds = (state.diagnostics ?? []).map(
+      (diagnostic) => diagnostic.id
+    )
+    expect(diagnosticIds).toContain(
+      'feature-diagnostic-warning-GSUB-lookup-0-missing-mark-attach-class'
+    )
+    expect(diagnosticIds).toContain(
+      'feature-diagnostic-warning-GSUB-lookup-0-missing-mark-filtering-set'
+    )
+
+    const generated = generateFea(state).text
+    expect(generated).toContain(
+      'Cannot serialize MarkAttachmentType for lookup lookup_gsub_0'
+    )
+    expect(generated).toContain(
+      'Cannot serialize UseMarkFilteringSet for lookup lookup_gsub_0'
+    )
   })
 
   it('reports GSUB and GPOS FeatureVariations as explicit unsupported table-level data', () => {

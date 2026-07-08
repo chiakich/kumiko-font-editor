@@ -9,6 +9,19 @@ export const formatGlyphSelector = (selector: GlyphSelector) =>
 
 export const formatGlyphList = (glyphs: string[]) => `[${glyphs.join(' ')}]`
 
+export const escapeFeaNameString = (text: string) => {
+  let escaped = ''
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index)
+    if (code === 0x22 || code === 0x5c || code < 0x20 || code > 0x7e) {
+      escaped += `\\${code.toString(16).padStart(4, '0')}`
+    } else {
+      escaped += text[index]
+    }
+  }
+  return escaped
+}
+
 export const formatAnchor = (anchor: { x: number; y: number }) =>
   `<anchor ${Math.round(anchor.x)} ${Math.round(anchor.y)}>`
 

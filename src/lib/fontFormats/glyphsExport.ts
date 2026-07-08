@@ -1,4 +1,5 @@
 import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
+import { buildGlyphsFeatureFieldsFromSnippets } from 'src/lib/fontFormats/glyphsFeatures'
 import {
   getComponentMatrix,
   isIdentityComponentMatrix,
@@ -561,46 +562,60 @@ const buildLayerMap = (layers: Array<Record<string, unknown>>) =>
 export const createBaseGlyphsDocument = (
   fontData: FontData,
   projectMetadata: Record<string, unknown> | null
-): GlyphsDocument => ({
-  familyName:
-    typeof projectMetadata?.familyName === 'string'
-      ? projectMetadata.familyName
-      : 'Untitled',
-  unitsPerEm:
-    typeof projectMetadata?.unitsPerEm === 'number'
-      ? projectMetadata.unitsPerEm
-      : (fontData.unitsPerEm ?? 1000),
-  versionMajor:
-    typeof projectMetadata?.versionMajor === 'number'
-      ? projectMetadata.versionMajor
-      : 1,
-  versionMinor:
-    typeof projectMetadata?.versionMinor === 'number'
-      ? projectMetadata.versionMinor
-      : 0,
-  customParameters: Array.isArray(projectMetadata?.customParameters)
-    ? (projectMetadata.customParameters as GlyphsDocument['customParameters'])
-    : [],
-  featurePrefixes: Array.isArray(projectMetadata?.featurePrefixes)
-    ? (projectMetadata.featurePrefixes as GlyphsDocument['featurePrefixes'])
-    : [],
-  classes: Array.isArray(projectMetadata?.classes)
-    ? (projectMetadata.classes as GlyphsDocument['classes'])
-    : [],
-  features: Array.isArray(projectMetadata?.features)
-    ? (projectMetadata.features as GlyphsDocument['features'])
-    : [],
-  instances: Array.isArray(projectMetadata?.instances)
-    ? (projectMetadata.instances as GlyphsDocument['instances'])
-    : [],
-  fontMaster: Array.isArray(projectMetadata?.fontMasters)
-    ? (projectMetadata.fontMasters as GlyphsDocument['fontMaster'])
-    : [],
-  glyphs: [],
-  lineMetricsHorizontalLayout:
-    (fontData.lineMetricsHorizontalLayout as GlyphsDocument['lineMetricsHorizontalLayout']) ??
-    {},
-})
+): GlyphsDocument => {
+  // Snippets are the authoritative feature source once they exist; the
+  // imported document metadata is only a fallback for projects without any
+  // feature edits (e.g. binary imports without feature data).
+  const snippetFeatureFields = buildGlyphsFeatureFieldsFromSnippets(
+    fontData.openTypeFeatures
+  )
+  return {
+    familyName:
+      typeof projectMetadata?.familyName === 'string'
+        ? projectMetadata.familyName
+        : 'Untitled',
+    unitsPerEm:
+      typeof projectMetadata?.unitsPerEm === 'number'
+        ? projectMetadata.unitsPerEm
+        : (fontData.unitsPerEm ?? 1000),
+    versionMajor:
+      typeof projectMetadata?.versionMajor === 'number'
+        ? projectMetadata.versionMajor
+        : 1,
+    versionMinor:
+      typeof projectMetadata?.versionMinor === 'number'
+        ? projectMetadata.versionMinor
+        : 0,
+    customParameters: Array.isArray(projectMetadata?.customParameters)
+      ? (projectMetadata.customParameters as GlyphsDocument['customParameters'])
+      : [],
+    featurePrefixes:
+      snippetFeatureFields?.featurePrefixes ??
+      (Array.isArray(projectMetadata?.featurePrefixes)
+        ? (projectMetadata.featurePrefixes as GlyphsDocument['featurePrefixes'])
+        : []),
+    classes:
+      snippetFeatureFields?.classes ??
+      (Array.isArray(projectMetadata?.classes)
+        ? (projectMetadata.classes as GlyphsDocument['classes'])
+        : []),
+    features:
+      snippetFeatureFields?.features ??
+      (Array.isArray(projectMetadata?.features)
+        ? (projectMetadata.features as GlyphsDocument['features'])
+        : []),
+    instances: Array.isArray(projectMetadata?.instances)
+      ? (projectMetadata.instances as GlyphsDocument['instances'])
+      : [],
+    fontMaster: Array.isArray(projectMetadata?.fontMasters)
+      ? (projectMetadata.fontMasters as GlyphsDocument['fontMaster'])
+      : [],
+    glyphs: [],
+    lineMetricsHorizontalLayout:
+      (fontData.lineMetricsHorizontalLayout as GlyphsDocument['lineMetricsHorizontalLayout']) ??
+      {},
+  }
+}
 
 export const createGlyphsRecordFromFontDataGlyph = (
   rawGlyph: Record<string, unknown> | undefined,

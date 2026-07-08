@@ -1,4 +1,5 @@
 import type { CompilerRuntimeStatus } from 'src/lib/openTypeFeatures/compilerTypes'
+import { hasRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import type {
   ExportPolicy,
   FeatureDiagnostic,
@@ -75,7 +76,7 @@ export const hasManagedFeatureEdits = (state: OpenTypeFeaturesState) =>
   state.glyphClasses.length > 0 ||
   state.markClasses.length > 0 ||
   state.anchors.length > 0 ||
-  Boolean(state.rawFeatureText?.trim())
+  hasRawFeatureText(state)
 
 export const hasBlockingExportWarnings = (warnings: OpenTypeExportWarning[]) =>
   warnings.some((warning) => warning.severity === 'error')

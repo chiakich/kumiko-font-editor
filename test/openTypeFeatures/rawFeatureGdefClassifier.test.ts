@@ -66,8 +66,13 @@ describe('OpenType raw FEA GDEF classifier', () => {
     const generated = generateFea(state).text
     expect(generated).toContain('table GDEF {')
     expect(generated).toContain('GlyphClassDef [A B], [f_i], [acutecomb], ;')
-    expect(generated).toContain('MarkGlyphSetsDef [acutecomb gravecomb];')
-    expect(generated).toContain('MarkGlyphSetsDef [dotaccent];')
+    expect(generated).not.toMatch(/^\s*MarkGlyphSetsDef/m)
+    expect(generated).toContain(
+      '# MarkGlyphSets @TopMarks = [acutecomb gravecomb]'
+    )
+    expect(generated).toContain(
+      '# MarkGlyphSets @GDEFMarkGlyphSet1 = [dotaccent]'
+    )
     expect(generated).toContain('LigatureCaretByPos f_i 250 500;')
     expect(generated).toContain('LigatureCaretByIndex f_i 3;')
   })

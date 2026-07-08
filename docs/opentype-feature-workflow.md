@@ -1,6 +1,7 @@
 # OpenType feature 工作流
 
 這份文件記錄 Kumiko 對 OpenType feature 的資料模型決策，以及接下來的實作方向。
+整體缺口盤點、目標 UI 架構與施工順序見 [OpenType feature：現況盤點與目標架構](opentype-feature-roadmap.md)。
 
 ## 資料模型
 
