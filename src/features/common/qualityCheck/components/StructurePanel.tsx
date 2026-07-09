@@ -9,17 +9,21 @@ import {
   Tag,
   Text,
 } from '@chakra-ui/react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore, type FontData, type GlyphData } from 'src/store'
 import type { QualityScope } from 'src/lib/qualityCheck/qualityLint'
 import { sideLabels } from 'src/lib/qualityCheck/structureMetrics'
-import { isHanGlyph } from 'src/lib/qualityCheck/hanClassification'
+import {
+  getGlyphCharacter,
+  isHanGlyph,
+} from 'src/lib/qualityCheck/hanClassification'
 import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
 import {
   buildGlyphGeometrySample,
   type GlyphGeometrySample,
 } from 'src/lib/qualityCheck/glyphSampling'
 import { useQualityAnalysis } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
+import { usePreviewGlyphMap } from 'src/features/common/qualityCheck/hooks/usePreviewGlyphMap'
 import {
   radarDimensionLabels,
   type RadarGlyphEvaluation,
@@ -94,6 +98,41 @@ export function StructurePanel({
     }
     return radar.suspects.slice(0, 50)
   }, [isFocusedScope, radar, scopedGlyphs])
+
+  const [expandedGlyphId, setExpandedGlyphId] = useState<string | null>(null)
+
+  // 字元 → glyphId：同組參照字要能點開預覽/定位
+  const glyphIdByCharacter = useMemo(() => {
+    const map = new Map<string, string>()
+    if (!fontData) {
+      return map
+    }
+    for (const glyph of Object.values(fontData.glyphs)) {
+      const character = getGlyphCharacter(glyph, '')
+      if (character && !map.has(character)) {
+        map.set(character, glyph.id)
+      }
+    }
+    return map
+  }, [fontData])
+
+  // 需要輪廓預覽的字形：可疑字本身 + 各 reason 的同組參照字
+  const previewGlyphIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const evaluation of visibleEvaluations) {
+      ids.add(evaluation.glyphId)
+      for (const reason of evaluation.reasons.slice(0, 4)) {
+        for (const character of reason.peerCharacters ?? []) {
+          const glyphId = glyphIdByCharacter.get(character)
+          if (glyphId) {
+            ids.add(glyphId)
+          }
+        }
+      }
+    }
+    return [...ids]
+  }, [glyphIdByCharacter, visibleEvaluations])
+  const previewGlyphMap = usePreviewGlyphMap(previewGlyphIds)
 
   if (!baseline) {
     return (
@@ -266,6 +305,14 @@ export function StructurePanel({
                   key={evaluation.glyphId}
                   evaluation={evaluation}
                   rank={isFocusedScope ? null : index + 1}
+                  glyphMap={previewGlyphMap}
+                  glyphIdByCharacter={glyphIdByCharacter}
+                  expanded={expandedGlyphId === evaluation.glyphId}
+                  onToggleExpanded={(glyphId) =>
+                    setExpandedGlyphId((current) =>
+                      current === glyphId ? null : glyphId
+                    )
+                  }
                   onLocateGlyph={onLocateGlyph}
                 />
               ))}

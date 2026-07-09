@@ -9,11 +9,14 @@ import {
   Tag,
   Text,
 } from '@chakra-ui/react'
+import { NavArrowDown, NavArrowRight } from 'iconoir-react'
+import type { GlyphData } from 'src/store'
 import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
 import { buildRadarAdvice } from 'src/lib/qualityCheck/radarAdvice'
 import {
   formatRadarReason,
   type RadarGlyphEvaluation,
+  type RadarReason,
 } from 'src/lib/qualityCheck/qualityRadar'
 import {
   sideLabels,
@@ -23,6 +26,7 @@ import {
   type StructureSide,
 } from 'src/lib/qualityCheck/structureMetrics'
 import { STRUCTURE_SIDES } from 'src/features/common/qualityCheck/components/structurePanel/structurePanelConstants'
+import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
 
 const FRAMING_FILL = 'var(--chakra-colors-pink-200)'
 const FRAMING_LINE = 'var(--chakra-colors-pink-500)'
@@ -209,73 +213,237 @@ export function DistributionRow({
   )
 }
 
+function GlyphThumb({
+  glyph,
+  glyphMap,
+  character,
+  size,
+}: {
+  glyph: GlyphData | undefined
+  glyphMap: Record<string, GlyphData>
+  character: string
+  size: string
+}) {
+  return (
+    <Box
+      w={size}
+      h={size}
+      flexShrink={0}
+      borderWidth={1}
+      borderColor="border"
+      bg="background"
+      color="foreground"
+      p="2px"
+      overflow="hidden"
+    >
+      {glyph ? (
+        <GlyphPreview glyph={glyph} glyphMap={glyphMap} inheritFallbackColor />
+      ) : (
+        <Text
+          fontFamily="glyph"
+          textAlign="center"
+          lineHeight={1.6}
+          userSelect="none"
+        >
+          {character}
+        </Text>
+      )}
+    </Box>
+  )
+}
+
+function SuspectReasonDetail({
+  reason,
+  glyphMap,
+  glyphIdByCharacter,
+  onLocateGlyph,
+}: {
+  reason: RadarReason
+  glyphMap: Record<string, GlyphData>
+  glyphIdByCharacter: Map<string, string>
+  onLocateGlyph: (glyphId: string) => void
+}) {
+  const advice = buildRadarAdvice(reason)
+  const peers = (reason.peerCharacters ?? [])
+    .map((character) => ({
+      character,
+      glyphId: glyphIdByCharacter.get(character),
+    }))
+    .slice(0, 4)
+
+  return (
+    <Box borderWidth={1} borderColor="border" bg="background" p={3}>
+      <HStack gap={2} mb={1} flexWrap="wrap">
+        <Badge
+          colorPalette={advice.severity === 'warning' ? 'orange' : 'gray'}
+          flexShrink={0}
+        >
+          {radarReasonDimensionLabel(reason)}
+        </Badge>
+        <Text fontSize="sm" fontWeight="900">
+          {advice.title}
+        </Text>
+      </HStack>
+      <Text fontSize="xs" color="mutedForeground" fontFamily="mono">
+        {advice.detail}
+      </Text>
+      {advice.action ? (
+        <Text fontSize="xs" mt={1}>
+          建議：{advice.action}
+        </Text>
+      ) : null}
+      {peers.length > 0 ? (
+        <HStack gap={2} mt={2} align="center" flexWrap="wrap">
+          <Text fontSize="xs" color="mutedForeground" fontWeight="800">
+            同組參照
+          </Text>
+          {peers.map((peer) => (
+            <Stack
+              key={peer.character}
+              gap={0}
+              align="center"
+              cursor={peer.glyphId ? 'pointer' : undefined}
+              title={
+                peer.glyphId ? `開啟「${peer.character}」` : peer.character
+              }
+              onClick={
+                peer.glyphId ? () => onLocateGlyph(peer.glyphId!) : undefined
+              }
+            >
+              <GlyphThumb
+                glyph={peer.glyphId ? glyphMap[peer.glyphId] : undefined}
+                glyphMap={glyphMap}
+                character={peer.character}
+                size="36px"
+              />
+              <Text fontSize="2xs" color="mutedForeground">
+                {peer.character}
+              </Text>
+            </Stack>
+          ))}
+        </HStack>
+      ) : null}
+    </Box>
+  )
+}
+
+const radarReasonDimensionLabel = (reason: RadarReason) =>
+  reason.basis === 'reference' ? '參考結構' : '同儕統計'
+
 export function SuspectRow({
   evaluation,
   rank,
+  glyphMap,
+  glyphIdByCharacter,
+  expanded,
+  onToggleExpanded,
   onLocateGlyph,
 }: {
   evaluation: RadarGlyphEvaluation
   rank: number | null
+  glyphMap: Record<string, GlyphData>
+  glyphIdByCharacter: Map<string, string>
+  expanded: boolean
+  onToggleExpanded: (glyphId: string) => void
   onLocateGlyph: (glyphId: string) => void
 }) {
   return (
-    <HStack justify="space-between" align="flex-start" px={3} py={2} gap={3}>
-      <HStack gap={3} minW={0} align="flex-start">
-        {rank !== null ? (
-          <Text
-            fontFamily="mono"
-            fontSize="xs"
-            color="mutedForeground"
-            fontWeight="900"
-            w="28px"
-            pt={1}
-          >
-            #{rank}
-          </Text>
-        ) : null}
-        <Text fontFamily="glyph" fontSize="2xl" lineHeight={1.2}>
-          {evaluation.character}
-        </Text>
-        <Stack gap={1} minW={0}>
-          <HStack gap={2}>
-            <Text fontFamily="mono" fontSize="xs" fontWeight="900">
-              {evaluation.glyphName}
-            </Text>
-            <Tag.Root
-              size="sm"
-              colorPalette={evaluation.score > 4 ? 'red' : 'orange'}
-            >
-              風險 {evaluation.score.toFixed(1)}
-            </Tag.Root>
-          </HStack>
-          <HStack gap={1} flexWrap="wrap">
-            {evaluation.reasons.slice(0, 3).map((reason) => (
-              <Tag.Root
-                key={reason.key}
-                size="sm"
-                variant="subtle"
-                title={formatRadarReason(reason)}
-              >
-                {buildRadarAdvice(reason).title}
-              </Tag.Root>
-            ))}
-            {evaluation.reasons.length > 3 ? (
-              <Tag.Root size="sm" variant="subtle" color="mutedForeground">
-                +{evaluation.reasons.length - 3}
-              </Tag.Root>
-            ) : null}
-          </HStack>
-        </Stack>
-      </HStack>
-      <Button
-        size="xs"
-        variant="outline"
-        flexShrink={0}
-        onClick={() => onLocateGlyph(evaluation.glyphId)}
+    <Box borderBottomWidth={1} borderColor="border">
+      <HStack
+        justify="space-between"
+        align="center"
+        px={3}
+        py={2}
+        gap={3}
+        cursor="pointer"
+        _hover={{ bg: 'muted' }}
+        onClick={() => onToggleExpanded(evaluation.glyphId)}
       >
-        定位
-      </Button>
-    </HStack>
+        <HStack gap={3} minW={0} align="center">
+          <Box color="mutedForeground" flexShrink={0}>
+            {expanded ? (
+              <NavArrowDown width={14} height={14} />
+            ) : (
+              <NavArrowRight width={14} height={14} />
+            )}
+          </Box>
+          {rank !== null ? (
+            <Text
+              fontFamily="mono"
+              fontSize="xs"
+              color="mutedForeground"
+              fontWeight="900"
+              w="28px"
+            >
+              #{rank}
+            </Text>
+          ) : null}
+          <GlyphThumb
+            glyph={glyphMap[evaluation.glyphId]}
+            glyphMap={glyphMap}
+            character={evaluation.character}
+            size="44px"
+          />
+          <Stack gap={1} minW={0}>
+            <HStack gap={2}>
+              <Text fontFamily="glyph" fontSize="md" lineHeight={1}>
+                {evaluation.character}
+              </Text>
+              <Text fontFamily="mono" fontSize="xs" fontWeight="900">
+                {evaluation.glyphName}
+              </Text>
+              <Tag.Root
+                size="sm"
+                colorPalette={evaluation.score > 4 ? 'red' : 'orange'}
+              >
+                風險 {evaluation.score.toFixed(1)}
+              </Tag.Root>
+            </HStack>
+            <HStack gap={1} flexWrap="wrap">
+              {evaluation.reasons.slice(0, 3).map((reason) => (
+                <Tag.Root
+                  key={reason.key}
+                  size="sm"
+                  variant="subtle"
+                  title={formatRadarReason(reason)}
+                >
+                  {buildRadarAdvice(reason).title}
+                </Tag.Root>
+              ))}
+              {evaluation.reasons.length > 3 ? (
+                <Tag.Root size="sm" variant="subtle" color="mutedForeground">
+                  +{evaluation.reasons.length - 3}
+                </Tag.Root>
+              ) : null}
+            </HStack>
+          </Stack>
+        </HStack>
+        <Button
+          size="xs"
+          variant="outline"
+          flexShrink={0}
+          onClick={(event) => {
+            event.stopPropagation()
+            onLocateGlyph(evaluation.glyphId)
+          }}
+        >
+          定位
+        </Button>
+      </HStack>
+      {expanded ? (
+        <Stack gap={2} px={3} pb={3} pl={12}>
+          {evaluation.reasons.slice(0, 4).map((reason) => (
+            <SuspectReasonDetail
+              key={reason.key}
+              reason={reason}
+              glyphMap={glyphMap}
+              glyphIdByCharacter={glyphIdByCharacter}
+              onLocateGlyph={onLocateGlyph}
+            />
+          ))}
+        </Stack>
+      ) : null}
+    </Box>
   )
 }
 

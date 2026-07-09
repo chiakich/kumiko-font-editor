@@ -20,8 +20,14 @@ import {
 const SUPPORTED_REFERENCE_FEATURE_KEYS: RadarReferenceFeatureKey[] = [
   'face:widthRatio',
   'face:heightRatio',
+  'face:aspect',
   'balance:centroidX',
   'balance:centroidY',
+  'ink:toFace',
+  'bearing:left',
+  'bearing:right',
+  'bearing:top',
+  'bearing:bottom',
 ]
 
 const DEFAULT_ASCENDER_RATIO = 0.88
@@ -51,6 +57,7 @@ interface ReferenceSample {
   sides: StructureSides
   centroidX: number
   centroidY: number
+  inkArea: number
   complexity: number
   features: ReferenceFeature[]
 }
@@ -164,8 +171,9 @@ const collectReferenceFeatures = (
   const faceWidth = sample.bounds.xMax - sample.bounds.xMin
   const faceHeight = sample.bounds.yMax - sample.bounds.yMin
   const bodyCenterY = (bodyBox.top + bodyBox.bottom) / 2
+  const faceCohort = `h${hFraming}v${vFraming}`
 
-  return [
+  const features: ReferenceFeature[] = [
     {
       key: 'face:widthRatio',
       value: faceWidth / sample.advance,
@@ -185,6 +193,38 @@ const collectReferenceFeatures = (
       value: (sample.centroidY - bodyCenterY) / bodyBox.unitsPerEm,
     },
   ]
+  if (faceHeight > 0) {
+    features.push({
+      key: 'face:aspect',
+      value: faceWidth / faceHeight,
+      cohort: faceCohort,
+    })
+  }
+  const faceArea = faceWidth * faceHeight
+  if (faceArea > 0) {
+    features.push({
+      key: 'ink:toFace',
+      value: Math.min(1, sample.inkArea / faceArea),
+      cohort: faceCohort,
+    })
+  }
+  // 邊距不分幾何分型（分型隨輪廓共變），以 UPM 正規化，
+  // cohort 帶自身與對側分型，跟 radar 的比較母體對齊
+  const bearingSides = ['left', 'right', 'top', 'bottom'] as const
+  const opposite = {
+    left: 'right',
+    right: 'left',
+    top: 'bottom',
+    bottom: 'top',
+  } as const
+  for (const side of bearingSides) {
+    features.push({
+      key: `bearing:${side}` as RadarReferenceFeatureKey,
+      value: sample.sides[side].bearing / bodyBox.unitsPerEm,
+      cohort: `${sideType(side)}:${sideType(opposite[side])}`,
+    })
+  }
+  return features
 }
 
 const buildReferenceSamples = (
@@ -229,6 +269,7 @@ const buildReferenceSamples = (
       sides: buildSidesFromPolygons(polygons, bounds, advance, bodyBox),
       centroidX: moments.centroidX,
       centroidY: moments.centroidY,
+      inkArea: moments.area,
     }
     const sample: ReferenceSample = {
       ...baseSample,
@@ -268,12 +309,18 @@ const buildReferenceWindows = (
     )
     if (complexityStat) {
       const valuesByKey = new Map<string, number[]>()
+      const pushValue = (key: string, value: number) => {
+        const values = valuesByKey.get(key) ?? []
+        values.push(value)
+        valuesByKey.set(key, values)
+      }
       for (const sample of slice) {
         for (const feature of sample.features) {
-          const key = featureStatKey(feature)
-          const values = valuesByKey.get(key) ?? []
-          values.push(feature.value)
-          valuesByKey.set(key, values)
+          pushValue(featureStatKey(feature), feature.value)
+          if (feature.cohort) {
+            // 同時累積不分 cohort 的統計，作為稀有 cohort 的退路
+            pushValue(feature.key, feature.value)
+          }
         }
       }
       const statsByKey = new Map<string, { median: number }>()
@@ -342,7 +389,11 @@ export const buildRadarReferenceDataFromOpenTypeFont = (
     const window = nearestWindow(windows, sample.complexity)
     const residuals: Partial<Record<RadarReferenceFeatureKey, number>> = {}
     for (const feature of sample.features) {
-      const stat = window.statsByKey.get(featureStatKey(feature))
+      // cohort 統計不足時退回同視窗不分 cohort 的統計：
+      // 極端字常落在稀有 cohort，卻正是最需要 residual 的字
+      const stat =
+        window.statsByKey.get(featureStatKey(feature)) ??
+        window.statsByKey.get(feature.key)
       if (stat) {
         residuals[feature.key] = roundResidual(feature.value - stat.median)
       }

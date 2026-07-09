@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
-import type { FontData } from 'src/store'
-import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
+import { useStore, getGlyphLayer, type FontData } from 'src/store'
+import {
+  resolveFontGlyphs,
+  resolveGlyph,
+  type ResolvedFont,
+  type ResolvedGlyph,
+} from 'src/lib/qualityCheck/resolvedGlyph'
 import type { PopulationAnalysis } from 'src/lib/qualityCheck/populationAnalysis'
 import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
+import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 
 interface AnalysisSuccessMessage {
   type: 'analysis-success'
@@ -41,6 +47,67 @@ const analysisCache = new WeakMap<
   Map<RadarReferenceData | null | undefined, Promise<PopulationAnalysis>>
 >()
 
+/**
+ * 字形幾何是 lazy-load 的：總覽頁瀏覽到才進 store，還有 LRU 驅逐。
+ * 品質分析不能只拿「剛好已載入」的字，否則一開 modal 就是「漢字不足」。
+ * 這裡直接從 IndexedDB 補齊缺幾何的字形，解析成 ResolvedGlyph 後
+ * 以模組快取保存（不進 store、不受驅逐影響）；已編輯的字以 store
+ * 版本為準，快取用 glyphEditTimes 判斷是否失效。
+ */
+let resolvedCacheProjectId: string | null = null
+const resolvedGlyphCache = new Map<
+  string,
+  { resolved: ResolvedGlyph; editTime: number | undefined }
+>()
+
+const resolveFontGlyphsComplete = async (
+  fontData: FontData
+): Promise<ResolvedFont> => {
+  const resolved = resolveFontGlyphs(fontData)
+  const { projectId, glyphEditTimes } = useStore.getState()
+  if (!projectId) {
+    return resolved
+  }
+  if (resolvedCacheProjectId !== projectId) {
+    resolvedGlyphCache.clear()
+    resolvedCacheProjectId = projectId
+  }
+
+  const missingGlyphIds: string[] = []
+  for (const glyph of Object.values(fontData.glyphs)) {
+    if (resolved.glyphs[glyph.id]) {
+      continue
+    }
+    const cached = resolvedGlyphCache.get(glyph.id)
+    if (cached && cached.editTime === glyphEditTimes[glyph.id]) {
+      resolved.glyphs[glyph.id] = cached.resolved
+    } else {
+      missingGlyphIds.push(glyph.id)
+    }
+  }
+  if (missingGlyphIds.length === 0) {
+    return resolved
+  }
+
+  const loadedGlyphs = await loadProjectGlyphGeometryClosure(
+    projectId,
+    missingGlyphIds,
+    { loadedGlyphIds: Object.keys(resolved.glyphs) }
+  )
+  for (const glyphData of loadedGlyphs) {
+    if (!glyphData || !getGlyphLayer(glyphData, glyphData.activeLayerId)) {
+      continue
+    }
+    const resolvedGlyph = resolveGlyph(glyphData)
+    resolved.glyphs[resolvedGlyph.id] = resolvedGlyph
+    resolvedGlyphCache.set(resolvedGlyph.id, {
+      resolved: resolvedGlyph,
+      editTime: glyphEditTimes[resolvedGlyph.id],
+    })
+  }
+  return resolved
+}
+
 const requestAnalysis = (
   fontData: FontData,
   referenceData?: RadarReferenceData | null
@@ -54,31 +121,33 @@ const requestAnalysis = (
   if (cached) {
     return cached
   }
-  const promise = new Promise<PopulationAnalysis>((resolve, reject) => {
-    nextRequestId += 1
-    const requestId = nextRequestId
-    const worker = getWorker()
-    const handleMessage = (event: MessageEvent<WorkerResponse>) => {
-      if (event.data.payload.requestId !== requestId) {
-        return
-      }
-      worker.removeEventListener('message', handleMessage)
-      if (event.data.type === 'analysis-success') {
-        resolve(event.data.payload.analysis)
-      } else {
-        cacheByReferenceData.delete(referenceData)
-        reject(new Error(event.data.payload.message))
-      }
-    }
-    worker.addEventListener('message', handleMessage)
-    worker.postMessage({
-      type: 'analyze',
-      payload: {
-        requestId,
-        resolvedFont: resolveFontGlyphs(fontData),
-        referenceData,
-      },
-    })
+  const promise = resolveFontGlyphsComplete(fontData).then(
+    (resolvedFont) =>
+      new Promise<PopulationAnalysis>((resolve, reject) => {
+        nextRequestId += 1
+        const requestId = nextRequestId
+        const worker = getWorker()
+        const handleMessage = (event: MessageEvent<WorkerResponse>) => {
+          if (event.data.payload.requestId !== requestId) {
+            return
+          }
+          worker.removeEventListener('message', handleMessage)
+          if (event.data.type === 'analysis-success') {
+            resolve(event.data.payload.analysis)
+          } else {
+            cacheByReferenceData.delete(referenceData)
+            reject(new Error(event.data.payload.message))
+          }
+        }
+        worker.addEventListener('message', handleMessage)
+        worker.postMessage({
+          type: 'analyze',
+          payload: { requestId, resolvedFont, referenceData },
+        })
+      })
+  )
+  promise.catch(() => {
+    cacheByReferenceData.delete(referenceData)
   })
   cacheByReferenceData.set(referenceData, promise)
   return promise

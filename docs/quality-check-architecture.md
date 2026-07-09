@@ -41,11 +41,11 @@
 
 ## 四把尺
 
-品質建議同時使用四把尺。它們各自回答不同問題。
+品質建議體系有四把尺。前兩把只做**視覺參照**（畫布 guide），後兩把才進**離群評分**。這個分工是用優質商業字體校正後定下的（見「用優質字體校正」一節）。
 
-### 固定尺字組
+### 固定尺字組（僅供畫布 guide，不進評分）
 
-固定尺字組是我們從報告案例中人工挑出的參照字。它們用來描述「這套字自己如何處理典型外框」，比全字體平均更穩定。
+固定尺字組是我們從報告案例中人工挑出的參照字。它們用來描述「這套字自己如何處理典型外框」，畫在畫布上供設計師目視對照。
 
 目前的字組定義在 `structureRuler.ts`：
 
@@ -61,7 +61,7 @@
 - `ruler.baseline`：把匹配到的固定尺字丟進一般 baseline 流程，得到四邊 framing / branching 的常見範圍。編輯頁畫布分布帶會優先使用它。
 - `ruler.groups[].box`：每組字各自取 `xMin/xMax/yMin/yMax` 的 median，得到該組代表外框。這可以支援後續更明確的分層 guide，例如顯示「四面框架字外框」或「上下框架字外框」。
 
-固定尺的重點不是覆蓋所有字，而是提供一組不容易隨全體母體漂移的設計參照。
+**固定尺不再作為 radar 評分的統計基準。** 校正發現這是最大誤報源：字組只有十幾個高度同質的字，分布極窄（MAD 極小），拿去量任意「幾何上剛好有框架邊」的字時，正常設計差異會被放大成 z 值 10–20 的極端建議；連字組內的字（一、日、胄）也會被組內異質性誤殺，例如「一」的長寬比在 vertical-frame 組內天生就是極端值。優質字體上超過三分之一的字因此被列為可疑。
 
 ### 全字體基準
 
@@ -72,7 +72,7 @@
 - 對每組 bearing 計算 `count`、`mode`、`p10`、`p90`、`min`、`max`。
 - 對左右兩邊都被判定為 framing 的字，另外計算 `lsb - rsb` 的 median，作為左右置中基準。
 
-畫布上的 P10-P90 分布帶就是從這個基準轉出來的。它的優點是適用於任意字；缺點是如果整套字已經系統性偏掉，這把尺也會跟著偏。因此編輯頁會優先使用固定尺 baseline，固定尺不足時才使用全字體 baseline。
+畫布上的 P10-P90 分布帶就是從這個基準轉出來的。它的優點是適用於任意字；缺點是如果整套字已經系統性偏掉，這把尺也會跟著偏。因此編輯頁會優先使用固定尺 baseline，固定尺不足時才使用全字體 baseline。它同樣只用於視覺參照，不進評分。
 
 ### 複雜度同儕尺
 
@@ -106,16 +106,23 @@ expectedFeature = currentPeerMedian + referenceResidual * confidence
 
 例如「人」如果在參考資料中比同複雜度字的視覺重心自然低 4% UPM，而目前這套字的同儕重心本來就整體偏低 5% UPM，系統會把「人」的期待重心放在約 -9% UPM。若設計師正在做一套重心偏低的字體，這個設計方向會被同儕尺吸收；「人」不會只因為低於幾何中央就全部被警告。只有當「人」比「目前字體風格 + 參考結構偏移」還要更低時，才會顯示重心偏低的建議。
 
-第一版資料介面是 `RadarReferenceData`。它支援逐字、逐 feature 的 residual，並可用 `confidence` 降低參考字體風格對目前設計的影響。目前演算法先支援這些 feature：
+資料介面是 `RadarReferenceData`。它支援逐字、逐 feature 的 residual，並可用 `confidence` 降低參考字體風格對目前設計的影響。目前支援的 feature：
 
-- `face:widthRatio`
-- `face:heightRatio`
-- `balance:centroidX`
-- `balance:centroidY`
+- 形狀類：`face:widthRatio`、`face:heightRatio`、`face:aspect`、`ink:toFace`
+- 放置類：`balance:centroidX`、`balance:centroidY`、`bearing:left/right/top/bottom`
 
-若某個字或 feature 沒有 reference residual，系統會直接退回固定尺或複雜度同儕尺。
+邊距 residual 有兩個特殊約定：
 
-目前預設資料是 `public/quality-reference/noto-sans-cjk-tc-regular-radar-residuals.json`，由 Noto Sans CJK TC Regular 離線產生。資料檔收錄約三萬個 Noto 漢字 sample，最後輸出 30,289 個逐字 residual entry，`defaultConfidence` 設為 `0.75`，讓參考字體只提供結構偏移，不會完全覆蓋目前字體自己的風格。重建指令是：
+- **不分筆畫類型**：radar 的 bearing feature 帶幾何分型後綴（`bearing:left:framing`），但分型會隨畫壞的輪廓共變，參考資料以「邊」為鍵（`bearing:left`），評分時自動對應。
+- **以 UPM 正規化儲存**：參考字體與目前字體的 UPM 可能不同，載入評分時乘回目前字體的 `unitsPerEm`。
+
+建置 residual 時，若某字所在複雜度視窗的 cohort 統計樣本不足（少於 20），會退回同視窗不分 cohort 的統計。這很重要：極端字（弓、㓁、部件字形）常落在稀有 cohort，卻正是最需要 residual 的字。
+
+**形狀與放置適用不同的信任規則**（見「Radar 怎麼產生建議」）。校正發現參考字體的形狀決策（哪些字窄、哪些字矮）在成熟字體間高度一致，可以直接平移期待值；但放置決策（部件靠邊還是置中、留白分配）帶有各家排印慣例，單一參考字體不足以定罪——例如 Noto 的「片」右邊距留到 230/1000，兩套優質 TC 字體都只留 56–93。
+
+若某個字或 feature 沒有 reference residual，系統退回複雜度同儕尺。
+
+目前預設資料是 `public/quality-reference/noto-sans-cjk-tc-regular-radar-residuals.json`，由 Noto Sans CJK TC Regular 離線產生。資料檔收錄約三萬個 Noto 漢字 sample，輸出 30,289 個逐字 residual entry，`defaultConfidence` 設為 `0.75`，讓參考字體只提供結構偏移，不會完全覆蓋目前字體自己的風格。重建指令是：
 
 ```bash
 pnpm data:quality-reference [font-path-or-url] [output-json]
@@ -169,7 +176,7 @@ bearing 的座標定義：
 - **單字四邊的筆畫類型**：幾何推導。每個 sample 的 left/right/top/bottom 都會用 edge-band coverage 判定 framing 或 branching。
 - **包圍結構語意分類**：radar 會讀 GlyphWiki 組成資料建立 `enclosureCharacters`。若某字語意上是包圍結構，`collectGlyphFeatures` 會把它四側視為 framing 來做 cohort，避免輪廓畫壞時分組也跟著漂移。這只影響 radar 分組，不改寫 `sample.sides` 的幾何結果。
 
-也就是說，固定尺是「已知參照字」，而品質建議是「固定參照字統計 + 目前字幾何側邊分類 + 語意結構輔助分組」。未來若要讓更多字自動進入 ruler group，應該新增一層結構分類器，例如 GlyphWiki/IDS 結構、radical/包圍件、幾何驗證，而不是在 `qualityRadar` 裡硬塞字名規則。
+也就是說，固定尺是「已知參照字」（畫布 guide 用），而品質建議是「複雜度同儕統計 + 目前字幾何側邊分類 + 語意結構輔助分組 + 參考結構 residual」。未來若要讓更多字自動進入 ruler group，應該新增一層結構分類器，例如 GlyphWiki/IDS 結構、radical/包圍件、幾何驗證，而不是在 `qualityRadar` 裡硬塞字名規則。
 
 ## Radar 怎麼產生建議
 
@@ -180,14 +187,18 @@ bearing 的座標定義：
 - **ink**：`ink:toFace`、`ink:toEm`、`ink:spreadX`、`ink:spreadY`。
 - **balance**：`bearing:symmetryH`、`balance:centroidX`、`balance:centroidY`。
 
-每個 feature 會先找可用的比較尺：
+`bearing:symmetryH`（lsb−rsb 置中檢查）只對語意包圍字或四邊皆框架的字收集。阝部、匚框這類「單側框架、設計上本來就不對稱」的字不適用置中規則，早期版本因此大量誤殺（陋、賾、除）。
 
-- boundary 和 `face:*` 若有固定尺統計，優先使用 `rulerStatsByKey`，且每個 feature/cohort 至少 5 個樣本才成立。
-- 沒有固定尺統計時，先找複雜度同儕視窗，且每個 feature/cohort 至少 20 個樣本才成立。
-- `face:widthRatio`、`face:heightRatio`、`balance:centroidX`、`balance:centroidY` 若同時有同儕統計與 reference residual，會把同儕統計整體平移成該字的結構期待值，並把 `basis` 標成 `reference`。
-- 墨量、密度和其他未支援 reference 的 feature 使用複雜度同儕視窗。
+每個 feature 的比較基準是**複雜度同儕視窗**（每個 feature/cohort 至少 20 個樣本才成立），若該字有 reference residual，再依特徵類別套用不同的信任規則：
+
+- **形狀類**（`face:*`、`ink:toFace`）：reference 期待值直接取代同儕中位（`basis: 'reference'`）。成熟字體對「哪些字天生窄、天生矮」高度一致，這讓「冑本來就窄」不再被同儕尺誤殺，也能抓到「該窄卻畫成方塊」的字。
+- **放置類**（四邊 bearing、`balance:centroid*`）：**兩把尺同向才算異常**——同儕 z 與 reference z 同號時取 |z| 較小者，異號時歸零。單一參考字體的排印慣例（部件置中方式、特定字的留白分配）不足以定罪，天生放置特殊的字也不因偏離同儕被誤殺。
 
 統計使用 robust median / MAD，並針對偏態分布使用 double-MAD：高於 median 與低於 median 各自有尺度。這是因為邊距分布常常不是對稱鐘形分布，單一尺度會高估長尾側、低估短尾側。
+
+尺度另有**感知下限**（scale floor）：母體高度一致時 MAD 會縮到肉眼無法分辨的量級，把毫無視覺意義的差異放大成極端 z 值。邊距下限 1% UPM、置中偏移 1.5% UPM、比例類 1%、長寬比 0.02。低於這些量級的偏差在字身框尺度下難以目視分辨，不產生建議。
+
+peer-mismatch 折扣（字的複雜度離視窗中心越遠，z 越收縮）只適用尺寸類特徵（boundary/proportion/ink）：延伸性讓字面大小、邊距、墨量本來就隨複雜度變動，複雜度不匹配才會讓比較失真。balance 維度不折扣——置中與重心不隨複雜度共變，簡單字也該放對位置，而且畫壞的字複雜度本身常是偏的，折扣會遮蔽它的置中錯誤。
 
 評分規則：
 
@@ -195,13 +206,30 @@ bearing 的座標定義：
 - `|z| >= 2.5` 才計入維度離群。
 - 單一 feature 的 `|z|` 封頂為 8，避免極端字以天文數字霸佔排序。
 - 同一維度多個 feature 只取最大偏離計分，避免「字面偏小」同時疊加邊距、比例、密度造成重複懲罰。
-- `RadarReason.basis` 會標記建議來自 `ruler`、`peers` 或 `reference`，UI 文案會顯示「固定尺字組」、「複雜度相近的字」或「參考結構校正值」。
+- `RadarReason.basis` 會標記建議來自 `peers` 或 `reference`，UI 文案會顯示「複雜度相近的字」或「參考結構校正值」。
 
 `radarAdvice.ts` 再把工程向 reason 翻成設計師可讀的語句，例如：
 
-- 左側留白比固定尺字組多：將左側筆畫往左延伸或整體左移。
-- 字面比複雜度相近的字偏窄：將字面寬度拉寬。
+- 左側留白比複雜度相近的字多：將左側筆畫往左延伸或整體左移。
+- 以參考結構校正後來看，字面偏窄：將字面寬度拉寬。
 - 左右皆框架筆畫的字未視覺置中：依 `lsb - rsb` 差值建議整體平移。
+
+## 用優質字體校正
+
+演算法的門檻與信任規則不是拍腦袋定的，而是用已知高品質的商業字體回歸出來的。校正 harness 在 `test/qualityCheck/radarCalibration.test.ts`，用 opentype.js 把 `test_glyphs/good_quality_font/` 的字體轉成與編輯器相同的 `GlyphGeometrySample`（共用管線在 `openTypeSampling.ts`），走真正的 `computeRadarFromSamples`：
+
+```bash
+QUALITY_CALIBRATION=1 pnpm vitest run test/qualityCheck/radarCalibration.test.ts
+```
+
+報告輸出 suspect 比例、各 feature/basis 的誤報分布與 top suspects，可另設 `QUALITY_CALIBRATION_REPORT_DIR` 寫檔。字體檔不進版控，CI 自動跳過。
+
+兩個量測目標：
+
+- **誤報率**：優質字體被列為可疑的比例要低。初版演算法（固定尺進評分、無感知下限、symmetryH 全面適用）在兩套優質字體上分別誤報 40.8% 與 59.5%；目前版本為 2.3% 與 1.6%，且殘餘者多為部件字形與真正非典型的字。
+- **召回率**：把正常字人工做歪（整體右移 6% UPM、字面縮小 15%），用凍結的 radar 評估（同編輯頁流程），兩套字體的偵測率為 96–100%。
+
+修改評分邏輯時應重跑校正，確認兩個數字沒有回退。
 
 ## 編輯頁怎麼使用這把尺
 
@@ -227,8 +255,9 @@ Worker import graph 不能碰 store：
 
 - `resolvedGlyph.ts` 定義 `ResolvedGlyph` / `ResolvedFont`，並提供唯一使用 `getGlyphLayer` 的 store adapter：`resolveFontGlyphs`。它只在主執行緒使用。
 - `populationAnalysis.ts` 只保留已解析字形的純分析；`populationAnalysisAdapter.ts` 才提供 `analyzeFontPopulation(fontData)` 這條主執行緒同步 adapter。Worker 不可 import adapter。
-- 可進 worker 的純層包括 `polygonGeometry`、`glyphInk`、`hanClassification`、`structureMetrics`、`structureRuler`、`glyphSampling`、`qualityRadar`、`populationAnalysis`，以及只用 `fetch` 載靜態資料的 `semanticStructure` / `radarReferenceData`。
+- 可進 worker 的純層包括 `polygonGeometry`、`glyphInk`、`hanClassification`、`structureMetrics`、`structureRuler`、`glyphSampling`、`qualityRadar`、`populationAnalysis`，以及只用 `fetch` 載靜態資料的 `semanticStructure` / `radarReferenceData`。`openTypeSampling` 是給校正 harness 與參考資料建置用的 opentype.js 轉接層，同樣是純函數。
 - `src/workers/qualityAnalysisWorker.ts` import `runPopulationAnalysis`、GlyphWiki enclosure loader 與 Noto residual loader。若 store 洩漏進 worker，build 後 chunk 會從十幾 KB 膨脹到數百 KB，可當回歸檢測。
 - `useQualityAnalysis.ts` 負責 worker hook；`isAnalyzing` 由「最後分析的 fontData 是否等於當前 fontData」衍生，不在 effect 裡同步 `setState`。
+- 字形幾何是 lazy-load 的（總覽頁瀏覽到才進 store，且有 LRU 驅逐），品質分析不能只拿「剛好已載入」的字：`useQualityAnalysis` 在解析階段直接從 IndexedDB 補齊缺幾何的字形（`resolveFontGlyphsComplete`），存模組層快取、不進 store，以 `glyphEditTimes` 判斷失效；已編輯的字以 store 版本為準。UI 端的輪廓預覽同理由 `usePreviewGlyphMap` 補齊。
 
 新增母體分析特徵時，應加在 `glyphSampling` 的 sample 或 `qualityRadar.collectGlyphFeatures`，不要另開一條 flatten 流程。任何要進 worker 的程式碼只能 `import type` 自 `resolvedGlyph`，不能 import `resolveFontGlyphs`。

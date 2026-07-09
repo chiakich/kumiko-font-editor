@@ -43,43 +43,33 @@ const makeSample = (
   }
 }
 
-describe('qualityRadar ruler stats', () => {
-  it('uses fixed ruler stats for boundary advice when available', () => {
-    const rulerBearings = [48, 49, 50, 51, 52, 49, 51, 50]
-    const rulerChars = ['口', '日', '目', '田', '回', '因', '固', '国']
-    const peerChars = [
-      '測',
-      '試',
-      '編',
-      '輯',
-      '字',
-      '形',
-      '建',
-      '議',
-      '校',
-      '準',
-      '參',
-      '照',
-      '外',
-      '框',
-      '尺',
-    ]
-    const samples = [
-      ...rulerChars.map((character, index) =>
-        makeSample(character, rulerBearings[index])
-      ),
-      ...peerChars.map((character) => makeSample(character, 90)),
-    ]
-
-    const radar = computeRadarFromSamples(samples, bodyBox)
-    const target = radar?.evaluationByGlyphId.get('glyph-測')
-    const leftBearingReason = target?.reasons.find(
-      (reason) => reason.key === 'bearing:left:framing'
+describe('qualityRadar perceptual scale floor', () => {
+  it('ignores imperceptible deviations in ultra-tight populations, still flags real ones', () => {
+    // 高度一致的母體：邊距 48–52，MAD 遠低於感知下限
+    const characters = '口日目田回因固国測試編輯字形建議校準參照外框'
+    const samples = [...characters].map((character, index) =>
+      makeSample(character, 48 + (index % 5))
     )
+    // 8 units 的偏差在字身框尺度下難以目視分辨，不該有建議
+    samples.push(makeSample('近', 58))
+    // 70 units 的偏差是真問題
+    samples.push(makeSample('遠', 120))
 
-    expect(radar?.rulerStatsByKey.size).toBeGreaterThan(0)
-    expect(leftBearingReason?.basis).toBe('ruler')
-    expect(leftBearingReason?.median).toBe(50)
-    expect(leftBearingReason?.zScore).toBeGreaterThan(2)
+    const radar = computeRadarFromSamples(samples, bodyBox)!
+    const near = radar.evaluationByGlyphId.get('glyph-近')!
+    const far = radar.evaluationByGlyphId.get('glyph-遠')!
+
+    expect(radar.suspects.some((entry) => entry.glyphId === 'glyph-近')).toBe(
+      false
+    )
+    expect(
+      near.reasons.filter((reason) => reason.key.startsWith('bearing:'))
+    ).toEqual([])
+    expect(radar.suspects.some((entry) => entry.glyphId === 'glyph-遠')).toBe(
+      true
+    )
+    expect(
+      far.reasons.some((reason) => reason.key.startsWith('bearing:'))
+    ).toBe(true)
   })
 })

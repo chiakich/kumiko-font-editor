@@ -1,18 +1,14 @@
-import type {
-  RadarReferenceData,
-  RadarReferenceFeatureKey,
-  RadarReferenceResidualInput,
+import {
+  RADAR_REFERENCE_FEATURE_KEYS,
+  type RadarReferenceData,
+  type RadarReferenceFeatureKey,
+  type RadarReferenceResidualInput,
 } from 'src/lib/qualityCheck/qualityRadar'
 
 const DEFAULT_RADAR_REFERENCE_DATA_PATH =
   '/quality-reference/noto-sans-cjk-tc-regular-radar-residuals.json'
 
-const REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
-  'face:widthRatio',
-  'face:heightRatio',
-  'balance:centroidX',
-  'balance:centroidY',
-])
+const REFERENCE_FEATURE_KEYS = RADAR_REFERENCE_FEATURE_KEYS
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)

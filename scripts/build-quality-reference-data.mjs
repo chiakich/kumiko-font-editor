@@ -31,8 +31,14 @@ const GLYPHWIKI_COMPOSITION_PATH = path.join(
 const SUPPORTED_FEATURE_KEYS = [
   'face:widthRatio',
   'face:heightRatio',
+  'face:aspect',
   'balance:centroidX',
   'balance:centroidY',
+  'ink:toFace',
+  'bearing:left',
+  'bearing:right',
+  'bearing:top',
+  'bearing:bottom',
 ]
 
 const HAN_RANGES = [
@@ -440,18 +446,19 @@ const getSideCoverage = (polygons, bounds, side, bandWidth) => {
 
 const buildSidesFromPolygons = (polygons, bounds, advance, bodyBox) => {
   const bandWidth = bodyBox.unitsPerEm * EDGE_BAND_RATIO
-  const buildSide = (side) => {
+  const buildSide = (side, bearing) => {
     const coverage = getSideCoverage(polygons, bounds, side, bandWidth)
     return {
       type: coverage >= FRAMING_COVERAGE_THRESHOLD ? 'framing' : 'branching',
+      bearing: Math.round(bearing),
       coverage,
     }
   }
   return {
-    left: buildSide('left'),
-    right: buildSide('right'),
-    top: buildSide('top'),
-    bottom: buildSide('bottom'),
+    left: buildSide('left', bounds.xMin),
+    right: buildSide('right', advance - bounds.xMax),
+    top: buildSide('top', bodyBox.top - bounds.yMax),
+    bottom: buildSide('bottom', bounds.yMin - bodyBox.bottom),
   }
 }
 
@@ -470,7 +477,8 @@ const collectReferenceFeatures = (sample, bodyBox, semanticEnclosure) => {
   const faceWidth = sample.bounds.xMax - sample.bounds.xMin
   const faceHeight = sample.bounds.yMax - sample.bounds.yMin
   const bodyCenterY = (bodyBox.top + bodyBox.bottom) / 2
-  return [
+  const faceCohort = `h${hFraming}v${vFraming}`
+  const features = [
     {
       key: 'face:widthRatio',
       value: faceWidth / sample.advance,
@@ -490,6 +498,36 @@ const collectReferenceFeatures = (sample, bodyBox, semanticEnclosure) => {
       value: (sample.moments.centroidY - bodyCenterY) / bodyBox.unitsPerEm,
     },
   ]
+  if (faceHeight > 0) {
+    features.push({
+      key: 'face:aspect',
+      value: faceWidth / faceHeight,
+      cohort: faceCohort,
+    })
+  }
+  const faceArea = faceWidth * faceHeight
+  if (faceArea > 0) {
+    features.push({
+      key: 'ink:toFace',
+      value: Math.min(1, sample.moments.area / faceArea),
+      cohort: faceCohort,
+    })
+  }
+  // Bearings are stored type-agnostic (per side) and normalized by UPM.
+  const opposite = {
+    left: 'right',
+    right: 'left',
+    top: 'bottom',
+    bottom: 'top',
+  }
+  for (const side of ['left', 'right', 'top', 'bottom']) {
+    features.push({
+      key: `bearing:${side}`,
+      value: sample.sides[side].bearing / bodyBox.unitsPerEm,
+      cohort: `${sideType(side)}:${sideType(opposite[side])}`,
+    })
+  }
+  return features
 }
 
 const buildSamples = (font, enclosureCharacters) => {
@@ -568,12 +606,18 @@ const buildWindows = (samples) => {
     const slice = sorted.slice(windowStart, windowStart + windowSize)
     const statsByKey = new Map()
     const valuesByKey = new Map()
+    const pushValue = (key, value) => {
+      const values = valuesByKey.get(key) ?? []
+      values.push(value)
+      valuesByKey.set(key, values)
+    }
     for (const sample of slice) {
       for (const feature of sample.features) {
-        const key = featureStatKey(feature)
-        const values = valuesByKey.get(key) ?? []
-        values.push(feature.value)
-        valuesByKey.set(key, values)
+        pushValue(featureStatKey(feature), feature.value)
+        if (feature.cohort) {
+          // Bare-key stats act as fallback for sparse cohorts.
+          pushValue(feature.key, feature.value)
+        }
       }
     }
     for (const [key, values] of valuesByKey) {
@@ -622,7 +666,9 @@ const buildResidualData = (samples) => {
     const window = nearestWindow(windows, sample.complexity)
     const residuals = {}
     for (const feature of sample.features) {
-      const stat = window.statsByKey.get(featureStatKey(feature))
+      const stat =
+        window.statsByKey.get(featureStatKey(feature)) ??
+        window.statsByKey.get(feature.key)
       if (stat) {
         residuals[feature.key] = roundResidual(feature.value - stat.median)
       }

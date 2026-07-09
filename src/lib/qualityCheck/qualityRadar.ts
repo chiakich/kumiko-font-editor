@@ -4,7 +4,6 @@ import {
   strokeTypeLabels,
   type StructureSide,
 } from 'src/lib/qualityCheck/structureMetrics'
-import { isStructureRulerCharacter } from 'src/lib/qualityCheck/structureRuler'
 
 /**
  * Font Quality Radar：以同一套字體自身的統計分布為基準的
@@ -38,6 +37,11 @@ export interface RadarFeatureValue extends RadarFeatureDefinition {
    * 只影響統計分組，不進 RadarReason.key，advice 文案對應不受影響。
    */
   cohort?: string
+  /**
+   * 感知尺度下限：母體高度一致時 MAD 會縮到肉眼無法分辨的量級，
+   * 把毫無視覺意義的差異放大成極端 z 值。量偏離時尺度至少取此值。
+   */
+  scaleFloor?: number
 }
 
 export interface RadarRobustStat {
@@ -61,7 +65,7 @@ export interface RadarReason {
   label: string
   dimension: RadarDimension
   format: RadarValueFormat
-  /** 這項建議使用的尺：固定參照字組、複雜度相近母體、或參考字體 residual 校正 */
+  /** 這項建議使用的尺：複雜度相近母體、或參考字體 residual 校正 */
   basis: RadarBasis
   value: number
   /** 比較母體（複雜度相鄰視窗）的中位數與 80% 區間 */
@@ -69,6 +73,8 @@ export interface RadarReason {
   p10: number
   p90: number
   zScore: number
+  /** 同比較組中最接近中位數的參照字，供 UI 對照「正常長怎樣」 */
+  peerCharacters?: string[]
 }
 
 export interface RadarGlyphEvaluation {
@@ -80,13 +86,19 @@ export interface RadarGlyphEvaluation {
   reasons: RadarReason[]
 }
 
-export type RadarBasis = 'ruler' | 'peers' | 'reference'
+export type RadarBasis = 'peers' | 'reference'
 
 export type RadarReferenceFeatureKey =
   | 'face:widthRatio'
   | 'face:heightRatio'
+  | 'face:aspect'
   | 'balance:centroidX'
   | 'balance:centroidY'
+  | 'ink:toFace'
+  | 'bearing:left'
+  | 'bearing:right'
+  | 'bearing:top'
+  | 'bearing:bottom'
 
 export interface RadarReferenceResidual {
   /** 參考字體中「此字 − 參考同儕 median」的相對偏移，單位同 feature value */
@@ -131,6 +143,8 @@ export interface RadarComplexityWindow {
   /** 視窗內複雜度分布（peer-mismatch 折扣用） */
   complexityStat: RadarRobustStat
   statsByKey: Map<string, RadarRobustStat>
+  /** 每個 feature/cohort 中最接近中位數的參照字（UI 對照用） */
+  exemplarsByKey: Map<string, string[]>
 }
 
 export interface RadarStrata {
@@ -141,8 +155,6 @@ export interface RadarStrata {
 export interface RadarAnalysis {
   sampleCount: number
   strata: RadarStrata
-  /** 由固定尺字組推導出的外框特徵統計，用來穩定邊界/字面比例建議 */
-  rulerStatsByKey: Map<string, RadarRobustStat>
   /** 參考字體 residual 資料；用來把目前字體同儕 median 平移到該字的結構期待值 */
   referenceData: RadarReferenceData | null
   /** 母體中被 GlyphWiki 組成資料判定為包圍結構的字（即時評分路徑沿用同一分類） */
@@ -170,9 +182,10 @@ const MIN_RADAR_SAMPLES = 20
  */
 const MIN_WINDOW_SIZE = 40
 const MAX_WINDOW_SIZE = 150
-const MIN_RULER_STAT_SAMPLES = 5
 /** 視窗間隔 = K / 3，相鄰視窗約 2/3 重疊 */
 const WINDOW_STRIDE_DIVISOR = 3
+/** 每個 feature/cohort 保留的參照字數（含被評估字本身，UI 端會濾掉） */
+const MAX_EXEMPLARS_PER_KEY = 5
 /**
  * peer-mismatch 折扣強度：字的複雜度在視窗內 |z| 每超出 1 一個單位，
  * 特徵 z 分數的折扣分母加 0.5。視窗已經很局部，只需弱折扣處理
@@ -184,12 +197,45 @@ const IQR_TO_SIGMA = 1 / 1.349
 
 const STRUCTURE_SIDES: StructureSide[] = ['left', 'right', 'top', 'bottom']
 
-const REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
+/**
+ * 感知尺度下限（以優質商業字體校正）：低於這些量級的偏差
+ * 在字身框尺度下難以目視分辨，不應該產生高 z 值建議。
+ */
+const BEARING_FLOOR_RATIO = 0.01
+const SYMMETRY_FLOOR_RATIO = 0.015
+const PERCENT_FLOOR = 0.01
+const ASPECT_FLOOR = 0.02
+
+export const RADAR_REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
   'face:widthRatio',
   'face:heightRatio',
+  'face:aspect',
   'balance:centroidX',
   'balance:centroidY',
+  'ink:toFace',
+  'bearing:left',
+  'bearing:right',
+  'bearing:top',
+  'bearing:bottom',
 ])
+
+/**
+ * 邊距特徵帶幾何分型後綴（bearing:left:framing），但分型會隨畫壞的
+ * 輪廓共變，參考資料以「邊」為鍵、不分型。residual 以 UPM 正規化儲存。
+ */
+export const referenceFeatureKeyOf = (
+  featureKey: string
+): RadarReferenceFeatureKey | null => {
+  const key = featureKey.startsWith('bearing:')
+    ? featureKey.split(':').slice(0, 2).join(':')
+    : featureKey
+  return RADAR_REFERENCE_FEATURE_KEYS.has(key as RadarReferenceFeatureKey)
+    ? (key as RadarReferenceFeatureKey)
+    : null
+}
+
+const isNormalizedBearingKey = (key: RadarReferenceFeatureKey) =>
+  key.startsWith('bearing:')
 
 const collectGlyphFeatures = (
   sample: GlyphGeometrySample,
@@ -238,18 +284,22 @@ const collectGlyphFeatures = (
       format: 'units',
       value: sample.sides[side].bearing,
       cohort: sideType(oppositeSide[side]),
+      scaleFloor: unitsPerEm * BEARING_FLOOR_RATIO,
     })
   }
 
-  // 對稱性（3type 報告 P83）：左右皆框架筆畫的字應在字身框中視覺置中，
-  // lsb−rsb 的離群直接量測未置中（比墨水重心對框架字更銳利）
-  if (sideType('left') === 'framing' && sideType('right') === 'framing') {
+  // 對稱性（3type 報告 P83）：框架字應在字身框中視覺置中，
+  // lsb−rsb 的離群直接量測未置中（比墨水重心對框架字更銳利）。
+  // 只對語意包圍字或四邊皆框架的字生效：阝部、匚框這類
+  // 「單側框架、設計上本來就不對稱」的字不適用這個規則。
+  if (semanticEnclosure || (hFraming === 2 && vFraming === 2)) {
     features.push({
       key: 'bearing:symmetryH',
       label: '左右置中偏移',
       dimension: 'balance',
       format: 'units',
       value: sample.sides.left.bearing - sample.sides.right.bearing,
+      scaleFloor: unitsPerEm * SYMMETRY_FLOOR_RATIO,
     })
   }
 
@@ -263,6 +313,7 @@ const collectGlyphFeatures = (
     format: 'percent',
     value: faceWidth / advance,
     cohort: hCohort,
+    scaleFloor: PERCENT_FLOOR,
   })
   features.push({
     key: 'face:heightRatio',
@@ -271,6 +322,7 @@ const collectGlyphFeatures = (
     format: 'percent',
     value: faceHeight / unitsPerEm,
     cohort: vCohort,
+    scaleFloor: PERCENT_FLOOR,
   })
   if (faceHeight > 0) {
     features.push({
@@ -280,6 +332,7 @@ const collectGlyphFeatures = (
       format: 'ratio',
       value: faceWidth / faceHeight,
       cohort: faceCohort,
+      scaleFloor: ASPECT_FLOOR,
     })
   }
 
@@ -293,6 +346,7 @@ const collectGlyphFeatures = (
       format: 'percent',
       value: ink.inkToFaceRatio,
       cohort: faceCohort,
+      scaleFloor: PERCENT_FLOOR,
     })
   }
   if (ink.inkToEmRatio !== null) {
@@ -302,6 +356,7 @@ const collectGlyphFeatures = (
       dimension: 'ink',
       format: 'percent',
       value: ink.inkToEmRatio,
+      scaleFloor: PERCENT_FLOOR,
     })
   }
   if (ink.spreadX !== null && ink.spreadY !== null) {
@@ -312,6 +367,7 @@ const collectGlyphFeatures = (
       format: 'percent',
       value: ink.spreadX / advance,
       cohort: hCohort,
+      scaleFloor: PERCENT_FLOOR,
     })
     features.push({
       key: 'ink:spreadY',
@@ -320,6 +376,7 @@ const collectGlyphFeatures = (
       format: 'percent',
       value: ink.spreadY / unitsPerEm,
       cohort: vCohort,
+      scaleFloor: PERCENT_FLOOR,
     })
   }
 
@@ -331,6 +388,7 @@ const collectGlyphFeatures = (
       dimension: 'balance',
       format: 'percent',
       value: (ink.centroidX - advance / 2) / advance,
+      scaleFloor: PERCENT_FLOOR,
     })
     features.push({
       key: 'balance:centroidY',
@@ -338,6 +396,7 @@ const collectGlyphFeatures = (
       dimension: 'balance',
       format: 'percent',
       value: (ink.centroidY - bodyCenterY) / unitsPerEm,
+      scaleFloor: PERCENT_FLOOR,
     })
   }
 
@@ -406,9 +465,14 @@ export const buildRobustStat = (values: number[]): RadarRobustStat | null => {
   }
 }
 
-export const radarZScore = (value: number, stat: RadarRobustStat) => {
-  // 偏態分布用該側自己的尺度量偏離
-  const scale = value >= stat.median ? stat.scaleAbove : stat.scaleBelow
+export const radarZScore = (
+  value: number,
+  stat: RadarRobustStat,
+  scaleFloor = 0
+) => {
+  // 偏態分布用該側自己的尺度量偏離；尺度不得低於感知下限
+  const sideScale = value >= stat.median ? stat.scaleAbove : stat.scaleBelow
+  const scale = Math.max(sideScale, scaleFloor)
   return scale > 0 ? (value - stat.median) / scale : 0
 }
 
@@ -428,39 +492,44 @@ interface GlyphFeatureEntry {
 const featureStatKey = (feature: RadarFeatureValue) =>
   feature.cohort ? `${feature.key}@${feature.cohort}` : feature.key
 
-const isRulerFeature = (feature: RadarFeatureValue) =>
-  feature.dimension === 'boundary' ||
-  feature.key === 'face:widthRatio' ||
-  feature.key === 'face:heightRatio' ||
-  feature.key === 'face:aspect'
-
-const isReferenceFeature = (
-  feature: RadarFeatureValue
-): feature is RadarFeatureValue & { key: RadarReferenceFeatureKey } =>
-  REFERENCE_FEATURE_KEYS.has(feature.key as RadarReferenceFeatureKey)
+/**
+ * 放置類特徵：邊距與重心描述的是「字放在字身框的哪裡」，
+ * 排印慣例（部件形式、間距形式）因字體而異，參考字體單獨不可信，
+ * 同儕統計也會被天生特殊的字誤導。這類特徵要兩把尺同向才算異常。
+ * 形狀類特徵（字面比例、墨量）在成熟字體間高度一致，參考字體可直接平移。
+ */
+const isPlacementFeature = (feature: RadarFeatureValue) =>
+  feature.dimension === 'boundary' || feature.key.startsWith('balance:')
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 
 const referenceResidualValue = (
   referenceData: RadarReferenceData | null | undefined,
   character: string,
-  feature: RadarFeatureValue
+  feature: RadarFeatureValue,
+  unitsPerEm: number
 ): number | null => {
-  if (!referenceData || !isReferenceFeature(feature)) {
+  if (!referenceData) {
     return null
   }
-  const entry = referenceData.residualsByCharacter[character]?.[feature.key]
+  const referenceKey = referenceFeatureKeyOf(feature.key)
+  if (!referenceKey) {
+    return null
+  }
+  const entry = referenceData.residualsByCharacter[character]?.[referenceKey]
   if (entry === undefined) {
     return null
   }
+  // 邊距 residual 以 UPM 正規化儲存，換回目前字體的座標單位
+  const unitScale = isNormalizedBearingKey(referenceKey) ? unitsPerEm : 1
   if (typeof entry === 'number') {
     const confidence = clamp01(referenceData.defaultConfidence ?? 1)
-    return entry * confidence
+    return entry * confidence * unitScale
   }
   const confidence = clamp01(
     entry.confidence ?? referenceData.defaultConfidence ?? 1
   )
-  return entry.value * confidence
+  return entry.value * confidence * unitScale
 }
 
 const shiftStat = (
@@ -472,38 +541,6 @@ const shiftStat = (
   p10: stat.p10 + medianShift,
   p90: stat.p90 + medianShift,
 })
-
-const buildRulerStats = (
-  glyphFeatures: GlyphFeatureEntry[]
-): Map<string, RadarRobustStat> => {
-  const valuesByKey = new Map<string, number[]>()
-  for (const entry of glyphFeatures) {
-    if (!isStructureRulerCharacter(entry.sample.character)) {
-      continue
-    }
-    for (const feature of entry.features) {
-      if (!isRulerFeature(feature)) {
-        continue
-      }
-      const statKey = featureStatKey(feature)
-      const values = valuesByKey.get(statKey) ?? []
-      values.push(feature.value)
-      valuesByKey.set(statKey, values)
-    }
-  }
-
-  const statsByKey = new Map<string, RadarRobustStat>()
-  for (const [key, values] of valuesByKey) {
-    if (values.length < MIN_RULER_STAT_SAMPLES) {
-      continue
-    }
-    const stat = buildRobustStat(values)
-    if (stat) {
-      statsByKey.set(key, stat)
-    }
-  }
-  return statsByKey
-}
 
 const buildStrata = (glyphFeatures: GlyphFeatureEntry[]): RadarStrata => {
   const sorted = [...glyphFeatures].sort(
@@ -525,31 +562,53 @@ const buildStrata = (glyphFeatures: GlyphFeatureEntry[]): RadarStrata => {
       slice.map((entry) => entry.complexity)
     )
     if (complexityStat) {
-      const valuesByKey = new Map<string, number[]>()
+      const entriesByKey = new Map<
+        string,
+        Array<{ value: number; character: string }>
+      >()
       for (const entry of slice) {
         for (const feature of entry.features) {
           const statKey = featureStatKey(feature)
-          const values = valuesByKey.get(statKey) ?? []
-          values.push(feature.value)
-          valuesByKey.set(statKey, values)
+          const values = entriesByKey.get(statKey) ?? []
+          values.push({
+            value: feature.value,
+            character: entry.sample.character,
+          })
+          entriesByKey.set(statKey, values)
         }
       }
       const statsByKey = new Map<string, RadarRobustStat>()
-      for (const [key, values] of valuesByKey) {
+      const exemplarsByKey = new Map<string, string[]>()
+      for (const [key, entries] of entriesByKey) {
         // 視窗內樣本不足的特徵直接不評（如某側 framing 邊距太稀少）。
         // 寧可少量一項，也不要退回全體統計拿錯誤的尺去量
-        if (values.length < MIN_RADAR_SAMPLES) {
+        if (entries.length < MIN_RADAR_SAMPLES) {
           continue
         }
-        const stat = buildRobustStat(values)
+        const stat = buildRobustStat(entries.map((entry) => entry.value))
         if (stat) {
           statsByKey.set(key, stat)
+          const exemplars: string[] = []
+          for (const entry of [...entries].sort(
+            (left, right) =>
+              Math.abs(left.value - stat.median) -
+              Math.abs(right.value - stat.median)
+          )) {
+            if (entry.character && !exemplars.includes(entry.character)) {
+              exemplars.push(entry.character)
+              if (exemplars.length >= MAX_EXEMPLARS_PER_KEY) {
+                break
+              }
+            }
+          }
+          exemplarsByKey.set(key, exemplars)
         }
       }
       windows.push({
         centerComplexity: complexityStat.median,
         complexityStat,
         statsByKey,
+        exemplarsByKey,
       })
     }
     if (windowStart >= lastStart) {
@@ -605,8 +664,8 @@ const evaluateFeatures = (
   features: RadarFeatureValue[],
   complexity: number,
   strata: RadarStrata,
-  rulerStatsByKey: Map<string, RadarRobustStat>,
-  referenceData: RadarReferenceData | null
+  referenceData: RadarReferenceData | null,
+  unitsPerEm: number
 ): FeatureEvaluation => {
   const reasons: RadarReason[] = []
   const outlierDimensions = new Set<RadarDimension>()
@@ -615,8 +674,10 @@ const evaluateFeatures = (
     return { score: 0, reasons, outlierDimensions }
   }
 
-  // peer-mismatch 折扣：字的複雜度離視窗中心越遠，比較結果越不可信，
-  // 所有特徵 z 等比收縮（針對排序兩端視窗內仍是極端值的字）
+  // peer-mismatch 折扣：字的複雜度離視窗中心越遠，尺寸類比較越不可信
+  // （延伸性：字面大小、邊距、墨量本來就隨複雜度變動），z 等比收縮。
+  // balance 維度不折扣：置中與重心不隨複雜度共變，簡單字也該放對位置，
+  // 且畫壞的字複雜度本身常是偏的，折扣會遮蔽它的置中錯誤。
   const complexityZ = radarZScore(complexity, window.complexityStat)
   const peerShrink =
     1 / (1 + PEER_MISMATCH_RATE * Math.max(0, Math.abs(complexityZ) - 1))
@@ -626,34 +687,53 @@ const evaluateFeatures = (
   const maxExcessByDimension = new Map<RadarDimension, number>()
   for (const feature of features) {
     const statKey = featureStatKey(feature)
-    const rulerStat = isRulerFeature(feature)
-      ? rulerStatsByKey.get(statKey)
-      : undefined
     const peerStat = window.statsByKey.get(statKey)
-    const referenceResidual =
-      rulerStat || !peerStat
-        ? null
-        : referenceResidualValue(referenceData, sample.character, feature)
-    let basis: RadarBasis = 'peers'
-    let stat: RadarRobustStat | undefined = peerStat
-    if (rulerStat) {
-      basis = 'ruler'
-      stat = rulerStat
-    } else if (referenceResidual !== null && peerStat) {
-      basis = 'reference'
-      stat = shiftStat(peerStat, referenceResidual)
-    }
-    if (!stat) {
+    if (!peerStat) {
       continue
     }
-    const zScore =
-      radarZScore(feature.value, stat) * (basis === 'peers' ? peerShrink : 1)
+    const referenceResidual = referenceResidualValue(
+      referenceData,
+      sample.character,
+      feature,
+      unitsPerEm
+    )
+    const floor = feature.scaleFloor ?? 0
+    const placement = isPlacementFeature(feature)
+    let basis: RadarBasis = 'peers'
+    let stat: RadarRobustStat = peerStat
+    let zScore =
+      radarZScore(feature.value, peerStat, floor) *
+      (feature.dimension === 'balance' ? 1 : peerShrink)
+    if (referenceResidual !== null) {
+      const referenceStat = shiftStat(peerStat, referenceResidual)
+      const referenceZ = radarZScore(feature.value, referenceStat, floor)
+      if (placement) {
+        // 放置類：兩把尺同向才算異常，取偏離較小者。
+        // 單一參考字體的特異排印慣例（如部件置中方式）不足以定罪，
+        // 天生放置特殊的字也不因偏離同儕被誤殺。
+        if (zScore * referenceZ <= 0) {
+          zScore = 0
+        } else if (Math.abs(referenceZ) < Math.abs(zScore)) {
+          basis = 'reference'
+          stat = referenceStat
+          zScore = referenceZ
+        }
+      } else {
+        // 形狀類：成熟字體間高度一致，參考結構期待值直接取代同儕
+        basis = 'reference'
+        stat = referenceStat
+        zScore = referenceZ
+      }
+    }
     const excess = Math.min(Math.abs(zScore), RADAR_Z_CAP) - RADAR_REASON_Z
     if (excess > 0) {
       const previous = maxExcessByDimension.get(feature.dimension) ?? 0
       if (excess > previous) {
         maxExcessByDimension.set(feature.dimension, excess)
       }
+      const peerCharacters = (window.exemplarsByKey.get(statKey) ?? []).filter(
+        (character) => character !== sample.character
+      )
       reasons.push({
         key: feature.key,
         label: feature.label,
@@ -665,6 +745,7 @@ const evaluateFeatures = (
         p10: stat.p10,
         p90: stat.p90,
         zScore,
+        peerCharacters: peerCharacters.length > 0 ? peerCharacters : undefined,
       })
     }
     if (Math.abs(zScore) >= RADAR_OUTLIER_Z) {
@@ -689,7 +770,7 @@ export const evaluateSampleAgainstRadar = (
   sample: GlyphGeometrySample,
   radar: Pick<
     RadarAnalysis,
-    'strata' | 'enclosureCharacters' | 'rulerStatsByKey' | 'referenceData'
+    'strata' | 'enclosureCharacters' | 'referenceData'
   >,
   bodyBox: { top: number; bottom: number; unitsPerEm: number }
 ): RadarGlyphEvaluation => {
@@ -705,8 +786,8 @@ export const evaluateSampleAgainstRadar = (
     ),
     glyphComplexity(sample, unitsPerEm),
     radar.strata,
-    radar.rulerStatsByKey,
-    radar.referenceData
+    radar.referenceData,
+    unitsPerEm
   )
   return {
     glyphId: sample.glyphId,
@@ -753,7 +834,6 @@ export const computeRadarFromSamples = (
     ),
   }))
 
-  const rulerStatsByKey = buildRulerStats(glyphFeatures)
   const strata = buildStrata(glyphFeatures)
 
   const evaluationByGlyphId = new Map<string, RadarGlyphEvaluation>()
@@ -770,8 +850,8 @@ export const computeRadarFromSamples = (
       entry.features,
       entry.complexity,
       strata,
-      rulerStatsByKey,
-      referenceData ?? null
+      referenceData ?? null,
+      unitsPerEm
     )
     for (const dimension of outlierDimensions) {
       dimensionOutliers[dimension] += 1
@@ -803,7 +883,6 @@ export const computeRadarFromSamples = (
   return {
     sampleCount,
     strata,
-    rulerStatsByKey,
     referenceData: referenceData ?? null,
     enclosureCharacters,
     dimensionScores,

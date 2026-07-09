@@ -38,11 +38,7 @@ const formatDelta = (reason: RadarReason) =>
   formatRadarValue(Math.abs(reason.value - reason.median), reason.format)
 
 const basisLabel = (reason: RadarReason) =>
-  reason.basis === 'ruler'
-    ? '固定尺字組'
-    : reason.basis === 'reference'
-      ? '參考結構校正值'
-      : '複雜度相近的字'
+  reason.basis === 'reference' ? '參考結構校正值' : '複雜度相近的字'
 
 const basisPrefix = (reason: RadarReason) =>
   reason.basis === 'reference'
