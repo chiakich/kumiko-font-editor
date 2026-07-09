@@ -108,7 +108,7 @@ expectedFeature = currentPeerMedian + referenceResidual * confidence
 
 資料介面是 `RadarReferenceData`。它支援逐字、逐 feature 的 residual，並可用 `confidence` 降低參考字體風格對目前設計的影響。目前支援的 feature：
 
-- 形狀類：`face:widthRatio`、`face:heightRatio`、`face:aspect`、`ink:toFace`
+- 形狀類：`face:widthRatio`、`face:heightRatio`、`face:aspect`、`ink:toFace`、`gap:x`、`gap:y`
 - 放置類：`balance:centroidX`、`balance:centroidY`、`bearing:left/right/top/bottom`
 
 邊距 residual 有兩個特殊約定：
@@ -187,6 +187,8 @@ bearing 的座標定義：
 - **ink**：`ink:toFace`、`ink:toEm`、`ink:spreadX`、`ink:spreadY`。
 - **balance**：`bearing:symmetryH`、`balance:centroidX`、`balance:centroidY`。
 
+proportion 另含**投影間隙** `gap:x` / `gap:y`：把輪廓線段投影到軸向 bin，取字面內最寬「無墨空帶」相對字面的比例（封閉輪廓在某列有墨，邊界必穿過該列，故無線段跨越＝真空帶）。左右／上下部件被拉開時，外框、邊距、重心可能都不動，只有這個特徵會動——它是整字聚合特徵抓不到的失效模式。州、三這類天生大間隙的字由 reference residual（形狀類，直接平移）吸收。
+
 `bearing:symmetryH`（lsb−rsb 置中檢查）只對語意包圍字或四邊皆框架的字收集。阝部、匚框這類「單側框架、設計上本來就不對稱」的字不適用置中規則，早期版本因此大量誤殺（陋、賾、除）。
 
 每個 feature 的比較基準是**複雜度同儕視窗**（每個 feature/cohort 至少 20 個樣本才成立），若該字有 reference residual，再依特徵類別套用不同的信任規則：
@@ -227,7 +229,7 @@ QUALITY_CALIBRATION=1 pnpm vitest run test/qualityCheck/radarCalibration.test.ts
 兩個量測目標：
 
 - **誤報率**：優質字體被列為可疑的比例要低。初版演算法（固定尺進評分、無感知下限、symmetryH 全面適用）在兩套優質字體上分別誤報 40.8% 與 59.5%；目前版本為 2.3% 與 1.6%，且殘餘者多為部件字形與真正非典型的字。
-- **召回率**：把正常字人工做歪（整體右移 6% UPM、字面縮小 15%），用凍結的 radar 評估（同編輯頁流程），兩套字體的偵測率為 96–100%。
+- **召回率**：把正常字人工做歪（整體右移 6% UPM、字面縮小 15%、部件間隙拉開至字面 30%），用凍結的 radar 評估（同編輯頁流程），兩套字體的偵測率為 95–100%。
 
 修改評分邏輯時應重跑校正，確認兩個數字沒有回退。
 

@@ -99,6 +99,8 @@ export type RadarReferenceFeatureKey =
   | 'bearing:right'
   | 'bearing:top'
   | 'bearing:bottom'
+  | 'gap:x'
+  | 'gap:y'
 
 export interface RadarReferenceResidual {
   /** 參考字體中「此字 − 參考同儕 median」的相對偏移，單位同 feature value */
@@ -205,6 +207,7 @@ const BEARING_FLOOR_RATIO = 0.01
 const SYMMETRY_FLOOR_RATIO = 0.015
 const PERCENT_FLOOR = 0.01
 const ASPECT_FLOOR = 0.02
+const GAP_FLOOR = 0.02
 
 export const RADAR_REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
   'face:widthRatio',
@@ -217,6 +220,8 @@ export const RADAR_REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
   'bearing:right',
   'bearing:top',
   'bearing:bottom',
+  'gap:x',
+  'gap:y',
 ])
 
 /**
@@ -333,6 +338,32 @@ const collectGlyphFeatures = (
       value: faceWidth / faceHeight,
       cohort: faceCohort,
       scaleFloor: ASPECT_FLOOR,
+    })
+  }
+
+  // 部件間隙：字面內最寬無墨空帶相對字面的比例。
+  // 左右/上下部件被拉開時，外框與重心可能都不動，只有這個特徵會動。
+  // 州、三這類天生大間隙的字交給 reference residual 吸收。
+  if (ink.gapX !== null && faceWidth > 0) {
+    features.push({
+      key: 'gap:x',
+      label: '部件橫向間隙',
+      dimension: 'proportion',
+      format: 'percent',
+      value: ink.gapX / faceWidth,
+      cohort: hCohort,
+      scaleFloor: GAP_FLOOR,
+    })
+  }
+  if (ink.gapY !== null && faceHeight > 0) {
+    features.push({
+      key: 'gap:y',
+      label: '部件縱向間隙',
+      dimension: 'proportion',
+      format: 'percent',
+      value: ink.gapY / faceHeight,
+      cohort: vCohort,
+      scaleFloor: GAP_FLOOR,
     })
   }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   computeInkArea,
   computeInkMoments,
+  computeProjectionGaps,
   flattenContour,
 } from 'src/lib/qualityCheck/polygonGeometry'
 import {
@@ -281,6 +282,8 @@ const makeStratumSample = (
       centroidY,
       spreadX: faceWidth / Math.sqrt(12),
       spreadY: 100,
+      gapX: null,
+      gapY: null,
     },
   }
 }
@@ -516,6 +519,69 @@ describe('complexity strata', () => {
     expect(lowReason?.basis).toBe('reference')
     expect(lowReason?.median).toBeCloseTo(-0.09, 2)
     expect(lowReason?.zScore).toBeLessThan(-2)
+  })
+})
+
+describe('projection gap detection', () => {
+  it('measures the widest ink-free band inside the face', () => {
+    const gaps = computeProjectionGaps(
+      [squarePolygon(0, 0, 40, 100), squarePolygon(60, 0, 100, 100)],
+      { xMin: 0, xMax: 100, yMin: 0, yMax: 100 }
+    )
+    expect(gaps.gapX).toBeGreaterThan(14)
+    expect(gaps.gapX).toBeLessThan(26)
+    expect(gaps.gapY).toBe(0)
+  })
+
+  it('flags drifted-apart components, unless reference says the gap is natural', () => {
+    const bodyBox = { top: 880, bottom: -120, unitsPerEm: 1000 }
+    const withGap = (
+      sample: GlyphGeometrySample,
+      gapRatio: number
+    ): GlyphGeometrySample => ({
+      ...sample,
+      ink: { ...sample.ink, gapX: 700 * gapRatio },
+    })
+    const buildSamples = () => {
+      const samples: GlyphGeometrySample[] = []
+      for (let index = 0; index < 24; index += 1) {
+        samples.push(
+          withGap(
+            makeStratumSample(`peer${index}`, 700, 100000, 0),
+            0.05 + (index % 5) * 0.005
+          )
+        )
+      }
+      // 左右部件被拉開的字：外框、重心都正常，只有內部空帶變寬
+      samples.push(withGap(makeStratumSample('drifted', 700, 100000, 0), 0.3))
+      // 天生大間隙的字（如 州）
+      samples.push(withGap(makeStratumSample('州', 700, 100000, 0), 0.3))
+      return samples
+    }
+
+    const blindRadar = computeRadarFromSamples(buildSamples(), bodyBox)!
+    const drifted = blindRadar.evaluationByGlyphId.get('drifted')!
+    expect(drifted.reasons.some((reason) => reason.key === 'gap:x')).toBe(true)
+    expect(
+      blindRadar.suspects.some((suspect) => suspect.glyphId === 'drifted')
+    ).toBe(true)
+
+    const radar = computeRadarFromSamples(buildSamples(), bodyBox, undefined, {
+      source: 'Synthetic residuals',
+      residualsByCharacter: {
+        州: { 'gap:x': { value: 0.25, confidence: 1 } },
+      },
+    })!
+    expect(
+      radar.evaluationByGlyphId
+        .get('州')!
+        .reasons.some((reason) => reason.key === 'gap:x')
+    ).toBe(false)
+    expect(
+      radar.evaluationByGlyphId
+        .get('drifted')!
+        .reasons.some((reason) => reason.key === 'gap:x')
+    ).toBe(true)
   })
 })
 

@@ -40,6 +40,8 @@ const makeSample = (
       centroidY: null,
       spreadX: null,
       spreadY: null,
+      gapX: null,
+      gapY: null,
     },
   }
 }

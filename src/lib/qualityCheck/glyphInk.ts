@@ -5,6 +5,7 @@ import {
 } from 'src/lib/components/componentTransform'
 import {
   computeInkMoments,
+  computeProjectionGaps,
   flattenContour,
   getPolygonsBounds,
   type GeometryBounds,
@@ -31,6 +32,9 @@ export interface GlyphInkMetrics {
   /** 墨水沿軸向的分布標準差：水平/垂直密度分布的代理值 */
   spreadX: number | null
   spreadY: number | null
+  /** 字面內最寬的無墨空帶（units）：部件間隔被拉開的直接量測 */
+  gapX: number | null
+  gapY: number | null
 }
 
 const MAX_COMPONENT_DEPTH = 8
@@ -90,6 +94,7 @@ export const computeInkFromPolygons = (
 ): GlyphInkMetrics => {
   const bounds = getPolygonsBounds(polygons)
   const moments = computeInkMoments(polygons)
+  const gaps = bounds ? computeProjectionGaps(polygons, bounds) : null
   const inkArea = moments?.area ?? 0
   const faceArea = bounds
     ? Math.max(0, bounds.xMax - bounds.xMin) *
@@ -107,6 +112,8 @@ export const computeInkFromPolygons = (
     centroidY: moments?.centroidY ?? null,
     spreadX: moments?.spreadX ?? null,
     spreadY: moments?.spreadY ?? null,
+    gapX: gaps?.gapX ?? null,
+    gapY: gaps?.gapY ?? null,
   }
 }
 

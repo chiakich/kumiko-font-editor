@@ -2,10 +2,12 @@ import type opentype from 'opentype.js'
 import { isHanCodePoint } from 'src/lib/qualityCheck/hanClassification'
 import {
   computeInkMoments,
+  computeProjectionGaps,
   flattenContour,
   getPolygonsBounds,
   type GeometryBounds,
   type GeometryPoint,
+  type ProjectionGaps,
 } from 'src/lib/qualityCheck/polygonGeometry'
 import { buildRobustStat } from 'src/lib/qualityCheck/qualityRadar'
 import type {
@@ -28,6 +30,8 @@ const SUPPORTED_REFERENCE_FEATURE_KEYS: RadarReferenceFeatureKey[] = [
   'bearing:right',
   'bearing:top',
   'bearing:bottom',
+  'gap:x',
+  'gap:y',
 ]
 
 const DEFAULT_ASCENDER_RATIO = 0.88
@@ -58,6 +62,7 @@ interface ReferenceSample {
   centroidX: number
   centroidY: number
   inkArea: number
+  gaps: ProjectionGaps
   complexity: number
   features: ReferenceFeature[]
 }
@@ -208,6 +213,20 @@ const collectReferenceFeatures = (
       cohort: faceCohort,
     })
   }
+  if (faceWidth > 0) {
+    features.push({
+      key: 'gap:x',
+      value: sample.gaps.gapX / faceWidth,
+      cohort: `h${hFraming}`,
+    })
+  }
+  if (faceHeight > 0) {
+    features.push({
+      key: 'gap:y',
+      value: sample.gaps.gapY / faceHeight,
+      cohort: `v${vFraming}`,
+    })
+  }
   // 邊距不分幾何分型（分型隨輪廓共變），以 UPM 正規化，
   // cohort 帶自身與對側分型，跟 radar 的比較母體對齊
   const bearingSides = ['left', 'right', 'top', 'bottom'] as const
@@ -270,6 +289,7 @@ const buildReferenceSamples = (
       centroidX: moments.centroidX,
       centroidY: moments.centroidY,
       inkArea: moments.area,
+      gaps: computeProjectionGaps(polygons, bounds),
     }
     const sample: ReferenceSample = {
       ...baseSample,

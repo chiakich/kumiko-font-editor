@@ -39,6 +39,8 @@ const SUPPORTED_FEATURE_KEYS = [
   'bearing:right',
   'bearing:top',
   'bearing:bottom',
+  'gap:x',
+  'gap:y',
 ]
 
 const HAN_RANGES = [
@@ -462,6 +464,58 @@ const buildSidesFromPolygons = (polygons, bounds, advance, bodyBox) => {
   }
 }
 
+const PROJECTION_BINS = 128
+
+// Widest ink-free band inside the face box, projected per axis.
+const computeProjectionGaps = (polygons, bounds) => {
+  const width = bounds.xMax - bounds.xMin
+  const height = bounds.yMax - bounds.yMin
+  const coveredX = new Array(PROJECTION_BINS).fill(false)
+  const coveredY = new Array(PROJECTION_BINS).fill(false)
+  const binOf = (value, min, size) =>
+    Math.min(
+      PROJECTION_BINS - 1,
+      Math.max(0, Math.floor(((value - min) / size) * PROJECTION_BINS))
+    )
+  for (const polygon of polygons) {
+    for (let index = 0; index < polygon.length; index += 1) {
+      const current = polygon[index]
+      const next = polygon[(index + 1) % polygon.length]
+      if (width > 0) {
+        const from = binOf(Math.min(current.x, next.x), bounds.xMin, width)
+        const to = binOf(Math.max(current.x, next.x), bounds.xMin, width)
+        for (let bin = from; bin <= to; bin += 1) {
+          coveredX[bin] = true
+        }
+      }
+      if (height > 0) {
+        const from = binOf(Math.min(current.y, next.y), bounds.yMin, height)
+        const to = binOf(Math.max(current.y, next.y), bounds.yMin, height)
+        for (let bin = from; bin <= to; bin += 1) {
+          coveredY[bin] = true
+        }
+      }
+    }
+  }
+  const longestGap = (covered, size) => {
+    let longest = 0
+    let run = 0
+    for (const bin of covered) {
+      if (bin) {
+        longest = Math.max(longest, run)
+        run = 0
+      } else {
+        run += 1
+      }
+    }
+    return (longest / PROJECTION_BINS) * size
+  }
+  return {
+    gapX: width > 0 ? longestGap(coveredX, width) : 0,
+    gapY: height > 0 ? longestGap(coveredY, height) : 0,
+  }
+}
+
 const featureStatKey = (feature) =>
   feature.cohort ? `${feature.key}@${feature.cohort}` : feature.key
 
@@ -511,6 +565,20 @@ const collectReferenceFeatures = (sample, bodyBox, semanticEnclosure) => {
       key: 'ink:toFace',
       value: Math.min(1, sample.moments.area / faceArea),
       cohort: faceCohort,
+    })
+  }
+  if (faceWidth > 0) {
+    features.push({
+      key: 'gap:x',
+      value: sample.gaps.gapX / faceWidth,
+      cohort: `h${hFraming}`,
+    })
+  }
+  if (faceHeight > 0) {
+    features.push({
+      key: 'gap:y',
+      value: sample.gaps.gapY / faceHeight,
+      cohort: `v${vFraming}`,
     })
   }
   // Bearings are stored type-agnostic (per side) and normalized by UPM.
@@ -575,6 +643,7 @@ const buildSamples = (font, enclosureCharacters) => {
       bounds,
       sides,
       moments,
+      gaps: computeProjectionGaps(polygons, bounds),
       complexity: Math.sqrt(Math.max(0, moments.area)) / bodyBox.unitsPerEm,
     }
     sample.features = collectReferenceFeatures(

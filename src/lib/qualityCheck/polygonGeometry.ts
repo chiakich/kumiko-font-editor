@@ -346,6 +346,78 @@ export const computeInkMoments = (
   }
 }
 
+const PROJECTION_BINS = 128
+
+export interface ProjectionGaps {
+  /** 字面內最寬的無墨縱向空帶（units）；左右部件被拉開時變大 */
+  gapX: number
+  /** 字面內最寬的無墨橫向空帶（units）；上下部件被拉開時變大 */
+  gapY: number
+}
+
+/**
+ * 投影間隙：把輪廓線段標記到軸向 bin 上，找外框內最長的未覆蓋區段。
+ * 封閉輪廓在某一列有墨，邊界必然穿過該列，所以「無任何線段跨越的列」
+ * 等價於「完全沒有墨的空帶」。整字聚合特徵（外框/重心/密度）看不出
+ * 部件間隔被拉開，這個特徵直接量測它。
+ */
+export const computeProjectionGaps = (
+  polygons: GeometryPoint[][],
+  bounds: GeometryBounds
+): ProjectionGaps => {
+  const width = bounds.xMax - bounds.xMin
+  const height = bounds.yMax - bounds.yMin
+  const coveredX = new Array<boolean>(PROJECTION_BINS).fill(false)
+  const coveredY = new Array<boolean>(PROJECTION_BINS).fill(false)
+
+  const binOf = (value: number, min: number, size: number) =>
+    Math.min(
+      PROJECTION_BINS - 1,
+      Math.max(0, Math.floor(((value - min) / size) * PROJECTION_BINS))
+    )
+
+  for (const polygon of polygons) {
+    for (let index = 0; index < polygon.length; index += 1) {
+      const current = polygon[index]
+      const next = polygon[(index + 1) % polygon.length]
+      if (width > 0) {
+        const from = binOf(Math.min(current.x, next.x), bounds.xMin, width)
+        const to = binOf(Math.max(current.x, next.x), bounds.xMin, width)
+        for (let bin = from; bin <= to; bin += 1) {
+          coveredX[bin] = true
+        }
+      }
+      if (height > 0) {
+        const from = binOf(Math.min(current.y, next.y), bounds.yMin, height)
+        const to = binOf(Math.max(current.y, next.y), bounds.yMin, height)
+        for (let bin = from; bin <= to; bin += 1) {
+          coveredY[bin] = true
+        }
+      }
+    }
+  }
+
+  const longestGap = (covered: boolean[], size: number) => {
+    let longest = 0
+    let run = 0
+    for (const bin of covered) {
+      if (bin) {
+        longest = Math.max(longest, run)
+        run = 0
+      } else {
+        run += 1
+      }
+    }
+    // 外框由極值定義，首尾 bin 必有覆蓋，尾端 run 不需收尾
+    return (longest / PROJECTION_BINS) * size
+  }
+
+  return {
+    gapX: width > 0 ? longestGap(coveredX, width) : 0,
+    gapY: height > 0 ? longestGap(coveredY, height) : 0,
+  }
+}
+
 export const getPolygonsBounds = (
   polygons: GeometryPoint[][]
 ): GeometryBounds | null => {

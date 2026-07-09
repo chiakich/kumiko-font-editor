@@ -155,6 +155,18 @@ const shiftSampleRight = (
   },
 })
 
+/** 模擬「左右部件被拉開」的做歪字：外框不變，內部空帶變寬 */
+const widenSampleGap = (sample: GlyphGeometrySample): GlyphGeometrySample => {
+  const faceWidth = sample.bounds.xMax - sample.bounds.xMin
+  return {
+    ...sample,
+    ink: {
+      ...sample.ink,
+      gapX: Math.max(sample.ink.gapX ?? 0, faceWidth * 0.3),
+    },
+  }
+}
+
 /** 模擬「字面縮小」的做歪字：對字面中心等比縮放 */
 const scaleSampleFace = (
   sample: GlyphGeometrySample,
@@ -240,6 +252,7 @@ describe.runIf(enabled)('radar calibration on good-quality fonts', () => {
         .slice(0, 80)
       let shiftCaught = 0
       let shrinkCaught = 0
+      let gapCaught = 0
       for (const sample of candidates) {
         const shifted = evaluateSampleAgainstRadar(
           shiftSampleRight(sample, Math.round(upm * 0.06)),
@@ -257,12 +270,21 @@ describe.runIf(enabled)('radar calibration on good-quality fonts', () => {
         if (shrunk.score >= RADAR_SUSPECT_SCORE) {
           shrinkCaught += 1
         }
+        const widened = evaluateSampleAgainstRadar(
+          widenSampleGap(sample),
+          radar,
+          bodyBox
+        )
+        if (widened.score >= RADAR_SUSPECT_SCORE) {
+          gapCaught += 1
+        }
       }
       console.log(
-        `${fontFile} recall: shift ${shiftCaught}/${candidates.length}, shrink ${shrinkCaught}/${candidates.length}`
+        `${fontFile} recall: shift ${shiftCaught}/${candidates.length}, shrink ${shrinkCaught}/${candidates.length}, gap ${gapCaught}/${candidates.length}`
       )
       expect(shiftCaught / candidates.length).toBeGreaterThan(0.8)
       expect(shrinkCaught / candidates.length).toBeGreaterThan(0.8)
+      expect(gapCaught / candidates.length).toBeGreaterThan(0.8)
     },
     600_000
   )

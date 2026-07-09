@@ -89,6 +89,20 @@ const describeBody = (
         title: `字面比例偏${high ? '扁寬' : '瘦長'}`,
         action: null,
       }
+    case 'gap:x':
+      return {
+        title: `${basisPrefix(reason)}，左右部件間隔偏${high ? '開' : '擠'}`,
+        action: high
+          ? '將左右部件互相靠攏，或檢查部件是否放錯位置'
+          : '將左右部件稍微拉開',
+      }
+    case 'gap:y':
+      return {
+        title: `${basisPrefix(reason)}，上下部件間隔偏${high ? '開' : '擠'}`,
+        action: high
+          ? '將上下部件互相靠攏，或檢查部件是否放錯位置'
+          : '將上下部件稍微拉開',
+      }
     case 'ink:toFace':
     case 'ink:toEm':
       return {
