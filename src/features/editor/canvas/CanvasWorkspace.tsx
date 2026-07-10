@@ -82,6 +82,9 @@ export function CanvasWorkspace() {
   const setEditorTextState = useStore((state) => state.setEditorTextState)
   const updateViewport = useStore((state) => state.updateViewport)
   const deleteSelectedNodes = useStore((state) => state.deleteSelectedNodes)
+  const convertLineSegmentToCurve = useStore(
+    (state) => state.convertLineSegmentToCurve
+  )
   const reconnectSelectedNodes = useStore(
     (state) => state.reconnectSelectedNodes
   )
@@ -157,6 +160,23 @@ export function CanvasWorkspace() {
       setSelectedSegment(null)
     },
     [setSelectedNodeIds, setSelectedSegment]
+  )
+
+  const selectAdjacentGlyph = useCallback(
+    (offset: -1 | 1) => {
+      const nextIndex = editorActiveGlyphIndex + offset
+      if (nextIndex < 0 || nextIndex >= editorGlyphIds.length) {
+        return
+      }
+      setEditorActiveGlyphIndex(nextIndex)
+      setEditorTextCursorIndex(nextIndex + 1)
+    },
+    [
+      editorActiveGlyphIndex,
+      editorGlyphIds.length,
+      setEditorActiveGlyphIndex,
+      setEditorTextCursorIndex,
+    ]
   )
 
   const positionedGlyphs = useMemo(
@@ -616,6 +636,7 @@ export function CanvasWorkspace() {
         <CanvasContextMenu
           activeEditorGlyphId={activeEditorGlyphId}
           copySelection={copySelection}
+          convertLineSegmentToCurve={convertLineSegmentToCurve}
           cutSelection={cutSelection}
           fontData={fontData}
           pasteSelection={pasteSelection}
@@ -648,6 +669,10 @@ export function CanvasWorkspace() {
         activeToolId={activeToolId}
         canRedo={futureStatesLength > 0}
         canUndo={pastStatesLength > 0}
+        hasNextGlyph={editorActiveGlyphIndex < editorGlyphIds.length - 1}
+        hasPreviousGlyph={editorActiveGlyphIndex > 0}
+        onNextGlyph={() => selectAdjacentGlyph(1)}
+        onPreviousGlyph={() => selectAdjacentGlyph(-1)}
         onRedo={handleRedo}
         onSelectTool={handleToolSelect}
         onUndo={handleUndo}

@@ -1,4 +1,6 @@
-import { Box, Flex, HStack } from '@chakra-ui/react'
+import { Box, Flex, HStack, IconButton } from '@chakra-ui/react'
+import { NavArrowLeft, NavArrowRight } from 'iconoir-react'
+import { useTranslation } from 'react-i18next'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import { AVAILABLE_TOOLS } from 'src/features/editor/canvas/workspace/types'
 import { HistoryButton } from 'src/features/editor/canvas/workspace/components/HistoryButton'
@@ -8,6 +10,10 @@ interface CanvasWorkspaceOverlayProps {
   activeToolId: ToolId
   canRedo: boolean
   canUndo: boolean
+  hasNextGlyph: boolean
+  hasPreviousGlyph: boolean
+  onNextGlyph: () => void
+  onPreviousGlyph: () => void
   onRedo: () => void
   onSelectTool: (toolId: ToolId) => void
   onUndo: () => void
@@ -17,12 +23,46 @@ export function CanvasWorkspaceOverlay({
   activeToolId,
   canRedo,
   canUndo,
+  hasNextGlyph,
+  hasPreviousGlyph,
+  onNextGlyph,
+  onPreviousGlyph,
   onRedo,
   onSelectTool,
   onUndo,
 }: CanvasWorkspaceOverlayProps) {
+  const { t } = useTranslation()
+
   return (
     <>
+      <IconButton
+        position="absolute"
+        top={4}
+        left={4}
+        aria-label={t('editor.previousGlyph')}
+        size="sm"
+        variant="outline"
+        bg="card"
+        borderColor="controlBorder"
+        disabled={!hasPreviousGlyph}
+        onClick={onPreviousGlyph}
+      >
+        <NavArrowLeft width={18} height={18} aria-hidden="true" />
+      </IconButton>
+      <IconButton
+        position="absolute"
+        top={4}
+        right={4}
+        aria-label={t('editor.nextGlyph')}
+        size="sm"
+        variant="outline"
+        bg="card"
+        borderColor="controlBorder"
+        disabled={!hasNextGlyph}
+        onClick={onNextGlyph}
+      >
+        <NavArrowRight width={18} height={18} aria-hidden="true" />
+      </IconButton>
       <Flex
         position="absolute"
         left="50%"

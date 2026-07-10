@@ -11,6 +11,12 @@ import { useTranslation } from 'react-i18next'
 interface CanvasContextMenuProps {
   activeEditorGlyphId: string | null
   copySelection: () => Promise<void>
+  convertLineSegmentToCurve: (
+    glyphId: string,
+    pathId: string,
+    startNodeId: string,
+    endNodeId: string
+  ) => void
   cutSelection: () => Promise<void>
   fontData: FontData | null
   pasteSelection: () => Promise<void>
@@ -28,6 +34,7 @@ interface CanvasContextMenuProps {
 export function CanvasContextMenu({
   activeEditorGlyphId,
   copySelection,
+  convertLineSegmentToCurve,
   cutSelection,
   fontData,
   pasteSelection,
@@ -103,6 +110,32 @@ export function CanvasContextMenu({
     selectedNodeIds,
   ])
 
+  const handleConvertSelectedSegment = useCallback(() => {
+    if (
+      !activeEditorGlyphId ||
+      !selectedSegment ||
+      selectedSegment.type !== 'line'
+    ) {
+      onClose()
+      return
+    }
+
+    convertLineSegmentToCurve(
+      activeEditorGlyphId,
+      selectedSegment.pathId,
+      selectedSegment.startNodeId,
+      selectedSegment.endNodeId
+    )
+    onClose()
+    onRequestCanvasUpdate()
+  }, [
+    activeEditorGlyphId,
+    convertLineSegmentToCurve,
+    onClose,
+    onRequestCanvasUpdate,
+    selectedSegment,
+  ])
+
   const handleReverseSelectedPaths = useCallback(() => {
     if (!activeEditorGlyphId || selectedReversiblePathIds.length === 0) {
       onClose()
@@ -169,6 +202,12 @@ export function CanvasContextMenu({
         {t('editor.paste')}
       </ContextMenuButton>
       <Box h="1px" my="4px" bg="muted" />
+      <ContextMenuButton
+        isDisabled={selectedSegment?.type !== 'line'}
+        onClick={handleConvertSelectedSegment}
+      >
+        {t('editor.convertToCubicCurve')}
+      </ContextMenuButton>
       <ContextMenuButton
         isDisabled={selectedReversiblePathIds.length === 0}
         onClick={handleReverseSelectedPaths}
