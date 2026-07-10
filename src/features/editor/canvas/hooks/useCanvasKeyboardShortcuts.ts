@@ -1,7 +1,8 @@
 import { useEffect, type RefObject } from 'react'
 import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
-import { getGlyphLayer, type FontData } from 'src/store'
+import { getGlyphLayer, isOffCurveNode, type FontData } from 'src/store'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import type { GlyphLayerData, PathData } from 'src/store'
 
 interface UseCanvasKeyboardShortcutsOptions {
   activeEditorGlyphId: string | null
@@ -29,6 +30,70 @@ interface UseCanvasKeyboardShortcutsOptions {
       newPos: { x: number; y: number }
     }>
   ) => void
+}
+
+const getSelectedNodeMoveKeys = (
+  activeLayer: GlyphLayerData,
+  selectedNodeIds: string[]
+) => {
+  const moveKeys = new Set(selectedNodeIds)
+
+  for (const selectedNodeId of selectedNodeIds) {
+    const [pathId, nodeId] = selectedNodeId.split(':')
+    const path = activeLayer.paths.find((candidate) => candidate.id === pathId)
+    if (!path) {
+      continue
+    }
+
+    const nodeIndex = path.nodes.findIndex(
+      (candidate) => candidate.id === nodeId
+    )
+    const node = path.nodes[nodeIndex]
+    if (!node || isOffCurveNode(node)) {
+      continue
+    }
+
+    for (const handleIndex of getAttachedHandleIndices(path, nodeIndex)) {
+      const handle = path.nodes[handleIndex]
+      if (handle) {
+        moveKeys.add(`${path.id}:${handle.id}`)
+      }
+    }
+  }
+
+  return [...moveKeys]
+}
+
+const getAttachedHandleIndices = (path: PathData, nodeIndex: number) => {
+  const indices: number[] = []
+  const addIfHandle = (index: number | null) => {
+    if (index === null) {
+      return
+    }
+    const node = path.nodes[index]
+    if (node && isOffCurveNode(node)) {
+      indices.push(index)
+    }
+  }
+
+  addIfHandle(getAdjacentNodeIndex(path, nodeIndex, -1))
+  addIfHandle(getAdjacentNodeIndex(path, nodeIndex, 1))
+  return indices
+}
+
+const getAdjacentNodeIndex = (
+  path: PathData,
+  nodeIndex: number,
+  direction: -1 | 1
+) => {
+  const candidateIndex = nodeIndex + direction
+  if (candidateIndex >= 0 && candidateIndex < path.nodes.length) {
+    return candidateIndex
+  }
+
+  return path.closed
+    ? (candidateIndex + path.nodes.length) % path.nodes.length
+    : null
 }
 
 export function useCanvasKeyboardShortcuts({
@@ -84,7 +149,11 @@ export function useCanvasKeyboardShortcuts({
         return
       }
 
-      const updates = selectedNodeIds.flatMap((selectedNodeId) => {
+      const nodeIdsToMove = getSelectedNodeMoveKeys(
+        activeLayer,
+        selectedNodeIds
+      )
+      const updates = nodeIdsToMove.flatMap((selectedNodeId) => {
         const [pathId, nodeId] = selectedNodeId.split(':')
         const path = activeLayer.paths.find(
           (candidate) => candidate.id === pathId

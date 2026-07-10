@@ -8,6 +8,8 @@ import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import { VarPackedPath } from 'src/font/VarPackedPath'
 import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
 import { buildReferenceCharPath } from 'src/lib/referenceFont/referenceFontStore'
+import { parsePointSelection } from 'src/lib/glyph/glyphSelection'
+import { buildSelectionTransformBounds } from 'src/features/editor/tools/PointerTool/transform'
 import {
   getGlyphLayer,
   getNodeSegmentType,
@@ -262,6 +264,15 @@ export function useCanvasSceneModelSync({
     sceneController.sceneModel.selection = selectionPointIds
     sceneController.selection = selectionPointIds
     sceneController.sceneModel.canEdit = canEdit
+    sceneController.sceneModel.selectionTransformBounds =
+      activeToolId === 'pointer' &&
+      !sceneController.selectedPathHit &&
+      positionedGlyph?.glyph.path?.getPoint
+        ? buildSelectionTransformBounds(
+            positionedGlyph.glyph.path,
+            parsePointSelection(selectionPointIds)
+          )
+        : undefined
 
     controller.requestUpdate()
   }, [
