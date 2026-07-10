@@ -82,4 +82,25 @@ describe('buildRadarAdvice', () => {
     expect(advice.title).toContain('偏低')
     expect(advice.detail).toContain('-10.0%–-8.0%')
   })
+
+  it('describes live part-spacing drift against the pre-edit glyph', () => {
+    const advice = buildRadarAdvice(
+      makeReason({
+        key: 'part-gap:x',
+        label: '左右部件介面間距',
+        dimension: 'proportion',
+        format: 'percent',
+        basis: 'baseline',
+        value: 0.08,
+        median: 0.05,
+        p10: 0.046,
+        p90: 0.054,
+        zScore: 4,
+      })
+    )
+    expect(advice.title).toContain('左右部件')
+    expect(advice.title).toContain('偏開')
+    expect(advice.action).toContain('互相靠攏')
+    expect(advice.detail).toContain('編輯前的字形')
+  })
 })

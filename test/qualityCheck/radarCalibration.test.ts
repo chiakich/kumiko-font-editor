@@ -1,9 +1,18 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import opentype from 'opentype.js'
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { buildOpenTypeGeometrySamples } from 'src/lib/qualityCheck/openTypeSampling'
+import { openTypePathToPolygons } from 'src/lib/qualityCheck/openTypeSampling'
 import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
+import { computeInkFromPolygons } from 'src/lib/qualityCheck/glyphInk'
+import {
+  computePartSpacingMetrics,
+  type SemanticPartLayout,
+} from 'src/lib/qualityCheck/partSpacingMetrics'
+import { computeRasterPartSpacingMetrics } from 'src/lib/qualityCheck/rasterPartSpacingMetrics'
+import type { PartSpacingSamplingMethod } from 'src/lib/qualityCheck/openTypeSampling'
+import { getPolygonsBounds } from 'src/lib/qualityCheck/polygonGeometry'
+import { buildSidesFromPolygons } from 'src/lib/qualityCheck/structureMetrics'
 import {
   computeRadarFromSamples,
   evaluateSampleAgainstRadar,
@@ -13,8 +22,13 @@ import {
   type RadarReferenceData,
 } from 'src/lib/qualityCheck/qualityRadar'
 import { buildEnclosureCharacterSet } from 'src/lib/qualityCheck/semanticStructure'
+import { buildSemanticPartLayoutMap } from 'src/lib/qualityCheck/semanticStructure'
 import { parseCompositionLine } from 'src/lib/glyph/glyphwikiComposition'
 import type { GlyphwikiPartPlacement } from 'src/lib/glyph/glyphwikiComposition'
+import {
+  cleanupCalibrationFontFaces,
+  loadCalibrationFontFaces,
+} from './calibrationFontFaces'
 
 /**
  * 校正 harness：拿已知高品質的商業字體跑 production radar，
@@ -24,7 +38,16 @@ import type { GlyphwikiPartPlacement } from 'src/lib/glyph/glyphwikiComposition'
  */
 
 const repoRoot = path.join(__dirname, '..', '..')
-const FONT_DIR = path.join(repoRoot, 'test_glyphs', 'good_quality_font')
+const defaultNestedFontDir = path.join(
+  repoRoot,
+  'test_glyphs',
+  'good_quality_font'
+)
+const FONT_DIR = process.env.QUALITY_CALIBRATION_FONT_DIR
+  ? path.resolve(process.env.QUALITY_CALIBRATION_FONT_DIR)
+  : existsSync(defaultNestedFontDir)
+    ? defaultNestedFontDir
+    : path.join(repoRoot, 'test_glyphs')
 const COMPOSITION_PATH = path.join(
   repoRoot,
   'public',
@@ -39,8 +62,10 @@ const REFERENCE_PATH = path.join(
 )
 
 const enabled = process.env.QUALITY_CALIBRATION === '1' && existsSync(FONT_DIR)
+const partSpacingMethod: PartSpacingSamplingMethod =
+  process.env.QUALITY_PART_SPACING_METHOD === 'raster' ? 'raster' : 'contour'
 
-const loadEnclosureSet = () => {
+const loadCompositionMap = () => {
   const text = readFileSync(COMPOSITION_PATH, 'utf-8')
   const map = new Map<string, GlyphwikiPartPlacement[]>()
   for (const line of text.split('\n')) {
@@ -49,7 +74,7 @@ const loadEnclosureSet = () => {
       map.set(parsed.target, parsed.parts)
     }
   }
-  return buildEnclosureCharacterSet(map)
+  return map
 }
 
 const loadReferenceData = (): RadarReferenceData | null => {
@@ -62,7 +87,11 @@ const loadReferenceData = (): RadarReferenceData | null => {
 const percent = (numerator: number, denominator: number) =>
   `${((100 * numerator) / Math.max(1, denominator)).toFixed(2)}%`
 
-const reportRadar = (label: string, radar: RadarAnalysis) => {
+const reportRadar = (
+  label: string,
+  radar: RadarAnalysis,
+  extraLines: string[] = []
+) => {
   const lines: string[] = []
   lines.push(`=== ${label} ===`)
   lines.push(`samples: ${radar.sampleCount}`)
@@ -70,6 +99,17 @@ const reportRadar = (label: string, radar: RadarAnalysis) => {
     `suspects: ${radar.suspects.length} (${percent(radar.suspects.length, radar.sampleCount)})`
   )
   lines.push(`overallScore: ${radar.overallScore}`)
+  const styleScales = Object.entries(radar.referenceStyleScales)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value.toFixed(3)}`)
+    .join(', ')
+  lines.push(`referenceStyleScales: ${styleScales || 'none'}`)
+  const styleErrors = Object.entries(radar.referenceStyleErrors)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}=${value.toFixed(3)}`)
+    .join(', ')
+  lines.push(`referenceStyleErrors: ${styleErrors || 'none'}`)
+  lines.push(...extraLines)
   for (const dimension of radar.dimensionScores) {
     lines.push(
       `  dim ${dimension.dimension}: score ${dimension.score}, outliers ${dimension.outlierCount} (${percent(dimension.outlierCount, radar.sampleCount)})`
@@ -122,11 +162,47 @@ const reportRadar = (label: string, radar: RadarAnalysis) => {
   console.log(lines.join('\n'))
   const reportDir = process.env.QUALITY_CALIBRATION_REPORT_DIR
   if (reportDir) {
+    mkdirSync(reportDir, { recursive: true })
     writeFileSync(
       path.join(reportDir, `${label.replace(/[^\w.-]+/gu, '_')}.report.txt`),
       lines.join('\n')
     )
   }
+}
+
+const comparePartSpacingSamples = (
+  contourSamples: GlyphGeometrySample[],
+  rasterSamples: GlyphGeometrySample[],
+  partLayouts: ReadonlyMap<string, SemanticPartLayout>
+) => {
+  const rasterByCharacter = new Map(
+    rasterSamples.map((sample) => [sample.character, sample])
+  )
+  let layoutCount = 0
+  let contourMeasured = 0
+  let contourNegative = 0
+  let rasterMeasured = 0
+  let rasterTouching = 0
+  for (const contour of contourSamples) {
+    if (!partLayouts.has(contour.character)) {
+      continue
+    }
+    layoutCount += 1
+    if (contour.partSpacing) {
+      contourMeasured += 1
+      if (contour.partSpacing.gapRatio < 0) {
+        contourNegative += 1
+      }
+    }
+    const raster = rasterByCharacter.get(contour.character)?.partSpacing
+    if (raster) {
+      rasterMeasured += 1
+      if (raster.gapRatio === 0) {
+        rasterTouching += 1
+      }
+    }
+  }
+  return `partSpacingComparison: layouts=${layoutCount}, contourMeasured=${contourMeasured}, contourNegative=${contourNegative}, rasterMeasured=${rasterMeasured}, rasterTouching=${rasterTouching}`
 }
 
 /** 模擬「整體右移」的做歪字：平移 bounds/邊距/重心 */
@@ -210,24 +286,71 @@ const scaleSampleFace = (
   }
 }
 
-describe.runIf(enabled)('radar calibration on good-quality fonts', () => {
-  const enclosureSet = enabled ? loadEnclosureSet() : new Set<string>()
-  const referenceData = enabled ? loadReferenceData() : null
-  const fontFiles = enabled
-    ? readdirSync(FONT_DIR).filter((file) => /\.(ttf|otf)$/iu.test(file))
-    : []
+const movePartsOutward = (
+  sample: GlyphGeometrySample,
+  polygons: ReturnType<typeof openTypePathToPolygons>,
+  layout: SemanticPartLayout,
+  offset: number,
+  bodyBox: { top: number; bottom: number; unitsPerEm: number },
+  spacingMethod: PartSpacingSamplingMethod
+): GlyphGeometrySample | null => {
+  const width = sample.bounds.xMax - sample.bounds.xMin
+  const height = sample.bounds.yMax - sample.bounds.yMin
+  const split =
+    layout.axis === 'horizontal'
+      ? sample.bounds.xMin + width * layout.splitRatio
+      : sample.bounds.yMax - height * layout.splitRatio
+  const moved = polygons.map((polygon) => {
+    const polygonBounds = getPolygonsBounds([polygon])!
+    const center =
+      layout.axis === 'horizontal'
+        ? (polygonBounds.xMin + polygonBounds.xMax) / 2
+        : (polygonBounds.yMin + polygonBounds.yMax) / 2
+    const first = layout.axis === 'horizontal' ? center < split : center > split
+    return polygon.map((point) => ({
+      x:
+        layout.axis === 'horizontal'
+          ? point.x + (first ? -offset : offset)
+          : point.x,
+      y:
+        layout.axis === 'vertical'
+          ? point.y + (first ? offset : -offset)
+          : point.y,
+    }))
+  })
+  const bounds = getPolygonsBounds(moved)
+  if (!bounds) {
+    return null
+  }
+  return {
+    ...sample,
+    bounds,
+    sides: buildSidesFromPolygons(moved, bounds, sample.advance, bodyBox),
+    ink: computeInkFromPolygons(moved, sample.advance, bodyBox.unitsPerEm),
+    partSpacing:
+      spacingMethod === 'raster'
+        ? computeRasterPartSpacingMetrics(moved, bounds, layout)
+        : computePartSpacingMetrics(moved, bounds, layout),
+  }
+}
 
-  it.each(fontFiles)(
-    'reports low suspect rate for %s',
-    (fontFile) => {
-      const buffer = readFileSync(path.join(FONT_DIR, fontFile))
-      const font = opentype.parse(
-        buffer.buffer.slice(
-          buffer.byteOffset,
-          buffer.byteOffset + buffer.byteLength
-        )
+describe.runIf(enabled)('radar calibration on good-quality fonts', () => {
+  const compositionMap = enabled ? loadCompositionMap() : new Map()
+  const enclosureSet = buildEnclosureCharacterSet(compositionMap)
+  const partLayouts = buildSemanticPartLayoutMap(compositionMap)
+  const referenceData = enabled ? loadReferenceData() : null
+  const fontFaces = enabled ? loadCalibrationFontFaces(FONT_DIR, repoRoot) : []
+
+  afterAll(cleanupCalibrationFontFaces)
+
+  it.each(fontFaces)(
+    'reports low suspect rate for $label',
+    ({ label: fontFile, font }) => {
+      const { bodyBox, samples } = buildOpenTypeGeometrySamples(
+        font,
+        partLayouts,
+        { partSpacingMethod }
       )
-      const { bodyBox, samples } = buildOpenTypeGeometrySamples(font)
       const radar = computeRadarFromSamples(
         samples,
         bodyBox,
@@ -238,7 +361,25 @@ describe.runIf(enabled)('radar calibration on good-quality fonts', () => {
       if (!radar) {
         return
       }
-      reportRadar(fontFile, radar)
+      const comparisonLines: string[] = []
+      if (process.env.QUALITY_COMPARE_PART_SPACING === '1') {
+        const contourSamples =
+          partSpacingMethod === 'contour'
+            ? samples
+            : buildOpenTypeGeometrySamples(font, partLayouts, {
+                partSpacingMethod: 'contour',
+              }).samples
+        const rasterSamples =
+          partSpacingMethod === 'raster'
+            ? samples
+            : buildOpenTypeGeometrySamples(font, partLayouts, {
+                partSpacingMethod: 'raster',
+              }).samples
+        comparisonLines.push(
+          comparePartSpacingSamples(contourSamples, rasterSamples, partLayouts)
+        )
+      }
+      reportRadar(fontFile, radar, comparisonLines)
 
       // 召回率：把正常字做歪（右移 6% UPM / 字面縮小 15%），
       // 用凍結的 radar 評估（同編輯頁流程），應該幾乎全數被抓到
@@ -285,6 +426,63 @@ describe.runIf(enabled)('radar calibration on good-quality fonts', () => {
       expect(shiftCaught / candidates.length).toBeGreaterThan(0.8)
       expect(shrinkCaught / candidates.length).toBeGreaterThan(0.8)
       expect(gapCaught / candidates.length).toBeGreaterThan(0.8)
+
+      // 真實輪廓擾動：依語意分界把兩側 contour 各向外移 1% UPM，
+      // 再完整重算幾何；不能只竄改 sample.gapX。
+      let movementTotal = 0
+      let movementCaught = 0
+      let movementSpecific = 0
+      for (const sample of samples) {
+        if (movementTotal >= 200 || !sample.partSpacing) {
+          continue
+        }
+        const layout = partLayouts.get(sample.character)
+        const glyph = font.charToGlyph(sample.character)
+        if (
+          !layout ||
+          sample.partSpacing.gapRatio < 0 ||
+          !glyph.path?.commands?.length
+        ) {
+          continue
+        }
+        const moved = movePartsOutward(
+          sample,
+          openTypePathToPolygons(glyph.path.commands),
+          layout,
+          bodyBox.unitsPerEm * 0.01,
+          bodyBox,
+          partSpacingMethod
+        )
+        if (!moved?.partSpacing || moved.partSpacing.gapRatio < 0) {
+          continue
+        }
+        movementTotal += 1
+        const evaluation = evaluateSampleAgainstRadar(
+          moved,
+          radar,
+          bodyBox,
+          sample.partSpacing
+        )
+        if (evaluation.score >= RADAR_SUSPECT_SCORE) {
+          movementCaught += 1
+        }
+        if (
+          evaluation.reasons.some(
+            (reason) =>
+              reason.key ===
+                (layout.axis === 'horizontal' ? 'part-gap:x' : 'part-gap:y') &&
+              reason.basis === 'baseline'
+          )
+        ) {
+          movementSpecific += 1
+        }
+      }
+      console.log(
+        `${fontFile} real part movement ±1% UPM: caught ${movementCaught}/${movementTotal}, specific ${movementSpecific}/${movementTotal}`
+      )
+      expect(movementTotal).toBeGreaterThan(50)
+      expect(movementCaught / movementTotal).toBeGreaterThan(0.8)
+      expect(movementSpecific / movementTotal).toBeGreaterThan(0.8)
     },
     600_000
   )

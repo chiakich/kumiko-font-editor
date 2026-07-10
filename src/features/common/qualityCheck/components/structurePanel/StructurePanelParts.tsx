@@ -328,7 +328,11 @@ function SuspectReasonDetail({
 }
 
 const radarReasonDimensionLabel = (reason: RadarReason) =>
-  reason.basis === 'reference' ? '參考結構' : '同儕統計'
+  reason.basis === 'reference'
+    ? '參考結構'
+    : reason.basis === 'baseline'
+      ? '編輯前字形'
+      : '同儕統計'
 
 export function SuspectRow({
   evaluation,

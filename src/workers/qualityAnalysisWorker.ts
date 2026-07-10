@@ -1,6 +1,6 @@
 import { runPopulationAnalysis } from 'src/lib/qualityCheck/populationAnalysis'
 import { getDefaultRadarReferenceData } from 'src/lib/qualityCheck/radarReferenceData'
-import { getEnclosureCharacterSet } from 'src/lib/qualityCheck/semanticStructure'
+import { getSemanticStructureData } from 'src/lib/qualityCheck/semanticStructure'
 import type { ResolvedFont } from 'src/lib/qualityCheck/resolvedGlyph'
 import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
 
@@ -28,16 +28,17 @@ self.onmessage = async (event: MessageEvent<AnalyzeMessage>) => {
   const post = (self as DedicatedWorkerGlobalScope).postMessage.bind(self)
 
   try {
-    const [enclosureChars, resolvedReferenceData] = await Promise.all([
-      getEnclosureCharacterSet(),
+    const [semanticStructure, resolvedReferenceData] = await Promise.all([
+      getSemanticStructureData(),
       referenceData === undefined
         ? getDefaultRadarReferenceData()
         : Promise.resolve(referenceData),
     ])
     const analysis = runPopulationAnalysis(
       resolvedFont,
-      enclosureChars,
-      resolvedReferenceData
+      semanticStructure.enclosureCharacters,
+      resolvedReferenceData,
+      semanticStructure.partLayoutsByCharacter
     )
     post({ type: 'analysis-success', payload: { requestId, analysis } })
   } catch (error) {

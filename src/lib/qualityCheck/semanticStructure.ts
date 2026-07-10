@@ -2,6 +2,10 @@ import {
   getGlyphwikiCompositionMap,
   type GlyphwikiPartPlacement,
 } from 'src/lib/glyph/glyphwikiComposition'
+import {
+  deriveSemanticPartLayout,
+  type SemanticPartLayout,
+} from 'src/lib/qualityCheck/partSpacingMetrics'
 
 /**
  * 語意結構分類：從 GlyphWiki 組成資料判斷「全包圍/門框」字。
@@ -35,6 +39,44 @@ export const buildEnclosureCharacterSet = (
     }
   }
   return result
+}
+
+export const buildSemanticPartLayoutMap = (
+  compositionMap: ReadonlyMap<string, GlyphwikiPartPlacement[]>
+): Map<string, SemanticPartLayout> => {
+  const result = new Map<string, SemanticPartLayout>()
+  for (const [character, parts] of compositionMap) {
+    const layout = deriveSemanticPartLayout(parts)
+    if (layout) {
+      result.set(character, layout)
+    }
+  }
+  return result
+}
+
+export interface SemanticStructureData {
+  enclosureCharacters: ReadonlySet<string>
+  partLayoutsByCharacter: ReadonlyMap<string, SemanticPartLayout>
+}
+
+let semanticStructurePromise: Promise<SemanticStructureData> | null = null
+
+export const getSemanticStructureData = (): Promise<SemanticStructureData> => {
+  if (!semanticStructurePromise) {
+    semanticStructurePromise = getGlyphwikiCompositionMap()
+      .then((compositionMap) => ({
+        enclosureCharacters: buildEnclosureCharacterSet(compositionMap),
+        partLayoutsByCharacter: buildSemanticPartLayoutMap(compositionMap),
+      }))
+      .catch(() => {
+        semanticStructurePromise = null
+        return {
+          enclosureCharacters: new Set<string>(),
+          partLayoutsByCharacter: new Map<string, SemanticPartLayout>(),
+        }
+      })
+  }
+  return semanticStructurePromise
 }
 
 let enclosureSetPromise: Promise<ReadonlySet<string>> | null = null

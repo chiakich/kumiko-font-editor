@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useStore } from 'src/store'
 import {
+  getGlyphCharacter,
   getStructureBodyBox,
   isHanGlyph,
 } from 'src/lib/qualityCheck/hanClassification'
-import { buildGlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
+import {
+  buildGlyphGeometrySample,
+  type GlyphGeometrySample,
+} from 'src/lib/qualityCheck/glyphSampling'
 import { evaluateSampleAgainstRadar } from 'src/lib/qualityCheck/qualityRadar'
 import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
 import { useQualityAnalysis } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
@@ -51,6 +55,7 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
     true,
     referenceData
   )
+  const radar = analysis?.radar ?? null
 
   const liveFontData = useDebouncedValue(fontData, LIVE_SAMPLE_MS)
   const sample = useMemo(() => {
@@ -69,11 +74,31 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
     return buildGlyphGeometrySample(
       resolvedGlyph,
       resolvedFont.glyphs,
-      resolvedFont.bodyBox
+      resolvedFont.bodyBox,
+      radar?.partLayoutsByCharacter.get(getGlyphCharacter(resolvedGlyph))
     )
-  }, [activeGlyphId, liveFontData])
+  }, [activeGlyphId, liveFontData, radar])
 
-  const radar = analysis?.radar ?? null
+  const baselineCandidate = sample
+    ? radar?.partSpacingBaselineByGlyphId.get(sample.glyphId)
+    : undefined
+  const [frozenPartSpacing, setFrozenPartSpacing] = useState<{
+    glyphId: string
+    value: NonNullable<GlyphGeometrySample['partSpacing']>
+  } | null>(null)
+  // React 支援在 render 中以「前一個 prop 身分」條件式調整 state；同一字後續的
+  // radar refresh 不覆寫快照，切換字時才建立新的編輯前基準。
+  if (
+    sample &&
+    baselineCandidate &&
+    frozenPartSpacing?.glyphId !== sample.glyphId
+  ) {
+    setFrozenPartSpacing({
+      glyphId: sample.glyphId,
+      value: baselineCandidate,
+    })
+  }
+
   const evaluation = useMemo(() => {
     if (!sample || !radar || !liveFontData) {
       return null
@@ -81,9 +106,12 @@ export function GlyphInsightProvider({ children }: { children: ReactNode }) {
     return evaluateSampleAgainstRadar(
       sample,
       radar,
-      getStructureBodyBox(liveFontData)
+      getStructureBodyBox(liveFontData),
+      frozenPartSpacing?.glyphId === sample.glyphId
+        ? frozenPartSpacing.value
+        : baselineCandidate
     )
-  }, [liveFontData, radar, sample])
+  }, [baselineCandidate, frozenPartSpacing, liveFontData, radar, sample])
 
   const value = useMemo<GlyphInsightValue>(() => {
     if (!sample) {

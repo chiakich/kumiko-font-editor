@@ -6,11 +6,17 @@ import {
 import {
   flattenContour,
   getPolygonsBounds,
+  type GeometryBounds,
   type GeometryPoint,
 } from 'src/lib/qualityCheck/polygonGeometry'
 import { computeInkFromPolygons } from 'src/lib/qualityCheck/glyphInk'
 import { buildSidesFromPolygons } from 'src/lib/qualityCheck/structureMetrics'
 import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
+import {
+  computePartSpacingMetrics,
+  type SemanticPartLayout,
+} from 'src/lib/qualityCheck/partSpacingMetrics'
+import { computeRasterPartSpacingMetrics } from 'src/lib/qualityCheck/rasterPartSpacingMetrics'
 
 /**
  * 把 opentype.js 解析出的字體轉成與編輯器相同的 GlyphGeometrySample，
@@ -103,8 +109,30 @@ export interface OpenTypeSamplingResult {
   samples: GlyphGeometrySample[]
 }
 
+export type PartSpacingSamplingMethod = 'contour' | 'raster'
+
+export interface OpenTypeSamplingOptions {
+  partSpacingMethod?: PartSpacingSamplingMethod
+}
+
+const computeSamplePartSpacing = (
+  polygons: GeometryPoint[][],
+  bounds: GeometryBounds,
+  layout: SemanticPartLayout | undefined,
+  method: PartSpacingSamplingMethod | undefined
+) => {
+  if (!layout) {
+    return null
+  }
+  return method === 'raster'
+    ? computeRasterPartSpacingMetrics(polygons, bounds, layout)
+    : computePartSpacingMetrics(polygons, bounds, layout)
+}
+
 export const buildOpenTypeGeometrySamples = (
-  font: opentype.Font
+  font: opentype.Font,
+  partLayoutsByCharacter?: ReadonlyMap<string, SemanticPartLayout>,
+  options: OpenTypeSamplingOptions = {}
 ): OpenTypeSamplingResult => {
   const bodyBox = getOpenTypeBodyBox(font)
   const samples: GlyphGeometrySample[] = []
@@ -138,6 +166,12 @@ export const buildOpenTypeGeometrySamples = (
       bounds,
       sides: buildSidesFromPolygons(polygons, bounds, advance, bodyBox),
       ink: computeInkFromPolygons(polygons, advance, bodyBox.unitsPerEm),
+      partSpacing: computeSamplePartSpacing(
+        polygons,
+        bounds,
+        partLayoutsByCharacter?.get(characters[0]),
+        options.partSpacingMethod
+      ),
     })
   }
 

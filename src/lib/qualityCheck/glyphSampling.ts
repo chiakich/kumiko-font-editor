@@ -20,6 +20,11 @@ import type {
   ResolvedFont,
   ResolvedGlyph,
 } from 'src/lib/qualityCheck/resolvedGlyph'
+import {
+  computePartSpacingMetrics,
+  type PartSpacingMetrics,
+  type SemanticPartLayout,
+} from 'src/lib/qualityCheck/partSpacingMetrics'
 
 /**
  * 母體統計分析的單一特徵來源：每個字形「攤平一次」即同時得到
@@ -34,12 +39,14 @@ export interface GlyphGeometrySample {
   bounds: GeometryBounds
   sides: StructureSides
   ink: GlyphInkMetrics
+  partSpacing?: PartSpacingMetrics | null
 }
 
 export const buildGlyphGeometrySample = (
   glyph: ResolvedGlyph,
   glyphs: Record<string, ResolvedGlyph>,
-  bodyBox: StructureBodyBox
+  bodyBox: StructureBodyBox,
+  partLayout?: SemanticPartLayout | null
 ): GlyphGeometrySample | null => {
   const polygons = flattenResolvedGlyph(glyph, glyphs)
   const bounds = getPolygonsBounds(polygons)
@@ -54,11 +61,15 @@ export const buildGlyphGeometrySample = (
     bounds,
     sides: buildSidesFromPolygons(polygons, bounds, glyph.advance, bodyBox),
     ink: computeInkFromPolygons(polygons, glyph.advance, bodyBox.unitsPerEm),
+    partSpacing: partLayout
+      ? computePartSpacingMetrics(polygons, bounds, partLayout)
+      : null,
   }
 }
 
 export const buildFontGeometrySamples = (
-  resolvedFont: ResolvedFont
+  resolvedFont: ResolvedFont,
+  partLayoutsByCharacter?: ReadonlyMap<string, SemanticPartLayout>
 ): GlyphGeometrySample[] => {
   const samples: GlyphGeometrySample[] = []
   for (const glyph of Object.values(resolvedFont.glyphs)) {
@@ -68,7 +79,8 @@ export const buildFontGeometrySamples = (
     const sample = buildGlyphGeometrySample(
       glyph,
       resolvedFont.glyphs,
-      resolvedFont.bodyBox
+      resolvedFont.bodyBox,
+      partLayoutsByCharacter?.get(getGlyphCharacter(glyph))
     )
     if (sample) {
       samples.push(sample)

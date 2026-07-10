@@ -8,7 +8,10 @@ import {
 import {
   buildRobustStat,
   computeRadarFromSamples,
+  evaluateSampleAgainstRadar,
+  RADAR_SUSPECT_SCORE,
   radarZScore,
+  type RadarReferenceData,
 } from 'src/lib/qualityCheck/qualityRadar'
 import { analyzeFontPopulation } from 'src/lib/qualityCheck/populationAnalysisAdapter'
 import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
@@ -582,6 +585,104 @@ describe('projection gap detection', () => {
         .get('drifted')!
         .reasons.some((reason) => reason.key === 'gap:x')
     ).toBe(true)
+  })
+})
+
+describe('semantic part-interface gap detection', () => {
+  it('uses the same leading-part cohort, then falls back to the axis cohort', () => {
+    const bodyBox = { top: 880, bottom: -120, unitsPerEm: 1000 }
+    const withPartGap = (
+      sample: GlyphGeometrySample,
+      gapRatio: number,
+      firstCharacter = '訁'
+    ): GlyphGeometrySample => ({
+      ...sample,
+      partSpacing: {
+        axis: 'horizontal',
+        firstCharacter,
+        secondCharacter: 'X',
+        splitRatio: 0.45,
+        gapRatio,
+        overlapRatio: 0,
+        sampleCount: 64,
+      },
+    })
+    const samples: GlyphGeometrySample[] = []
+    for (let index = 0; index < 40; index += 1) {
+      samples.push(
+        withPartGap(
+          makeStratumSample(`peer${index}`, 700, 100000, 0),
+          0.05 + (index % 5) * 0.002,
+          index < 24 ? '訁' : `part${index}`
+        )
+      )
+    }
+    samples.push(
+      withPartGap(makeStratumSample('drifted', 700, 100000, 0), 0.12)
+    )
+
+    const radar = computeRadarFromSamples(samples, bodyBox)!
+    expect(
+      radar.evaluationByGlyphId
+        .get('drifted')!
+        .reasons.some((reason) => reason.key === 'part-gap:x')
+    ).toBe(true)
+  })
+
+  it('detects a small live-edit drift against the same glyph baseline', () => {
+    const bodyBox = { top: 880, bottom: -120, unitsPerEm: 1000 }
+    const samples = Array.from({ length: 40 }, (_, index) =>
+      makeStratumSample(`peer${index}`, 700, 100000, 0)
+    )
+    const radar = computeRadarFromSamples(samples, bodyBox)!
+    const sample: GlyphGeometrySample = {
+      ...samples[0],
+      partSpacing: {
+        axis: 'horizontal',
+        firstCharacter: '訁',
+        secondCharacter: '吾',
+        splitRatio: 0.45,
+        gapRatio: 0.07,
+        overlapRatio: 0,
+        sampleCount: 64,
+      },
+    }
+    const evaluation = evaluateSampleAgainstRadar(sample, radar, bodyBox, {
+      ...sample.partSpacing,
+      gapRatio: 0.05,
+    })
+    expect(
+      evaluation.reasons.find((reason) => reason.key === 'part-gap:x')?.basis
+    ).toBe('baseline')
+    expect(evaluation.score).toBeGreaterThanOrEqual(RADAR_SUSPECT_SCORE)
+  })
+})
+
+describe('reference residual style adaptation', () => {
+  it('learns a narrower per-glyph width-residual amplitude from the current font', () => {
+    const bodyBox = { top: 880, bottom: -120, unitsPerEm: 1000 }
+    const residualsByCharacter: RadarReferenceData['residualsByCharacter'] = {}
+    const samples = Array.from({ length: 160 }, (_, index) => {
+      const referenceResidual = ((index % 17) - 8) * 0.01
+      const id = `adapt${index}`
+      residualsByCharacter[id] = {
+        'face:widthRatio': { value: referenceResidual, confidence: 1 },
+      }
+      return makeStratumSample(
+        id,
+        700 + referenceResidual * 1000 * 0.25,
+        100000,
+        0
+      )
+    })
+    const radar = computeRadarFromSamples(samples, bodyBox, undefined, {
+      source: 'Synthetic wide reference',
+      defaultConfidence: 1,
+      residualsByCharacter,
+    })!
+
+    expect(radar.referenceStyleScales['face:widthRatio']).toBeCloseTo(0.25, 1)
+    expect(radar.suspects).toHaveLength(0)
   })
 })
 

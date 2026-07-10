@@ -13,6 +13,7 @@ import {
   type RadarReferenceData,
   type RadarAnalysis,
 } from 'src/lib/qualityCheck/qualityRadar'
+import type { SemanticPartLayout } from 'src/lib/qualityCheck/partSpacingMetrics'
 
 /**
  * 母體分析：整套字體唯一的重計算點。一次 flatten 取樣後，
@@ -28,9 +29,10 @@ export interface PopulationAnalysis {
 export const runPopulationAnalysis = (
   resolvedFont: ResolvedFont,
   semanticEnclosureChars?: ReadonlySet<string>,
-  referenceData?: RadarReferenceData | null
+  referenceData?: RadarReferenceData | null,
+  partLayoutsByCharacter?: ReadonlyMap<string, SemanticPartLayout>
 ): PopulationAnalysis => {
-  const samples = buildFontGeometrySamples(resolvedFont)
+  const samples = buildFontGeometrySamples(resolvedFont, partLayoutsByCharacter)
   const ruler = buildStructureRuler(samples, resolvedFont.bodyBox)
   return {
     baseline: buildStructureBaseline(samples, resolvedFont.bodyBox),

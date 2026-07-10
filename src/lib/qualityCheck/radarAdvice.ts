@@ -37,8 +37,12 @@ const BEARING_ACTIONS: Record<StructureSide, [string, string]> = {
 const formatDelta = (reason: RadarReason) =>
   formatRadarValue(Math.abs(reason.value - reason.median), reason.format)
 
-const basisLabel = (reason: RadarReason) =>
-  reason.basis === 'reference' ? '參考結構校正值' : '複雜度相近的字'
+const basisLabel = (reason: RadarReason) => {
+  if (reason.basis === 'reference') {
+    return '參考結構校正值'
+  }
+  return reason.basis === 'baseline' ? '編輯前的字形' : '複雜度相近的字'
+}
 
 const basisPrefix = (reason: RadarReason) =>
   reason.basis === 'reference'
@@ -102,6 +106,20 @@ const describeBody = (
         action: high
           ? '將上下部件互相靠攏，或檢查部件是否放錯位置'
           : '將上下部件稍微拉開',
+      }
+    case 'part-gap:x':
+      return {
+        title: `左右部件相向邊緣的間距偏${high ? '開' : '擠'}`,
+        action: high
+          ? `將左右部件互相靠攏約 ${delta}`
+          : `將左右部件互相拉開約 ${delta}`,
+      }
+    case 'part-gap:y':
+      return {
+        title: `上下部件相向邊緣的間距偏${high ? '開' : '擠'}`,
+        action: high
+          ? `將上下部件互相靠攏約 ${delta}`
+          : `將上下部件互相拉開約 ${delta}`,
       }
     case 'ink:toFace':
     case 'ink:toEm':
