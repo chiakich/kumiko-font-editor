@@ -458,12 +458,22 @@ export function GlyphReadonlyReference({
       const part = partId
         ? (previewParts.find((candidate) => candidate.id === partId) ?? null)
         : null
-      setComponentGhostPaths(part ? buildInsertablePaths(part) : null)
+      const selectedIds = new Set(selectedPartIds)
+      const partsToPreview =
+        part && selectedIds.has(part.id)
+          ? previewParts.filter((candidate) => selectedIds.has(candidate.id))
+          : part
+            ? [part]
+            : []
+      const pathsToPreview = partsToPreview.flatMap(buildInsertablePaths)
+
+      setComponentGhostPaths(pathsToPreview.length > 0 ? pathsToPreview : null)
       setComponentTargetRect(null)
     },
     [
       buildInsertablePaths,
       previewParts,
+      selectedPartIds,
       setComponentGhostPaths,
       setComponentTargetRect,
     ]
@@ -604,6 +614,7 @@ export function GlyphReadonlyReference({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerLeave}
+          style={{ cursor: 'pointer' }}
         />
       </Box>
     </Box>
