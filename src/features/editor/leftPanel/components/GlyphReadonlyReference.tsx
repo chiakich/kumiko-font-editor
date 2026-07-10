@@ -1,20 +1,8 @@
 import { Box, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { VarPackedPath } from 'src/font/VarPackedPath'
-import {
-  computePartBoxPlacement,
-  getFontVerticalBox,
-  groupPathsByPartBoxes,
-  mapGlyphwikiBoxToFontUnits,
-  transformPaths,
-  type Rect,
-} from 'src/lib/components/componentAssembly'
-import { getGlyphCharacter } from 'src/lib/glyph/glyphRelations'
+import { getPathsBounds, type Rect } from 'src/lib/components/componentAssembly'
 import { getComponentMatrix } from 'src/lib/components/componentTransform'
-import {
-  getGlyphwikiComposition,
-  type GlyphwikiPartPlacement,
-} from 'src/lib/glyph/glyphwikiComposition'
 import {
   useStore,
   activeLayer,
@@ -37,7 +25,23 @@ interface PreviewPart {
   id: string
   path2d: Path2D
   pathsToInsert: PathData[]
-  sourcePartRect?: Rect
+  bounds: Rect
+}
+
+interface PreviewTransform {
+  scale: number
+  e: number
+  f: number
+}
+
+interface FontPoint {
+  x: number
+  y: number
+}
+
+interface SelectionDrag {
+  start: FontPoint
+  current: FontPoint
 }
 
 const generateId = (prefix: string) =>
@@ -51,6 +55,19 @@ const clonePath = (path: PathData): PathData => ({
     id: generateId('node'),
   })),
 })
+
+const buildPart = (id: string, paths: PathData[]): PreviewPart | null => {
+  const bounds = getPathsBounds(paths)
+  if (!bounds) {
+    return null
+  }
+  return {
+    id,
+    path2d: new Path2D(buildVarPackedPathForPaths(paths).toSVGPath()),
+    pathsToInsert: paths.map(clonePath),
+    bounds,
+  }
+}
 
 const buildVarPackedPathForPaths = (paths: PathData[]) =>
   VarPackedPath.fromUnpackedContours(
@@ -110,11 +127,10 @@ const buildRootPathParts = (sourcePaths: PathData[]): PreviewPart[] => {
 
   const testContext = createTestContext()
   if (!testContext) {
-    return sourcePaths.map((path) => ({
-      id: `path:${path.id}`,
-      path2d: new Path2D(buildVarPackedPathForPaths([path]).toSVGPath()),
-      pathsToInsert: [clonePath(path)],
-    }))
+    return sourcePaths.flatMap((path) => {
+      const part = buildPart(`path:${path.id}`, [path])
+      return part ? [part] : []
+    })
   }
 
   const singles = sourcePaths.map((path) => ({
@@ -168,11 +184,10 @@ const buildRootPathParts = (sourcePaths: PathData[]): PreviewPart[] => {
     groups.set(root, paths)
   }
 
-  return [...groups.entries()].map(([rootIndex, paths]) => ({
-    id: `path-group:${singles[rootIndex].path.id}`,
-    path2d: new Path2D(buildVarPackedPathForPaths(paths).toSVGPath()),
-    pathsToInsert: paths.map(clonePath),
-  }))
+  return [...groups.entries()].flatMap(([rootIndex, paths]) => {
+    const part = buildPart(`path-group:${singles[rootIndex].path.id}`, paths)
+    return part ? [part] : []
+  })
 }
 
 const materializeComponentPaths = (
@@ -236,13 +251,8 @@ const buildComponentParts = (
       return []
     }
 
-    return [
-      {
-        id: `component:${component.id}`,
-        path2d: new Path2D(buildVarPackedPathForPaths(paths).toSVGPath()),
-        pathsToInsert: paths,
-      },
-    ]
+    const part = buildPart(`component:${component.id}`, paths)
+    return part ? [part] : []
   })
 
 const getPreviewWidth = (glyph: GlyphData) =>
@@ -265,16 +275,38 @@ const getPreviewTransform = (
   }
 }
 
+const rectFromPoints = (start: FontPoint, end: FontPoint): Rect => ({
+  xMin: Math.min(start.x, end.x),
+  xMax: Math.max(start.x, end.x),
+  yMin: Math.min(start.y, end.y),
+  yMax: Math.max(start.y, end.y),
+})
+
+const rectsIntersect = (left: Rect, right: Rect) =>
+  left.xMin <= right.xMax &&
+  left.xMax >= right.xMin &&
+  left.yMin <= right.yMax &&
+  left.yMax >= right.yMin
+
+const getSelectionBoxScreenRect = (
+  rect: Rect,
+  transform: PreviewTransform
+) => ({
+  x: rect.xMin * transform.scale + transform.e,
+  y: transform.f - rect.yMax * transform.scale,
+  width: Math.max(1, (rect.xMax - rect.xMin) * transform.scale),
+  height: Math.max(1, (rect.yMax - rect.yMin) * transform.scale),
+})
+
+const isMeaningfulDrag = (start: FontPoint, current: FontPoint) =>
+  Math.hypot(start.x - current.x, start.y - current.y) > 8
+
 export function GlyphReadonlyReference({
   glyph,
   glyphMap,
-  targetRect,
 }: {
   glyph: GlyphData
   glyphMap: Record<string, GlyphData>
-  // Destination box (current glyph's font units) the hovered part should be
-  // fitted into; null falls back to inserting at the donor's coordinates.
-  targetRect?: Rect | null
 }) {
   const { t } = useTranslation()
 
@@ -287,81 +319,31 @@ export function GlyphReadonlyReference({
   const setComponentTargetRect = useStore(
     (state) => state.setComponentTargetRect
   )
-  const fontData = useStore((state) => state.fontData)
   const [hoveredPartId, setHoveredPartId] = useState<string | null>(null)
+  const [selectedPartIds, setSelectedPartIds] = useState<string[]>([])
+  const [selectionDrag, setSelectionDrag] = useState<SelectionDrag | null>(null)
+  const pointerDownRef = useRef<{
+    point: FontPoint
+    partId: string | null
+    pointerId: number
+  } | null>(null)
   const [forceRedraw, setForceRedraw] = useState(0)
   const width = useMemo(() => getPreviewWidth(glyph), [glyph])
 
-  // Group the donor's paths by its own GlyphWiki part boxes so an entire
-  // radical (e.g. all three strokes of 火) hovers and inserts as one unit.
-  const donorCharacter = getGlyphCharacter(glyph)
-  const [donorParts, setDonorParts] = useState<{
-    character: string
-    placements: GlyphwikiPartPlacement[]
-  } | null>(null)
-
-  useEffect(() => {
-    if (!donorCharacter) {
-      return
-    }
-    let cancelled = false
-    void getGlyphwikiComposition(donorCharacter)
-      .then((placements) => {
-        if (!cancelled && placements) {
-          setDonorParts({ character: donorCharacter, placements })
-        }
-      })
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [donorCharacter])
-
-  const previewParts = useMemo(() => {
-    const placements =
-      donorParts && donorParts.character === donorCharacter && fontData
-        ? donorParts.placements
-        : null
-
-    let semanticParts: PreviewPart[] = []
-    let leftoverPaths = activeLayer(glyph).paths
-    if (placements && fontData) {
-      const verticalBox = getFontVerticalBox(fontData)
-      const advanceWidth =
-        activeLayer(glyph).metrics.width || fontData.unitsPerEm || 1000
-      const partRects = placements.map((placement) =>
-        mapGlyphwikiBoxToFontUnits(placement.box, advanceWidth, verticalBox)
-      )
-      const { groups, remaining } = groupPathsByPartBoxes(
-        activeLayer(glyph).paths,
-        partRects
-      )
-      semanticParts = groups.flatMap((groupPaths, index) =>
-        groupPaths.length > 0
-          ? [
-              {
-                id: `part:${placements[index]!.char}:${index}`,
-                path2d: new Path2D(
-                  buildVarPackedPathForPaths(groupPaths).toSVGPath()
-                ),
-                pathsToInsert: groupPaths.map(clonePath),
-                sourcePartRect: partRects[index],
-              },
-            ]
-          : []
-      )
-      leftoverPaths = remaining
-    }
-
-    return [
+  const previewParts = useMemo(
+    () => [
       ...buildComponentParts(glyphMap, activeLayer(glyph).componentRefs),
-      ...semanticParts,
-      ...buildRootPathParts(leftoverPaths),
-    ]
-  }, [donorCharacter, donorParts, fontData, glyph, glyphMap])
+      ...buildRootPathParts(activeLayer(glyph).paths),
+    ],
+    [glyph, glyphMap]
+  )
 
   const drawPreview = useCallback(
-    (hoveredId: string | null) => {
+    (
+      hoveredId: string | null,
+      selectionIds: string[],
+      drag: SelectionDrag | null
+    ) => {
       const canvas = canvasRef.current
       if (!canvas) {
         return
@@ -382,22 +364,42 @@ export function GlyphReadonlyReference({
       context.scale(dpr, dpr)
 
       const { scale, e, f } = getPreviewTransform(cssWidth, cssHeight, width)
+      const transform = { scale, e, f }
+      const selectionIdSet = new Set(selectionIds)
 
       context.fillStyle = '#fff'
       context.fillRect(0, 0, cssWidth, cssHeight)
       context.setTransform(scale * dpr, 0, 0, -scale * dpr, e * dpr, f * dpr)
 
       for (const part of previewParts) {
-        context.fillStyle = part.id === hoveredId ? '#1E88A8' : '#000'
+        context.fillStyle =
+          part.id === hoveredId || selectionIdSet.has(part.id)
+            ? '#1E88A8'
+            : '#000'
         context.fill(part.path2d, 'evenodd')
+      }
+
+      if (drag && isMeaningfulDrag(drag.start, drag.current)) {
+        const rect = getSelectionBoxScreenRect(
+          rectFromPoints(drag.start, drag.current),
+          transform
+        )
+        context.setTransform(dpr, 0, 0, dpr, 0, 0)
+        context.fillStyle = 'rgba(30, 136, 168, 0.13)'
+        context.strokeStyle = '#1E88A8'
+        context.lineWidth = 1
+        context.setLineDash([4, 3])
+        context.fillRect(rect.x, rect.y, rect.width, rect.height)
+        context.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.width, rect.height)
+        context.setLineDash([])
       }
     },
     [previewParts, width]
   )
 
   useEffect(() => {
-    drawPreview(hoveredPartId)
-  }, [drawPreview, hoveredPartId, forceRedraw])
+    drawPreview(hoveredPartId, selectedPartIds, selectionDrag)
+  }, [drawPreview, hoveredPartId, selectedPartIds, selectionDrag, forceRedraw])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -411,7 +413,7 @@ export function GlyphReadonlyReference({
     return () => observer.disconnect()
   }, [])
 
-  const toFontPoint = (clientX: number, clientY: number) => {
+  const toFontPoint = (clientX: number, clientY: number): FontPoint | null => {
     const canvas = canvasRef.current
     if (!canvas) {
       return null
@@ -446,19 +448,9 @@ export function GlyphReadonlyReference({
     return null
   }
 
-  // Move the hovered part by its GlyphWiki placement box so the part keeps
-  // the same visual offset it had inside the donor character.
   const buildInsertablePaths = useCallback(
-    (part: PreviewPart) => {
-      if (!part.sourcePartRect || !targetRect) {
-        return part.pathsToInsert.map(clonePath)
-      }
-      return transformPaths(
-        part.pathsToInsert,
-        computePartBoxPlacement(part.sourcePartRect, targetRect)
-      )
-    },
-    [targetRect]
+    (part: PreviewPart) => part.pathsToInsert.map(clonePath),
+    []
   )
 
   const showGhostForPart = useCallback(
@@ -467,15 +459,13 @@ export function GlyphReadonlyReference({
         ? (previewParts.find((candidate) => candidate.id === partId) ?? null)
         : null
       setComponentGhostPaths(part ? buildInsertablePaths(part) : null)
-      // The destination box only shows together with the ghost preview.
-      setComponentTargetRect(part ? (targetRect ?? null) : null)
+      setComponentTargetRect(null)
     },
     [
       buildInsertablePaths,
       previewParts,
       setComponentGhostPaths,
       setComponentTargetRect,
-      targetRect,
     ]
   )
 
@@ -491,6 +481,12 @@ export function GlyphReadonlyReference({
     if (!point) {
       return
     }
+
+    if (pointerDownRef.current && pointerDownRef.current.partId === null) {
+      setSelectionDrag({ start: pointerDownRef.current.point, current: point })
+      return
+    }
+
     const part = hitTestPart(point)
     const partId = part?.id ?? null
     if (partId !== hoveredPartId) {
@@ -504,17 +500,89 @@ export function GlyphReadonlyReference({
     showGhostForPart(null)
   }
 
-  const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const insertParts = useCallback(
+    (parts: PreviewPart[]) => {
+      if (!selectedGlyphId) {
+        return
+      }
+      for (const part of parts) {
+        for (const path of buildInsertablePaths(part)) {
+          createPath(selectedGlyphId, path)
+        }
+      }
+      showGhostForPart(null)
+    },
+    [buildInsertablePaths, createPath, selectedGlyphId, showGhostForPart]
+  )
+
+  const getSelectedParts = useCallback(() => {
+    const selected = new Set(selectedPartIds)
+    return previewParts.filter((part) => selected.has(part.id))
+  }, [previewParts, selectedPartIds])
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const point = toFontPoint(event.clientX, event.clientY)
-    const part = point ? hitTestPart(point) : null
-    if (!part || !selectedGlyphId) {
+    if (!point) {
       return
     }
 
-    for (const path of buildInsertablePaths(part)) {
-      createPath(selectedGlyphId, path)
+    const part = hitTestPart(point)
+    pointerDownRef.current = {
+      point,
+      partId: part?.id ?? null,
+      pointerId: event.pointerId,
     }
-    showGhostForPart(null)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    if (!part) {
+      setSelectionDrag({ start: point, current: point })
+    }
+  }
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const pointerDown = pointerDownRef.current
+    pointerDownRef.current = null
+    if (!pointerDown) {
+      return
+    }
+
+    if (event.currentTarget.hasPointerCapture(pointerDown.pointerId)) {
+      event.currentTarget.releasePointerCapture(pointerDown.pointerId)
+    }
+
+    const point = toFontPoint(event.clientX, event.clientY)
+    const drag = selectionDrag
+    setSelectionDrag(null)
+
+    if (
+      pointerDown.partId === null &&
+      drag &&
+      isMeaningfulDrag(drag.start, drag.current)
+    ) {
+      const selectionRect = rectFromPoints(drag.start, drag.current)
+      setSelectedPartIds(
+        previewParts
+          .filter((part) => rectsIntersect(part.bounds, selectionRect))
+          .map((part) => part.id)
+      )
+      return
+    }
+
+    const part = point ? hitTestPart(point) : null
+    const selectedIds = new Set(selectedPartIds)
+    if (part && selectedIds.has(part.id)) {
+      const parts = getSelectedParts()
+      insertParts(parts.length > 0 ? parts : [part])
+      return
+    }
+
+    if (selectedPartIds.length > 0) {
+      setSelectedPartIds([])
+      return
+    }
+
+    if (part && pointerDown.partId === part.id) {
+      insertParts([part])
+    }
   }
 
   return (
@@ -532,9 +600,10 @@ export function GlyphReadonlyReference({
       <Box display="block" w="100%" h="220px" cursor="pointer" asChild>
         <canvas
           ref={canvasRef}
+          onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerLeave}
-          onClick={handleClick}
         />
       </Box>
     </Box>

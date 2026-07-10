@@ -1,13 +1,9 @@
 import { HStack, Stack, Text, VStack, Separator } from '@chakra-ui/react'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import type { ListRange } from 'react-virtuoso'
-import {
-  getFontVerticalBox,
-  mapGlyphwikiBoxToFontUnits,
-} from 'src/lib/components/componentAssembly'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
-import { useStore, activeLayer, type GlyphData } from 'src/store'
+import { useStore, type GlyphData } from 'src/store'
 import { ComponentSearchSection } from 'src/features/editor/leftPanel/components/ComponentSearchSection'
 import { GlyphPreviewCard } from 'src/features/editor/leftPanel/components/GlyphPreviewCard'
 import { GlyphPreviewStrip } from 'src/features/editor/leftPanel/components/GlyphPreviewStrip'
@@ -25,7 +21,6 @@ export function LeftPanelContent({
   glyphs,
   selectedGlyph,
 }: LeftPanelContentProps) {
-  const fontData = useStore((state) => state.fontData)
   const projectId = useStore((state) => state.projectId)
   const hydrateGlyphGeometry = useStore((state) => state.hydrateGlyphGeometry)
   const setEditorReferenceGlyphIds = useStore(
@@ -41,7 +36,6 @@ export function LeftPanelContent({
     resultGlyphs,
     searchState,
     selectedComponent,
-    targetPartBox,
     partBoxesByComponent,
     setPreviewGlyphId,
     setSelectedComponent,
@@ -50,21 +44,6 @@ export function LeftPanelContent({
     glyphMap,
     selectedGlyph,
   })
-
-  // Where the active component should land inside the edited glyph,
-  // in font units; null when GlyphWiki has no layout for this character.
-  const targetRect = useMemo(() => {
-    if (!targetPartBox || !selectedGlyph || !fontData) {
-      return null
-    }
-    const advanceWidth =
-      activeLayer(selectedGlyph).metrics.width || fontData.unitsPerEm || 1000
-    return mapGlyphwikiBoxToFontUnits(
-      targetPartBox,
-      advanceWidth,
-      getFontVerticalBox(fontData)
-    )
-  }, [fontData, selectedGlyph, targetPartBox])
 
   const loadGeometry = useCallback(
     (glyphIds: string[]) => {
@@ -157,11 +136,7 @@ export function LeftPanelContent({
           onRangeChange={handleStripRangeChange}
         />
 
-        <GlyphPreviewCard
-          glyph={previewGlyph}
-          glyphMap={glyphMap}
-          targetRect={targetRect}
-        />
+        <GlyphPreviewCard glyph={previewGlyph} glyphMap={glyphMap} />
       </Stack>
       {searchState.error ? (
         <Text mt={3} fontSize="sm" color="destructive">
