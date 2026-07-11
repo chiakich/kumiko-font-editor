@@ -1,4 +1,5 @@
 <img width="1088" height="362" alt="image" src="https://github.com/user-attachments/assets/725fa628-7af8-4aaf-aae8-0950599abad8" />
+<img width="1778" height="1014" alt="image" src="https://github.com/user-attachments/assets/5f75232b-dc20-41e2-b8d2-ce1dc9333f0a" />
 
 # Kumiko Font Editor
 
