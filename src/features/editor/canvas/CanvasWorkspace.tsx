@@ -197,7 +197,7 @@ export function CanvasWorkspace() {
       }
       const glyph = fontData?.glyphs[glyphId]
       setEditorTextState(
-        glyph ? getGlyphDisplayCharacter(glyph) : '',
+        glyph ? (getGlyphDisplayCharacter(glyph) ?? '') : '',
         [glyphId],
         1,
         0
