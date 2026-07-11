@@ -24,8 +24,10 @@ import { useCanvasClipboard } from 'src/features/editor/canvas/hooks/useCanvasCl
 import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
 import { useReferenceFontRestoration } from 'src/features/editor/canvas/workspace/hooks/useReferenceFontRestoration'
 import { useCanvasSceneModelSync } from 'src/features/editor/canvas/workspace/hooks/useCanvasSceneModelSync'
+import { useOverviewSections } from 'src/features/fontOverview/hooks/useOverviewSections'
 import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+import { getGlyphDisplayCharacter } from 'src/lib/glyph/glyphOverview'
 import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
 import type { GlyphData } from 'src/store'
 
@@ -54,6 +56,10 @@ export function CanvasWorkspace() {
   const componentGhostPaths = useStore((state) => state.componentGhostPaths)
   const componentTargetRect = useStore((state) => state.componentTargetRect)
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
+  const filteredGlyphList = useStore((state) => state.filteredGlyphList)
+  const glyphEditTimes = useStore((state) => state.glyphEditTimes)
+  const overviewCustomFilters = useStore((state) => state.overviewCustomFilters)
+  const overviewSectionId = useStore((state) => state.overviewSectionId)
   const editorGlyphIds = useStore((state) => state.editorGlyphIds)
   const editorText = useStore((state) => state.editorText)
   const editorTextCursorIndex = useStore((state) => state.editorTextCursorIndex)
@@ -80,6 +86,7 @@ export function CanvasWorkspace() {
     (state) => state.setEditorActiveGlyphIndex
   )
   const setEditorTextState = useStore((state) => state.setEditorTextState)
+  const setOverviewSectionId = useStore((state) => state.setOverviewSectionId)
   const updateViewport = useStore((state) => state.updateViewport)
   const deleteSelectedNodes = useStore((state) => state.deleteSelectedNodes)
   const convertLineSegmentToCurve = useStore(
@@ -116,6 +123,13 @@ export function CanvasWorkspace() {
   const activeEditorGlyph = activeEditorGlyphId
     ? (fontData?.glyphs[activeEditorGlyphId] ?? null)
     : null
+  const { activeSection: activeOverviewSection } = useOverviewSections({
+    filteredGlyphList,
+    glyphEditTimes,
+    overviewCustomFilters,
+    selectedSectionId: overviewSectionId,
+    onSelectedSectionChange: setOverviewSectionId,
+  })
   const isInterpolatedPreview = useMemo(
     () =>
       isInterpolatedGlyphLocation(fontData, activeEditorGlyph, editLocation),
@@ -162,21 +176,34 @@ export function CanvasWorkspace() {
     [setSelectedNodeIds, setSelectedSegment]
   )
 
+  const adjacentOverviewGlyphs = useMemo(() => {
+    const activeIndex = activeOverviewSection.glyphs.findIndex(
+      (glyph) => glyph.id === activeEditorGlyphId
+    )
+    if (activeIndex < 0) {
+      return { next: null, previous: null }
+    }
+
+    return {
+      previous: activeOverviewSection.glyphs[activeIndex - 1] ?? null,
+      next: activeOverviewSection.glyphs[activeIndex + 1] ?? null,
+    }
+  }, [activeEditorGlyphId, activeOverviewSection.glyphs])
+
   const selectAdjacentGlyph = useCallback(
-    (offset: -1 | 1) => {
-      const nextIndex = editorActiveGlyphIndex + offset
-      if (nextIndex < 0 || nextIndex >= editorGlyphIds.length) {
+    (glyphId: string | null) => {
+      if (!glyphId) {
         return
       }
-      setEditorActiveGlyphIndex(nextIndex)
-      setEditorTextCursorIndex(nextIndex + 1)
+      const glyph = fontData?.glyphs[glyphId]
+      setEditorTextState(
+        glyph ? getGlyphDisplayCharacter(glyph) : '',
+        [glyphId],
+        1,
+        0
+      )
     },
-    [
-      editorActiveGlyphIndex,
-      editorGlyphIds.length,
-      setEditorActiveGlyphIndex,
-      setEditorTextCursorIndex,
-    ]
+    [fontData, setEditorTextState]
   )
 
   const positionedGlyphs = useMemo(
@@ -669,10 +696,26 @@ export function CanvasWorkspace() {
         activeToolId={activeToolId}
         canRedo={futureStatesLength > 0}
         canUndo={pastStatesLength > 0}
-        hasNextGlyph={editorActiveGlyphIndex < editorGlyphIds.length - 1}
-        hasPreviousGlyph={editorActiveGlyphIndex > 0}
-        onNextGlyph={() => selectAdjacentGlyph(1)}
-        onPreviousGlyph={() => selectAdjacentGlyph(-1)}
+        hasNextGlyph={Boolean(adjacentOverviewGlyphs.next)}
+        hasPreviousGlyph={Boolean(adjacentOverviewGlyphs.previous)}
+        nextGlyphLabel={
+          adjacentOverviewGlyphs.next
+            ? getGlyphDisplayCharacter(adjacentOverviewGlyphs.next) ||
+              adjacentOverviewGlyphs.next.id
+            : null
+        }
+        onNextGlyph={() =>
+          selectAdjacentGlyph(adjacentOverviewGlyphs.next?.id ?? null)
+        }
+        onPreviousGlyph={() =>
+          selectAdjacentGlyph(adjacentOverviewGlyphs.previous?.id ?? null)
+        }
+        previousGlyphLabel={
+          adjacentOverviewGlyphs.previous
+            ? getGlyphDisplayCharacter(adjacentOverviewGlyphs.previous) ||
+              adjacentOverviewGlyphs.previous.id
+            : null
+        }
         onRedo={handleRedo}
         onSelectTool={handleToolSelect}
         onUndo={handleUndo}

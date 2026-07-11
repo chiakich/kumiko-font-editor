@@ -1,4 +1,4 @@
-import { Box, Flex, HStack, IconButton } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack } from '@chakra-ui/react'
 import { NavArrowLeft, NavArrowRight } from 'iconoir-react'
 import { useTranslation } from 'react-i18next'
 import type { ToolId } from 'src/features/editor/canvas/workspace/types'
@@ -12,8 +12,10 @@ interface CanvasWorkspaceOverlayProps {
   canUndo: boolean
   hasNextGlyph: boolean
   hasPreviousGlyph: boolean
+  nextGlyphLabel: string | null
   onNextGlyph: () => void
   onPreviousGlyph: () => void
+  previousGlyphLabel: string | null
   onRedo: () => void
   onSelectTool: (toolId: ToolId) => void
   onUndo: () => void
@@ -25,8 +27,10 @@ export function CanvasWorkspaceOverlay({
   canUndo,
   hasNextGlyph,
   hasPreviousGlyph,
+  nextGlyphLabel,
   onNextGlyph,
   onPreviousGlyph,
+  previousGlyphLabel,
   onRedo,
   onSelectTool,
   onUndo,
@@ -35,7 +39,7 @@ export function CanvasWorkspaceOverlay({
 
   return (
     <>
-      <IconButton
+      <Button
         position="absolute"
         top={4}
         left={4}
@@ -48,8 +52,9 @@ export function CanvasWorkspaceOverlay({
         onClick={onPreviousGlyph}
       >
         <NavArrowLeft width={18} height={18} aria-hidden="true" />
-      </IconButton>
-      <IconButton
+        {previousGlyphLabel}
+      </Button>
+      <Button
         position="absolute"
         top={4}
         right={4}
@@ -61,8 +66,9 @@ export function CanvasWorkspaceOverlay({
         disabled={!hasNextGlyph}
         onClick={onNextGlyph}
       >
+        {nextGlyphLabel}
         <NavArrowRight width={18} height={18} aria-hidden="true" />
-      </IconButton>
+      </Button>
       <Flex
         position="absolute"
         left="50%"
