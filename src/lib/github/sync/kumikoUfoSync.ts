@@ -1,6 +1,10 @@
 import { hashString } from 'src/lib/hash'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
+import {
+  buildUfoFontLevelFontData,
+  parseUfoMetadataFiles,
+} from 'src/lib/fontFormats/ufoFormat'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import {
   buildSyncReport,
@@ -1581,7 +1585,43 @@ export const applyKumikoRemoteSnapshot = async (input: {
     return true
   }
 
+  const fontLevelEntries = input.report.entries.filter(
+    (entry) => entry.kind === 'font'
+  )
+  const appliedFontLevelShas: Record<string, string> = {}
+  let applyFontLevel = false
+  for (const entry of fontLevelEntries) {
+    const takeRemote =
+      entry.status === 'remoteModified' ||
+      entry.status === 'remoteAdded' ||
+      (entry.status === 'conflict' && resolutions[entry.path] === 'takeRemote')
+    if (entry.status === 'conflict' && resolutions[entry.path] === undefined) {
+      remainingConflicts += 1
+      continue
+    }
+    if (
+      entry.status === 'conflict' &&
+      resolutions[entry.path] === 'keepLocal'
+    ) {
+      // Re-baseline so the next report compares against what the remote holds.
+      if (entry.remoteSha) {
+        appliedFontLevelShas[entry.path] = entry.remoteSha
+      }
+      appliedCount += 1
+      continue
+    }
+    if (!takeRemote || !entry.remoteSha) {
+      continue
+    }
+    applyFontLevel = true
+    appliedFontLevelShas[entry.path] = entry.remoteSha
+    appliedCount += 1
+  }
+
   for (const entry of input.report.entries) {
+    if (entry.kind === 'font') {
+      continue
+    }
     switch (entry.status) {
       case 'remoteModified':
       case 'remoteAdded': {
@@ -1649,8 +1689,35 @@ export const applyKumikoRemoteSnapshot = async (input: {
     await deleteKumikoGlyphRecordBatch(keysToDelete)
   }
 
+  // Re-read the remote UFO through the import parser so pulled font-level state
+  // lands in canonical fields exactly the way an import would put it there.
+  const remoteFontLevel =
+    applyFontLevel && remoteUfo
+      ? parseUfoMetadataFiles({
+          projectId: input.projectId,
+          ufo: remoteUfo,
+          updatedAt: timestamp,
+        }).metadata
+      : null
+  const remoteFontData = remoteFontLevel
+    ? buildUfoFontLevelFontData(remoteFontLevel)
+    : null
+
   await saveKumikoProjectRecord({
     ...project,
+    ...(remoteFontData
+      ? {
+          fontInfo: remoteFontData.fontInfo,
+          unitsPerEm: remoteFontData.unitsPerEm,
+          axes: remoteFontData.axes,
+          settings: remoteFontData.settings,
+          kerningGroups: remoteFontData.kerningGroups,
+          kerningPairs: remoteFontData.kerningPairs,
+          openTypeFeatures: remoteFontData.openTypeFeatures,
+          lineMetricsHorizontalLayout:
+            remoteFontData.lineMetricsHorizontalLayout,
+        }
+      : {}),
     glyphOrder: nextGlyphOrder,
     sourceData: {
       ...project.sourceData,
@@ -1663,6 +1730,19 @@ export const applyKumikoRemoteSnapshot = async (input: {
                     ...ufo,
                     contents: nextContents,
                     glyphOrder: nextGlyphOrder,
+                    ...(remoteFontLevel
+                      ? {
+                          metainfo: remoteFontLevel.metainfo,
+                          fontinfoExtra: remoteFontLevel.fontinfo,
+                          libExtra: remoteFontLevel.lib,
+                          groupsExtra: remoteFontLevel.groups,
+                          kerningExtra: remoteFontLevel.kerning,
+                        }
+                      : {}),
+                    remoteBlobShaByPath: {
+                      ...ufo.remoteBlobShaByPath,
+                      ...appliedFontLevelShas,
+                    },
                   }
                 : ufo
             ),

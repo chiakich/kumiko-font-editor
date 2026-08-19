@@ -27,6 +27,7 @@ import type { ProjectSyncReport } from 'src/lib/github/sync/types'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)
+vi.stubGlobal('Node', window.Node)
 
 vi.mock('src/lib/github/githubImport', () => ({
   fetchGitHubArchiveSnapshot: vi.fn(async () => ({
@@ -575,6 +576,100 @@ describe('Kumiko GitHub UFO sync', () => {
     expect(report?.conflicts.map((entry) => entry.path)).toContain(
       'Kumiko.ufo/fontinfo.plist'
     )
+  })
+
+  it('applies remote font-level changes to canonical project fields', async () => {
+    const { fetchGitHubArchiveSnapshot } =
+      await import('src/lib/github/githubImport')
+    vi.mocked(fetchGitHubArchiveSnapshot).mockResolvedValueOnce({
+      archiveRoot: 'owner-repo',
+      resolvedRef: 'main',
+      zipballUrl: 'https://example.test/archive.zip',
+      commitSha: 'remote-head',
+      ufoEntries: [
+        {
+          relativePath: 'Kumiko.ufo/fontinfo.plist',
+          text: `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+  <key>unitsPerEm</key>
+  <integer>2048</integer>
+  <key>familyName</key>
+  <string>Remote Family</string>
+</dict>
+</plist>`,
+        },
+        {
+          relativePath: 'Kumiko.ufo/glyphs/contents.plist',
+          text: `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict></dict>
+</plist>`,
+        },
+      ],
+    } as never)
+
+    await saveProjectDraft({
+      id: 'github-sync-apply-fontlevel',
+      title: 'Kumiko',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Kumiko.ufo',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      fontData: makeFontData(),
+      projectMetadata: null,
+      projectSourceData: sourceDataWithFontLevelBaseline,
+      projectSourceFormat: 'ufo',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      syncDirtyGlyphIds: [],
+    })
+
+    const report: ProjectSyncReport = {
+      target: { owner: 'owner', repo: 'repo', ref: 'main' },
+      remoteHeadSha: 'remote-head',
+      remoteTreeTruncated: false,
+      entries: [
+        {
+          kind: 'font',
+          glyphName: null,
+          fileName: 'fontinfo.plist',
+          path: 'Kumiko.ufo/fontinfo.plist',
+          status: 'remoteModified',
+          baselineSha: 'baseline-fontinfo-sha',
+          remoteSha: 'remote-fontinfo-sha',
+        },
+      ],
+      conflicts: [],
+      remoteChanges: [],
+      localChanges: [],
+      isUpToDate: false,
+    }
+
+    const result = await applyKumikoRemoteSnapshot({
+      projectId: 'github-sync-apply-fontlevel',
+      activeUfoId: 'Kumiko.ufo',
+      report,
+    })
+
+    expect(result.appliedCount).toBe(1)
+    const project = await loadKumikoProjectRecord('github-sync-apply-fontlevel')
+    expect(project?.unitsPerEm).toBe(2048)
+    expect(project?.fontInfo?.familyName).toBe('Remote Family')
+    // The baseline advances so the next report sees the file as unchanged.
+    expect(
+      project?.sourceData?.ufo?.ufos?.[0]?.remoteBlobShaByPath?.[
+        'Kumiko.ufo/fontinfo.plist'
+      ]
+    ).toBe('remote-fontinfo-sha')
   })
 
   it('applies remote GLIF updates to canonical glyph records', async () => {
