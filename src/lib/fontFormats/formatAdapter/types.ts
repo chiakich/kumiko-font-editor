@@ -29,4 +29,15 @@ export interface FormatAdapter {
 
   // Paths that belong to the format but must never be tracked.
   readonly ignoredPaths: readonly string[]
+
+  // How a both-sides-changed entity is settled.
+  //
+  // - `atomic`: the entity is real content; a divergence is a genuine conflict
+  //   and a person has to choose.
+  // - `setMerge`: the entity is derived bookkeeping (a glyph listing, an order
+  //   file). Its content follows from the entities around it, so a divergence
+  //   resolves itself once those are applied and must never be shown as a
+  //   conflict — that is exactly the case of two contributors each adding a
+  //   different glyph.
+  mergePolicy(entity: EntityId): 'atomic' | 'setMerge'
 }

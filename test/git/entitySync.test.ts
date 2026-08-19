@@ -186,3 +186,79 @@ describe('grouping paths by entity', () => {
     )
   })
 })
+
+describe('derived bookkeeping entities (setMerge)', () => {
+  const setMerge = (
+    base: string | null,
+    local: string | null,
+    remote: string | null
+  ) =>
+    resolveEntityStatus({
+      baseOid: base,
+      localOid: local,
+      remoteOid: remote,
+      mergePolicy: 'setMerge',
+    })
+
+  it('never conflicts when two contributors each add a glyph', () => {
+    // base lists {A}, we list {A,B}, they list {A,C}
+    expect(setMerge('base', 'local', 'remote')).toBe('localModified')
+  })
+
+  it('does not prompt a pull when only the derived file moved', () => {
+    expect(setMerge('base', 'base', 'remote')).toBe('unchanged')
+  })
+
+  it('still reports our own change so the commit carries it', () => {
+    expect(setMerge('base', 'local', 'base')).toBe('localModified')
+  })
+
+  it('leaves untouched files alone', () => {
+    expect(setMerge('base', 'base', 'base')).toBe('unchanged')
+  })
+
+  it('keeps atomic entities conflicting on the same inputs', () => {
+    expect(
+      resolveEntityStatus({
+        baseOid: 'base',
+        localOid: 'local',
+        remoteOid: 'remote',
+      })
+    ).toBe('conflict')
+  })
+
+  it('keeps a concurrent-add report free of conflicts end to end', () => {
+    const report = summarizeEntitySync(
+      buildEntitySyncEntries([
+        {
+          entity: { kind: 'font', part: 'order' },
+          path: 'Kumiko.ufo/glyphs/contents.plist',
+          baseOid: 'o0',
+          localOid: 'o1',
+          remoteOid: 'o2',
+          mergePolicy: 'setMerge',
+        },
+        {
+          entity: glyph('B'),
+          path: 'Kumiko.ufo/glyphs/B_.glif',
+          baseOid: null,
+          localOid: 'b',
+          remoteOid: null,
+        },
+        {
+          entity: glyph('C'),
+          path: 'Kumiko.ufo/glyphs/C_.glif',
+          baseOid: null,
+          localOid: null,
+          remoteOid: 'c',
+        },
+      ])
+    )
+
+    expect(report.conflicts).toHaveLength(0)
+    // The remote's new glyph is still pullable; only the listing is silent.
+    expect(report.remoteChanges.map((entry) => entry.path)).toEqual([
+      'Kumiko.ufo/glyphs/C_.glif',
+    ])
+  })
+})

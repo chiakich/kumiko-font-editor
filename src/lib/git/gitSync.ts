@@ -146,7 +146,7 @@ export const buildGitSyncReport = async (input: {
     for (const adapter of adapters) {
       const entity = adapter.entityOwning(path)
       if (entity) {
-        return entity
+        return { entity, mergePolicy: adapter.mergePolicy(entity) }
       }
     }
     return null
@@ -165,8 +165,8 @@ export const buildGitSyncReport = async (input: {
 
   const inputs: EntitySyncInput[] = []
   for (const path of paths) {
-    const local = localTree.get(path) ?? null
-    const entity = local?.entity ?? entityOwning(path)
+    const owned = entityOwning(path)
+    const entity = owned?.entity ?? localTree.get(path)?.entity ?? null
     if (!entity) {
       continue
     }
@@ -174,8 +174,9 @@ export const buildGitSyncReport = async (input: {
       entity,
       path,
       baseOid: baseOids.get(path) ?? null,
-      localOid: local?.oid ?? null,
+      localOid: localTree.get(path)?.oid ?? null,
       remoteOid: remoteOids.get(path) ?? null,
+      mergePolicy: owned?.mergePolicy ?? 'atomic',
     })
   }
 

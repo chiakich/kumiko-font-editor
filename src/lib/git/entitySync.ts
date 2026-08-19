@@ -30,6 +30,8 @@ export interface EntitySyncInput {
   baseOid: string | null
   localOid: string | null
   remoteOid: string | null
+  // Defaults to 'atomic'. See FormatAdapter.mergePolicy.
+  mergePolicy?: 'atomic' | 'setMerge'
 }
 
 // Classic three-way comparison against the merge base, over blob OIDs. Because
@@ -39,6 +41,7 @@ export const resolveEntityStatus = (input: {
   baseOid: string | null
   localOid: string | null
   remoteOid: string | null
+  mergePolicy?: 'atomic' | 'setMerge'
 }): EntitySyncStatus => {
   const { baseOid, localOid, remoteOid } = input
   const localChanged = localOid !== baseOid
@@ -51,6 +54,11 @@ export const resolveEntityStatus = (input: {
     return localOid === null ? 'localDeleted' : 'localModified'
   }
   if (!localChanged && remoteChanged) {
+    // A derived file moving on its own carries no information the glyph
+    // entities do not already carry, so it must not prompt a pull.
+    if (input.mergePolicy === 'setMerge') {
+      return 'unchanged'
+    }
     if (remoteOid === null) {
       return 'remoteDeleted'
     }
@@ -59,6 +67,11 @@ export const resolveEntityStatus = (input: {
   // Both sides moved. Identical content is not a conflict — it is convergence.
   if (localOid === remoteOid) {
     return 'unchanged'
+  }
+  // Derived bookkeeping settles itself: the local projection already reflects
+  // whatever glyph set survives, so surfacing it would be a false conflict.
+  if (input.mergePolicy === 'setMerge') {
+    return 'localModified'
   }
   return 'conflict'
 }

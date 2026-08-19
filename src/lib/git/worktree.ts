@@ -3,7 +3,10 @@ import git from 'isomorphic-git'
 import { createGitFs, type GitFs } from 'src/lib/git/gitFileSystem'
 import { createOpfsFileStore } from 'src/lib/git/opfsFileStore'
 import type { FileStore } from 'src/lib/git/fileStore'
-import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
+import {
+  listUfoTreePaths,
+  materializeUfoTree,
+} from 'src/lib/fontFormats/ufoMaterialize'
 
 export const KUMIKO_GIT_ROOT = 'kumiko/projects'
 
@@ -48,26 +51,41 @@ const listTrackedPaths = async (worktree: GitWorktree) => {
 }
 
 // Rewrites the worktree from canonical records. The worktree is a derived
-// cache, so anything the materializer no longer emits is removed rather than
-// left behind to be committed by accident.
+// cache, so anything the project no longer produces is removed rather than left
+// behind to be committed by accident.
+//
+// Scope 'auto' rebuilds everything the first time (an empty repository has
+// nothing to reuse) and afterwards writes only what changed. Deletions are
+// still detected in full, because the expected path list comes from project
+// metadata and never loads glyph geometry.
 export const syncWorktreeFromProject = async (input: {
   projectId: string
   worktree: GitWorktree
+  scope?: 'auto' | 'all' | 'dirty'
 }): Promise<WorktreeSyncResult> => {
   const { worktree } = input
   const tracked = await listTrackedPaths(worktree)
-  const writtenPaths: string[] = []
+  const requested = input.scope ?? 'auto'
+  const scope =
+    requested === 'auto' ? (tracked.size === 0 ? 'all' : 'dirty') : requested
 
-  for await (const file of materializeUfoTree({ projectId: input.projectId })) {
+  const writtenPaths: string[] = []
+  for await (const file of materializeUfoTree({
+    projectId: input.projectId,
+    scope,
+  })) {
     await worktree.fs.promises.writeFile(
       `${worktree.dir}/${file.path}`,
       file.text
     )
     writtenPaths.push(file.path)
-    tracked.delete(file.path)
   }
 
-  const removedPaths = [...tracked]
+  const expected =
+    scope === 'all'
+      ? new Set(writtenPaths)
+      : new Set(await listUfoTreePaths(input.projectId))
+  const removedPaths = [...tracked].filter((path) => !expected.has(path))
   for (const path of removedPaths) {
     await worktree.fs.promises
       .unlink(`${worktree.dir}/${path}`)

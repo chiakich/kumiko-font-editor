@@ -5,6 +5,7 @@ import {
 } from 'src/lib/fontFormats/adapters/ufo'
 import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
 import { hashString } from 'src/lib/hash'
+import { listSyncDirtyKumikoGlyphIds } from 'src/lib/project/kumikoProjectPersistence'
 import {
   buildKumikoUfoExportManifest,
   loadKumikoUfoExportExtraGlyphBatch,
@@ -32,13 +33,57 @@ const joinPath = (...parts: Array<string | null | undefined>) =>
     .filter(Boolean)
     .join('/')
 
+export type MaterializeScope = 'all' | 'dirty'
+
 export interface MaterializeUfoTreeOptions {
   projectId: string
+  // 'all' rebuilds the whole tree. 'dirty' emits only the glyphs marked sync
+  // dirty, plus the font-level files when the project itself changed — the
+  // difference between touching one file and touching thirty thousand.
+  scope?: MaterializeScope
   // Collects the export-clean bookkeeping the caller may want to persist.
   onExportState?: (update: KumikoUfoExportStateUpdate) => void
   // Reported once the manifest is known, before any file is yielded, so callers
   // can show a real progress total rather than inferring one.
   onTotal?: (totalGlyphs: number) => void
+}
+
+// Every path the project would write, without loading any glyph geometry. Used
+// to spot files that must be deleted when only part of the tree is rebuilt.
+export const listUfoTreePaths = async (projectId: string) => {
+  const manifest = await buildKumikoUfoExportManifest(projectId)
+  const paths: string[] = []
+
+  if (manifest.designspace) {
+    paths.push(manifest.designspace.relativePath)
+  }
+
+  for (const ufo of manifest.ufos) {
+    const metadata = ufo.metadata
+    for (const file of buildUfoFontLevelFiles(metadata)) {
+      paths.push(joinPath(metadata.relativePath, file.path))
+    }
+    for (const layer of metadata.layers) {
+      const layerDir = joinPath(metadata.relativePath, layer.glyphDir)
+      paths.push(joinPath(layerDir, 'contents.plist'))
+      const isDefaultLayer = layer.layerId === ufo.defaultLayer.layerId
+      const isBackgroundLayer = isUfoBackgroundLayer(layer, ufo.defaultLayer)
+      if (!isDefaultLayer && !isBackgroundLayer) {
+        continue
+      }
+      for (const glyphId of ufo.glyphIds) {
+        const fileName = ufo.contents[glyphId]
+        if (fileName) {
+          paths.push(joinPath(layerDir, fileName))
+        }
+      }
+      for (const extra of ufo.extraGlyphs ?? []) {
+        paths.push(joinPath(layerDir, extra.fileName))
+      }
+    }
+  }
+
+  return paths
 }
 
 // The single projection from canonical Kumiko records to UFO source files.
@@ -48,9 +93,26 @@ export async function* materializeUfoTree(
   options: MaterializeUfoTreeOptions
 ): AsyncGenerator<MaterializedFile> {
   const manifest = await buildKumikoUfoExportManifest(options.projectId)
-  options.onTotal?.(manifest.totalGlyphs)
+  const scope = options.scope ?? 'all'
+  // Only geometry loads are expensive; the dirty set comes from an index scan.
+  const dirtyGlyphIds =
+    scope === 'dirty'
+      ? new Set(await listSyncDirtyKumikoGlyphIds(options.projectId))
+      : null
+  const includeFontLevel = scope === 'all' || manifest.project.syncDirty === 1
 
-  if (manifest.designspace) {
+  const glyphIdsFor = (ufo: (typeof manifest.ufos)[number]) =>
+    dirtyGlyphIds
+      ? ufo.glyphIds.filter((glyphId) => dirtyGlyphIds.has(glyphId))
+      : ufo.glyphIds
+
+  options.onTotal?.(
+    dirtyGlyphIds
+      ? manifest.ufos.reduce((sum, ufo) => sum + glyphIdsFor(ufo).length, 0)
+      : manifest.totalGlyphs
+  )
+
+  if (manifest.designspace && includeFontLevel) {
     yield {
       path: manifest.designspace.relativePath,
       text: manifest.designspace.text,
@@ -62,7 +124,9 @@ export async function* materializeUfoTree(
   for (const ufo of manifest.ufos) {
     const metadata = ufo.metadata
 
-    for (const file of buildUfoFontLevelFiles(metadata)) {
+    for (const file of includeFontLevel
+      ? buildUfoFontLevelFiles(metadata)
+      : []) {
       yield {
         path: joinPath(metadata.relativePath, file.path),
         text: file.text,
@@ -94,10 +158,11 @@ export async function* materializeUfoTree(
       }
 
       const writtenContents: Record<string, string> = {}
+      const layerGlyphIds = glyphIdsFor(ufo)
 
       for (
         let start = 0;
-        start < ufo.glyphIds.length;
+        start < layerGlyphIds.length;
         start += GLYPH_LOAD_BATCH_SIZE
       ) {
         const glyphs = await loadKumikoUfoExportGlyphBatch({
@@ -105,7 +170,7 @@ export async function* materializeUfoTree(
           activeUfoId: metadata.ufoId,
           source: ufo.source,
           contents: ufo.contents,
-          glyphIds: ufo.glyphIds.slice(start, start + GLYPH_LOAD_BATCH_SIZE),
+          glyphIds: layerGlyphIds.slice(start, start + GLYPH_LOAD_BATCH_SIZE),
           targetLayer: layer,
         })
 
@@ -129,12 +194,15 @@ export async function* materializeUfoTree(
         }
       }
 
-      if (isDefaultLayer && (ufo.extraGlyphs?.length ?? 0) > 0) {
+      const scopedExtras = (ufo.extraGlyphs ?? []).filter(
+        (extra) => !dirtyGlyphIds || dirtyGlyphIds.has(extra.glyphId)
+      )
+      if (isDefaultLayer && scopedExtras.length > 0) {
         const extraGlyphs = await loadKumikoUfoExportExtraGlyphBatch({
           project: manifest.project,
           activeUfoId: metadata.ufoId,
           source: ufo.source,
-          extraGlyphs: ufo.extraGlyphs ?? [],
+          extraGlyphs: scopedExtras,
           targetLayer: layer,
         })
 
@@ -149,9 +217,23 @@ export async function* materializeUfoTree(
         }
       }
 
+      // The listing always covers every live glyph: a partial rebuild must not
+      // shrink it to whatever happened to be dirty.
+      const fullContents = dirtyGlyphIds
+        ? Object.fromEntries(
+            ufo.glyphIds
+              .map((glyphId) => [glyphId, ufo.contents[glyphId]] as const)
+              .filter((entry): entry is readonly [string, string] => !!entry[1])
+              .concat(
+                (ufo.extraGlyphs ?? []).map(
+                  (extra) => [extra.glyphName, extra.fileName] as const
+                )
+              )
+          )
+        : writtenContents
       yield {
         path: joinPath(layerDir, 'contents.plist'),
-        text: serializeXmlPlist(writtenContents),
+        text: serializeXmlPlist(fullContents),
         entity: { kind: 'font', part: 'order' },
         countsTowardTotal: false,
       }

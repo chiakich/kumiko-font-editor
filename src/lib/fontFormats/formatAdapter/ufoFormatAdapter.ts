@@ -87,6 +87,11 @@ export const createUfoFormatAdapter = (layout: UfoLayout): FormatAdapter => {
       return FONT_LEVEL_OWNERS[name] ?? null
     },
 
+    // contents.plist is regenerated from whichever glyphs exist, so it never
+    // needs a human to resolve it.
+    mergePolicy: (entity) =>
+      entity.kind === 'font' && entity.part === 'order' ? 'setMerge' : 'atomic',
+
     pathsOwnedBy: (entity) => {
       if (entity.kind === 'glyph') {
         return [joinPath(glyphDirPath, glyphFileName(entity.name))]
