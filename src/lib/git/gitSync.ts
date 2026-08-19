@@ -31,7 +31,15 @@ import type {
   ProjectSyncReport,
   SyncConflictResolution,
 } from 'src/lib/github/sync/types'
-import { loadKumikoProjectRecord } from 'src/lib/project/kumikoProjectPersistence'
+import {
+  listKumikoGlyphSyncMetadataForProject,
+  listSyncDirtyKumikoGlyphIds,
+  loadKumikoProjectRecord,
+  makeKumikoGlyphKey,
+  saveKumikoProjectRecord,
+  updateKumikoGlyphExportDirtyState,
+  updateKumikoGlyphSyncDirtyState,
+} from 'src/lib/project/kumikoProjectPersistence'
 import type { FileStore } from 'src/lib/git/fileStore'
 
 export interface GitSyncTarget {
@@ -317,5 +325,68 @@ export const applyGitRemoteChanges = async (input: {
     report: input.report,
     resolutions: input.resolutions,
     remoteUfos,
+  })
+}
+
+export interface GitCommitSyncedInput {
+  projectId: string
+  pushedRepo: string
+  pushedBranch: string
+  commitSha: string
+}
+
+// Canonical bookkeeping after a git commit. No blob baselines are written: with
+// git the merge base commit is the baseline, so the per-glyph SHA fields the
+// REST transport maintains have nothing to record here.
+export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
+  const project = await loadKumikoProjectRecord(input.projectId)
+  if (!project) {
+    return
+  }
+
+  // The whole tree is materialized on every commit, so everything dirty is now
+  // committed — no per-glyph selection needed.
+  const dirtyGlyphIds = await listSyncDirtyKumikoGlyphIds(input.projectId)
+  const keys = dirtyGlyphIds.map((glyphId) =>
+    makeKumikoGlyphKey(input.projectId, glyphId)
+  )
+  await updateKumikoGlyphSyncDirtyState(keys, 0)
+  await updateKumikoGlyphExportDirtyState(keys, 0)
+
+  const glyphs = await listKumikoGlyphSyncMetadataForProject(input.projectId)
+  const timestamp = Date.now()
+
+  await saveKumikoProjectRecord({
+    ...project,
+    syncDirty: 0,
+    exportDirty: 0,
+    sourceData: {
+      ...project.sourceData,
+      ufo: project.sourceData?.ufo
+        ? {
+            ...project.sourceData.ufo,
+            ufos: project.sourceData.ufo.ufos?.map((ufo) => ({
+              ...ufo,
+              contents: Object.fromEntries(
+                glyphs.map((glyph) => [
+                  glyph.glyphId,
+                  ufo.contents[glyph.glyphId] ??
+                    glyph.sourceData?.ufo?.fileName ??
+                    `${glyph.glyphId}.glif`,
+                ])
+              ),
+              glyphOrder: project.glyphOrder,
+            })),
+            lastSync: {
+              owner: input.pushedRepo.split('/')[0] ?? '',
+              repo: input.pushedRepo.split('/')[1] ?? '',
+              ref: input.pushedBranch,
+              commitSha: input.commitSha,
+              syncedAt: timestamp,
+            },
+          }
+        : project.sourceData?.ufo,
+    },
+    updatedAt: timestamp,
   })
 }

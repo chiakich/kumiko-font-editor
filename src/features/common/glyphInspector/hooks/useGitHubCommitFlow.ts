@@ -37,6 +37,8 @@ import {
 import type { GitHubCommitModalProps } from 'src/features/common/glyphInspector/components/GitHubCommitModal'
 import { githubSyncReportQueryKey } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
+import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
+import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
 
 interface UseGitHubCommitFlowInput {
@@ -452,24 +454,36 @@ export const useGitHubCommitFlow = ({
         })
       )
 
-      const preparedCommit = await prepareGitHubCommit({
-        projectId,
-        projectTitle,
-      })
+      const commitThroughRest = async () => {
+        const preparedCommit = await prepareGitHubCommit({
+          projectId,
+          projectTitle,
+        })
+        const restResult = await createCommitMutation.mutateAsync({
+          ...preparedCommit.request,
+          commitMessage:
+            gitHubCommitMessage.trim() || preparedCommit.request.commitMessage,
+          branchName: gitHubBranchName.trim(),
+        })
+        await markGitHubCommitSynced(preparedCommit.exportStateUpdates, {
+          projectId,
+          headOwner: restResult.headOwner,
+          branchName: restResult.branchName,
+          commitSha: restResult.commitSha,
+          fontLevelBlobShas: preparedCommit.fontLevelBlobShas,
+        })
+        return restResult
+      }
 
-      const result = await createCommitMutation.mutateAsync({
-        ...preparedCommit.request,
-        commitMessage:
-          gitHubCommitMessage.trim() || preparedCommit.request.commitMessage,
-        branchName: gitHubBranchName.trim(),
-      })
-      await markGitHubCommitSynced(preparedCommit.exportStateUpdates, {
-        projectId,
-        headOwner: result.headOwner,
-        branchName: result.branchName,
-        commitSha: result.commitSha,
-        fontLevelBlobShas: preparedCommit.fontLevelBlobShas,
-      })
+      const result = loadGitSyncEnabled()
+        ? await commitThroughGit({
+            projectId,
+            projectTitle,
+            branchName: gitHubBranchName.trim(),
+            commitMessage: gitHubCommitMessage.trim(),
+            forkStatus: githubForkStatus,
+          })
+        : await commitThroughRest()
       markDraftSaved()
       markLocalSaved()
       void queryClient.invalidateQueries({
