@@ -13,4 +13,5 @@
 - [OpenType feature：現況盤點與目標架構](opentype-feature-roadmap.md) — 2026-07 全面盤點、缺口清單、feature workspace 目標架構與施工順序
 - [Kerning Roadmap](kerning.md) — UFO kerning/group model、開源 UI 參考與 Kumiko 導入順序
 - [Kumiko project persistence](kumiko-project-persistence.md) — 格式無關的 project/glyph IndexedDB records 與不重複保存向量資料的規則
+- [編輯手感效能量測](editor-performance.md) — production build 實測、選取提交約 70ms 的卡頓，以及已被實測排除的假設
 - [Git 同步架構](git-sync-architecture.md) — 為何走 OPFS 工作樹 + isomorphic-git、entity ownership 的 `FormatAdapter` 模型與 entity 層三方合併，讓 UFO／`.glyphspackage`／`.glyphs` 共用同步路徑

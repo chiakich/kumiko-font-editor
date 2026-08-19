@@ -333,6 +333,17 @@ OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消
 
 **`materializeUfoTree` 目前沒有 dirty scope。** `syncWorktreeFromProject` 每次都重建整棵樹，所以改一個字也要付全樹的代價。文件前面「用 `byProjectSyncDirty` 決定要 materialize 哪些檔」這條原則在 git 路徑**尚未實作**，這是切換為預設前最該補的優化。
 
+### glyphspackage（2026-08-20）
+
+`FormatAdapter` 補完了 `materialize` / `listPaths`，並加上 `mergePolicy`；格式偵測收斂到 `detectSourceFormats`。glyphspackage 現在有自己的 adapter 與 materializer（`glyphsPackageMaterialize.ts`），佈局為 `fontinfo.plist` + `order.plist` + `glyphs/<name>.glyph`，`UIState.plist` 宣告為 ignored。
+
+仍未接上的是**匯入**：GitHub 匯入偵測到 glyphspackage 時會明確說明「請先下載後用本地匯入」，而不是含糊地說找不到 UFO。要真正支援還需要 `parse` 方向（remote `.glyph` → canonical），那要等 git 路徑成為預設之後再做。
+
+### 假衝突與局部重建（2026-08-20）
+
+- `mergePolicy: 'setMerge'` 讓 `contents.plist` / `order.plist` 這類衍生檔案永不產生衝突。先前兩個貢獻者各補一個新字就會撞出假衝突，而那正是 Kumiko 的主線情境。
+- `materializeUfoTree` 加上 `scope: 'dirty'`，`syncWorktreeFromProject` 預設 `auto`（首次全建、之後只寫變動的檔）。刪除偵測仍是完整的，因為預期路徑清單由 metadata 產生、不載入字形幾何。
+
 尚未完成：
 
 - **fetch / push 仍未對真實 GitHub 驗證。** 需要 OAuth 登入與 `wrangler pages dev`（vite dev 不會執行 `functions/`），本地無法完成。
