@@ -1,19 +1,13 @@
 /// <reference lib="webworker" />
 import { Zip, ZipDeflate } from 'fflate'
-import { hashString } from 'src/lib/hash'
 import {
-  isUfoBackgroundLayer,
-  serializeGlifRecord,
-  serializeXmlPlist,
-} from 'src/lib/fontFormats/adapters/ufo'
-import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
-import {
-  buildKumikoUfoExportManifest,
-  loadKumikoUfoExportExtraGlyphBatch,
-  loadKumikoUfoExportGlyphBatch,
   markKumikoUfoExportClean,
   type KumikoUfoExportStateUpdate,
 } from 'src/lib/github/sync/kumikoUfoSync'
+import {
+  materializeUfoTree,
+  type MaterializedFile,
+} from 'src/lib/fontFormats/ufoMaterialize'
 
 interface ZipExportRequest {
   type: 'zip-export'
@@ -45,7 +39,6 @@ type ZipExportResponse =
   | ZipExportErrorMessage
 
 const OPFS_STAGING_DIR = '__kumiko_zip_staging'
-const GLYPH_LOAD_BATCH_SIZE = 128
 
 const encoder = new TextEncoder()
 
@@ -77,20 +70,6 @@ const writeOpfsFile = async (
   accessHandle.write(data, { at: 0 })
   accessHandle.flush()
   accessHandle.close()
-}
-
-const writeOpfsPath = async (
-  root: FileSystemDirectoryHandle,
-  relativePath: string,
-  content: string
-) => {
-  const segments = relativePath.split('/').filter(Boolean)
-  const fileName = segments.pop()
-  if (!fileName) {
-    return
-  }
-  const dir = await ensureOpfsDir(root, ...segments)
-  await writeOpfsFile(dir, fileName, content)
 }
 
 /** Remove an OPFS directory recursively. */
@@ -144,22 +123,12 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
       fixedConcurrency = 8,
     } = event.data.payload
 
-    const exportManifest = await buildKumikoUfoExportManifest(projectId)
     const stagingRoot = await ensureOpfsDir(opfsRoot, OPFS_STAGING_DIR)
 
-    if (exportManifest.designspace) {
-      await writeOpfsPath(
-        stagingRoot,
-        exportManifest.designspace.relativePath,
-        exportManifest.designspace.text
-      )
-    }
-
-    // --- Phase 1: write all UFO files into OPFS staging ---
-    const totalGlyphs = exportManifest.totalGlyphs
+    // --- Phase 1: materialize the UFO tree into OPFS staging ---
+    let totalGlyphs = 0
     let completedGlyphs = 0
     const concurrency = Math.max(1, fixedConcurrency)
-
     const exportStateUpdates: KumikoUfoExportStateUpdate[] = []
 
     const progressWrite = () => {
@@ -176,108 +145,64 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
 
     progressWrite()
 
-    for (const ufo of exportManifest.ufos) {
-      const metadata = ufo.metadata
-      const ufoDir = await ensureOpfsDir(stagingRoot, metadata.relativePath)
-
-      // Write metadata files
-      for (const file of buildUfoFontLevelFiles(metadata)) {
-        await writeOpfsPath(ufoDir, file.path, file.text)
+    // Resolve each directory once: a batch can span directories, and repeating
+    // getDirectoryHandle(create) concurrently for the same path is wasteful.
+    const dirHandles = new Map<string, Promise<FileSystemDirectoryHandle>>()
+    const dirHandleFor = (dirPath: string) => {
+      const cached = dirHandles.get(dirPath)
+      if (cached) {
+        return cached
       }
+      const handle = dirPath
+        ? ensureOpfsDir(stagingRoot, dirPath)
+        : Promise.resolve(stagingRoot)
+      dirHandles.set(dirPath, handle)
+      return handle
+    }
 
-      // Write glyph layers
-      for (const layer of metadata.layers) {
-        const layerDir = await ensureOpfsDir(ufoDir, layer.glyphDir)
-        const isDefaultLayer = layer.layerId === ufo.defaultLayer.layerId
-        const isBackgroundLayer = isUfoBackgroundLayer(layer, ufo.defaultLayer)
-        if (!isDefaultLayer && !isBackgroundLayer) {
-          await writeOpfsFile(layerDir, 'contents.plist', serializeXmlPlist({}))
-          continue
-        }
+    const writeMaterializedFile = async (file: MaterializedFile) => {
+      const segments = file.path.split('/').filter(Boolean)
+      const fileName = segments.pop()
+      if (!fileName) {
+        return
+      }
+      const dir = await dirHandleFor(segments.join('/'))
+      await writeOpfsFile(dir, fileName, file.text)
+    }
 
-        const writtenContents: Record<string, string> = {}
-        let glyphStartIndex = 0
-        while (glyphStartIndex < ufo.glyphIds.length) {
-          const glyphIds = ufo.glyphIds.slice(
-            glyphStartIndex,
-            glyphStartIndex + Math.max(GLYPH_LOAD_BATCH_SIZE, concurrency)
-          )
-          const glyphs = await loadKumikoUfoExportGlyphBatch({
-            project: exportManifest.project,
-            activeUfoId: metadata.ufoId,
-            source: ufo.source,
-            contents: ufo.contents,
-            glyphIds,
-            targetLayer: layer,
-          })
-
-          let writeStartIndex = 0
-          while (writeStartIndex < glyphs.length) {
-            const batch = glyphs.slice(
-              writeStartIndex,
-              writeStartIndex + concurrency
-            )
-            await Promise.all(
-              batch.map(async (glyph) => {
-                const glifText = serializeGlifRecord(glyph)
-                const nextHash = hashString(glifText)
-                await writeOpfsFile(layerDir, glyph.fileName, glifText)
-                writtenContents[glyph.glyphName] = glyph.fileName
-
-                if (markClean && isDefaultLayer) {
-                  exportStateUpdates.push({
-                    activeUfoId: glyph.ufoId,
-                    glyphId: glyph.glyphName,
-                    fileName: glyph.fileName,
-                    sourceHash: nextHash,
-                  })
-                }
-              })
-            )
-            if (isDefaultLayer) {
-              completedGlyphs += batch.length
-              progressWrite()
-            }
-            writeStartIndex += batch.length
-          }
-          glyphStartIndex += glyphIds.length
-        }
-
-        if (isDefaultLayer && (ufo.extraGlyphs?.length ?? 0) > 0) {
-          const extraGlyphs = await loadKumikoUfoExportExtraGlyphBatch({
-            project: exportManifest.project,
-            activeUfoId: metadata.ufoId,
-            source: ufo.source,
-            extraGlyphs: ufo.extraGlyphs ?? [],
-            targetLayer: layer,
-          })
-
-          let writeStartIndex = 0
-          while (writeStartIndex < extraGlyphs.length) {
-            const batch = extraGlyphs.slice(
-              writeStartIndex,
-              writeStartIndex + concurrency
-            )
-            await Promise.all(
-              batch.map(async (glyph) => {
-                const glifText = serializeGlifRecord(glyph)
-                await writeOpfsFile(layerDir, glyph.fileName, glifText)
-                writtenContents[glyph.glyphName] = glyph.fileName
-              })
-            )
-            completedGlyphs += batch.length
-            progressWrite()
-            writeStartIndex += batch.length
-          }
-        }
-
-        await writeOpfsFile(
-          layerDir,
-          'contents.plist',
-          serializeXmlPlist(writtenContents)
-        )
+    let pending: MaterializedFile[] = []
+    const flushPending = async () => {
+      if (pending.length === 0) {
+        return
+      }
+      const batch = pending
+      pending = []
+      await Promise.all(batch.map(writeMaterializedFile))
+      const glyphCount = batch.filter((file) => file.countsTowardTotal).length
+      if (glyphCount > 0) {
+        completedGlyphs += glyphCount
+        progressWrite()
       }
     }
+
+    for await (const file of materializeUfoTree({
+      projectId,
+      onTotal: (total) => {
+        totalGlyphs = total
+        progressWrite()
+      },
+      onExportState: (update) => {
+        if (markClean) {
+          exportStateUpdates.push(update)
+        }
+      },
+    })) {
+      pending.push(file)
+      if (pending.length >= concurrency) {
+        await flushPending()
+      }
+    }
+    await flushPending()
 
     // --- Phase 2: stream OPFS files into a zip and transfer the blob ---
     const allFiles = await collectOpfsFiles(stagingRoot)
