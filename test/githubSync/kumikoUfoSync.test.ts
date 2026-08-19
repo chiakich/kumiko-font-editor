@@ -19,6 +19,8 @@ import {
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
+  saveKumikoGlyphRecord,
+  saveKumikoProjectRecord,
 } from 'src/lib/project/kumikoProjectPersistence'
 import type { FontData } from 'src/store'
 import type { ProjectSyncReport } from 'src/lib/github/sync/types'
@@ -329,10 +331,91 @@ describe('Kumiko GitHub UFO sync', () => {
     })
 
     expect(prepared.request.files.map((file) => file.path).sort()).toEqual([
+      'Kumiko.ufo/fontinfo.plist',
+      'Kumiko.ufo/glyphs/A.glif',
+      'Kumiko.ufo/glyphs/contents.plist',
+      'Kumiko.ufo/layercontents.plist',
+      'Kumiko.ufo/lib.plist',
+      'Kumiko.ufo/metainfo.plist',
+    ])
+    expect(prepared.changedGlyphNames).toEqual(['A'])
+  })
+
+  it('skips font-level files whose content already matches the baseline', async () => {
+    await saveCanonicalGitHubProject('github-sync-baseline')
+
+    const first = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-baseline',
+      projectTitle: 'Kumiko',
+      activeUfoId: 'Kumiko.ufo',
+    })
+    await markKumikoGitHubCommitSynced(first.exportStateUpdates, {
+      projectId: 'github-sync-baseline',
+      activeUfoId: 'Kumiko.ufo',
+      headOwner: 'owner',
+      branchName: 'kumiko/patch',
+      commitSha: 'commit-1',
+      fontLevelBlobShas: first.fontLevelBlobShas,
+    })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('github-sync-baseline', 'A')
+    )
+    await saveKumikoGlyphRecord({ ...glyph!, syncDirty: 1 })
+    const second = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-baseline',
+      projectTitle: 'Kumiko',
+      activeUfoId: 'Kumiko.ufo',
+    })
+
+    // The glyph changed again, the font-level files did not.
+    expect(second.request.files.map((file) => file.path).sort()).toEqual([
       'Kumiko.ufo/glyphs/A.glif',
       'Kumiko.ufo/glyphs/contents.plist',
     ])
-    expect(prepared.changedGlyphNames).toEqual(['A'])
+    // Baselines are still reported so a later commit can keep skipping them.
+    expect(Object.keys(second.fontLevelBlobShas).sort()).toEqual([
+      'Kumiko.ufo/fontinfo.plist',
+      'Kumiko.ufo/layercontents.plist',
+      'Kumiko.ufo/lib.plist',
+      'Kumiko.ufo/metainfo.plist',
+    ])
+  })
+
+  it('commits kerning plists once the project has kerning data', async () => {
+    await saveCanonicalGitHubProject('github-sync-kerning')
+    const project = await loadKumikoProjectRecord('github-sync-kerning')
+    await saveKumikoProjectRecord({
+      ...project!,
+      kerningGroups: [
+        {
+          id: 'kern1-A',
+          name: 'public.kern1.A',
+          side: 'left',
+          glyphs: ['A'],
+        },
+      ],
+      kerningPairs: [
+        {
+          left: { kind: 'class', classId: 'kern1-A' },
+          right: { kind: 'glyph', glyph: 'A' },
+          value: -20,
+        },
+      ],
+    })
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-kerning',
+      projectTitle: 'Kumiko',
+      activeUfoId: 'Kumiko.ufo',
+    })
+
+    expect(prepared.request.files.map((file) => file.path)).toContain(
+      'Kumiko.ufo/kerning.plist'
+    )
+    expect(prepared.request.files.map((file) => file.path)).toContain(
+      'Kumiko.ufo/groups.plist'
+    )
   })
 
   it('builds sync reports from lightweight canonical metadata', async () => {

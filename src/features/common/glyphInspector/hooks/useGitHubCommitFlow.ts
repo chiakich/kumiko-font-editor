@@ -497,6 +497,7 @@ export const useGitHubCommitFlow = ({
         headOwner: result.headOwner,
         branchName: result.branchName,
         commitSha: result.commitSha,
+        fontLevelBlobShas: preparedCommit.fontLevelBlobShas,
       })
       markDraftSaved()
       markLocalSaved()

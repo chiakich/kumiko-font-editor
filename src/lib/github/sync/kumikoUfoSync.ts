@@ -1,5 +1,6 @@
 import { hashString } from 'src/lib/hash'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
+import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
 import {
   buildSyncReport,
   computeGlyphSyncEntries,
@@ -97,6 +98,8 @@ export interface GitHubPreparedCommit {
     sourceHash: string | null
     remoteBlobSha: string | null
   }>
+  // Git blob SHA of every font-level file as committed, keyed by repo path.
+  fontLevelBlobShas: Record<string, string>
   syncTarget: {
     projectId: string
     headOwner?: string
@@ -1146,6 +1149,7 @@ export const prepareKumikoGitHubCommit = async (input: {
     })
   }
 
+  const fontLevelBlobShas: Record<string, string> = {}
   if (project.syncDirty === 1 || files.length > 0) {
     files.push({
       path: joinRepoPath(
@@ -1156,23 +1160,33 @@ export const prepareKumikoGitHubCommit = async (input: {
       content: serializeXmlPlist(metadata.contents),
     })
 
-    // Only write kerning plists when the project has kerning data or the
-    // imported UFO already had content there, so untouched repos stay untouched.
+    const baseline = source.remoteBlobShaByPath ?? {}
+    // Kerning plists stay out of repos that never had them and still have no
+    // kerning data, so importing a plain UFO does not grow new files.
     const hasKerningData =
       Object.keys(metadata.groups ?? {}).length > 0 ||
       Object.keys(metadata.kerning ?? {}).length > 0
     const hadKerningContent =
       Object.keys(source.groupsExtra ?? {}).length > 0 ||
       Object.keys(source.kerningExtra ?? {}).length > 0
-    if (hasKerningData || hadKerningContent) {
-      files.push({
-        path: joinRepoPath(source.relativePath, 'groups.plist'),
-        content: serializeXmlPlist(metadata.groups ?? {}),
-      })
-      files.push({
-        path: joinRepoPath(source.relativePath, 'kerning.plist'),
-        content: serializeXmlPlist(metadata.kerning ?? {}),
-      })
+    const skipKerning = !hasKerningData && !hadKerningContent
+
+    for (const file of buildUfoFontLevelFiles(metadata)) {
+      if (
+        skipKerning &&
+        (file.path === 'groups.plist' || file.path === 'kerning.plist')
+      ) {
+        continue
+      }
+      const path = joinRepoPath(source.relativePath, file.path)
+      const blobSha = await gitBlobShaFromText(file.text)
+      fontLevelBlobShas[path] = blobSha
+      // A matching baseline means the remote already has this exact content;
+      // skipping it keeps commits free of no-op font-level churn.
+      if (baseline[path] === blobSha) {
+        continue
+      }
+      files.push({ path, content: file.text })
     }
   }
 
@@ -1195,6 +1209,7 @@ export const prepareKumikoGitHubCommit = async (input: {
     },
     changedGlyphNames,
     exportStateUpdates,
+    fontLevelBlobShas,
     syncTarget: { projectId: input.projectId },
   }
 }
@@ -1207,6 +1222,7 @@ export const markKumikoGitHubCommitSynced = async (
     headOwner: string
     branchName: string
     commitSha: string
+    fontLevelBlobShas?: Record<string, string>
   }
 ) => {
   const projectId = commitTarget?.projectId
@@ -1290,6 +1306,10 @@ export const markKumikoGitHubCommitSynced = async (
                     ...ufo,
                     contents: liveContents,
                     glyphOrder: project.glyphOrder,
+                    remoteBlobShaByPath: {
+                      ...ufo.remoteBlobShaByPath,
+                      ...commitTarget.fontLevelBlobShas,
+                    },
                   }
                 : ufo
             ),

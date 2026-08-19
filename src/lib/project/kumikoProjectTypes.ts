@@ -52,6 +52,9 @@ export interface KumikoProjectSourceData {
       libExtra?: Record<string, unknown> | null
       groupsExtra?: Record<string, unknown> | null
       kerningExtra?: Record<string, unknown> | null
+      // Git blob SHA baseline for font-level files, keyed by repo path. Glyph
+      // baselines live on each glyph record instead.
+      remoteBlobShaByPath?: Record<string, string> | null
     }>
     lastSync?: GitHubSyncTarget | null
   }
