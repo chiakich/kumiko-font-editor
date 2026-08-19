@@ -658,6 +658,103 @@ describe('Kumiko GitHub UFO sync', () => {
     ).not.toBe(glyph?.sourceData?.ufo?.remoteBlobShaByUfoId?.['Bold.ufo'])
   })
 
+  it('adopts the remote baseline for masters recorded before the split', async () => {
+    const { fetchRemoteTree } = await import('src/lib/github/sync/remoteTree')
+    vi.mocked(fetchRemoteTree).mockResolvedValueOnce({
+      commitSha: 'remote-head',
+      truncated: false,
+      blobShaByPath: new Map([
+        ['Light.ufo/glyphs/A.glif', 'light-remote-sha'],
+        ['Bold.ufo/glyphs/A.glif', 'bold-remote-sha'],
+      ]),
+    })
+
+    await saveProjectDraft({
+      id: 'github-sync-legacy-baseline',
+      title: 'Family',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Family.designspace',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      // Pre-migration shape: one scalar baseline, matching Light only.
+      fontData: {
+        ...makeMultiSourceFontData(),
+        glyphs: {
+          A: {
+            ...makeMultiSourceFontData().glyphs.A!,
+            sourceData: {
+              ufo: { fileName: 'A.glif', remoteBlobSha: 'light-remote-sha' },
+            },
+          },
+        },
+      },
+      projectMetadata: null,
+      projectSourceData: designspaceSourceData,
+      projectSourceFormat: 'designspace',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      syncDirtyGlyphIds: [],
+    })
+
+    const report = await buildKumikoProjectSyncReport({
+      projectId: 'github-sync-legacy-baseline',
+    })
+
+    // Bold has no recorded baseline; it must not be proposed as a pull that
+    // would overwrite the local Bold layer.
+    const bold = report?.entries.find(
+      (entry) => entry.path === 'Bold.ufo/glyphs/A.glif'
+    )
+    expect(bold?.status).toBe('unchanged')
+    expect(report?.remoteChanges.map((entry) => entry.path)).not.toContain(
+      'Bold.ufo/glyphs/A.glif'
+    )
+  })
+
+  it('leaves a sibling master untouched when only one master changed', async () => {
+    await saveProjectDraft({
+      id: 'github-sync-sibling',
+      title: 'Family',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Family.designspace',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      fontData: makeMultiSourceFontData(),
+      projectMetadata: null,
+      projectSourceData: designspaceSourceData,
+      projectSourceFormat: 'designspace',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      syncDirtyGlyphIds: [],
+    })
+    const project = await loadKumikoProjectRecord('github-sync-sibling')
+    await saveKumikoProjectRecord({ ...project!, syncDirty: 0 })
+
+    // No dirty glyphs and no font-level changes: nothing to commit at all.
+    await expect(
+      prepareKumikoGitHubCommit({
+        projectId: 'github-sync-sibling',
+        projectTitle: 'Family',
+      })
+    ).rejects.toThrow('目前沒有可提交到 GitHub 的變更')
+  })
+
   it('commits the designspace when font-level data changed', async () => {
     await saveProjectDraft({
       id: 'github-sync-designspace-commit',

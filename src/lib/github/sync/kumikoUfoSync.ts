@@ -1180,6 +1180,7 @@ export const prepareKumikoGitHubCommit = async (input: {
 
   // Every master gets its own .glif, so a dirty glyph is written once per UFO.
   for (const source of listProjectUfoSources(project)) {
+    const filesBeforeSource = files.length
     const contents = makeContents(project, glyphMetadata, source.ufoId, source)
     const metadata = buildMetadata(
       project,
@@ -1239,7 +1240,9 @@ export const prepareKumikoGitHubCommit = async (input: {
       })
     }
 
-    if (project.syncDirty === 1 || files.length > 0) {
+    // Only when this UFO itself gained or lost glyph files, not when a sibling
+    // master did.
+    if (project.syncDirty === 1 || files.length > filesBeforeSource) {
       files.push({
         path: joinRepoPath(
           source.relativePath,
@@ -1542,16 +1545,33 @@ export const buildKumikoProjectSyncReport = async (input: {
 
     entries.push(
       ...computeGlyphSyncEntries({
-        glyphs: glyphs.map((glyph) => ({
-          glyphName: glyph.glyphId,
-          fileName: contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`,
-          dirty: glyph.syncDirty === 1,
-          remoteBlobSha: readGlyphBaselineFor(
+        glyphs: glyphs.map((glyph) => {
+          const fileName = contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`
+          const path = joinRepoPath(
+            source.relativePath,
+            defaultLayer.glyphDir,
+            fileName
+          )
+          const baseline = readGlyphBaselineFor(
             glyph,
             source.ufoId,
             primaryUfoId
-          ),
-        })),
+          )
+          return {
+            glyphName: glyph.glyphId,
+            fileName,
+            dirty: glyph.syncDirty === 1,
+            // Records written before baselines went per-master have nothing to
+            // compare on secondary masters. Adopting the remote SHA keeps the
+            // first report after the upgrade from proposing a pull that would
+            // overwrite local layers; the next commit writes a real baseline.
+            remoteBlobSha:
+              baseline ??
+              (source.ufoId === primaryUfoId
+                ? null
+                : (remote.blobShaByPath.get(path) ?? null)),
+          }
+        }),
         locallyDeletedFiles,
         glyphDirPath: joinRepoPath(source.relativePath, defaultLayer.glyphDir),
         adapter,
@@ -1760,12 +1780,13 @@ export const applyKumikoRemoteSnapshot = async (input: {
 
   // A glyph is only gone once every master dropped it.
   const remoteDeletedCount = new Map<string, number>()
-  const countRemoteDeleted = (glyphName: string) => {
+  const countRemoteDeleted = (
+    glyphName: string,
+    source: KumikoProjectUfoSource
+  ) => {
     const next = (remoteDeletedCount.get(glyphName) ?? 0) + 1
     remoteDeletedCount.set(glyphName, next)
-    for (const contents of nextContentsByUfoId.values()) {
-      delete contents[glyphName]
-    }
+    delete nextContentsByUfoId.get(source.ufoId)?.[glyphName]
     return next === ufoSources.length
   }
 
@@ -1783,7 +1804,7 @@ export const applyKumikoRemoteSnapshot = async (input: {
         break
       }
       case 'remoteDeleted': {
-        if (entry.glyphName && countRemoteDeleted(entry.glyphName)) {
+        if (entry.glyphName && countRemoteDeleted(entry.glyphName, source)) {
           keysToDelete.push(
             makeKumikoGlyphKey(input.projectId, entry.glyphName)
           )
@@ -1799,7 +1820,7 @@ export const applyKumikoRemoteSnapshot = async (input: {
         const resolution = resolutions[entry.path]
         if (resolution === 'takeRemote') {
           if (entry.remoteSha === null && entry.glyphName) {
-            if (countRemoteDeleted(entry.glyphName)) {
+            if (countRemoteDeleted(entry.glyphName, source)) {
               keysToDelete.push(
                 makeKumikoGlyphKey(input.projectId, entry.glyphName)
               )

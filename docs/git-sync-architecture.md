@@ -173,29 +173,25 @@ git、zip 匯出、同步報告與（長期）import 只認這個介面。各格
 
 有了 OPFS 工作樹，`serialize` 的 `prevFiles` 直接讀工作樹裡的上一版檔案——git 工作樹天生就是「上一版全文」的載體。這比現況乾淨，也順帶讓 UFO 那邊 `sourceData.ufo.fontinfoExtra` / `libExtra` 這類「保留未知欄位」的欄位有機會簡化。
 
-## 已知缺陷：多 master 專案只同步 active UFO
+## 多 master 同步：曾經的缺陷與現行模型
 
-2026-08 施工 Phase 0 時發現的既有 bug，記在這裡因為它決定 Phase 1 的施工順序。
+2026-08 施工 Phase 0 時發現、並在 Phase 1 收尾時修掉的 bug，保留紀錄因為它解釋了現行的基準線形狀。
 
-`prepareKumikoGitHubCommit` 與 `buildKumikoProjectSyncReport` 都吃一個 `activeUfoId`，只處理那一個 `.ufo`。多 master 專案（designspace + 多個 master UFO）因此：
+### 曾經的行為
 
-1. 使用者編輯 Bold master 的某個字 → 該 glyph 被標為 `syncDirty`。
-2. commit 時 `toUfoGlyphRecord` 用 `activeUfoId` 投影，寫出的是這個字的 **Light** layer，送進 `Light.ufo/glyphs/`。
-3. `markKumikoGitHubCommitSynced` 把該 glyph 的 `syncDirty` 清成 0。
+`prepareKumikoGitHubCommit` 與 `buildKumikoProjectSyncReport` 都吃一個 `activeUfoId`，只處理那一個 `.ufo`。多 master 專案因此：編輯 Bold master 的某個字 → 標為 `syncDirty` → commit 時 `toUfoGlyphRecord` 用 `activeUfoId` 投影，寫出的是這個字的 **Light** layer → `markKumikoGitHubCommitSynced` 把 `syncDirty` 清成 0。Bold 的修改從未進到 `Bold.ufo`，dirty 標記已清，之後也不會再被推送——靜默的同步遺失。本地資料一直是完整的（zip 匯出走 manifest，涵蓋所有 UFO）。
 
-結果：Bold 的修改從未進到 `Bold.ufo`，而且 dirty 標記已被清掉，之後也不會再被推送——靜默的同步遺失。本地資料仍完整（zip 匯出走 manifest，涵蓋所有 UFO，不受影響），只有 GitHub 同步這條路徑會漏。
+### 現行模型
 
-### 為什麼修起來比看起來大
+glyph 的同步基準線原本是單一純量 `sourceData.ufo.remoteBlobSha`，但一個 glyph 在多 master 下對應 N 個檔案（每 master 一個），各有自己的 remote blob SHA。這正是 `FormatAdapter` 的 `pathsOwnedBy` 回傳 N 個 path 的情況，儲存層現在跟上了：
 
-直覺的修法是讓 commit 迭代所有 UFO source。但 glyph 的同步基準線 `sourceData.ufo.remoteBlobSha` 是**單一純量**，而多 master 下一個 glyph 對應 N 個檔案（每個 master 一個），每個檔案各有自己的 remote blob SHA。
+- glyph 基準線改為 `sourceData.ufo.remoteBlobShaByUfoId`（`ufoId → blob SHA`）。舊的純量欄位保留為讀取相容，只在 primary master 上採用，並在下次 commit 時被寫成 map。
+- commit、sync report、pull 三條路徑都迭代 `listProjectUfoSources(project)`，不再只看 active UFO。
+- `activeUfoId` 已從公開 API 消失（`prepareKumikoGitHubCommit`、`buildKumikoProjectSyncReport`、`applyKumikoRemoteSnapshot`、`markKumikoGitHubCommitSynced`），只留在各 adapter 內部當作「選哪一個 UFO」的參數。
+- pull 對同一個字在多個 master 都有遠端變更時，逐 master 合進同一筆 glyph record 的不同 layer，而不是後者覆蓋前者。
+- `remoteDeleted` 只有在**每個** master 都不再持有該字時才刪除 canonical 記錄。
 
-這正是 `FormatAdapter` 的 `pathsOwnedBy` 回傳 N 個 path 的情況——模型早已預期，但**儲存層還沒跟上**。所以正確的修法是：
-
-1. glyph 基準線改成 per-path（或 per-ufoId）的 map，含既有記錄的 migration。
-2. commit / report / pull 三條路徑改成迭代所有 UFO source。
-3. `activeUfoId` 從公開 API 消失。
-
-第 1 步是帶 migration 的 schema 變更，涉及 CJK 規模的 glyph records，不該和其他重構混在同一批做。**建議獨立成 Phase 1 的最後一段施工**，並在動工前先加一個多 master commit 的回歸測試把現況釘住。
+回歸測試在 `test/githubSync/kumikoUfoSync.test.ts`：commit 寫到每個 master、各 master 拿到自己的 layer 幾何、基準線逐 master 分開。
 
 ## 前提升級：通用多 master 協作
 
@@ -274,7 +270,7 @@ session 結束或斷線，狀態落回 IndexedDB；git 同步完全不知道即�
 
 從 `ufoZipExportWorker.ts` 抽出 UFO 的 `FormatAdapter` 實作，匯出與 commit 共用。介面第一天就用 entity ownership 這一版，不要先寫「檔案樹形狀」版之後回頭改。這步結束後三份序列化變一份，即使最後不上 git 也划算。
 
-順序上分兩段：先做 entity ownership 與共用 materializer（無 schema 變更），再做「多 master 只同步 active UFO」的修復（見上節，含 glyph 基準線的 schema migration）與 `activeUfoId` 的移除。
+順序上分兩段：先做 entity ownership 與共用 materializer（無 schema 變更），再做多 master 同步修復（見上節，含 glyph 基準線的 schema 變更）與 `activeUfoId` 的移除。**兩段皆已完成（2026-08）。**
 
 OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消費者，提前常駐只會替每個 CJK 專案多背數萬個檔案與一份無人讀取的過期狀態。改到 Phase 2 與 isomorphic-git 一起落地。
 
