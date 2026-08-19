@@ -1,8 +1,10 @@
 import { hashString } from 'src/lib/hash'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
+import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import {
   buildSyncReport,
+  computeFontLevelSyncEntries,
   computeGlyphSyncEntries,
   joinRepoPath,
   type SyncGlyphRecord,
@@ -395,6 +397,40 @@ const getUfoSource = (
     defaultLayer,
     canonicalLayerId: getCanonicalLayerIdForUfo(project, source),
   }
+}
+
+// Kerning plists stay out of repos that never had them and still have no
+// kerning data, so importing a plain UFO does not grow new files. Shared by the
+// commit and report paths so the two can never disagree on the file set.
+const shouldSkipUfoKerningFiles = (
+  project: KumikoProjectRecord,
+  source: KumikoProjectUfoSource
+) => {
+  const hasKerningData =
+    (project.kerningGroups?.length ?? 0) > 0 ||
+    (project.kerningPairs?.length ?? 0) > 0
+  const hadKerningContent =
+    Object.keys(source.groupsExtra ?? {}).length > 0 ||
+    Object.keys(source.kerningExtra ?? {}).length > 0
+  return !hasKerningData && !hadKerningContent
+}
+
+const listLocalUfoFontLevelFileNames = (
+  project: KumikoProjectRecord,
+  source: KumikoProjectUfoSource
+): string[] => {
+  const skipKerning = shouldSkipUfoKerningFiles(project, source)
+  const hasFeatures =
+    selectUfoFeatureText(makeProjectFontDataFromMetadata(project, [])) !== null
+  return UFO_FONT_LEVEL_FILE_NAMES.filter((name) => {
+    if (skipKerning && (name === 'groups.plist' || name === 'kerning.plist')) {
+      return false
+    }
+    if (name === 'features.fea') {
+      return hasFeatures
+    }
+    return true
+  })
 }
 
 export const resolveKumikoSyncTarget = (
@@ -1165,15 +1201,7 @@ export const prepareKumikoGitHubCommit = async (input: {
   // must not reformat plists the repo already has.
   if (project.syncDirty === 1) {
     const baseline = source.remoteBlobShaByPath ?? {}
-    // Kerning plists stay out of repos that never had them and still have no
-    // kerning data, so importing a plain UFO does not grow new files.
-    const hasKerningData =
-      Object.keys(metadata.groups ?? {}).length > 0 ||
-      Object.keys(metadata.kerning ?? {}).length > 0
-    const hadKerningContent =
-      Object.keys(source.groupsExtra ?? {}).length > 0 ||
-      Object.keys(source.kerningExtra ?? {}).length > 0
-    const skipKerning = !hasKerningData && !hadKerningContent
+    const skipKerning = shouldSkipUfoKerningFiles(project, source)
 
     for (const file of buildUfoFontLevelFiles(metadata)) {
       if (
@@ -1431,6 +1459,25 @@ export const buildKumikoProjectSyncReport = async (input: {
     glyphDirPath: joinRepoPath(source.relativePath, defaultLayer.glyphDir),
     remote,
   })
+
+  const localFontLevelNames = new Set(
+    listLocalUfoFontLevelFileNames(project, source)
+  )
+  entries.push(
+    ...computeFontLevelSyncEntries({
+      candidatePaths: UFO_FONT_LEVEL_FILE_NAMES.map((name) =>
+        joinRepoPath(source.relativePath, name)
+      ),
+      localPaths: new Set(
+        [...localFontLevelNames].map((name) =>
+          joinRepoPath(source.relativePath, name)
+        )
+      ),
+      dirty: project.syncDirty === 1,
+      baseline: source.remoteBlobShaByPath ?? {},
+      remote,
+    })
+  )
 
   return buildSyncReport({
     target: { owner: target.owner, repo: target.repo, ref: target.ref },

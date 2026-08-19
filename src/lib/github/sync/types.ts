@@ -16,6 +16,8 @@ export type GlyphSyncStatus =
   | 'conflict'
 
 export interface GlyphSyncEntry {
+  // Font-level files (fontinfo.plist, features.fea…) carry no glyph name.
+  kind: 'glyph' | 'font'
   // Null when only the remote knows this file (remoteAdded).
   glyphName: string | null
   fileName: string

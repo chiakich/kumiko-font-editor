@@ -1,6 +1,7 @@
 export { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 export {
   buildSyncReport,
+  computeFontLevelSyncEntries,
   computeGlyphSyncEntries,
   joinRepoPath,
 } from 'src/lib/github/sync/computeSyncReport'

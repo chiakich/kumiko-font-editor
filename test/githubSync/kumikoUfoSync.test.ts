@@ -105,6 +105,18 @@ const sourceData = {
   },
 } satisfies Parameters<typeof saveProjectDraft>[0]['projectSourceData']
 
+const sourceDataWithFontLevelBaseline = {
+  ufo: {
+    ...sourceData.ufo,
+    ufos: sourceData.ufo.ufos.map((ufo) => ({
+      ...ufo,
+      remoteBlobShaByPath: {
+        'Kumiko.ufo/fontinfo.plist': 'baseline-fontinfo-sha',
+      },
+    })),
+  },
+} satisfies Parameters<typeof saveProjectDraft>[0]['projectSourceData']
+
 const sourceDataWithDeletedB = {
   ufo: {
     ...sourceData.ufo,
@@ -466,6 +478,102 @@ describe('Kumiko GitHub UFO sync', () => {
     ])
     expect(report?.localChanges.map((entry) => entry.glyphName).sort()).toEqual(
       ['A', 'B']
+    )
+  })
+
+  it('reports remote font-level file changes', async () => {
+    const { fetchRemoteTree } = await import('src/lib/github/sync/remoteTree')
+    vi.mocked(fetchRemoteTree).mockResolvedValueOnce({
+      commitSha: 'remote-head',
+      truncated: false,
+      blobShaByPath: new Map([
+        ['Kumiko.ufo/glyphs/A.glif', 'old-sha'],
+        ['Kumiko.ufo/fontinfo.plist', 'remote-fontinfo-sha'],
+      ]),
+    })
+
+    await saveProjectDraft({
+      id: 'github-sync-fontlevel',
+      title: 'Kumiko',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Kumiko.ufo',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      fontData: makeFontData(),
+      projectMetadata: null,
+      projectSourceData: sourceDataWithFontLevelBaseline,
+      projectSourceFormat: 'ufo',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      syncDirtyGlyphIds: [],
+    })
+
+    const report = await buildKumikoProjectSyncReport({
+      projectId: 'github-sync-fontlevel',
+      activeUfoId: 'Kumiko.ufo',
+    })
+
+    const fontinfo = report?.entries.find(
+      (entry) => entry.path === 'Kumiko.ufo/fontinfo.plist'
+    )
+    expect(fontinfo?.kind).toBe('font')
+    expect(fontinfo?.status).toBe('remoteModified')
+    expect(report?.remoteChanges.map((entry) => entry.path)).toContain(
+      'Kumiko.ufo/fontinfo.plist'
+    )
+    expect(report?.isUpToDate).toBe(false)
+  })
+
+  it('flags a font-level file as conflicted when both sides moved', async () => {
+    const { fetchRemoteTree } = await import('src/lib/github/sync/remoteTree')
+    vi.mocked(fetchRemoteTree).mockResolvedValueOnce({
+      commitSha: 'remote-head',
+      truncated: false,
+      blobShaByPath: new Map([
+        ['Kumiko.ufo/fontinfo.plist', 'remote-fontinfo-sha'],
+      ]),
+    })
+
+    await saveProjectDraft({
+      id: 'github-sync-fontlevel-conflict',
+      title: 'Kumiko',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Kumiko.ufo',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      fontData: makeFontData(),
+      projectMetadata: null,
+      projectSourceData: sourceDataWithFontLevelBaseline,
+      projectSourceFormat: 'ufo',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      projectSyncDirty: true,
+      syncDirtyGlyphIds: [],
+    })
+
+    const report = await buildKumikoProjectSyncReport({
+      projectId: 'github-sync-fontlevel-conflict',
+      activeUfoId: 'Kumiko.ufo',
+    })
+
+    expect(report?.conflicts.map((entry) => entry.path)).toContain(
+      'Kumiko.ufo/fontinfo.plist'
     )
   })
 

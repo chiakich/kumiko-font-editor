@@ -57,6 +57,7 @@ export const computeGlyphSyncEntries = (input: {
     const path = joinRepoPath(glyphDirPath, glyph.fileName)
     seenPaths.add(path)
     entries.push({
+      kind: 'glyph',
       glyphName: glyph.glyphName,
       fileName: glyph.fileName,
       path,
@@ -78,6 +79,7 @@ export const computeGlyphSyncEntries = (input: {
     seenPaths.add(path)
     const remoteSha = remote.blobShaByPath.get(path) ?? null
     entries.push({
+      kind: 'glyph',
       glyphName,
       fileName,
       path,
@@ -100,11 +102,61 @@ export const computeGlyphSyncEntries = (input: {
       continue
     }
     entries.push({
+      kind: 'glyph',
       glyphName: null,
       fileName: path.slice(glyphDirPrefix.length),
       path,
       status: 'remoteAdded',
       baselineSha: null,
+      remoteSha,
+    })
+  }
+
+  return entries
+}
+
+export const computeFontLevelSyncEntries = (input: {
+  // Every font-level path this UFO could hold, whether or not it exists.
+  candidatePaths: string[]
+  // The subset the local project would write right now.
+  localPaths: ReadonlySet<string>
+  // Font-level data shares one project-wide dirty flag.
+  dirty: boolean
+  baseline: Record<string, string>
+  remote: RemoteTreeSnapshot
+}): GlyphSyncEntry[] => {
+  const { candidatePaths, localPaths, dirty, baseline, remote } = input
+  const entries: GlyphSyncEntry[] = []
+
+  for (const path of candidatePaths) {
+    const remoteSha = remote.blobShaByPath.get(path) ?? null
+    const baselineSha = baseline[path] ?? null
+    const fileName = path.slice(path.lastIndexOf('/') + 1)
+
+    if (!localPaths.has(path)) {
+      if (remoteSha === null) {
+        continue
+      }
+      entries.push({
+        kind: 'font',
+        glyphName: null,
+        fileName,
+        path,
+        // A known baseline means we had this file and stopped writing it.
+        status: baselineSha === null ? 'remoteAdded' : 'localDeleted',
+        baselineSha,
+        remoteSha,
+      })
+      continue
+    }
+
+    entries.push({
+      kind: 'font',
+      glyphName: null,
+      fileName,
+      path,
+      status: resolveStatus({ dirty, baselineSha, remoteSha }),
+      baselineSha,
       remoteSha,
     })
   }
