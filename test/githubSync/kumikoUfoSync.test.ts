@@ -333,6 +333,31 @@ const saveCanonicalGitHubProject = async (projectId: string) => {
   })
 }
 
+const saveMultiMasterProject = async (projectId: string) =>
+  saveProjectDraft({
+    id: projectId,
+    title: 'Family',
+    lastModified: 2,
+    createdAt: 1,
+    updatedAt: 2,
+    sourceName: 'Family.designspace',
+    sourceType: 'github',
+    githubSource: {
+      owner: 'owner',
+      repo: 'repo',
+      ref: 'main',
+      defaultBranch: 'main',
+      commitSha: 'base',
+    },
+    fontData: makeMultiSourceFontData(),
+    projectMetadata: null,
+    projectSourceData: designspaceSourceData,
+    projectSourceFormat: 'designspace',
+    projectRoundTripFormat: 'ufo',
+    projectGlyphsPackage: null,
+    syncDirtyGlyphIds: ['A'],
+  })
+
 describe('Kumiko GitHub UFO sync', () => {
   it('prepares commit files from canonical records', async () => {
     await saveCanonicalGitHubProject('github-sync-prepare')
@@ -340,7 +365,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const prepared = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-prepare',
       projectTitle: 'Kumiko',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     expect(prepared.request.files.map((file) => file.path).sort()).toEqual([
@@ -360,7 +384,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const first = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-baseline',
       projectTitle: 'Kumiko',
-      activeUfoId: 'Kumiko.ufo',
     })
     await markKumikoGitHubCommitSynced(first.exportStateUpdates, {
       projectId: 'github-sync-baseline',
@@ -378,7 +401,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const second = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-baseline',
       projectTitle: 'Kumiko',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     // The glyph changed again, the font-level files did not.
@@ -398,7 +420,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const prepared = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-glyph-only',
       projectTitle: 'Kumiko',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     expect(prepared.request.files.map((file) => file.path).sort()).toEqual([
@@ -432,7 +453,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const prepared = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-kerning',
       projectTitle: 'Kumiko',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     expect(prepared.request.files.map((file) => file.path)).toContain(
@@ -470,7 +490,6 @@ describe('Kumiko GitHub UFO sync', () => {
 
     const report = await buildKumikoProjectSyncReport({
       projectId: 'github-sync-report',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     expect(report?.localChanges.map((entry) => entry.status).sort()).toEqual([
@@ -519,7 +538,6 @@ describe('Kumiko GitHub UFO sync', () => {
 
     const report = await buildKumikoProjectSyncReport({
       projectId: 'github-sync-fontlevel',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     const fontinfo = report?.entries.find(
@@ -570,12 +588,74 @@ describe('Kumiko GitHub UFO sync', () => {
 
     const report = await buildKumikoProjectSyncReport({
       projectId: 'github-sync-fontlevel-conflict',
-      activeUfoId: 'Kumiko.ufo',
     })
 
     expect(report?.conflicts.map((entry) => entry.path)).toContain(
       'Kumiko.ufo/fontinfo.plist'
     )
+  })
+
+  // Regression guard for the multi-master sync gap: a dirty glyph currently
+  // reaches only the active UFO, so the other master's edits never leave the
+  // browser. See docs/git-sync-architecture.md.
+  it('commits a dirty glyph to every master UFO', async () => {
+    await saveMultiMasterProject('github-sync-multimaster')
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-multimaster',
+      projectTitle: 'Family',
+    })
+
+    const glyphPaths = prepared.request.files
+      .map((file) => file.path)
+      .filter((path) => path.endsWith('A.glif'))
+    expect(glyphPaths.sort()).toEqual([
+      'Bold.ufo/glyphs/A.glif',
+      'Light.ufo/glyphs/A.glif',
+    ])
+  })
+
+  it('writes each master its own layer geometry', async () => {
+    await saveMultiMasterProject('github-sync-multimaster-geometry')
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-multimaster-geometry',
+      projectTitle: 'Family',
+    })
+    const contentOf = (path: string) =>
+      prepared.request.files.find((file) => file.path === path)?.content ?? ''
+
+    // The fixture puts the Light master at x=10 and the Bold master at x=80.
+    expect(contentOf('Light.ufo/glyphs/A.glif')).toContain('x="10"')
+    expect(contentOf('Bold.ufo/glyphs/A.glif')).toContain('x="80"')
+  })
+
+  it('baselines the glyph separately for each master', async () => {
+    await saveMultiMasterProject('github-sync-multimaster-baseline')
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-multimaster-baseline',
+      projectTitle: 'Family',
+    })
+    await markKumikoGitHubCommitSynced(prepared.exportStateUpdates, {
+      projectId: 'github-sync-multimaster-baseline',
+      headOwner: 'owner',
+      branchName: 'kumiko/patch',
+      commitSha: 'commit-1',
+      fontLevelBlobShas: prepared.fontLevelBlobShas,
+    })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('github-sync-multimaster-baseline', 'A')
+    )
+    // One baseline per master file, not one scalar shared by both.
+    expect(glyph?.sourceData?.ufo?.remoteBlobShaByUfoId).toEqual({
+      'Light.ufo': expect.any(String),
+      'Bold.ufo': expect.any(String),
+    })
+    expect(
+      glyph?.sourceData?.ufo?.remoteBlobShaByUfoId?.['Light.ufo']
+    ).not.toBe(glyph?.sourceData?.ufo?.remoteBlobShaByUfoId?.['Bold.ufo'])
   })
 
   it('commits the designspace when font-level data changed', async () => {
@@ -607,7 +687,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const prepared = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-designspace-commit',
       projectTitle: 'Family',
-      activeUfoId: 'Light.ufo',
     })
 
     expect(prepared.request.files.map((file) => file.path)).toContain(
@@ -644,7 +723,6 @@ describe('Kumiko GitHub UFO sync', () => {
     const prepared = await prepareKumikoGitHubCommit({
       projectId: 'github-sync-designspace-clean',
       projectTitle: 'Family',
-      activeUfoId: 'Light.ufo',
     })
 
     expect(prepared.request.files.map((file) => file.path)).not.toContain(
@@ -730,7 +808,6 @@ describe('Kumiko GitHub UFO sync', () => {
 
     const result = await applyKumikoRemoteSnapshot({
       projectId: 'github-sync-apply-fontlevel',
-      activeUfoId: 'Kumiko.ufo',
       report,
     })
 
@@ -770,7 +847,6 @@ describe('Kumiko GitHub UFO sync', () => {
 
     const result = await applyKumikoRemoteSnapshot({
       projectId: 'github-sync-apply',
-      activeUfoId: 'Kumiko.ufo',
       report,
     })
     const glyph = await loadKumikoGlyphRecord(
@@ -780,7 +856,9 @@ describe('Kumiko GitHub UFO sync', () => {
     expect(result).toEqual({ appliedCount: 1, remainingConflicts: 0 })
     expect(glyph?.layers['public.default']?.metrics.width).toBe(700)
     expect(glyph?.syncDirty).toBe(0)
-    expect(glyph?.sourceData?.ufo?.remoteBlobSha).toBeTruthy()
+    expect(
+      glyph?.sourceData?.ufo?.remoteBlobShaByUfoId?.['Kumiko.ufo']
+    ).toBeTruthy()
   })
 
   it('marks committed glyphs and project UFO contents as synced', async () => {
@@ -789,16 +867,14 @@ describe('Kumiko GitHub UFO sync', () => {
     await markKumikoGitHubCommitSynced(
       [
         {
-          activeUfoId: 'Kumiko.ufo',
           glyphId: 'A',
-          fileName: 'A.glif',
+          fileNameByUfoId: { 'Kumiko.ufo': 'A.glif' },
           sourceHash: 'next-hash',
-          remoteBlobSha: 'next-sha',
+          remoteBlobShaByUfoId: { 'Kumiko.ufo': 'next-sha' },
         },
       ],
       {
         projectId: 'github-sync-mark',
-        activeUfoId: 'Kumiko.ufo',
         headOwner: 'fork-owner',
         branchName: 'kumiko/a',
         commitSha: 'commit-sha',
@@ -811,7 +887,9 @@ describe('Kumiko GitHub UFO sync', () => {
     ])
 
     expect(glyph?.syncDirty).toBe(0)
-    expect(glyph?.sourceData?.ufo?.remoteBlobSha).toBe('next-sha')
+    expect(glyph?.sourceData?.ufo?.remoteBlobShaByUfoId).toEqual({
+      'Kumiko.ufo': 'next-sha',
+    })
     expect(project?.sourceData?.ufo?.ufos?.[0]?.contents).toEqual({
       A: 'A.glif',
     })

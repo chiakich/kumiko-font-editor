@@ -1,5 +1,4 @@
 import type { GitHubForkStatus } from 'src/lib/github/githubAuth'
-import { getProjectArchiveMetadata } from 'src/lib/project/projectArchive'
 
 export const isMissingGitHubTokenError = (message: string) =>
   /登入 GitHub/.test(message) ||
@@ -8,13 +7,6 @@ export const isMissingGitHubTokenError = (message: string) =>
 
 export const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback
-
-export const getActiveUfoIdFromArchive = () => {
-  const projectMetadata = getProjectArchiveMetadata() as {
-    activeUfoId?: string | null
-  } | null
-  return projectMetadata?.activeUfoId ?? null
-}
 
 export const isExistingGitHubBranch = (
   forkStatus: GitHubForkStatus | null,

@@ -29,7 +29,6 @@ import { useStore, type FontData } from 'src/store'
 import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
 import {
   buildSuggestedGitHubBranchName,
-  getActiveUfoIdFromArchive,
   getErrorMessage,
   isExistingGitHubBranch,
   isMissingGitHubTokenError,
@@ -286,19 +285,6 @@ export const useGitHubCommitFlow = ({
       return
     }
 
-    const activeUfoId = getActiveUfoIdFromArchive()
-
-    if (!activeUfoId) {
-      toaster.create({
-        title: '無法準備 GitHub 提交',
-        description: '找不到目前啟用的 UFO 字重。',
-        type: 'error',
-        duration: 3200,
-        closable: true,
-      })
-      return
-    }
-
     const forkStatus = githubViewer
       ? await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
       : null
@@ -332,7 +318,6 @@ export const useGitHubCommitFlow = ({
       const preparedCommit = await prepareGitHubCommit({
         projectId,
         projectTitle,
-        activeUfoId,
       })
       const nextDraft: Partial<Omit<ScopedGitHubCommitDraft, 'repoFullName'>> =
         {
@@ -405,19 +390,7 @@ export const useGitHubCommitFlow = ({
       return
     }
 
-    const activeUfoId = getActiveUfoIdFromArchive()
     const activeLayerId = selectedLayerId ?? 'public.default'
-
-    if (!activeUfoId) {
-      toaster.create({
-        title: '無法建立 commit',
-        description: '找不到目前啟用的 UFO 字重。',
-        type: 'error',
-        duration: 3200,
-        closable: true,
-      })
-      return
-    }
 
     if (!gitHubBranchName.trim()) {
       toaster.create({
@@ -482,7 +455,6 @@ export const useGitHubCommitFlow = ({
       const preparedCommit = await prepareGitHubCommit({
         projectId,
         projectTitle,
-        activeUfoId,
       })
 
       const result = await createCommitMutation.mutateAsync({
@@ -493,7 +465,6 @@ export const useGitHubCommitFlow = ({
       })
       await markGitHubCommitSynced(preparedCommit.exportStateUpdates, {
         projectId,
-        activeUfoId,
         headOwner: result.headOwner,
         branchName: result.branchName,
         commitSha: result.commitSha,

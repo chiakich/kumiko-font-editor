@@ -11,7 +11,6 @@ export { resolveKumikoSyncTarget as resolveSyncTarget } from 'src/lib/github/syn
 
 export const buildProjectSyncReport = async (input: {
   projectId: string
-  activeUfoId: string
 }): Promise<ProjectSyncReport | null> => buildKumikoProjectSyncReport(input)
 
 export interface ApplyRemoteResult {
@@ -21,7 +20,6 @@ export interface ApplyRemoteResult {
 
 export const applyRemoteSnapshot = async (input: {
   projectId: string
-  activeUfoId: string
   report: ProjectSyncReport
   resolutions?: Record<string, SyncConflictResolution>
 }): Promise<ApplyRemoteResult> => applyKumikoRemoteSnapshot(input)

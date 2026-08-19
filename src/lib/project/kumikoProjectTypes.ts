@@ -148,7 +148,11 @@ export interface KumikoGlyphSourceData {
   ufo?: {
     fileName?: string
     sourceHash?: string | null
+    // Superseded by remoteBlobShaByUfoId; kept so pre-migration records still
+    // read, and migrated on the next commit.
     remoteBlobSha?: string | null
+    // A glyph writes one .glif per master, so the git baseline is per UFO.
+    remoteBlobShaByUfoId?: Record<string, string> | null
   }
 }
 

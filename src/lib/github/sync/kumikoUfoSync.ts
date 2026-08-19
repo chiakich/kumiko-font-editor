@@ -12,12 +12,12 @@ import {
   computeFontLevelSyncEntries,
   computeGlyphSyncEntries,
   joinRepoPath,
-  type SyncGlyphRecord,
 } from 'src/lib/github/sync/computeSyncReport'
 import { fetchRemoteTree } from 'src/lib/github/sync/remoteTree'
 import { fetchGitHubArchiveSnapshot } from 'src/lib/github/githubImport'
 import type {
   GitHubSyncTarget,
+  GlyphSyncEntry,
   ProjectSyncReport,
   SyncConflictResolution,
 } from 'src/lib/github/sync/types'
@@ -99,11 +99,12 @@ export interface GitHubPreparedCommit {
   request: GitHubCommitRequestInput
   changedGlyphNames: string[]
   exportStateUpdates: Array<{
-    activeUfoId: string
     glyphId: string
-    fileName: string
+    // One .glif file name per master UFO this glyph was written to.
+    fileNameByUfoId: Record<string, string>
     sourceHash: string | null
-    remoteBlobSha: string | null
+    // Git baseline per master, so a later report can compare each file.
+    remoteBlobShaByUfoId: Record<string, string>
   }>
   // Git blob SHA of every font-level file as committed, keyed by repo path.
   fontLevelBlobShas: Record<string, string>
@@ -409,6 +410,32 @@ const getUfoSource = (
 // commit and report paths so the two can never disagree on the file set.
 // The designspace lives beside the .ufo folders rather than inside one, so it is
 // tracked as its own font-level path.
+// Every UFO the project writes. Source-backed projects list them explicitly;
+// projects without UFO source metadata get the generic single-UFO projection.
+const listProjectUfoSources = (
+  project: KumikoProjectRecord
+): KumikoProjectUfoSource[] => {
+  const sources = project.sourceData?.ufo?.ufos
+  return sources?.length
+    ? sources
+    : getGenericExportSources(project).map((entry) => entry.source)
+}
+
+// Reads a glyph's per-master git baseline, falling back to the pre-migration
+// scalar so records written before the split still compare correctly.
+const readGlyphBaselineFor = (
+  glyph: Pick<KumikoGlyphRecord, 'sourceData'>,
+  ufoId: string,
+  primaryUfoId: string
+): string | null => {
+  const source = readGlyphUfoSource(glyph)
+  const byUfoId = source.remoteBlobShaByUfoId ?? null
+  if (byUfoId && ufoId in byUfoId) {
+    return byUfoId[ufoId] ?? null
+  }
+  return ufoId === primaryUfoId ? (source.remoteBlobSha ?? null) : null
+}
+
 const resolveDesignspacePath = (
   project: KumikoProjectRecord
 ): string | null => {
@@ -834,21 +861,6 @@ const ufoGlyphToGlyphData = (input: {
   }
 }
 
-const toSyncGlyphRecord = (input: {
-  project: KumikoProjectRecord
-  glyph: Pick<KumikoGlyphRecord, 'glyphId' | 'sourceData' | 'syncDirty'>
-  activeUfoId: string
-  fileName: string
-}): SyncGlyphRecord => {
-  const source = readGlyphUfoSource(input.glyph)
-  return {
-    glyphName: input.glyph.glyphId,
-    fileName: input.fileName,
-    dirty: input.glyph.syncDirty === 1,
-    remoteBlobSha: source.remoteBlobSha ?? null,
-  }
-}
-
 const buildMetadata = (
   project: KumikoProjectRecord,
   activeUfoId: string,
@@ -1139,7 +1151,6 @@ export const buildKumikoUfoExportState = async (
 export const prepareKumikoGitHubCommit = async (input: {
   projectId: string
   projectTitle: string
-  activeUfoId: string
 }): Promise<GitHubPreparedCommit> => {
   const project = await loadKumikoProjectRecord(input.projectId)
   if (!project?.githubSource) {
@@ -1160,101 +1171,123 @@ export const prepareKumikoGitHubCommit = async (input: {
       makeKumikoGlyphKey(input.projectId, glyphId)
     )
   )
-  const contents = makeContents(project, glyphMetadata, input.activeUfoId)
-  const metadata = buildMetadata(
-    project,
-    input.activeUfoId,
-    contents,
-    glyphExportMetadata
-  )
-  const { source, defaultLayer } = getUfoSource(project, input.activeUfoId)
   const liveGlyphIds = new Set(glyphMetadata.map((glyph) => glyph.glyphId))
   const files: GitHubCommitFileInput[] = []
-  const exportStateUpdates: GitHubPreparedCommit['exportStateUpdates'] = []
-
-  for (const glyph of dirtyGlyphs) {
-    const fileName = contents[glyph.glyphId]
-    if (!fileName) {
-      continue
-    }
-    const ufoGlyph = toUfoGlyphRecord({
-      project,
-      glyph,
-      activeUfoId: input.activeUfoId,
-      fileName,
-    })
-    const glifText = serializeGlifRecord(ufoGlyph)
-    files.push({
-      path: joinRepoPath(source.relativePath, defaultLayer.glyphDir, fileName),
-      content: glifText,
-    })
-    exportStateUpdates.push({
-      activeUfoId: input.activeUfoId,
-      glyphId: glyph.glyphId,
-      fileName,
-      sourceHash: hashString(glifText),
-      remoteBlobSha: await gitBlobShaFromText(glifText),
-    })
-  }
-
-  for (const [glyphId, fileName] of Object.entries(source.contents)) {
-    if (liveGlyphIds.has(glyphId)) {
-      continue
-    }
-    files.push({
-      path: joinRepoPath(source.relativePath, defaultLayer.glyphDir, fileName),
-      deleted: true,
-    })
-  }
-
   const fontLevelBlobShas: Record<string, string> = {}
-  if (project.syncDirty === 1 || files.length > 0) {
-    files.push({
-      path: joinRepoPath(
-        source.relativePath,
-        defaultLayer.glyphDir,
-        'contents.plist'
-      ),
-      content: serializeXmlPlist(metadata.contents),
-    })
-  }
+  const blobShaByGlyphAndUfo = new Map<string, Record<string, string>>()
+  const fileNameByGlyphAndUfo = new Map<string, Record<string, string>>()
+  const sourceHashByGlyph = new Map<string, string>()
 
-  // Font-level files ride on the project-level dirty flag only. Editing glyphs
-  // must not reformat plists the repo already has.
-  if (project.syncDirty === 1) {
-    const baseline = source.remoteBlobShaByPath ?? {}
-    const skipKerning = shouldSkipUfoKerningFiles(project, source)
+  // Every master gets its own .glif, so a dirty glyph is written once per UFO.
+  for (const source of listProjectUfoSources(project)) {
+    const contents = makeContents(project, glyphMetadata, source.ufoId, source)
+    const metadata = buildMetadata(
+      project,
+      source.ufoId,
+      contents,
+      glyphExportMetadata,
+      source
+    )
+    const { defaultLayer } = getUfoSource(project, source.ufoId, source)
 
-    for (const file of buildUfoFontLevelFiles(metadata)) {
-      if (
-        skipKerning &&
-        (file.path === 'groups.plist' || file.path === 'kerning.plist')
-      ) {
+    for (const glyph of dirtyGlyphs) {
+      const fileName = contents[glyph.glyphId]
+      if (!fileName) {
         continue
       }
-      const path = joinRepoPath(source.relativePath, file.path)
-      const blobSha = await gitBlobShaFromText(file.text)
-      fontLevelBlobShas[path] = blobSha
-      // A matching baseline means the remote already has this exact content;
-      // skipping it keeps commits free of no-op font-level churn.
-      if (baseline[path] === blobSha) {
-        continue
+      const ufoGlyph = toUfoGlyphRecord({
+        project,
+        glyph,
+        activeUfoId: source.ufoId,
+        source,
+        fileName,
+      })
+      const glifText = serializeGlifRecord(ufoGlyph)
+      files.push({
+        path: joinRepoPath(
+          source.relativePath,
+          defaultLayer.glyphDir,
+          fileName
+        ),
+        content: glifText,
+      })
+      blobShaByGlyphAndUfo.set(glyph.glyphId, {
+        ...blobShaByGlyphAndUfo.get(glyph.glyphId),
+        [source.ufoId]: await gitBlobShaFromText(glifText),
+      })
+      fileNameByGlyphAndUfo.set(glyph.glyphId, {
+        ...fileNameByGlyphAndUfo.get(glyph.glyphId),
+        [source.ufoId]: fileName,
+      })
+      // The export digest tracks the primary projection only.
+      if (!sourceHashByGlyph.has(glyph.glyphId)) {
+        sourceHashByGlyph.set(glyph.glyphId, hashString(glifText))
       }
-      files.push({ path, content: file.text })
     }
 
-    const designspacePath = resolveDesignspacePath(project)
-    if (designspacePath) {
-      const manifest = await buildKumikoUfoExportManifest(input.projectId)
-      if (manifest.designspace) {
-        const blobSha = await gitBlobShaFromText(manifest.designspace.text)
-        fontLevelBlobShas[manifest.designspace.relativePath] = blobSha
-        if (baseline[manifest.designspace.relativePath] !== blobSha) {
-          files.push({
-            path: manifest.designspace.relativePath,
-            content: manifest.designspace.text,
-          })
+    for (const [glyphId, fileName] of Object.entries(source.contents)) {
+      if (liveGlyphIds.has(glyphId)) {
+        continue
+      }
+      files.push({
+        path: joinRepoPath(
+          source.relativePath,
+          defaultLayer.glyphDir,
+          fileName
+        ),
+        deleted: true,
+      })
+    }
+
+    if (project.syncDirty === 1 || files.length > 0) {
+      files.push({
+        path: joinRepoPath(
+          source.relativePath,
+          defaultLayer.glyphDir,
+          'contents.plist'
+        ),
+        content: serializeXmlPlist(metadata.contents),
+      })
+    }
+
+    // Font-level files ride on the project-level dirty flag only. Editing
+    // glyphs must not reformat plists the repo already has.
+    if (project.syncDirty === 1) {
+      const baseline = source.remoteBlobShaByPath ?? {}
+      const skipKerning = shouldSkipUfoKerningFiles(project, source)
+
+      for (const file of buildUfoFontLevelFiles(metadata)) {
+        if (
+          skipKerning &&
+          (file.path === 'groups.plist' || file.path === 'kerning.plist')
+        ) {
+          continue
         }
+        const path = joinRepoPath(source.relativePath, file.path)
+        const blobSha = await gitBlobShaFromText(file.text)
+        fontLevelBlobShas[path] = blobSha
+        // A matching baseline means the remote already has this exact content;
+        // skipping it keeps commits free of no-op font-level churn.
+        if (baseline[path] === blobSha) {
+          continue
+        }
+        files.push({ path, content: file.text })
+      }
+    }
+  }
+
+  if (project.syncDirty === 1 && resolveDesignspacePath(project)) {
+    const manifest = await buildKumikoUfoExportManifest(input.projectId)
+    if (manifest.designspace) {
+      const blobSha = await gitBlobShaFromText(manifest.designspace.text)
+      const baseline =
+        listProjectUfoSources(project)[0]?.remoteBlobShaByPath ?? {}
+      fontLevelBlobShas[manifest.designspace.relativePath] = blobSha
+      if (baseline[manifest.designspace.relativePath] !== blobSha) {
+        files.push({
+          path: manifest.designspace.relativePath,
+          content: manifest.designspace.text,
+        })
       }
     }
   }
@@ -1262,6 +1295,15 @@ export const prepareKumikoGitHubCommit = async (input: {
   if (files.length === 0) {
     throw new Error('目前沒有可提交到 GitHub 的變更')
   }
+
+  const exportStateUpdates: GitHubPreparedCommit['exportStateUpdates'] = [
+    ...blobShaByGlyphAndUfo.keys(),
+  ].map((glyphId) => ({
+    glyphId,
+    fileNameByUfoId: fileNameByGlyphAndUfo.get(glyphId) ?? {},
+    sourceHash: sourceHashByGlyph.get(glyphId) ?? null,
+    remoteBlobShaByUfoId: blobShaByGlyphAndUfo.get(glyphId) ?? {},
+  }))
 
   const changedGlyphNames = [...dirtyGlyphIds]
   const titleSummary =
@@ -1287,7 +1329,6 @@ export const markKumikoGitHubCommitSynced = async (
   updates: GitHubPreparedCommit['exportStateUpdates'],
   commitTarget?: {
     projectId: string
-    activeUfoId: string
     headOwner: string
     branchName: string
     commitSha: string
@@ -1309,17 +1350,6 @@ export const markKumikoGitHubCommitSynced = async (
   const updateByGlyphId = new Map(
     updates.map((update) => [update.glyphId, update])
   )
-  const activeUfoId = commitTarget.activeUfoId
-  const { source } = getUfoSource(project, activeUfoId)
-  const liveContents = Object.fromEntries(
-    glyphs.map((glyph) => [
-      glyph.glyphId,
-      updateByGlyphId.get(glyph.glyphId)?.fileName ??
-        glyph.sourceData?.ufo?.fileName ??
-        source.contents[glyph.glyphId] ??
-        `${glyph.glyphId}.glif`,
-    ])
-  )
   const timestamp = Date.now()
   const updatedGlyphIds = [...updateByGlyphId.keys()]
   for (
@@ -1340,6 +1370,7 @@ export const markKumikoGitHubCommitSynced = async (
         if (!update) {
           return glyph
         }
+        const primaryUfoId = Object.keys(update.fileNameByUfoId)[0] ?? null
         return {
           ...glyph,
           syncDirty: 0,
@@ -1350,9 +1381,16 @@ export const markKumikoGitHubCommitSynced = async (
             ...glyph.sourceData,
             ufo: {
               ...glyph.sourceData?.ufo,
-              fileName: update.fileName,
+              fileName: primaryUfoId
+                ? update.fileNameByUfoId[primaryUfoId]
+                : glyph.sourceData?.ufo?.fileName,
               sourceHash: update.sourceHash,
-              remoteBlobSha: update.remoteBlobSha,
+              // The scalar baseline is retired once the per-master map exists.
+              remoteBlobSha: null,
+              remoteBlobShaByUfoId: {
+                ...glyph.sourceData?.ufo?.remoteBlobShaByUfoId,
+                ...update.remoteBlobShaByUfoId,
+              },
             },
           },
           updatedAt: timestamp,
@@ -1360,6 +1398,18 @@ export const markKumikoGitHubCommitSynced = async (
       })
     )
   }
+
+  const liveContentsFor = (ufoId: string) =>
+    Object.fromEntries(
+      glyphs.map((glyph) => [
+        glyph.glyphId,
+        updateByGlyphId.get(glyph.glyphId)?.fileNameByUfoId[ufoId] ??
+          glyph.sourceData?.ufo?.fileName ??
+          project.sourceData?.ufo?.ufos?.find((ufo) => ufo.ufoId === ufoId)
+            ?.contents[glyph.glyphId] ??
+          `${glyph.glyphId}.glif`,
+      ])
+    )
 
   await saveKumikoProjectRecord({
     ...project,
@@ -1369,19 +1419,15 @@ export const markKumikoGitHubCommitSynced = async (
       ufo: project.sourceData?.ufo
         ? {
             ...project.sourceData.ufo,
-            ufos: project.sourceData.ufo.ufos?.map((ufo) =>
-              ufo.ufoId === activeUfoId
-                ? {
-                    ...ufo,
-                    contents: liveContents,
-                    glyphOrder: project.glyphOrder,
-                    remoteBlobShaByPath: {
-                      ...ufo.remoteBlobShaByPath,
-                      ...commitTarget.fontLevelBlobShas,
-                    },
-                  }
-                : ufo
-            ),
+            ufos: project.sourceData.ufo.ufos?.map((ufo) => ({
+              ...ufo,
+              contents: liveContentsFor(ufo.ufoId),
+              glyphOrder: project.glyphOrder,
+              remoteBlobShaByPath: {
+                ...ufo.remoteBlobShaByPath,
+                ...commitTarget.fontLevelBlobShas,
+              },
+            })),
             lastSync: {
               owner: commitTarget.headOwner,
               repo: project.githubSource?.repo ?? commitTarget.headOwner,
@@ -1458,7 +1504,6 @@ export const markKumikoUfoExportClean = async (
 
 export const buildKumikoProjectSyncReport = async (input: {
   projectId: string
-  activeUfoId: string
 }): Promise<ProjectSyncReport | null> => {
   const project = await loadKumikoProjectRecord(input.projectId)
   if (!project) {
@@ -1470,63 +1515,80 @@ export const buildKumikoProjectSyncReport = async (input: {
   }
 
   const glyphs = await listKumikoGlyphSyncMetadataForProject(input.projectId)
-  const contents = makeContents(project, glyphs, input.activeUfoId)
-  const { source, defaultLayer } = getUfoSource(project, input.activeUfoId)
   const remote = await fetchRemoteTree({
     repo: `${target.owner}/${target.repo}`,
     ref: target.ref,
   })
-  const adapter = createUfoFormatAdapter({
-    relativePath: source.relativePath,
-    glyphDir: defaultLayer.glyphDir,
-    designspacePath: resolveDesignspacePath(project),
-    contents,
-  })
   const liveGlyphIds = new Set(glyphs.map((glyph) => glyph.glyphId))
-  const locallyDeletedFiles = Object.fromEntries(
-    Object.entries(source.contents).filter(
-      ([glyphId]) => !liveGlyphIds.has(glyphId)
-    )
-  )
-
-  const entries = computeGlyphSyncEntries({
-    glyphs: glyphs.map((glyph) =>
-      toSyncGlyphRecord({
-        project,
-        glyph,
-        activeUfoId: input.activeUfoId,
-        fileName: contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`,
-      })
-    ),
-    locallyDeletedFiles,
-    glyphDirPath: joinRepoPath(source.relativePath, defaultLayer.glyphDir),
-    adapter,
-    remote,
-  })
-
-  const localFontLevelNames = new Set(
-    listLocalUfoFontLevelFileNames(project, source)
-  )
   const designspacePath = resolveDesignspacePath(project)
-  entries.push(
-    ...computeFontLevelSyncEntries({
-      candidatePaths: [
-        ...UFO_FONT_LEVEL_FILE_NAMES.map((name) =>
-          joinRepoPath(source.relativePath, name)
-        ),
-        ...(designspacePath ? [designspacePath] : []),
-      ],
-      localPaths: new Set([
-        ...[...localFontLevelNames].map((name) =>
-          joinRepoPath(source.relativePath, name)
-        ),
-        ...(designspacePath ? [designspacePath] : []),
-      ]),
-      dirty: project.syncDirty === 1,
-      baseline: source.remoteBlobShaByPath ?? {},
-      remote,
+  const ufoSources = listProjectUfoSources(project)
+  const primaryUfoId = ufoSources[0]?.ufoId ?? ''
+  const entries: GlyphSyncEntry[] = []
+
+  for (const source of ufoSources) {
+    const contents = makeContents(project, glyphs, source.ufoId, source)
+    const { defaultLayer } = getUfoSource(project, source.ufoId, source)
+    const adapter = createUfoFormatAdapter({
+      relativePath: source.relativePath,
+      glyphDir: defaultLayer.glyphDir,
+      designspacePath,
+      contents,
     })
-  )
+    const locallyDeletedFiles = Object.fromEntries(
+      Object.entries(source.contents).filter(
+        ([glyphId]) => !liveGlyphIds.has(glyphId)
+      )
+    )
+
+    entries.push(
+      ...computeGlyphSyncEntries({
+        glyphs: glyphs.map((glyph) => ({
+          glyphName: glyph.glyphId,
+          fileName: contents[glyph.glyphId] ?? `${glyph.glyphId}.glif`,
+          dirty: glyph.syncDirty === 1,
+          remoteBlobSha: readGlyphBaselineFor(
+            glyph,
+            source.ufoId,
+            primaryUfoId
+          ),
+        })),
+        locallyDeletedFiles,
+        glyphDirPath: joinRepoPath(source.relativePath, defaultLayer.glyphDir),
+        adapter,
+        remote,
+      })
+    )
+
+    const localFontLevelNames = listLocalUfoFontLevelFileNames(project, source)
+    entries.push(
+      ...computeFontLevelSyncEntries({
+        candidatePaths: UFO_FONT_LEVEL_FILE_NAMES.map((name) =>
+          joinRepoPath(source.relativePath, name)
+        ),
+        localPaths: new Set(
+          localFontLevelNames.map((name) =>
+            joinRepoPath(source.relativePath, name)
+          )
+        ),
+        dirty: project.syncDirty === 1,
+        baseline: source.remoteBlobShaByPath ?? {},
+        remote,
+      })
+    )
+  }
+
+  // The designspace sits outside every .ufo, so it is tracked once.
+  if (designspacePath) {
+    entries.push(
+      ...computeFontLevelSyncEntries({
+        candidatePaths: [designspacePath],
+        localPaths: new Set([designspacePath]),
+        dirty: project.syncDirty === 1,
+        baseline: ufoSources[0]?.remoteBlobShaByPath ?? {},
+        remote,
+      })
+    )
+  }
 
   return buildSyncReport({
     target: { owner: target.owner, repo: target.repo, ref: target.ref },
@@ -1537,7 +1599,6 @@ export const buildKumikoProjectSyncReport = async (input: {
 
 export const applyKumikoRemoteSnapshot = async (input: {
   projectId: string
-  activeUfoId: string
   report: ProjectSyncReport
   resolutions?: Record<string, SyncConflictResolution>
 }): Promise<ApplyRemoteResult> => {
@@ -1546,15 +1607,17 @@ export const applyKumikoRemoteSnapshot = async (input: {
   if (!project) {
     throw new Error('找不到專案資料，無法套用遠端更新')
   }
-  const { source, defaultLayer } = getUfoSource(project, input.activeUfoId)
+  const ufoSources = listProjectUfoSources(project)
+  const primarySource = ufoSources[0]
+  if (!primarySource) {
+    throw new Error('專案沒有可同步的 UFO 來源')
+  }
   const timestamp = Date.now()
   const snapshot = await fetchGitHubArchiveSnapshot({
     repo: `${input.report.target.owner}/${input.report.target.repo}`,
     ref: input.report.remoteHeadSha,
   })
   const parsedUfos = buildWorkspaceFileMapFromEntries(snapshot.ufoEntries)
-  const remoteUfo =
-    parsedUfos.find((ufo) => ufo.relativePath === source.relativePath) ?? null
   const affectedGlyphIds = [
     ...new Set(
       input.report.entries
@@ -1570,14 +1633,24 @@ export const applyKumikoRemoteSnapshot = async (input: {
   const existingById = new Map(
     existingGlyphs.map((glyph) => [glyph.glyphId, glyph])
   )
-  const recordsToSave: KumikoGlyphRecord[] = []
+  // Keyed so a glyph touched in several masters merges into one record rather
+  // than the last master overwriting the others.
+  const recordsToSave = new Map<string, KumikoGlyphRecord>()
   const keysToDelete: Array<[string, string]> = []
-  const nextContents = { ...source.contents }
+  const nextContentsByUfoId = new Map<string, Record<string, string>>(
+    ufoSources.map((entry) => [entry.ufoId, { ...entry.contents }])
+  )
   const nextGlyphOrder = [...project.glyphOrder]
   let appliedCount = 0
   let remainingConflicts = 0
 
-  const takeRemoteEntry = async (fileName: string) => {
+  const takeRemoteEntry = async (
+    source: KumikoProjectUfoSource,
+    fileName: string
+  ) => {
+    const { defaultLayer } = getUfoSource(project, source.ufoId, source)
+    const remoteUfo =
+      parsedUfos.find((ufo) => ufo.relativePath === source.relativePath) ?? null
     const text = remoteUfo?.files[`${defaultLayer.glyphDir}/${fileName}`]
     if (!text) {
       return false
@@ -1585,9 +1658,12 @@ export const applyKumikoRemoteSnapshot = async (input: {
     const parsedGlyph = parseGlifText(text, fileName)
     const sourceHash = hashString(text)
     const remoteBlobSha = await gitBlobShaFromText(text)
+    const existing =
+      recordsToSave.get(parsedGlyph.glyphName) ??
+      existingById.get(parsedGlyph.glyphName)
     const glyphData = ufoGlyphToGlyphData({
       project,
-      activeUfoId: input.activeUfoId,
+      activeUfoId: source.ufoId,
       record: {
         ...parsedGlyph,
         projectId: input.projectId,
@@ -1599,7 +1675,7 @@ export const applyKumikoRemoteSnapshot = async (input: {
         updatedAt: timestamp,
       },
       text,
-      existing: existingById.get(parsedGlyph.glyphName),
+      existing,
       remoteBlobSha,
     })
     const record = glyphDataToKumikoGlyphRecord({
@@ -1609,10 +1685,21 @@ export const applyKumikoRemoteSnapshot = async (input: {
       exportDirty: false,
       syncDirty: false,
     })
-    recordsToSave.push({
+    recordsToSave.set(parsedGlyph.glyphName, {
       ...record,
       exportedDigest: sourceHash,
       syncedDigest: sourceHash,
+      sourceData: {
+        ...record.sourceData,
+        ufo: {
+          ...record.sourceData?.ufo,
+          remoteBlobSha: null,
+          remoteBlobShaByUfoId: {
+            ...existing?.sourceData?.ufo?.remoteBlobShaByUfoId,
+            [source.ufoId]: remoteBlobSha,
+          },
+        },
+      },
       layers: Object.fromEntries(
         Object.entries(record.layers).map(([layerId, layer]) => [
           layerId,
@@ -1623,12 +1710,20 @@ export const applyKumikoRemoteSnapshot = async (input: {
         ])
       ),
     })
-    nextContents[parsedGlyph.glyphName] = fileName
+    const contents = nextContentsByUfoId.get(source.ufoId)
+    if (contents) {
+      contents[parsedGlyph.glyphName] = fileName
+    }
     if (!nextGlyphOrder.includes(parsedGlyph.glyphName)) {
       nextGlyphOrder.push(parsedGlyph.glyphName)
     }
     return true
   }
+
+  // Maps a report entry back to the UFO that owns its path.
+  const sourceForPath = (path: string) =>
+    ufoSources.find((entry) => path.startsWith(`${entry.relativePath}/`)) ??
+    primarySource
 
   const fontLevelEntries = input.report.entries.filter(
     (entry) => entry.kind === 'font'
@@ -1663,24 +1758,35 @@ export const applyKumikoRemoteSnapshot = async (input: {
     appliedCount += 1
   }
 
+  // A glyph is only gone once every master dropped it.
+  const remoteDeletedCount = new Map<string, number>()
+  const countRemoteDeleted = (glyphName: string) => {
+    const next = (remoteDeletedCount.get(glyphName) ?? 0) + 1
+    remoteDeletedCount.set(glyphName, next)
+    for (const contents of nextContentsByUfoId.values()) {
+      delete contents[glyphName]
+    }
+    return next === ufoSources.length
+  }
+
   for (const entry of input.report.entries) {
     if (entry.kind === 'font') {
       continue
     }
+    const source = sourceForPath(entry.path)
     switch (entry.status) {
       case 'remoteModified':
       case 'remoteAdded': {
-        if (await takeRemoteEntry(entry.fileName)) {
+        if (await takeRemoteEntry(source, entry.fileName)) {
           appliedCount += 1
         }
         break
       }
       case 'remoteDeleted': {
-        if (entry.glyphName) {
+        if (entry.glyphName && countRemoteDeleted(entry.glyphName)) {
           keysToDelete.push(
             makeKumikoGlyphKey(input.projectId, entry.glyphName)
           )
-          delete nextContents[entry.glyphName]
           const orderIndex = nextGlyphOrder.indexOf(entry.glyphName)
           if (orderIndex >= 0) {
             nextGlyphOrder.splice(orderIndex, 1)
@@ -1693,24 +1799,31 @@ export const applyKumikoRemoteSnapshot = async (input: {
         const resolution = resolutions[entry.path]
         if (resolution === 'takeRemote') {
           if (entry.remoteSha === null && entry.glyphName) {
-            keysToDelete.push(
-              makeKumikoGlyphKey(input.projectId, entry.glyphName)
-            )
-            delete nextContents[entry.glyphName]
+            if (countRemoteDeleted(entry.glyphName)) {
+              keysToDelete.push(
+                makeKumikoGlyphKey(input.projectId, entry.glyphName)
+              )
+            }
             appliedCount += 1
-          } else if (await takeRemoteEntry(entry.fileName)) {
+          } else if (await takeRemoteEntry(source, entry.fileName)) {
             appliedCount += 1
           }
         } else if (resolution === 'keepLocal' && entry.glyphName) {
-          const existing = existingById.get(entry.glyphName)
-          if (existing) {
-            recordsToSave.push({
+          const existing =
+            recordsToSave.get(entry.glyphName) ??
+            existingById.get(entry.glyphName)
+          if (existing && entry.remoteSha) {
+            // Re-baseline this master so the next report sees it as settled.
+            recordsToSave.set(entry.glyphName, {
               ...existing,
               sourceData: {
                 ...existing.sourceData,
                 ufo: {
                   ...existing.sourceData?.ufo,
-                  remoteBlobSha: entry.remoteSha,
+                  remoteBlobShaByUfoId: {
+                    ...existing.sourceData?.ufo?.remoteBlobShaByUfoId,
+                    [source.ufoId]: entry.remoteSha,
+                  },
                 },
               },
               updatedAt: timestamp,
@@ -1727,23 +1840,41 @@ export const applyKumikoRemoteSnapshot = async (input: {
     }
   }
 
-  if (recordsToSave.length > 0) {
-    await saveKumikoGlyphRecordBatch(recordsToSave)
+  if (recordsToSave.size > 0) {
+    await saveKumikoGlyphRecordBatch([...recordsToSave.values()])
   }
   if (keysToDelete.length > 0) {
     await deleteKumikoGlyphRecordBatch(keysToDelete)
   }
 
-  // Re-read the remote UFO through the import parser so pulled font-level state
-  // lands in canonical fields exactly the way an import would put it there.
+  // Re-read each remote UFO through the import parser so pulled font-level
+  // state lands in canonical fields exactly the way an import would put it.
+  const remoteFontLevelByUfoId = new Map(
+    applyFontLevel
+      ? ufoSources.flatMap((entry) => {
+          const remoteUfo = parsedUfos.find(
+            (ufo) => ufo.relativePath === entry.relativePath
+          )
+          if (!remoteUfo) {
+            return []
+          }
+          return [
+            [
+              entry.ufoId,
+              parseUfoMetadataFiles({
+                projectId: input.projectId,
+                ufo: remoteUfo,
+                updatedAt: timestamp,
+              }).metadata,
+            ] as const,
+          ]
+        })
+      : []
+  )
+  // Project-level fields come from the primary master; the others contribute
+  // their own round-trip stores below.
   const remoteFontLevel =
-    applyFontLevel && remoteUfo
-      ? parseUfoMetadataFiles({
-          projectId: input.projectId,
-          ufo: remoteUfo,
-          updatedAt: timestamp,
-        }).metadata
-      : null
+    remoteFontLevelByUfoId.get(primarySource.ufoId) ?? null
   const remoteFontData = remoteFontLevel
     ? buildUfoFontLevelFontData(remoteFontLevel)
     : null
@@ -1769,28 +1900,27 @@ export const applyKumikoRemoteSnapshot = async (input: {
       ufo: project.sourceData?.ufo
         ? {
             ...project.sourceData.ufo,
-            ufos: project.sourceData.ufo.ufos?.map((ufo) =>
-              ufo.ufoId === source.ufoId
-                ? {
-                    ...ufo,
-                    contents: nextContents,
-                    glyphOrder: nextGlyphOrder,
-                    ...(remoteFontLevel
-                      ? {
-                          metainfo: remoteFontLevel.metainfo,
-                          fontinfoExtra: remoteFontLevel.fontinfo,
-                          libExtra: remoteFontLevel.lib,
-                          groupsExtra: remoteFontLevel.groups,
-                          kerningExtra: remoteFontLevel.kerning,
-                        }
-                      : {}),
-                    remoteBlobShaByPath: {
-                      ...ufo.remoteBlobShaByPath,
-                      ...appliedFontLevelShas,
-                    },
-                  }
-                : ufo
-            ),
+            ufos: project.sourceData.ufo.ufos?.map((ufo) => {
+              const remoteMetadata = remoteFontLevelByUfoId.get(ufo.ufoId)
+              return {
+                ...ufo,
+                contents: nextContentsByUfoId.get(ufo.ufoId) ?? ufo.contents,
+                glyphOrder: nextGlyphOrder,
+                ...(remoteMetadata
+                  ? {
+                      metainfo: remoteMetadata.metainfo,
+                      fontinfoExtra: remoteMetadata.fontinfo,
+                      libExtra: remoteMetadata.lib,
+                      groupsExtra: remoteMetadata.groups,
+                      kerningExtra: remoteMetadata.kerning,
+                    }
+                  : {}),
+                remoteBlobShaByPath: {
+                  ...ufo.remoteBlobShaByPath,
+                  ...appliedFontLevelShas,
+                },
+              }
+            }),
             lastSync: {
               owner: input.report.target.owner,
               repo: input.report.target.repo,

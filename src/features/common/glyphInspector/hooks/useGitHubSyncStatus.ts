@@ -15,7 +15,6 @@ import {
   UFO_GLYPH_EDIT_TIMES_KEY,
 } from 'src/lib/glyph/glyphEditTimes'
 import { useStore } from 'src/store'
-import { getActiveUfoIdFromArchive } from 'src/features/common/glyphInspector/utils/githubCommitFlowUtils'
 
 export const githubSyncReportQueryKey = (projectId: string | null) => [
   'githubSyncReport',
@@ -41,14 +40,10 @@ export const useGitHubSyncStatus = (input: {
     staleTime: 30_000,
     retry: false,
     queryFn: async () => {
-      const activeUfoId = getActiveUfoIdFromArchive()
-      if (!input.projectId || !activeUfoId) {
+      if (!input.projectId) {
         return null
       }
-      return buildProjectSyncReport({
-        projectId: input.projectId,
-        activeUfoId,
-      })
+      return buildProjectSyncReport({ projectId: input.projectId })
     },
   })
 
@@ -77,14 +72,12 @@ export const useGitHubSyncStatus = (input: {
 
   const applyMutation = useMutation({
     mutationFn: async () => {
-      const activeUfoId = getActiveUfoIdFromArchive()
       const report = reportQuery.data
-      if (!input.projectId || !activeUfoId || !report) {
+      if (!input.projectId || !report) {
         throw new Error('目前沒有可套用的遠端更新')
       }
       const result = await applyRemoteSnapshot({
         projectId: input.projectId,
-        activeUfoId,
         report,
         resolutions,
       })
