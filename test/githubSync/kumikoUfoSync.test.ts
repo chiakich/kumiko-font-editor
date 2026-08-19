@@ -373,12 +373,24 @@ describe('Kumiko GitHub UFO sync', () => {
       'Kumiko.ufo/glyphs/A.glif',
       'Kumiko.ufo/glyphs/contents.plist',
     ])
-    // Baselines are still reported so a later commit can keep skipping them.
-    expect(Object.keys(second.fontLevelBlobShas).sort()).toEqual([
-      'Kumiko.ufo/fontinfo.plist',
-      'Kumiko.ufo/layercontents.plist',
-      'Kumiko.ufo/lib.plist',
-      'Kumiko.ufo/metainfo.plist',
+    // A glyph-only commit leaves the stored font-level baselines untouched.
+    expect(second.fontLevelBlobShas).toEqual({})
+  })
+
+  it('leaves font-level files alone when only glyphs are dirty', async () => {
+    await saveCanonicalGitHubProject('github-sync-glyph-only')
+    const project = await loadKumikoProjectRecord('github-sync-glyph-only')
+    await saveKumikoProjectRecord({ ...project!, syncDirty: 0 })
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-glyph-only',
+      projectTitle: 'Kumiko',
+      activeUfoId: 'Kumiko.ufo',
+    })
+
+    expect(prepared.request.files.map((file) => file.path).sort()).toEqual([
+      'Kumiko.ufo/glyphs/A.glif',
+      'Kumiko.ufo/glyphs/contents.plist',
     ])
   })
 

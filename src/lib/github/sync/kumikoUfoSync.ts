@@ -1159,7 +1159,11 @@ export const prepareKumikoGitHubCommit = async (input: {
       ),
       content: serializeXmlPlist(metadata.contents),
     })
+  }
 
+  // Font-level files ride on the project-level dirty flag only. Editing glyphs
+  // must not reformat plists the repo already has.
+  if (project.syncDirty === 1) {
     const baseline = source.remoteBlobShaByPath ?? {}
     // Kerning plists stay out of repos that never had them and still have no
     // kerning data, so importing a plain UFO does not grow new files.
