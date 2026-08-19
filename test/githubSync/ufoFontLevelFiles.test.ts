@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { Window } from 'happy-dom'
 import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
 import type { UfoMetadataRecord } from 'src/lib/fontFormats/ufoTypes'
 
@@ -20,6 +21,15 @@ const makeMetadata = (
   updatedAt: 0,
   ...overrides,
 })
+
+const window = new Window()
+vi.stubGlobal('DOMParser', window.DOMParser)
+vi.stubGlobal('Node', window.Node)
+
+const EMPTY_DICT =
+  '<?xml version="1.0"?><plist version="1.0"><dict></dict></plist>'
+const METAINFO =
+  '<?xml version="1.0"?><plist version="1.0"><dict><key>creator</key><string>com.example</string><key>formatVersion</key><integer>3</integer></dict></plist>'
 
 const pathsOf = (metadata: UfoMetadataRecord) =>
   buildUfoFontLevelFiles(metadata).map((file) => file.path)
@@ -79,5 +89,33 @@ describe('buildUfoFontLevelFiles', () => {
       ) ?? ''
     expect(text).toContain('public.default')
     expect(text).toContain('glyphs.background')
+  })
+})
+
+describe('UFO font-level import baselines', () => {
+  it('records blob baselines for the font-level files the repo actually has', async () => {
+    const { importUfoWorkspaceEntries } =
+      await import('src/lib/fontFormats/ufoFormat')
+    const { gitBlobShaFromText } =
+      await import('src/lib/github/sync/gitBlobSha')
+    const fontinfo =
+      '<?xml version="1.0"?><plist version="1.0"><dict><key>unitsPerEm</key><integer>1000</integer></dict></plist>'
+    const imported = await importUfoWorkspaceEntries(
+      [
+        { relativePath: 'Kumiko.ufo/metainfo.plist', text: METAINFO },
+        { relativePath: 'Kumiko.ufo/fontinfo.plist', text: fontinfo },
+        { relativePath: 'Kumiko.ufo/glyphs/contents.plist', text: EMPTY_DICT },
+      ],
+      { projectId: 'import-baseline', title: 'Kumiko' }
+    )
+
+    const source = imported.projectSourceData.ufo?.ufos?.[0]
+    expect(source?.remoteBlobShaByPath?.['Kumiko.ufo/fontinfo.plist']).toBe(
+      await gitBlobShaFromText(fontinfo)
+    )
+    // Files the repo does not have must not get a baseline.
+    expect(source?.remoteBlobShaByPath).not.toHaveProperty(
+      'Kumiko.ufo/features.fea'
+    )
   })
 })

@@ -1,3 +1,16 @@
+// The font-level files a UFO directory carries, in write order. Lives here
+// rather than next to the builder so importers can reference it without
+// pulling in the serializer.
+export const UFO_FONT_LEVEL_FILE_NAMES = [
+  'metainfo.plist',
+  'fontinfo.plist',
+  'lib.plist',
+  'groups.plist',
+  'kerning.plist',
+  'layercontents.plist',
+  'features.fea',
+] as const
+
 // Port of the UFO 3 "common user name to file name" algorithm
 // (unifiedfontobject.org / fontTools.ufoLib.filenames.userNameToFileName).
 // Makes glyph names filesystem-safe and case-insensitive-collision-safe, which

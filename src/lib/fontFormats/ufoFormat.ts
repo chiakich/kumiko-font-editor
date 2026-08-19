@@ -26,6 +26,7 @@ import { hashString } from 'src/lib/hash'
 import { normalizeUnicodeHex } from 'src/lib/project/unicode'
 import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
+import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import {
   defaultFontSource,
   fontInfoFromUfoFontInfo,
@@ -1630,6 +1631,21 @@ export const buildWorkspaceEntriesFromFiles = async (
   return entries
 }
 
+// Baseline the font-level files against what the repo actually holds, so the
+// first sync report after an import compares like with like.
+const computeUfoFontLevelBaselines = async (ufo: ParsedUfoFolder) => {
+  const baselines: Record<string, string> = {}
+  for (const name of UFO_FONT_LEVEL_FILE_NAMES) {
+    const text = ufo.files[name]
+    if (text === undefined) {
+      continue
+    }
+    baselines[[ufo.relativePath, name].filter(Boolean).join('/')] =
+      await gitBlobShaFromText(text)
+  }
+  return baselines
+}
+
 export const importUfoWorkspaceEntries = async (
   entries: UfoWorkspaceEntry[],
   options: UfoImportSourceOptions
@@ -1841,6 +1857,15 @@ export const importUfoWorkspaceEntries = async (
     metainfo: activeMetadata?.metainfo ?? {},
   }
 
+  const fontLevelBaselines = new Map<string, Record<string, string>>(
+    await Promise.all(
+      parsedUfos.map(
+        async (ufo) =>
+          [ufo.ufoId, await computeUfoFontLevelBaselines(ufo)] as const
+      )
+    )
+  )
+
   const projectSourceData: KumikoProjectSourceData = {
     ufo: {
       designspace,
@@ -1860,6 +1885,7 @@ export const importUfoWorkspaceEntries = async (
         libExtra: record.lib,
         groupsExtra: record.groups,
         kerningExtra: record.kerning,
+        remoteBlobShaByPath: fontLevelBaselines.get(record.ufoId) ?? {},
       })),
       lastSync: project.lastSync,
     },

@@ -1,5 +1,6 @@
 import { serializeXmlPlist } from 'src/lib/fontFormats/adapters/ufo'
 import type { UfoMetadataRecord } from 'src/lib/fontFormats/ufoTypes'
+import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 
 export interface UfoFontLevelFile {
   /** Path relative to the UFO directory. */
@@ -62,5 +63,7 @@ export const buildUfoFontLevelFiles = (
     files.push({ path: 'features.fea', text: metadata.featuresText })
   }
 
-  return files
+  // Keeps the builder honest against the shared name list.
+  const known = new Set<string>(UFO_FONT_LEVEL_FILE_NAMES)
+  return files.filter((file) => known.has(file.path))
 }
