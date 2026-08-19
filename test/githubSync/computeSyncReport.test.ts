@@ -4,6 +4,7 @@ import {
   computeGlyphSyncEntries,
 } from 'src/lib/github/sync/computeSyncReport'
 import type { RemoteTreeSnapshot } from 'src/lib/github/sync/types'
+import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
 import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
 
 const GLYPH_DIR = 'Kumiko.ufo/glyphs'
@@ -50,6 +51,10 @@ const compute = (
     glyphs,
     locallyDeletedFiles,
     glyphDirPath: GLYPH_DIR,
+    adapter: createUfoFormatAdapter({
+      relativePath: 'Kumiko.ufo',
+      glyphDir: 'glyphs',
+    }),
     remote,
   })
 

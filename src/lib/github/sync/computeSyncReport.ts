@@ -1,3 +1,4 @@
+import type { FormatAdapter } from 'src/lib/fontFormats/formatAdapter/types'
 import type {
   GlyphSyncEntry,
   GlyphSyncStatus,
@@ -47,9 +48,10 @@ export const computeGlyphSyncEntries = (input: {
   // Glyphs deleted locally but not yet committed, as glyphName → fileName.
   locallyDeletedFiles: Record<string, string>
   glyphDirPath: string
+  adapter: Pick<FormatAdapter, 'entityOwning'>
   remote: RemoteTreeSnapshot
 }): GlyphSyncEntry[] => {
-  const { glyphs, locallyDeletedFiles, glyphDirPath, remote } = input
+  const { glyphs, locallyDeletedFiles, glyphDirPath, adapter, remote } = input
   const entries: GlyphSyncEntry[] = []
   const seenPaths = new Set<string>()
 
@@ -91,20 +93,20 @@ export const computeGlyphSyncEntries = (input: {
     })
   }
 
-  const glyphDirPrefix = `${glyphDirPath}/`
+  // Which remote paths are glyphs is a format decision, so the adapter answers
+  // it rather than a hardcoded extension check.
   for (const [path, remoteSha] of remote.blobShaByPath) {
-    if (
-      seenPaths.has(path) ||
-      !path.startsWith(glyphDirPrefix) ||
-      !path.toLowerCase().endsWith('.glif') ||
-      path.slice(glyphDirPrefix.length).includes('/')
-    ) {
+    if (seenPaths.has(path)) {
+      continue
+    }
+    const entity = adapter.entityOwning(path)
+    if (entity?.kind !== 'glyph') {
       continue
     }
     entries.push({
       kind: 'glyph',
       glyphName: null,
-      fileName: path.slice(glyphDirPrefix.length),
+      fileName: path.slice(path.lastIndexOf('/') + 1),
       path,
       status: 'remoteAdded',
       baselineSha: null,

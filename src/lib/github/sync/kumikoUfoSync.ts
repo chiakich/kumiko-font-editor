@@ -6,6 +6,7 @@ import {
   parseUfoMetadataFiles,
 } from 'src/lib/fontFormats/ufoFormat'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
+import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
 import {
   buildSyncReport,
   computeFontLevelSyncEntries,
@@ -1475,6 +1476,12 @@ export const buildKumikoProjectSyncReport = async (input: {
     repo: `${target.owner}/${target.repo}`,
     ref: target.ref,
   })
+  const adapter = createUfoFormatAdapter({
+    relativePath: source.relativePath,
+    glyphDir: defaultLayer.glyphDir,
+    designspacePath: resolveDesignspacePath(project),
+    contents,
+  })
   const liveGlyphIds = new Set(glyphs.map((glyph) => glyph.glyphId))
   const locallyDeletedFiles = Object.fromEntries(
     Object.entries(source.contents).filter(
@@ -1493,6 +1500,7 @@ export const buildKumikoProjectSyncReport = async (input: {
     ),
     locallyDeletedFiles,
     glyphDirPath: joinRepoPath(source.relativePath, defaultLayer.glyphDir),
+    adapter,
     remote,
   })
 
