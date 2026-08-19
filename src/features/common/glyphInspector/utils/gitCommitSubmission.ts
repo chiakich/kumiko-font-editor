@@ -28,10 +28,15 @@ export const commitThroughGit = async (input: {
   const { commitAndPushProject, markGitCommitSynced } =
     await import('src/lib/git/gitSync')
 
+  const sourceRepo = input.forkStatus?.sourceRepo ?? null
   const pushed = await commitAndPushProject({
     projectId: input.projectId,
     pushRepo: targetRepo.fullName,
     pushBranch: input.branchName,
+    // Start a new patch branch from upstream so the pull request diffs against
+    // the real base instead of an unrelated history.
+    baseRepo: sourceRepo?.fullName ?? null,
+    baseBranch: sourceRepo?.defaultBranch ?? null,
     message: input.commitMessage || `Update ${input.projectTitle}`,
   })
 
@@ -40,10 +45,10 @@ export const commitThroughGit = async (input: {
     pushedRepo: pushed.pushedRepo,
     pushedBranch: pushed.pushedBranch,
     commitSha: pushed.commitSha,
+    writtenPaths: pushed.writtenPaths,
   })
 
   // The PR affordances read compare status, which stays a REST concern.
-  const sourceRepo = input.forkStatus?.sourceRepo
   const compare = sourceRepo
     ? await fetchGitHubCompareStatus({
         repo: sourceRepo.fullName,

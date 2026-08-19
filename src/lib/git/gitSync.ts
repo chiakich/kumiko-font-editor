@@ -190,6 +190,8 @@ export interface GitCommitAndPushResult {
   commitSha: string
   pushedRepo: string
   pushedBranch: string
+  // Exactly what the commit wrote, so bookkeeping never has to guess file names.
+  writtenPaths: string[]
 }
 
 // Materializes, commits and pushes. Contributors push to their own fork, so the
@@ -202,8 +204,11 @@ export const commitAndPushProject = async (input: {
   pushRepo: string
   // Branch to create or update on that fork.
   pushBranch: string
-  // Commit to start a new branch from, normally the fetched upstream head.
-  startAt?: string | null
+  // Upstream repo and branch a new patch branch should start from. Without
+  // these a fresh worktree would commit with no common ancestor, and the
+  // resulting pull request would show every file as newly added.
+  baseRepo?: string | null
+  baseBranch?: string | null
   message: string
   store?: FileStore
 }): Promise<GitCommitAndPushResult> => {
@@ -211,10 +216,21 @@ export const commitAndPushProject = async (input: {
     projectId: input.projectId,
     store: input.store,
   })
+
+  let startAt: string | null = null
+  if (input.baseRepo && input.baseBranch) {
+    const fetched = await fetchRemoteBranch({
+      worktree,
+      repo: input.baseRepo,
+      branch: input.baseBranch,
+    })
+    startAt = fetched.remoteHeadSha
+  }
+
   await checkoutWorktreeBranch({
     worktree,
     branch: input.pushBranch,
-    startAt: input.startAt ?? null,
+    startAt,
   })
   const synced = await syncWorktreeFromProject({
     projectId: input.projectId,
@@ -233,6 +249,7 @@ export const commitAndPushProject = async (input: {
     commitSha,
     pushedRepo: input.pushRepo,
     pushedBranch: input.pushBranch,
+    writtenPaths: synced.writtenPaths,
   }
 }
 
@@ -333,6 +350,8 @@ export interface GitCommitSyncedInput {
   pushedRepo: string
   pushedBranch: string
   commitSha: string
+  // The paths the commit actually wrote, from commitAndPushProject.
+  writtenPaths?: readonly string[]
 }
 
 // Canonical bookkeeping after a git commit. No blob baselines are written: with
@@ -355,6 +374,29 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
 
   const glyphs = await listKumikoGlyphSyncMetadataForProject(input.projectId)
   const timestamp = Date.now()
+  const liveGlyphIds = new Set(glyphs.map((glyph) => glyph.glyphId))
+
+  // Recover glyphName → file name per UFO from the committed paths. The adapter
+  // owns the path-to-entity mapping, so no naming rule is duplicated here.
+  const adapters = await buildProjectAdapters(input.projectId)
+  const committedNames = new Map<string, Record<string, string>>()
+  for (const path of input.writtenPaths ?? []) {
+    for (const [index, adapter] of adapters.entries()) {
+      const entity = adapter.entityOwning(path)
+      if (entity?.kind !== 'glyph' || !liveGlyphIds.has(entity.name)) {
+        continue
+      }
+      const ufoId = listProjectUfoSources(project)[index]?.ufoId
+      if (!ufoId) {
+        continue
+      }
+      committedNames.set(ufoId, {
+        ...committedNames.get(ufoId),
+        [entity.name]: path.slice(path.lastIndexOf('/') + 1),
+      })
+      break
+    }
+  }
 
   await saveKumikoProjectRecord({
     ...project,
@@ -370,7 +412,8 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
               contents: Object.fromEntries(
                 glyphs.map((glyph) => [
                   glyph.glyphId,
-                  ufo.contents[glyph.glyphId] ??
+                  committedNames.get(ufo.ufoId)?.[glyph.glyphId] ??
+                    ufo.contents[glyph.glyphId] ??
                     glyph.sourceData?.ufo?.fileName ??
                     `${glyph.glyphId}.glif`,
                 ])

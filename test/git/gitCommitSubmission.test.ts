@@ -48,6 +48,7 @@ beforeEach(() => {
     commitSha: 'a'.repeat(40),
     pushedRepo: 'contributor/font',
     pushedBranch: 'kumiko/patch-1',
+    writtenPaths: ['Kumiko.ufo/glyphs/A_.glif'],
   })
   fetchGitHubCompareStatus.mockResolvedValue({ compare: { aheadBy: 1 } })
 })
@@ -67,6 +68,23 @@ describe('committing through git', () => {
         pushRepo: 'contributor/font',
         pushBranch: 'kumiko/patch-1',
         message: 'Update A',
+      })
+    )
+  })
+
+  it('starts the patch branch from the upstream base branch', async () => {
+    await commitThroughGit({
+      projectId: 'p1',
+      projectTitle: 'Kumiko',
+      branchName: 'kumiko/patch-1',
+      commitMessage: 'Update A',
+      forkStatus,
+    })
+
+    expect(commitAndPushProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseRepo: 'upstream/font',
+        baseBranch: 'main',
       })
     )
   })
@@ -102,6 +120,8 @@ describe('committing through git', () => {
       pushedRepo: 'contributor/font',
       pushedBranch: 'kumiko/patch-1',
       commitSha: 'a'.repeat(40),
+      // Bookkeeping uses the paths the commit really wrote.
+      writtenPaths: ['Kumiko.ufo/glyphs/A_.glif'],
     })
   })
 

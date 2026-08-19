@@ -12,6 +12,7 @@ import {
 import { saveProjectDraft } from 'src/lib/project/projectRepository'
 import {
   loadKumikoGlyphRecord,
+  loadKumikoProjectRecord,
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
 } from 'src/lib/project/kumikoProjectPersistence'
@@ -39,6 +40,7 @@ const {
   applyGitRemoteChanges,
   buildGitSyncReport,
   commitAndPushProject,
+  markGitCommitSynced,
   readRemoteUfoFolders,
 } = await import('src/lib/git/gitSync')
 
@@ -550,5 +552,70 @@ describe('reading the remote side of a pull', () => {
     })
 
     expect(folders[0]?.files).not.toHaveProperty('glyphs/Nope.glif')
+  })
+})
+
+describe('bookkeeping after a git commit', () => {
+  it('records the file names the commit actually wrote', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-mark')
+
+    const pushed = await commitAndPushProject({
+      projectId: 'gs-mark',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch',
+      message: 'Update A',
+      store,
+    })
+    await markGitCommitSynced({
+      projectId: 'gs-mark',
+      pushedRepo: pushed.pushedRepo,
+      pushedBranch: pushed.pushedBranch,
+      commitSha: pushed.commitSha,
+      writtenPaths: pushed.writtenPaths,
+    })
+
+    const project = await loadKumikoProjectRecord('gs-mark')
+    expect(project?.sourceData?.ufo?.ufos?.[0]?.contents).toEqual({
+      A: 'A.glif',
+    })
+    expect(project?.syncDirty).toBe(0)
+    expect(project?.sourceData?.ufo?.lastSync).toMatchObject({
+      owner: 'contributor',
+      repo: 'repo',
+      ref: 'kumiko/patch',
+      commitSha: pushed.commitSha,
+    })
+  })
+
+  it('clears the dirty flag on the committed glyphs', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-mark-clean')
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-mark-clean', 'A')
+    )
+    await saveKumikoGlyphRecord({ ...glyph!, syncDirty: 1 })
+
+    const pushed = await commitAndPushProject({
+      projectId: 'gs-mark-clean',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch',
+      message: 'Update A',
+      store,
+    })
+    await markGitCommitSynced({
+      projectId: 'gs-mark-clean',
+      pushedRepo: pushed.pushedRepo,
+      pushedBranch: pushed.pushedBranch,
+      commitSha: pushed.commitSha,
+      writtenPaths: pushed.writtenPaths,
+    })
+
+    const updated = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-mark-clean', 'A')
+    )
+    expect(updated?.syncDirty).toBe(0)
+    // git tracks the baseline in the commit, so no per-glyph blob sha is written.
+    expect(updated?.sourceData?.ufo?.remoteBlobShaByUfoId ?? null).toBeNull()
   })
 })

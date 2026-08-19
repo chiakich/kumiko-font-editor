@@ -299,12 +299,23 @@ OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消
 - **兩邊改成一樣不是衝突**，是收斂；任一 master 衝突則整個 glyph entity 升級為衝突。
 - **proxy 不轉發呼叫端 header**，token 由 server 端注入，回應只放行 content-type。
 
-尚未完成，刻意留給手動驗證之後：
+三條路徑都已接上開關（`kumiko.app.gitSyncEnabled.v1`）：
 
-- git 路徑目前是 **opt-in**（`kumiko.app.gitSyncEnabled.v1`，預設關閉），現行 REST 同步仍是預設。切換為預設前需要對真實 repo 驗證 fetch / push 與 CJK 規模的 OPFS 效能——這兩件在單元測試環境裡驗不了。
-- `remoteBlobSha` / `remoteBlobShaByPath` **尚未退役**：REST 路徑還在用。git 成為預設後才移除。
-- **只有「產生報告」接上了 UI**（在開關後面）。`commitAndPushProject` 已實作並測過，但尚未接線：它目前 push 到 `target.branch`，而 fork-based 貢獻流程需要推到使用者 fork 的分支，接線時要沿用現有 `fork-status` 的分支解析。
-- pull 的套用仍走 REST 的 `applyKumikoRemoteSnapshot`。
+| 動作          | 開關關閉（預設）                                           | 開關開啟                                                       |
+| ------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
+| 產生同步報告  | `buildKumikoProjectSyncReport`（REST tree API + 逐檔 SHA） | `buildGitSyncReport`（fetch + merge base + blob OID 三方比較） |
+| 套用遠端變更  | `applyKumikoRemoteSnapshot`（下載 archive zip）            | `applyGitRemoteChanges`（從 fetch 到的 commit 讀需要的路徑）   |
+| commit / push | `/api/github/commit`（blob/tree/commit API）               | `commitAndPushProject` + `markGitCommitSynced`                 |
+
+兩條 pull 路徑共用同一份 canonical 寫回邏輯：`applyKumikoRemoteSnapshot` 的遠端樹可注入（`remoteUfos`），git 端從 commit 組出同樣的 `ParsedUfoFolder` 形狀，因此格式轉換沒有第二份實作。
+
+`markGitCommitSynced` 刻意不寫 blob 基準線——git 以 merge base commit 當基準，REST 路徑維護的 per-glyph SHA 欄位在 git 下沒有東西要記。
+
+尚未完成：
+
+- **切換為預設仍待手動驗證。** 需要對真實 repo 驗證 fetch / push、fork 權限與 CJK 規模的 OPFS 效能——這幾件在單元測試環境裡驗不了（測試用 in-memory `FileStore` 跑真正的 isomorphic-git，但沒有網路也沒有 OPFS）。
+- **`remoteBlobSha` / `remoteBlobShaByPath` 尚未退役**：REST 路徑還在用。git 成為預設後才移除。
+- git 路徑沒有 `remoteTreeTruncated` 的概念（packfile 不會截斷），該欄位在 git 報告裡固定為 `false`。
 - git 堆疊是**動態載入**的（`syncEngine` 只在開關開啟時 `await import`），打包成獨立的 `gitSync` chunk（約 266 kB / gzip 80 kB）。走 REST 路徑的使用者不會下載它。
 - 效能上刻意用 blob OID 比較而非讀取內容：`collectLocalTree` 只保存 hash，`collectTreeOids` 一次 `git.walk` 取整棵樹，避免 CJK 規模下數萬次 blob 讀取。內容只在真正要套用遠端變更時才讀。
 
