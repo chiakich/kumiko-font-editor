@@ -318,18 +318,21 @@ describe('git sync report', () => {
 })
 
 describe('commit and push', () => {
-  it('commits the materialized tree and reports the new sha', async () => {
+  it('commits the materialized tree onto the requested branch', async () => {
     const store = createMemoryFileStore()
     await saveProject('gs-push')
 
     const result = await commitAndPushProject({
-      target: target('gs-push'),
+      projectId: 'gs-push',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-1',
       message: 'Update A',
       store,
     })
 
     expect(result.commitSha).toMatch(/^[0-9a-f]{40}$/)
-    expect(result.pushedBranch).toBe('main')
+    expect(result.pushedRepo).toBe('contributor/repo')
+    expect(result.pushedBranch).toBe('kumiko/patch-1')
 
     const worktree = await openGitWorktree({ projectId: 'gs-push', store })
     const blob = await git.readBlob({
@@ -339,5 +342,83 @@ describe('commit and push', () => {
       filepath: 'Kumiko.ufo/glyphs/A.glif',
     })
     expect(new TextDecoder().decode(blob.blob)).toContain('<glyph')
+  })
+
+  it('lands the commit on the named branch, not on main', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-push-branch')
+
+    const result = await commitAndPushProject({
+      projectId: 'gs-push-branch',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-2',
+      message: 'Update A',
+      store,
+    })
+
+    const worktree = await openGitWorktree({
+      projectId: 'gs-push-branch',
+      store,
+    })
+    expect(
+      await git.resolveRef({
+        fs: worktree.fs,
+        dir: worktree.dir,
+        ref: 'kumiko/patch-2',
+      })
+    ).toBe(result.commitSha)
+    expect(
+      await git.currentBranch({ fs: worktree.fs, dir: worktree.dir })
+    ).toBe('kumiko/patch-2')
+  })
+
+  it('reuses an existing branch on a second commit', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-push-reuse')
+
+    const first = await commitAndPushProject({
+      projectId: 'gs-push-reuse',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-3',
+      message: 'first',
+      store,
+    })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-push-reuse', 'A')
+    )
+    await saveKumikoGlyphRecord({
+      ...glyph!,
+      layers: {
+        ...glyph!.layers,
+        'public.default': {
+          ...glyph!.layers['public.default']!,
+          metrics: { width: 640, lsb: 0, rsb: 640 },
+        },
+      },
+    })
+
+    const second = await commitAndPushProject({
+      projectId: 'gs-push-reuse',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-3',
+      message: 'second',
+      store,
+    })
+
+    expect(second.commitSha).not.toBe(first.commitSha)
+    const worktree = await openGitWorktree({
+      projectId: 'gs-push-reuse',
+      store,
+    })
+    const log = await git.log({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: 'kumiko/patch-3',
+    })
+    expect(log.map((entry) => entry.commit.message.trim())).toEqual([
+      'second',
+      'first',
+    ])
   })
 })

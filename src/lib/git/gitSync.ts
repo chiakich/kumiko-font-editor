@@ -15,6 +15,7 @@ import {
   openGitWorktree,
   stageWorktreePaths,
   syncWorktreeFromProject,
+  checkoutWorktreeBranch,
   type GitWorktree,
 } from 'src/lib/git/worktree'
 import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
@@ -169,32 +170,52 @@ export const buildGitSyncReport = async (input: {
 
 export interface GitCommitAndPushResult {
   commitSha: string
+  pushedRepo: string
   pushedBranch: string
 }
 
-// Materializes, commits and pushes. Callers must resolve conflicts first: this
-// never merges file text, matching the entity-level conflict model.
+// Materializes, commits and pushes. Contributors push to their own fork, so the
+// push repository is separate from the one the report fetched. Callers must
+// resolve conflicts first: this never merges file text, matching the
+// entity-level conflict model.
 export const commitAndPushProject = async (input: {
-  target: GitSyncTarget
+  projectId: string
+  // owner/repo to push to — the contributor's fork, not necessarily upstream.
+  pushRepo: string
+  // Branch to create or update on that fork.
+  pushBranch: string
+  // Commit to start a new branch from, normally the fetched upstream head.
+  startAt?: string | null
   message: string
-  pushBranchName?: string
   store?: FileStore
 }): Promise<GitCommitAndPushResult> => {
   const worktree = await openGitWorktree({
-    projectId: input.target.projectId,
+    projectId: input.projectId,
     store: input.store,
   })
+  await checkoutWorktreeBranch({
+    worktree,
+    branch: input.pushBranch,
+    startAt: input.startAt ?? null,
+  })
   const synced = await syncWorktreeFromProject({
-    projectId: input.target.projectId,
+    projectId: input.projectId,
     worktree,
   })
   await stageWorktreePaths({ worktree, ...synced })
   const commitSha = await commitWorktree({ worktree, message: input.message })
 
-  const branch = input.pushBranchName ?? input.target.branch
-  await pushBranch({ worktree, repo: input.target.repo, branch })
+  await pushBranch({
+    worktree,
+    repo: input.pushRepo,
+    localRef: input.pushBranch,
+  })
 
-  return { commitSha, pushedBranch: branch }
+  return {
+    commitSha,
+    pushedRepo: input.pushRepo,
+    pushedBranch: input.pushBranch,
+  }
 }
 
 export const remoteTrackingRefFor = trackingRefFor

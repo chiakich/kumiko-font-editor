@@ -87,10 +87,13 @@ export const fetchRemoteBranch = async (input: {
   }
 }
 
+// Pushes a local ref to a possibly different repository — contributors fetch
+// from upstream and push to their own fork, so the two repos differ.
 export const pushBranch = async (input: {
   worktree: GitWorktree
   repo: string
-  branch: string
+  localRef: string
+  remoteRef?: string
   force?: boolean
 }) => {
   const result = await git.push({
@@ -98,8 +101,8 @@ export const pushBranch = async (input: {
     http,
     dir: input.worktree.dir,
     url: gitProxyUrlFor(input.repo),
-    remote: REMOTE_NAME,
-    ref: input.branch,
+    ref: input.localRef,
+    remoteRef: input.remoteRef ?? input.localRef,
     force: input.force ?? false,
     headers: {},
   })

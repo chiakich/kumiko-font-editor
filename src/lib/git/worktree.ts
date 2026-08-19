@@ -101,6 +101,38 @@ export const stageWorktreePaths = async (input: {
   }
 }
 
+// Points HEAD at the branch a commit should land on. Creating the branch only
+// moves HEAD: the worktree is rewritten from canonical records right after, so
+// there is no reason to make git check out tens of thousands of files.
+export const checkoutWorktreeBranch = async (input: {
+  worktree: GitWorktree
+  branch: string
+  startAt?: string | null
+}) => {
+  const { worktree } = input
+  const existing = await git
+    .listBranches({ fs: worktree.fs, dir: worktree.dir })
+    .catch(() => [] as string[])
+
+  if (existing.includes(input.branch)) {
+    await git.checkout({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: input.branch,
+      noCheckout: true,
+    })
+    return
+  }
+
+  await git.branch({
+    fs: worktree.fs,
+    dir: worktree.dir,
+    ref: input.branch,
+    checkout: true,
+    ...(input.startAt ? { object: input.startAt } : {}),
+  })
+}
+
 export const commitWorktree = async (input: {
   worktree: GitWorktree
   message: string
