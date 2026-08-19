@@ -35,8 +35,12 @@ vi.mock('src/lib/git/remote', async (importOriginal) => {
   }
 })
 
-const { buildGitSyncReport, commitAndPushProject } =
-  await import('src/lib/git/gitSync')
+const {
+  applyGitRemoteChanges,
+  buildGitSyncReport,
+  commitAndPushProject,
+  readRemoteUfoFolders,
+} = await import('src/lib/git/gitSync')
 
 const makeFontData = (width: number): FontData => ({
   glyphOrder: ['A'],
@@ -420,5 +424,131 @@ describe('commit and push', () => {
       'second',
       'first',
     ])
+  })
+})
+
+describe('applying remote changes from git', () => {
+  it('writes remote glyph content back into canonical records', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-apply')
+    const { worktree, base } = await seedRepo('gs-apply', store)
+    const remoteGlif = `<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="A" format="2">
+  <advance width="1234"/>
+  <unicode hex="0041"/>
+  <outline></outline>
+</glyph>`
+    const remote = await plantRemoteCommit(worktree, base, {
+      'Kumiko.ufo/glyphs/A.glif': remoteGlif,
+    })
+
+    const result = await applyGitRemoteChanges({
+      projectId: 'gs-apply',
+      remoteHeadSha: remote,
+      store,
+      report: {
+        target: { owner: 'owner', repo: 'repo', ref: 'main' },
+        remoteHeadSha: remote,
+        remoteTreeTruncated: false,
+        entries: [
+          {
+            kind: 'glyph',
+            glyphName: 'A',
+            fileName: 'A.glif',
+            path: 'Kumiko.ufo/glyphs/A.glif',
+            status: 'remoteModified',
+            baselineSha: base,
+            remoteSha: remote,
+          },
+        ],
+        conflicts: [],
+        remoteChanges: [],
+        localChanges: [],
+        isUpToDate: false,
+      },
+    })
+
+    expect(result.appliedCount).toBe(1)
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-apply', 'A')
+    )
+    expect(glyph?.layers['public.default']?.metrics.width).toBe(1234)
+    expect(glyph?.syncDirty).toBe(0)
+  })
+
+  it('leaves an unresolved conflict for the user to decide', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-apply-conflict')
+    const { worktree, base } = await seedRepo('gs-apply-conflict', store)
+    const remote = await plantRemoteCommit(worktree, base, {
+      'Kumiko.ufo/glyphs/A.glif': '<glyph name="A"/>',
+    })
+
+    const result = await applyGitRemoteChanges({
+      projectId: 'gs-apply-conflict',
+      remoteHeadSha: remote,
+      store,
+      report: {
+        target: { owner: 'owner', repo: 'repo', ref: 'main' },
+        remoteHeadSha: remote,
+        remoteTreeTruncated: false,
+        entries: [
+          {
+            kind: 'glyph',
+            glyphName: 'A',
+            fileName: 'A.glif',
+            path: 'Kumiko.ufo/glyphs/A.glif',
+            status: 'conflict',
+            baselineSha: base,
+            remoteSha: remote,
+          },
+        ],
+        conflicts: [],
+        remoteChanges: [],
+        localChanges: [],
+        isUpToDate: false,
+      },
+    })
+
+    expect(result.remainingConflicts).toBe(1)
+    expect(result.appliedCount).toBe(0)
+  })
+})
+
+describe('reading the remote side of a pull', () => {
+  it('includes font-level files even when only a glyph changed', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-read-remote')
+    const { worktree, base } = await seedRepo('gs-read-remote', store)
+    const remote = await plantRemoteCommit(worktree, base, {
+      'Kumiko.ufo/glyphs/A.glif': '<glyph name="A"/>',
+    })
+
+    const folders = await readRemoteUfoFolders({
+      worktree,
+      remoteHeadSha: remote,
+      projectId: 'gs-read-remote',
+      paths: ['Kumiko.ufo/glyphs/A.glif'],
+    })
+
+    expect(folders).toHaveLength(1)
+    expect(folders[0]?.relativePath).toBe('Kumiko.ufo')
+    expect(folders[0]?.files['glyphs/A.glif']).toBe('<glyph name="A"/>')
+    expect(folders[0]?.files['fontinfo.plist']).toContain('plist')
+  })
+
+  it('omits paths the remote commit does not have', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-read-missing')
+    const { worktree, base } = await seedRepo('gs-read-missing', store)
+
+    const folders = await readRemoteUfoFolders({
+      worktree,
+      remoteHeadSha: base,
+      projectId: 'gs-read-missing',
+      paths: ['Kumiko.ufo/glyphs/Nope.glif'],
+    })
+
+    expect(folders[0]?.files).not.toHaveProperty('glyphs/Nope.glif')
   })
 })

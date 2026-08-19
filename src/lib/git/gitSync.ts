@@ -8,6 +8,7 @@ import {
 import {
   fetchRemoteBranch,
   pushBranch,
+  readBlobAtCommit,
   trackingRefFor,
 } from 'src/lib/git/remote'
 import {
@@ -20,7 +21,16 @@ import {
 } from 'src/lib/git/worktree'
 import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
 import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
-import { listProjectUfoSources } from 'src/lib/github/sync/kumikoUfoSync'
+import {
+  applyKumikoRemoteSnapshot,
+  listProjectUfoSources,
+} from 'src/lib/github/sync/kumikoUfoSync'
+import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
+import type { ParsedUfoFolder } from 'src/lib/fontFormats/ufoFormat'
+import type {
+  ProjectSyncReport,
+  SyncConflictResolution,
+} from 'src/lib/github/sync/types'
 import { loadKumikoProjectRecord } from 'src/lib/project/kumikoProjectPersistence'
 import type { FileStore } from 'src/lib/git/fileStore'
 
@@ -219,3 +229,93 @@ export const commitAndPushProject = async (input: {
 }
 
 export const remoteTrackingRefFor = trackingRefFor
+
+// Reads the remote side of a pull out of the fetched commit, in the same shape
+// the archive download produces, so the canonical apply logic is shared.
+export const readRemoteUfoFolders = async (input: {
+  worktree: GitWorktree
+  remoteHeadSha: string
+  projectId: string
+  // Repo paths worth reading. Font-level files are always included so pulled
+  // metadata lands the same way an import would put it there.
+  paths: readonly string[]
+}): Promise<ParsedUfoFolder[]> => {
+  const project = await loadKumikoProjectRecord(input.projectId)
+  if (!project) {
+    return []
+  }
+  const sources = listProjectUfoSources(project)
+  const wanted = new Set(input.paths)
+  const folders: ParsedUfoFolder[] = []
+
+  for (const source of sources) {
+    const prefix = `${source.relativePath}/`
+    const files: Record<string, string> = {}
+
+    const innerPaths = new Set<string>(
+      UFO_FONT_LEVEL_FILE_NAMES.map((name) => name)
+    )
+    for (const path of wanted) {
+      if (path.startsWith(prefix)) {
+        innerPaths.add(path.slice(prefix.length))
+      }
+    }
+
+    for (const innerPath of innerPaths) {
+      const text = await readBlobAtCommit({
+        worktree: input.worktree,
+        oid: input.remoteHeadSha,
+        filepath: `${source.relativePath}/${innerPath}`,
+      })
+      if (text !== null) {
+        files[innerPath] = text
+      }
+    }
+
+    folders.push({
+      ufoId: source.ufoId,
+      relativePath: source.relativePath,
+      files,
+    })
+  }
+
+  return folders
+}
+
+// Applies a git-derived report to canonical records. Only the paths the report
+// wants are read out of the commit, so a one-glyph pull does not touch the rest
+// of a CJK-scale repository.
+export const applyGitRemoteChanges = async (input: {
+  projectId: string
+  report: ProjectSyncReport
+  resolutions?: Record<string, SyncConflictResolution>
+  remoteHeadSha: string
+  store?: FileStore
+}) => {
+  const worktree = await openGitWorktree({
+    projectId: input.projectId,
+    store: input.store,
+  })
+  const paths = input.report.entries
+    .filter(
+      (entry) =>
+        entry.status === 'remoteModified' ||
+        entry.status === 'remoteAdded' ||
+        entry.status === 'conflict'
+    )
+    .map((entry) => entry.path)
+
+  const remoteUfos = await readRemoteUfoFolders({
+    worktree,
+    remoteHeadSha: input.remoteHeadSha,
+    projectId: input.projectId,
+    paths,
+  })
+
+  return applyKumikoRemoteSnapshot({
+    projectId: input.projectId,
+    report: input.report,
+    resolutions: input.resolutions,
+    remoteUfos,
+  })
+}

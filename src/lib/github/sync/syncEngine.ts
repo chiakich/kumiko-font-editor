@@ -99,4 +99,15 @@ export const applyRemoteSnapshot = async (input: {
   projectId: string
   report: ProjectSyncReport
   resolutions?: Record<string, SyncConflictResolution>
-}): Promise<ApplyRemoteResult> => applyKumikoRemoteSnapshot(input)
+}): Promise<ApplyRemoteResult> => {
+  if (!loadGitSyncEnabled()) {
+    return applyKumikoRemoteSnapshot(input)
+  }
+
+  // Loaded on demand so projects on the REST path never ship the git stack.
+  const { applyGitRemoteChanges } = await import('src/lib/git/gitSync')
+  return applyGitRemoteChanges({
+    ...input,
+    remoteHeadSha: input.report.remoteHeadSha,
+  })
+}

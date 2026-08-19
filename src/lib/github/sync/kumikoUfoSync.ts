@@ -1,6 +1,7 @@
 import { hashString } from 'src/lib/hash'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
+import type { ParsedUfoFolder } from 'src/lib/fontFormats/ufoFormat'
 import {
   buildUfoFontLevelFontData,
   parseUfoMetadataFiles,
@@ -1621,6 +1622,10 @@ export const applyKumikoRemoteSnapshot = async (input: {
   projectId: string
   report: ProjectSyncReport
   resolutions?: Record<string, SyncConflictResolution>
+  // Lets the git transport supply the remote tree from a fetched commit instead
+  // of downloading an archive. Same shape either way, so everything downstream
+  // of here is shared between the two transports.
+  remoteUfos?: ParsedUfoFolder[]
 }): Promise<ApplyRemoteResult> => {
   const resolutions = input.resolutions ?? {}
   const project = await loadKumikoProjectRecord(input.projectId)
@@ -1633,11 +1638,16 @@ export const applyKumikoRemoteSnapshot = async (input: {
     throw new Error('專案沒有可同步的 UFO 來源')
   }
   const timestamp = Date.now()
-  const snapshot = await fetchGitHubArchiveSnapshot({
-    repo: `${input.report.target.owner}/${input.report.target.repo}`,
-    ref: input.report.remoteHeadSha,
-  })
-  const parsedUfos = buildWorkspaceFileMapFromEntries(snapshot.ufoEntries)
+  const parsedUfos =
+    input.remoteUfos ??
+    buildWorkspaceFileMapFromEntries(
+      (
+        await fetchGitHubArchiveSnapshot({
+          repo: `${input.report.target.owner}/${input.report.target.repo}`,
+          ref: input.report.remoteHeadSha,
+        })
+      ).ufoEntries
+    )
   const affectedGlyphIds = [
     ...new Set(
       input.report.entries
