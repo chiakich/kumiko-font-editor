@@ -1,0 +1,126 @@
+import git from 'isomorphic-git'
+import { createGitFs, type GitFs } from 'src/lib/git/gitFileSystem'
+import { createOpfsFileStore } from 'src/lib/git/opfsFileStore'
+import type { FileStore } from 'src/lib/git/fileStore'
+import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
+
+export const KUMIKO_GIT_ROOT = 'kumiko/projects'
+
+export const worktreeDirFor = (projectId: string) =>
+  `/${KUMIKO_GIT_ROOT}/${projectId}/worktree`
+
+export interface GitWorktree {
+  fs: GitFs
+  dir: string
+}
+
+const COMMIT_AUTHOR = {
+  name: 'Kumiko',
+  email: 'noreply@kumiko.font',
+}
+
+export const openGitWorktree = async (input: {
+  projectId: string
+  store?: FileStore
+}): Promise<GitWorktree> => {
+  const store =
+    input.store ?? createOpfsFileStore(await navigator.storage.getDirectory())
+  const fs = createGitFs(store)
+  const dir = worktreeDirFor(input.projectId)
+
+  // init is idempotent: on an existing repo it leaves refs and objects alone.
+  await git.init({ fs, dir, defaultBranch: 'main' })
+  return { fs, dir }
+}
+
+export interface WorktreeSyncResult {
+  writtenPaths: string[]
+  removedPaths: string[]
+}
+
+const listTrackedPaths = async (worktree: GitWorktree) => {
+  try {
+    return new Set(await git.listFiles({ fs: worktree.fs, dir: worktree.dir }))
+  } catch {
+    return new Set<string>()
+  }
+}
+
+// Rewrites the worktree from canonical records. The worktree is a derived
+// cache, so anything the materializer no longer emits is removed rather than
+// left behind to be committed by accident.
+export const syncWorktreeFromProject = async (input: {
+  projectId: string
+  worktree: GitWorktree
+}): Promise<WorktreeSyncResult> => {
+  const { worktree } = input
+  const tracked = await listTrackedPaths(worktree)
+  const writtenPaths: string[] = []
+
+  for await (const file of materializeUfoTree({ projectId: input.projectId })) {
+    await worktree.fs.promises.writeFile(
+      `${worktree.dir}/${file.path}`,
+      file.text
+    )
+    writtenPaths.push(file.path)
+    tracked.delete(file.path)
+  }
+
+  const removedPaths = [...tracked]
+  for (const path of removedPaths) {
+    await worktree.fs.promises
+      .unlink(`${worktree.dir}/${path}`)
+      .catch(() => undefined)
+  }
+
+  return { writtenPaths, removedPaths }
+}
+
+// Stages exactly the paths the caller names, so a CJK-scale worktree never gets
+// hashed wholesale by a status scan.
+export const stageWorktreePaths = async (input: {
+  worktree: GitWorktree
+  writtenPaths: readonly string[]
+  removedPaths?: readonly string[]
+}) => {
+  for (const path of input.writtenPaths) {
+    await git.add({
+      fs: input.worktree.fs,
+      dir: input.worktree.dir,
+      filepath: path,
+    })
+  }
+  for (const path of input.removedPaths ?? []) {
+    await git
+      .remove({
+        fs: input.worktree.fs,
+        dir: input.worktree.dir,
+        filepath: path,
+      })
+      .catch(() => undefined)
+  }
+}
+
+export const commitWorktree = async (input: {
+  worktree: GitWorktree
+  message: string
+}) =>
+  git.commit({
+    fs: input.worktree.fs,
+    dir: input.worktree.dir,
+    message: input.message,
+    author: COMMIT_AUTHOR,
+  })
+
+// Deletes the whole repository. The worktree is rebuildable from IndexedDB, so
+// discarding it is always a valid recovery step.
+export const discardGitWorktree = async (input: {
+  projectId: string
+  store?: FileStore
+}) => {
+  const store =
+    input.store ?? createOpfsFileStore(await navigator.storage.getDirectory())
+  await store.removeDir(`${KUMIKO_GIT_ROOT}/${input.projectId}`, {
+    recursive: true,
+  })
+}
