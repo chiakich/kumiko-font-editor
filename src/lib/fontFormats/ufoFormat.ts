@@ -1646,6 +1646,77 @@ const computeUfoFontLevelBaselines = async (ufo: ParsedUfoFolder) => {
   return baselines
 }
 
+// Parses the font-level files of one .ufo folder into a metadata record. Shared
+// by import and by GitHub pull so remote font-level state is read exactly the
+// way an import would read it.
+export const parseUfoMetadataFiles = (input: {
+  projectId: string
+  ufo: ParsedUfoFolder
+  updatedAt: number
+}): { metadata: UfoMetadataRecord; defaultLayer: UfoLayerRecord } => {
+  const { projectId, ufo, updatedAt } = input
+  const readPlist = (name: string) =>
+    (ufo.files[name] ? parseXmlPlist(ufo.files[name]) : {}) as Record<
+      string,
+      unknown
+    >
+
+  const metainfo = readPlist('metainfo.plist')
+  const fontinfo = readPlist('fontinfo.plist')
+  const lib = readPlist('lib.plist')
+  const groups = readPlist('groups.plist')
+  const kerning = readPlist('kerning.plist')
+  const featuresText = ufo.files['features.fea'] ?? null
+  const layercontents = ufo.files['layercontents.plist']
+    ? (parseXmlPlist(ufo.files['layercontents.plist']) as unknown[])
+    : [['public.default', 'glyphs']]
+
+  const layers: UfoLayerRecord[] = Array.isArray(layercontents)
+    ? layercontents
+        .map((entry) => (Array.isArray(entry) ? entry : null))
+        .filter((entry): entry is unknown[] => Boolean(entry))
+        .map((entry) => ({
+          layerId: String(entry[0] ?? 'public.default'),
+          glyphDir: String(entry[1] ?? 'glyphs'),
+        }))
+    : [{ layerId: 'public.default', glyphDir: 'glyphs' }]
+
+  const baseRecord: UfoMetadataRecord = {
+    projectId,
+    ufoId: ufo.ufoId,
+    relativePath: ufo.relativePath,
+    metainfo,
+    fontinfo,
+    lib,
+    groups,
+    kerning,
+    featuresText,
+    layers,
+    contents: {},
+    glyphOrder: [],
+    updatedAt,
+  }
+
+  const defaultLayer = pickDefaultLayer(baseRecord)
+  const contentsPath = `${defaultLayer.glyphDir}/contents.plist`
+  const contents = (
+    ufo.files[contentsPath] ? parseXmlPlist(ufo.files[contentsPath]) : {}
+  ) as Record<string, string>
+  const glyphOrder = Array.isArray(lib?.['public.glyphOrder'])
+    ? (lib['public.glyphOrder'] as string[])
+    : Object.keys(contents)
+
+  return {
+    metadata: { ...baseRecord, contents, glyphOrder },
+    defaultLayer,
+  }
+}
+
+// Font-level projection of a UFO metadata record: every project-level field a
+// UFO carries, with no glyph data attached.
+export const buildUfoFontLevelFontData = (metadata: UfoMetadataRecord) =>
+  buildFontDataFromUfoGlyphs([], metadata)
+
 export const importUfoWorkspaceEntries = async (
   entries: UfoWorkspaceEntry[],
   options: UfoImportSourceOptions
@@ -1685,84 +1756,16 @@ export const importUfoWorkspaceEntries = async (
   const glyphRecords: UfoGlyphRecord[] = []
 
   for (const ufo of parsedUfos) {
-    const metainfo = (
-      ufo.files['metainfo.plist']
-        ? parseXmlPlist(ufo.files['metainfo.plist'])
-        : {}
-    ) as Record<string, unknown>
-    const fontinfo = (
-      ufo.files['fontinfo.plist']
-        ? parseXmlPlist(ufo.files['fontinfo.plist'])
-        : {}
-    ) as Record<string, unknown>
-    const lib = (
-      ufo.files['lib.plist'] ? parseXmlPlist(ufo.files['lib.plist']) : {}
-    ) as Record<string, unknown>
-    const groups = (
-      ufo.files['groups.plist'] ? parseXmlPlist(ufo.files['groups.plist']) : {}
-    ) as Record<string, unknown>
-    const kerning = (
-      ufo.files['kerning.plist']
-        ? parseXmlPlist(ufo.files['kerning.plist'])
-        : {}
-    ) as Record<string, unknown>
-    const featuresText = ufo.files['features.fea'] ?? null
-    const layercontents = ufo.files['layercontents.plist']
-      ? (parseXmlPlist(ufo.files['layercontents.plist']) as unknown[])
-      : [['public.default', 'glyphs']]
-
-    const layers: UfoLayerRecord[] = Array.isArray(layercontents)
-      ? layercontents
-          .map((entry) => (Array.isArray(entry) ? entry : null))
-          .filter((entry): entry is unknown[] => Boolean(entry))
-          .map((entry) => ({
-            layerId: String(entry[0] ?? 'public.default'),
-            glyphDir: String(entry[1] ?? 'glyphs'),
-          }))
-      : [{ layerId: 'public.default', glyphDir: 'glyphs' }]
-
-    const defaultLayer = pickDefaultLayer({
+    const { metadata: metadataRecord, defaultLayer } = parseUfoMetadataFiles({
       projectId,
-      ufoId: ufo.ufoId,
-      relativePath: ufo.relativePath,
-      metainfo,
-      fontinfo,
-      lib,
-      groups,
-      kerning,
-      featuresText,
-      layers,
-      contents: {},
-      glyphOrder: [],
+      ufo,
       updatedAt: createdAt,
     })
+    const { layers, contents } = metadataRecord
     const designspaceLayerIds =
       designspaceLayerIdsByUfoBasename.get(basename(ufo.relativePath)) ??
       new Set<string>()
 
-    const contentsPath = `${defaultLayer.glyphDir}/contents.plist`
-    const contents = (
-      ufo.files[contentsPath] ? parseXmlPlist(ufo.files[contentsPath]) : {}
-    ) as Record<string, string>
-    const glyphOrder = Array.isArray(lib?.['public.glyphOrder'])
-      ? (lib['public.glyphOrder'] as string[])
-      : Object.keys(contents)
-
-    const metadataRecord: UfoMetadataRecord = {
-      projectId,
-      ufoId: ufo.ufoId,
-      relativePath: ufo.relativePath,
-      metainfo,
-      fontinfo,
-      lib,
-      groups,
-      kerning,
-      featuresText,
-      layers,
-      contents,
-      glyphOrder,
-      updatedAt: createdAt,
-    }
     metadataRecords.push(metadataRecord)
 
     for (const layer of layers) {
