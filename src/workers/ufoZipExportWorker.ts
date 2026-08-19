@@ -6,6 +6,7 @@ import {
   serializeGlifRecord,
   serializeXmlPlist,
 } from 'src/lib/fontFormats/adapters/ufo'
+import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
 import {
   buildKumikoUfoExportManifest,
   loadKumikoUfoExportExtraGlyphBatch,
@@ -180,44 +181,8 @@ self.onmessage = async (event: MessageEvent<ZipExportRequest>) => {
       const ufoDir = await ensureOpfsDir(stagingRoot, metadata.relativePath)
 
       // Write metadata files
-      await writeOpfsFile(
-        ufoDir,
-        'metainfo.plist',
-        serializeXmlPlist({
-          creator: metadata.metainfo?.creator ?? 'org.kumiko.fonteditor',
-          formatVersion: metadata.metainfo?.formatVersion ?? 3,
-          formatVersionMinor: metadata.metainfo?.formatVersionMinor ?? 0,
-        })
-      )
-      await writeOpfsFile(
-        ufoDir,
-        'fontinfo.plist',
-        serializeXmlPlist(metadata.fontinfo ?? {})
-      )
-      await writeOpfsFile(
-        ufoDir,
-        'lib.plist',
-        serializeXmlPlist(metadata.lib ?? {})
-      )
-      await writeOpfsFile(
-        ufoDir,
-        'groups.plist',
-        serializeXmlPlist(metadata.groups ?? {})
-      )
-      await writeOpfsFile(
-        ufoDir,
-        'kerning.plist',
-        serializeXmlPlist(metadata.kerning ?? {})
-      )
-      await writeOpfsFile(
-        ufoDir,
-        'layercontents.plist',
-        serializeXmlPlist(
-          metadata.layers.map((layer) => [layer.layerId, layer.glyphDir])
-        )
-      )
-      if (metadata.featuresText !== null) {
-        await writeOpfsFile(ufoDir, 'features.fea', metadata.featuresText)
+      for (const file of buildUfoFontLevelFiles(metadata)) {
+        await writeOpfsPath(ufoDir, file.path, file.text)
       }
 
       // Write glyph layers
