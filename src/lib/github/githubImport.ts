@@ -1,4 +1,5 @@
 import { unzipSync } from 'fflate'
+import { detectSourceFormats } from 'src/lib/fontFormats/formatAdapter/detectSourceFormat'
 import {
   importUfoWorkspaceEntries,
   isDesignspaceFile,
@@ -62,6 +63,13 @@ const collectUfoEntriesFromZip = (zipBuffer: Uint8Array) => {
   const archiveEntries = unzipSync(zipBuffer)
   const rawPaths = Object.keys(archiveEntries).filter((path) => path.length > 0)
   const archiveRoot = rawPaths[0]?.split('/')[0] ?? ''
+  const repoPaths = rawPaths.map((path) => {
+    const normalized = normalizePath(path)
+    return archiveRoot && normalized.startsWith(`${archiveRoot}/`)
+      ? normalized.slice(archiveRoot.length + 1)
+      : normalized
+  })
+  const detectedFormats = detectSourceFormats(repoPaths)
   const ufoEntries: UfoWorkspaceEntry[] = []
 
   for (const [rawPath, bytes] of Object.entries(archiveEntries)) {
@@ -88,7 +96,7 @@ const collectUfoEntriesFromZip = (zipBuffer: Uint8Array) => {
     })
   }
 
-  return { archiveRoot, ufoEntries }
+  return { archiveRoot, ufoEntries, detectedFormats }
 }
 
 const parseResponseBody = async (response: Response) => {
@@ -182,9 +190,17 @@ export const fetchGitHubArchiveSnapshot = async (input: {
   }
 
   const zipBuffer = new Uint8Array(await archiveResponse.arrayBuffer())
-  const { archiveRoot, ufoEntries } = collectUfoEntriesFromZip(zipBuffer)
+  const { archiveRoot, ufoEntries, detectedFormats } =
+    collectUfoEntriesFromZip(zipBuffer)
   if (ufoEntries.length === 0) {
-    throw new Error('這個 repo 的 ZIP 檔裡沒有找到可解析的 UFO 專案')
+    // Say what the repo actually holds: "no UFO" is unhelpful when the repo has
+    // a source tree Kumiko recognises but cannot import over GitHub yet.
+    const other = detectedFormats.find((format) => format.id !== 'ufo')
+    throw new Error(
+      other
+        ? `這個 repo 是 ${other.label}，GitHub 匯入目前只支援 UFO／designspace。可以先下載後用本地匯入。`
+        : '這個 repo 的 ZIP 檔裡沒有找到可解析的 UFO 專案'
+    )
   }
 
   return {

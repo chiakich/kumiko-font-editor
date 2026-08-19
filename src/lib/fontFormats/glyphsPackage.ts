@@ -180,6 +180,25 @@ const ensureGlyphsPackageName = (value: string | null | undefined) => {
     : `${packageName}.glyphspackage`
 }
 
+// One glyph file name, unique within the package. Exported so the materializer
+// and the path lister agree on names without duplicating the rule.
+export const sanitizeGlyphsPackageFileName = (
+  glyphName: string,
+  usedNames: Set<string>
+) => {
+  const baseName = sanitizeGlyphFileName(glyphName)
+  let index = 0
+  while (true) {
+    const suffix = index === 0 ? '' : `_${index + 1}`
+    const fileName = `${baseName}${suffix}.glyph`
+    if (!usedNames.has(fileName)) {
+      usedNames.add(fileName)
+      return fileName
+    }
+    index += 1
+  }
+}
+
 const getUniqueGlyphPath = (glyphName: string, usedPaths: Set<string>) => {
   const baseName = sanitizeGlyphFileName(glyphName)
   let index = 0

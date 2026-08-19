@@ -5,7 +5,12 @@ import {
 import type {
   EntityId,
   FormatAdapter,
+  FormatDetection,
 } from 'src/lib/fontFormats/formatAdapter/types'
+import {
+  listUfoTreePaths,
+  materializeUfoTree,
+} from 'src/lib/fontFormats/ufoMaterialize'
 
 export interface UfoLayout {
   // The .ufo directory, relative to the repo root.
@@ -48,6 +53,10 @@ export const createUfoFormatAdapter = (layout: UfoLayout): FormatAdapter => {
     id: 'ufo',
 
     ignoredPaths: [],
+
+    materialize: (options) => materializeUfoTree(options),
+
+    listPaths: (projectId) => listUfoTreePaths(projectId),
 
     entityOwning: (path) => {
       if (layout.designspacePath && path === layout.designspacePath) {
@@ -109,4 +118,26 @@ export const createUfoFormatAdapter = (layout: UfoLayout): FormatAdapter => {
       ).map((name) => joinPath(layout.relativePath, name))
     },
   }
+}
+
+const UFO_DIR = /(^|\/)([^/]+)\.ufo\//i
+
+// A repo holds a UFO project when it has at least one .ufo directory. The
+// designspace, when present, sits beside them rather than inside one.
+export const detectUfoSourceTrees = (
+  paths: readonly string[]
+): FormatDetection[] => {
+  const roots = new Set<string>()
+  for (const path of paths) {
+    const match = UFO_DIR.exec(path)
+    if (!match) {
+      continue
+    }
+    roots.add(path.slice(0, match.index))
+  }
+  return [...roots].sort().map((root) => ({
+    id: 'ufo' as const,
+    root,
+    label: root ? `${root} (UFO)` : 'UFO',
+  }))
 }

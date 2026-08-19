@@ -15,8 +15,39 @@ export const entityKey = (entity: EntityId): string =>
 export const entitiesEqual = (left: EntityId, right: EntityId): boolean =>
   entityKey(left) === entityKey(right)
 
+export type SourceFormatId = 'ufo' | 'glyphspackage'
+
+export interface MaterializedFile {
+  // Repo-relative path, identical to what the source tree holds on disk.
+  path: string
+  text: string
+  entity: EntityId
+  // Mirrors the manifest's glyph accounting so callers can drive a progress bar
+  // without re-deriving which writes are user-visible work.
+  countsTowardTotal: boolean
+}
+
+export type MaterializeScope = 'all' | 'dirty'
+
+export interface MaterializeOptions {
+  projectId: string
+  scope?: MaterializeScope
+  onTotal?: (totalGlyphs: number) => void
+}
+
+// Recognises a source tree from its file listing alone, so import can pick a
+// format before anything is parsed.
+export interface FormatDetection {
+  id: SourceFormatId
+  // Root of the detected tree, relative to the repo (e.g. 'Family.glyphspackage'
+  // or '' when .ufo folders sit at the top level).
+  root: string
+  // Human-facing label for a picker when a repo holds more than one format.
+  label: string
+}
+
 export interface FormatAdapter {
-  readonly id: 'ufo' | 'glyphspackage'
+  readonly id: SourceFormatId
 
   // Which entity owns this repo path, or null when the path is not part of the
   // source tree (editor scratch files, unrelated repo content).
@@ -40,4 +71,16 @@ export interface FormatAdapter {
   //   conflict — that is exactly the case of two contributors each adding a
   //   different glyph.
   mergePolicy(entity: EntityId): 'atomic' | 'setMerge'
+
+  // The single projection from canonical records to source files. Streamed so a
+  // CJK-scale project never has to be held in memory at once.
+  materialize(options: MaterializeOptions): AsyncGenerator<MaterializedFile>
+
+  // Every path the project would write, without loading glyph geometry. Used to
+  // spot files that must be deleted when only part of a tree is rebuilt.
+  listPaths(projectId: string): Promise<string[]>
 }
+
+// Formats declare themselves here so import and sync can enumerate what Kumiko
+// understands without importing every implementation.
+export type FormatDetector = (paths: readonly string[]) => FormatDetection[]
