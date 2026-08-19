@@ -412,7 +412,7 @@ const getUfoSource = (
 // tracked as its own font-level path.
 // Every UFO the project writes. Source-backed projects list them explicitly;
 // projects without UFO source metadata get the generic single-UFO projection.
-const listProjectUfoSources = (
+export const listProjectUfoSources = (
   project: KumikoProjectRecord
 ): KumikoProjectUfoSource[] => {
   const sources = project.sourceData?.ufo?.ufos
