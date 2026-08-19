@@ -42,6 +42,41 @@ const resolveFile = async (
   }
 }
 
+// createSyncAccessHandle is worker-only; the sync stack also runs on the main
+// thread, where createWritable is the available path. Prefer the sync handle
+// when it works — it is markedly faster for the many small files a UFO holds.
+const writeFileHandle = async (
+  handle: FileSystemFileHandle,
+  data: Uint8Array
+) => {
+  if (typeof handle.createSyncAccessHandle === 'function') {
+    try {
+      const accessHandle = await handle.createSyncAccessHandle()
+      try {
+        accessHandle.truncate(0)
+        accessHandle.write(data, { at: 0 })
+        accessHandle.flush()
+        return
+      } finally {
+        accessHandle.close()
+      }
+    } catch {
+      // Fall through: some engines expose the method but reject off-worker.
+    }
+  }
+
+  const writable = await handle.createWritable()
+  // Copy into a plain ArrayBuffer: a Uint8Array view over a SharedArrayBuffer
+  // is not an accepted chunk type.
+  await writable.write(
+    data.buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength
+    ) as ArrayBuffer
+  )
+  await writable.close()
+}
+
 // OPFS-backed store. The only place in the git stack that knows about
 // FileSystemDirectoryHandle.
 export const createOpfsFileStore = (
@@ -61,14 +96,7 @@ export const createOpfsFileStore = (
     if (!handle) {
       throw new Error(`無法寫入 OPFS 路徑：${path}`)
     }
-    const accessHandle = await handle.createSyncAccessHandle()
-    try {
-      accessHandle.truncate(0)
-      accessHandle.write(data, { at: 0 })
-      accessHandle.flush()
-    } finally {
-      accessHandle.close()
-    }
+    await writeFileHandle(handle, data)
   },
 
   deleteFile: async (path) => {

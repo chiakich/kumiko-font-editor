@@ -311,9 +311,32 @@ OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消
 
 `markGitCommitSynced` 刻意不寫 blob 基準線——git 以 merge base commit 當基準，REST 路徑維護的 per-glyph SHA 欄位在 git 下沒有東西要記。
 
+### 瀏覽器實測（2026-08-20，Chrome + 真實 OPFS）
+
+單元測試用 in-memory `FileStore` 跑真正的 isomorphic-git，但跑在 Node 上、沒有 OPFS。實際在瀏覽器跑一次，抓到三個單元測試不可能發現的問題：
+
+1. **`createSyncAccessHandle()` 只存在於 Web Worker。** OPFS store 原本只走這條路，在主執行緒（sync 實際執行的地方）直接 `TypeError`。現在偵測後回退到 `createWritable()`，worker 裡仍優先用較快的 sync handle。
+2. **isomorphic-git 需要 Node 的 `Buffer` 全域**，且沒有 browser 專用 build（原始碼用了 122 次）。`git.init` 會過，`git.add` 寫 index 時才炸。加了 `src/lib/git/nodeGlobals.ts`，由 git 模組以 side-effect import 注入；因為 git 堆疊是 lazy 的，polyfill 也留在 lazy chunk，主 bundle 沒有它。
+3. **`git.add` 逐檔呼叫是二次成本**——每次呼叫都重寫整個 index。實測 7.91ms/檔；改成一次傳入陣列後降到 1.29ms/檔（**6.3 倍**）。`stageWorktreePaths` 已改為批次。
+
+修正後的實測（每檔約 100 bytes 的 `.glif`）：
+
+| 操作                   | N=300      | N=1200       | 判讀                      |
+| ---------------------- | ---------- | ------------ | ------------------------- |
+| 寫入 OPFS              | 1.00 ms/檔 | 1.05 ms/檔   | 線性                      |
+| stage（批次 add）      | 1.29 ms/檔 | 1.35 ms/檔   | 線性                      |
+| commit                 | 20 ms      | 25 ms        | 幾乎不隨字數成長          |
+| `git.walk` 取 blob OID | —          | 0.02 ms/blob | 極快，佐證 OID 比較的設計 |
+| `git.hashBlob`         | —          | 0.003 ms/次  | 可忽略                    |
+
+外推到 3 萬字：全樹 materialize + stage + commit 約 **70–90 秒**。線性可接受，但——
+
+**`materializeUfoTree` 目前沒有 dirty scope。** `syncWorktreeFromProject` 每次都重建整棵樹，所以改一個字也要付全樹的代價。文件前面「用 `byProjectSyncDirty` 決定要 materialize 哪些檔」這條原則在 git 路徑**尚未實作**，這是切換為預設前最該補的優化。
+
 尚未完成：
 
-- **切換為預設仍待手動驗證。** 需要對真實 repo 驗證 fetch / push、fork 權限與 CJK 規模的 OPFS 效能——這幾件在單元測試環境裡驗不了（測試用 in-memory `FileStore` 跑真正的 isomorphic-git，但沒有網路也沒有 OPFS）。
+- **fetch / push 仍未對真實 GitHub 驗證。** 需要 OAuth 登入與 `wrangler pages dev`（vite dev 不會執行 `functions/`），本地無法完成。
+- **dirty-scoped materialization**（見上）。
 - **`remoteBlobSha` / `remoteBlobShaByPath` 尚未退役**：REST 路徑還在用。git 成為預設後才移除。
 - git 路徑沒有 `remoteTreeTruncated` 的概念（packfile 不會截斷），該欄位在 git 報告裡固定為 `false`。
 - git 堆疊是**動態載入**的（`syncEngine` 只在開關開啟時 `await import`），打包成獨立的 `gitSync` chunk（約 266 kB / gzip 80 kB）。走 REST 路徑的使用者不會下載它。

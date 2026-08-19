@@ -1,3 +1,4 @@
+import 'src/lib/git/nodeGlobals'
 import git from 'isomorphic-git'
 import http from 'isomorphic-git/http/web'
 import type { GitWorktree } from 'src/lib/git/worktree'

@@ -1,3 +1,4 @@
+import 'src/lib/git/nodeGlobals'
 import git from 'isomorphic-git'
 import {
   buildEntitySyncEntries,
