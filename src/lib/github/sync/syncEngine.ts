@@ -7,11 +7,13 @@ import type {
   ProjectSyncReport,
   SyncConflictResolution,
 } from 'src/lib/github/sync/types'
-import { buildGitSyncReport } from 'src/lib/git/gitSync'
 import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
 import { loadKumikoProjectRecord } from 'src/lib/project/kumikoProjectPersistence'
 import type { EntitySyncStatus } from 'src/lib/git/entitySync'
 import type { GlyphSyncStatus } from 'src/lib/github/sync/types'
+
+type GitSyncReportBuilder =
+  (typeof import('src/lib/git/gitSync'))['buildGitSyncReport']
 
 export { resolveKumikoSyncTarget as resolveSyncTarget } from 'src/lib/github/sync/kumikoUfoSync'
 
@@ -23,7 +25,7 @@ const toGlyphSyncStatus = (status: EntitySyncStatus): GlyphSyncStatus => status
 // merge base replaces the stored per-file baselines, so baselineSha carries the
 // base content marker rather than a persisted hash.
 const asProjectSyncReport = (
-  report: Awaited<ReturnType<typeof buildGitSyncReport>>,
+  report: Awaited<ReturnType<GitSyncReportBuilder>>,
   target: { owner: string; repo: string; ref: string }
 ): ProjectSyncReport => {
   const entries = report.entries.map((entry) => ({
@@ -33,8 +35,10 @@ const asProjectSyncReport = (
     fileName: entry.path.slice(entry.path.lastIndexOf('/') + 1),
     path: entry.path,
     status: toGlyphSyncStatus(entry.status),
-    baselineSha: entry.baseText === null ? null : report.mergeBaseSha,
-    remoteSha: entry.remoteText === null ? null : report.remoteHeadSha,
+    // The merge base commit is the baseline; a null marks a path the base or
+    // the remote simply did not have.
+    baselineSha: entry.baseOid === null ? null : report.mergeBaseSha,
+    remoteSha: entry.remoteOid === null ? null : report.remoteHeadSha,
   }))
 
   return {
@@ -70,6 +74,8 @@ export const buildProjectSyncReport = async (input: {
     return null
   }
 
+  // Loaded on demand so projects on the REST path never ship the git stack.
+  const { buildGitSyncReport } = await import('src/lib/git/gitSync')
   const report = await buildGitSyncReport({
     target: {
       projectId: input.projectId,

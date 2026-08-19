@@ -110,8 +110,10 @@ export const pushBranch = async (input: {
   return result
 }
 
-// Reads one path out of a commit. Returns null when the commit has no such file,
-// which is how a report tells "added" from "modified".
+// Reads one path out of a commit, returning null when the commit lacks it.
+// isomorphic-git funnels a missing path, a missing object and a failed object
+// read all into NotFoundError, so those cannot be told apart here; the catch is
+// still narrowed so any other error class surfaces instead of reading as absent.
 export const readBlobAtCommit = async (input: {
   worktree: GitWorktree
   oid: string
@@ -125,7 +127,13 @@ export const readBlobAtCommit = async (input: {
       filepath: input.filepath,
     })
     return new TextDecoder().decode(blob.blob)
-  } catch {
-    return null
+  } catch (error) {
+    if (
+      error instanceof git.Errors.NotFoundError ||
+      error instanceof git.Errors.ObjectTypeError
+    ) {
+      return null
+    }
+    throw error
   }
 }

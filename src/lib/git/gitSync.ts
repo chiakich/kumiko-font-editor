@@ -8,7 +8,6 @@ import {
 import {
   fetchRemoteBranch,
   pushBranch,
-  readBlobAtCommit,
   trackingRefFor,
 } from 'src/lib/git/remote'
 import {
@@ -36,29 +35,52 @@ export interface GitSyncReport extends EntitySyncReport {
   localHeadSha: string | null
 }
 
-// Collects the local file tree once. The materializer is the only projection
-// from canonical records, so local content here is exactly what a commit
-// would write.
+// Hashes the local tree instead of holding it. The materializer is the only
+// projection from canonical records, so these OIDs are exactly what a commit
+// would produce — and a CJK-scale project stays a map of hashes, not of file
+// bodies.
 const collectLocalTree = async (projectId: string) => {
   const files = new Map<
     string,
-    { text: string; entity: EntitySyncInput['entity'] }
+    { oid: string; entity: EntitySyncInput['entity'] }
   >()
   for await (const file of materializeUfoTree({ projectId })) {
-    files.set(file.path, { text: file.text, entity: file.entity })
+    const { oid } = await git.hashBlob({ object: file.text })
+    files.set(file.path, { oid, entity: file.entity })
   }
   return files
 }
 
-const listCommitPaths = async (worktree: GitWorktree, oid: string | null) => {
+// Collects path → blob OID for one commit in a single walk, rather than reading
+// every file to compare content.
+const collectTreeOids = async (worktree: GitWorktree, oid: string | null) => {
+  const oids = new Map<string, string>()
   if (!oid) {
-    return [] as string[]
+    return oids
   }
   try {
-    return await git.listFiles({ fs: worktree.fs, dir: worktree.dir, ref: oid })
+    await git.walk({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      trees: [git.TREE({ ref: oid })],
+      map: async (path, entries) => {
+        const entry = entries?.[0]
+        if (!entry || path === '.') {
+          return
+        }
+        if ((await entry.type()) !== 'blob') {
+          return
+        }
+        const entryOid = await entry.oid()
+        if (entryOid) {
+          oids.set(path, entryOid)
+        }
+      },
+    })
   } catch {
-    return [] as string[]
+    return oids
   }
+  return oids
 }
 
 const buildProjectAdapters = async (projectId: string) => {
@@ -110,15 +132,15 @@ export const buildGitSyncReport = async (input: {
     return null
   }
 
-  const [basePaths, remotePaths] = await Promise.all([
-    listCommitPaths(worktree, fetched.mergeBaseSha),
-    listCommitPaths(worktree, fetched.remoteHeadSha),
+  const [baseOids, remoteOids] = await Promise.all([
+    collectTreeOids(worktree, fetched.mergeBaseSha),
+    collectTreeOids(worktree, fetched.remoteHeadSha),
   ])
 
   const paths = new Set<string>([
     ...localTree.keys(),
-    ...basePaths,
-    ...remotePaths,
+    ...baseOids.keys(),
+    ...remoteOids.keys(),
   ])
 
   const inputs: EntitySyncInput[] = []
@@ -131,19 +153,9 @@ export const buildGitSyncReport = async (input: {
     inputs.push({
       entity,
       path,
-      baseText: fetched.mergeBaseSha
-        ? await readBlobAtCommit({
-            worktree,
-            oid: fetched.mergeBaseSha,
-            filepath: path,
-          })
-        : null,
-      localText: local?.text ?? null,
-      remoteText: await readBlobAtCommit({
-        worktree,
-        oid: fetched.remoteHeadSha,
-        filepath: path,
-      }),
+      baseOid: baseOids.get(path) ?? null,
+      localOid: local?.oid ?? null,
+      remoteOid: remoteOids.get(path) ?? null,
     })
   }
 

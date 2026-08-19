@@ -16,46 +16,48 @@ export interface EntitySyncEntry {
   entity: EntityId
   path: string
   status: EntitySyncStatus
-  // Content at the merge base, or null when the base did not have this path.
-  baseText: string | null
-  localText: string | null
-  remoteText: string | null
+  // Blob OID at the merge base, or null when the base lacked this path. Blob
+  // OIDs are content hashes, so equality here is content equality — no file
+  // body needs to be read to classify a path.
+  baseOid: string | null
+  localOid: string | null
+  remoteOid: string | null
 }
 
 export interface EntitySyncInput {
   entity: EntityId
   path: string
-  baseText: string | null
-  localText: string | null
-  remoteText: string | null
+  baseOid: string | null
+  localOid: string | null
+  remoteOid: string | null
 }
 
-// Classic three-way comparison against the merge base. Because the base is a
-// commit rather than a stored per-file hash, "unknown baseline" no longer
-// exists: either the base has the path or it genuinely did not.
+// Classic three-way comparison against the merge base, over blob OIDs. Because
+// the base is a commit rather than a stored per-file hash, "unknown baseline" no
+// longer exists: either the base has the path or it genuinely did not.
 export const resolveEntityStatus = (input: {
-  baseText: string | null
-  localText: string | null
-  remoteText: string | null
+  baseOid: string | null
+  localOid: string | null
+  remoteOid: string | null
 }): EntitySyncStatus => {
-  const { baseText, localText, remoteText } = input
-  const localChanged = localText !== baseText
-  const remoteChanged = remoteText !== baseText
+  const { baseOid, localOid, remoteOid } = input
+  const localChanged = localOid !== baseOid
+  const remoteChanged = remoteOid !== baseOid
 
   if (!localChanged && !remoteChanged) {
     return 'unchanged'
   }
   if (localChanged && !remoteChanged) {
-    return localText === null ? 'localDeleted' : 'localModified'
+    return localOid === null ? 'localDeleted' : 'localModified'
   }
   if (!localChanged && remoteChanged) {
-    if (remoteText === null) {
+    if (remoteOid === null) {
       return 'remoteDeleted'
     }
-    return baseText === null ? 'remoteAdded' : 'remoteModified'
+    return baseOid === null ? 'remoteAdded' : 'remoteModified'
   }
   // Both sides moved. Identical content is not a conflict — it is convergence.
-  if (localText === remoteText) {
+  if (localOid === remoteOid) {
     return 'unchanged'
   }
   return 'conflict'
@@ -67,9 +69,9 @@ export const buildEntitySyncEntries = (
   inputs.map((input) => ({
     entity: input.entity,
     path: input.path,
-    baseText: input.baseText,
-    localText: input.localText,
-    remoteText: input.remoteText,
+    baseOid: input.baseOid,
+    localOid: input.localOid,
+    remoteOid: input.remoteOid,
     status: resolveEntityStatus(input),
   }))
 

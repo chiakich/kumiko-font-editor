@@ -274,9 +274,39 @@ session 結束或斷線，狀態落回 IndexedDB；git 同步完全不知道即�
 
 OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消費者，提前常駐只會替每個 CJK 專案多背數萬個檔案與一份無人讀取的過期狀態。改到 Phase 2 與 isomorphic-git 一起落地。
 
-**Phase 2 — 接 isomorphic-git**
+**Phase 2 — 接 isomorphic-git（機制已完成，尚未成為預設）**
 
-加 `/api/github/git/*` proxy；git 只負責 fetch / merge base / commit / push；衝突偵測換成 entity 三方比較，UI 沿用現有 per-glyph 解法；`remoteBlobSha` 退役。fork / compare / merge 這些 GitHub 專屬操作繼續走現有 REST endpoint——git 只取代資料平面。
+加 `/api/github/git/*` proxy；git 只負責 fetch / merge base / commit / push；衝突偵測換成 entity 三方比較，UI 沿用現有 per-glyph 解法。fork / compare / merge 這些 GitHub 專屬操作繼續走現有 REST endpoint——git 只取代資料平面。
+
+已落地（2026-08）：
+
+| 模組                                   | 職責                                                                       |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| `src/lib/git/fileStore.ts`             | 儲存 port：`FileStore`，只談 bytes 與目錄                                  |
+| `src/lib/git/gitFileSystem.ts`         | 把 `FileStore` 包成 isomorphic-git 的 `PromiseFsClient`，帶 POSIX 錯誤碼   |
+| `src/lib/git/opfsFileStore.ts`         | OPFS 實作，是整個 git 堆疊裡唯一認識 `FileSystemDirectoryHandle` 的地方    |
+| `src/lib/git/worktree.ts`              | per-project repo：init、從 materializer 寫工作樹、staging、commit、discard |
+| `src/lib/git/remote.ts`                | 經自家 proxy 的 fetch / push、merge base、`readBlobAtCommit`               |
+| `src/lib/git/entitySync.ts`            | entity 層三方比較與依 entity 分組（跨 master 收斂成一個判斷）              |
+| `src/lib/git/gitSync.ts`               | 串起來：materialize → fetch → merge base → 報告 / commit / push            |
+| `functions/api/github/git/[[path]].ts` | git-http proxy，只開放三個 smart-HTTP 端點                                 |
+
+設計要點：
+
+- **OPFS 工作樹是 derived cache。** `syncWorktreeFromProject` 會刪掉 materializer 不再產出的檔案，`discardGitWorktree` 隨時可整包丟棄重建。
+- **不靠 `statusMatrix`。** staging 只針對 materializer 回報的路徑，數萬字的工作樹不會被整棵樹 hash。
+- **merge base 取代逐檔基準線。** 三方比較直接讀 base commit 的 blob，因此不再有「基準線未知」這個狀態。
+- **兩邊改成一樣不是衝突**，是收斂；任一 master 衝突則整個 glyph entity 升級為衝突。
+- **proxy 不轉發呼叫端 header**，token 由 server 端注入，回應只放行 content-type。
+
+尚未完成，刻意留給手動驗證之後：
+
+- git 路徑目前是 **opt-in**（`kumiko.app.gitSyncEnabled.v1`，預設關閉），現行 REST 同步仍是預設。切換為預設前需要對真實 repo 驗證 fetch / push 與 CJK 規模的 OPFS 效能——這兩件在單元測試環境裡驗不了。
+- `remoteBlobSha` / `remoteBlobShaByPath` **尚未退役**：REST 路徑還在用。git 成為預設後才移除。
+- **只有「產生報告」接上了 UI**（在開關後面）。`commitAndPushProject` 已實作並測過，但尚未接線：它目前 push 到 `target.branch`，而 fork-based 貢獻流程需要推到使用者 fork 的分支，接線時要沿用現有 `fork-status` 的分支解析。
+- pull 的套用仍走 REST 的 `applyKumikoRemoteSnapshot`。
+- git 堆疊是**動態載入**的（`syncEngine` 只在開關開啟時 `await import`），打包成獨立的 `gitSync` chunk（約 266 kB / gzip 80 kB）。走 REST 路徑的使用者不會下載它。
+- 效能上刻意用 blob OID 比較而非讀取內容：`collectLocalTree` 只保存 hash，`collectTreeOids` 一次 `git.walk` 取整棵樹，避免 CJK 規模下數萬次 blob 讀取。內容只在真正要套用遠端變更時才讀。
 
 **Phase 3 — 更多格式上同步路徑**
 

@@ -15,8 +15,7 @@ const status = (
   base: string | null,
   local: string | null,
   remote: string | null
-) =>
-  resolveEntityStatus({ baseText: base, localText: local, remoteText: remote })
+) => resolveEntityStatus({ baseOid: base, localOid: local, remoteOid: remote })
 
 describe('three-way entity status', () => {
   it('reports unchanged when nobody moved', () => {
@@ -63,30 +62,30 @@ describe('entity sync summary', () => {
     {
       entity: glyph('A'),
       path: 'Light.ufo/glyphs/A.glif',
-      baseText: 'a',
-      localText: 'a2',
-      remoteText: 'a',
+      baseOid: 'a',
+      localOid: 'a2',
+      remoteOid: 'a',
     },
     {
       entity: glyph('B'),
       path: 'Light.ufo/glyphs/B.glif',
-      baseText: 'b',
-      localText: 'b',
-      remoteText: 'b2',
+      baseOid: 'b',
+      localOid: 'b',
+      remoteOid: 'b2',
     },
     {
       entity: glyph('C'),
       path: 'Light.ufo/glyphs/C.glif',
-      baseText: 'c',
-      localText: 'c2',
-      remoteText: 'c3',
+      baseOid: 'c',
+      localOid: 'c2',
+      remoteOid: 'c3',
     },
     {
       entity: { kind: 'font', part: 'info' },
       path: 'Light.ufo/fontinfo.plist',
-      baseText: 'i',
-      localText: 'i',
-      remoteText: 'i',
+      baseOid: 'i',
+      localOid: 'i',
+      remoteOid: 'i',
     },
   ]
 
@@ -119,16 +118,16 @@ describe('grouping paths by entity', () => {
       {
         entity: glyph('A'),
         path: 'Light.ufo/glyphs/A.glif',
-        baseText: 'l',
-        localText: 'l',
-        remoteText: 'l',
+        baseOid: 'l',
+        localOid: 'l',
+        remoteOid: 'l',
       },
       {
         entity: glyph('A'),
         path: 'Bold.ufo/glyphs/A.glif',
-        baseText: 'b',
-        localText: 'b2',
-        remoteText: 'b',
+        baseOid: 'b',
+        localOid: 'b2',
+        remoteOid: 'b',
       },
     ])
 
@@ -146,16 +145,16 @@ describe('grouping paths by entity', () => {
       {
         entity: glyph('A'),
         path: 'Light.ufo/glyphs/A.glif',
-        baseText: 'l',
-        localText: 'l2',
-        remoteText: 'l',
+        baseOid: 'l',
+        localOid: 'l2',
+        remoteOid: 'l',
       },
       {
         entity: glyph('A'),
         path: 'Bold.ufo/glyphs/A.glif',
-        baseText: 'b',
-        localText: 'b2',
-        remoteText: 'b3',
+        baseOid: 'b',
+        localOid: 'b2',
+        remoteOid: 'b3',
       },
     ])
 
@@ -169,16 +168,16 @@ describe('grouping paths by entity', () => {
       {
         entity: glyph('A'),
         path: 'Light.ufo/glyphs/A.glif',
-        baseText: 'l',
-        localText: 'l',
-        remoteText: 'l',
+        baseOid: 'l',
+        localOid: 'l',
+        remoteOid: 'l',
       },
       {
         entity: glyph('A'),
         path: 'Bold.ufo/glyphs/A.glif',
-        baseText: 'b',
-        localText: 'b',
-        remoteText: 'b',
+        baseOid: 'b',
+        localOid: 'b',
+        remoteOid: 'b',
       },
     ])
 
