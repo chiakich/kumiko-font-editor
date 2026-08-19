@@ -578,6 +578,80 @@ describe('Kumiko GitHub UFO sync', () => {
     )
   })
 
+  it('commits the designspace when font-level data changed', async () => {
+    await saveProjectDraft({
+      id: 'github-sync-designspace-commit',
+      title: 'Family',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Family.designspace',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      fontData: makeMultiSourceFontData(),
+      projectMetadata: null,
+      projectSourceData: designspaceSourceData,
+      projectSourceFormat: 'designspace',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      projectSyncDirty: true,
+      syncDirtyGlyphIds: [],
+    })
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-designspace-commit',
+      projectTitle: 'Family',
+      activeUfoId: 'Light.ufo',
+    })
+
+    expect(prepared.request.files.map((file) => file.path)).toContain(
+      'Family.designspace'
+    )
+    expect(prepared.fontLevelBlobShas).toHaveProperty('Family.designspace')
+  })
+
+  it('leaves the designspace out of glyph-only commits', async () => {
+    await saveProjectDraft({
+      id: 'github-sync-designspace-clean',
+      title: 'Family',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: 'Family.designspace',
+      sourceType: 'github',
+      githubSource: {
+        owner: 'owner',
+        repo: 'repo',
+        ref: 'main',
+        defaultBranch: 'main',
+        commitSha: 'base',
+      },
+      fontData: makeMultiSourceFontData(),
+      projectMetadata: null,
+      projectSourceData: designspaceSourceData,
+      projectSourceFormat: 'designspace',
+      projectRoundTripFormat: 'ufo',
+      projectGlyphsPackage: null,
+      syncDirtyGlyphIds: ['A'],
+    })
+
+    const prepared = await prepareKumikoGitHubCommit({
+      projectId: 'github-sync-designspace-clean',
+      projectTitle: 'Family',
+      activeUfoId: 'Light.ufo',
+    })
+
+    expect(prepared.request.files.map((file) => file.path)).not.toContain(
+      'Family.designspace'
+    )
+  })
+
   it('applies remote font-level changes to canonical project fields', async () => {
     const { fetchGitHubArchiveSnapshot } =
       await import('src/lib/github/githubImport')

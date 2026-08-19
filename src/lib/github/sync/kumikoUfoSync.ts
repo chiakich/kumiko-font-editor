@@ -406,6 +406,23 @@ const getUfoSource = (
 // Kerning plists stay out of repos that never had them and still have no
 // kerning data, so importing a plain UFO does not grow new files. Shared by the
 // commit and report paths so the two can never disagree on the file set.
+// The designspace lives beside the .ufo folders rather than inside one, so it is
+// tracked as its own font-level path.
+const resolveDesignspacePath = (
+  project: KumikoProjectRecord
+): string | null => {
+  const hasDesignspace =
+    project.sourceFormat === 'designspace' ||
+    Boolean(project.sourceData?.ufo?.designspacePath)
+  if (!hasDesignspace) {
+    return null
+  }
+  return (
+    project.sourceData?.ufo?.designspacePath ??
+    `${project.title || project.projectId}.designspace`
+  )
+}
+
 const shouldSkipUfoKerningFiles = (
   project: KumikoProjectRecord,
   source: KumikoProjectUfoSource
@@ -1224,6 +1241,21 @@ export const prepareKumikoGitHubCommit = async (input: {
       }
       files.push({ path, content: file.text })
     }
+
+    const designspacePath = resolveDesignspacePath(project)
+    if (designspacePath) {
+      const manifest = await buildKumikoUfoExportManifest(input.projectId)
+      if (manifest.designspace) {
+        const blobSha = await gitBlobShaFromText(manifest.designspace.text)
+        fontLevelBlobShas[manifest.designspace.relativePath] = blobSha
+        if (baseline[manifest.designspace.relativePath] !== blobSha) {
+          files.push({
+            path: manifest.designspace.relativePath,
+            content: manifest.designspace.text,
+          })
+        }
+      }
+    }
   }
 
   if (files.length === 0) {
@@ -1467,16 +1499,21 @@ export const buildKumikoProjectSyncReport = async (input: {
   const localFontLevelNames = new Set(
     listLocalUfoFontLevelFileNames(project, source)
   )
+  const designspacePath = resolveDesignspacePath(project)
   entries.push(
     ...computeFontLevelSyncEntries({
-      candidatePaths: UFO_FONT_LEVEL_FILE_NAMES.map((name) =>
-        joinRepoPath(source.relativePath, name)
-      ),
-      localPaths: new Set(
-        [...localFontLevelNames].map((name) =>
+      candidatePaths: [
+        ...UFO_FONT_LEVEL_FILE_NAMES.map((name) =>
           joinRepoPath(source.relativePath, name)
-        )
-      ),
+        ),
+        ...(designspacePath ? [designspacePath] : []),
+      ],
+      localPaths: new Set([
+        ...[...localFontLevelNames].map((name) =>
+          joinRepoPath(source.relativePath, name)
+        ),
+        ...(designspacePath ? [designspacePath] : []),
+      ]),
       dirty: project.syncDirty === 1,
       baseline: source.remoteBlobShaByPath ?? {},
       remote,
