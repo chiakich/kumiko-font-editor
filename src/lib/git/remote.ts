@@ -10,7 +10,9 @@ export const gitProxyUrlFor = (repo: string) => {
   if (!owner || !name) {
     throw new Error(`repo 必須是 owner/repo：${repo}`)
   }
-  return `${window.location.origin}/api/github/git/${owner}/${name}`
+  // self.location works on both the window and a worker; the proxy is always
+  // same-origin so the session cookie rides along.
+  return `${self.location.origin}/api/github/git/${owner}/${name}`
 }
 
 const REMOTE_NAME = 'origin'

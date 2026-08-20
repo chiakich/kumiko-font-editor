@@ -23,7 +23,7 @@ import type { FontData } from 'src/store'
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)
 vi.stubGlobal('Node', window.Node)
-vi.stubGlobal('window', { location: { origin: 'https://kumiko.test' } })
+vi.stubGlobal('self', { location: { origin: 'https://kumiko.test' } })
 
 const fetchRemoteBranch = vi.fn()
 

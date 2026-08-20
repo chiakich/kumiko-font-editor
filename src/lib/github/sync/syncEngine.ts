@@ -74,14 +74,14 @@ export const buildProjectSyncReport = async (input: {
     return null
   }
 
-  // Loaded on demand so projects on the REST path never ship the git stack.
-  const { buildGitSyncReport } = await import('src/lib/git/gitSync')
-  const report = await buildGitSyncReport({
-    target: {
-      projectId: input.projectId,
-      repo: `${target.owner}/${target.repo}`,
-      branch: target.ref,
-    },
+  // Loaded on demand so projects on the REST path never ship the git stack, and
+  // run in a worker because the report hashes the entire project.
+  const { buildGitSyncReportInWorker } =
+    await import('src/lib/git/gitSyncWorkerClient')
+  const report = await buildGitSyncReportInWorker({
+    projectId: input.projectId,
+    repo: `${target.owner}/${target.repo}`,
+    branch: target.ref,
   })
   return asProjectSyncReport(report, {
     owner: target.owner,

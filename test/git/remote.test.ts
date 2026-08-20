@@ -9,7 +9,8 @@ import {
 } from 'src/lib/git/remote'
 import { createMemoryFileStore } from './memoryFileStore'
 
-vi.stubGlobal('window', { location: { origin: 'https://kumiko.test' } })
+// the proxy url reads self.location so it works in a worker too
+vi.stubGlobal('self', { location: { origin: 'https://kumiko.test' } })
 
 const makeWorktree = async () => {
   const fs = createGitFs(createMemoryFileStore())

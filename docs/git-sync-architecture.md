@@ -373,6 +373,18 @@ UFO 格式沒有規定這些細節，而各家工具的選擇不同：
 
 仍知道的限制：font-level plist 是從 canonical 資料重新產生的，所以逐位元相同也依賴鍵值內容本身沒有漂移；風格偵測樣本取 `fontinfo.plist`（`metainfo.plist` 太小，帶不出引號證據）。
 
+### 報告在 worker 裡跑（2026-08-20）
+
+`buildGitSyncReport` 會 materialize 並雜湊整個專案——CJK 規模就是數萬個檔案。在 main thread 上跑會凍住整個 UI（實測 14,562 字約 17 秒）。整條報告路徑改在 `gitSyncWorker` 執行：
+
+- OPFS 與 IndexedDB 在 worker 都可用，而且 worker 才拿得到 `createSyncAccessHandle` 快速路徑
+- 報告路徑**不需要 DOMParser**（只序列化、不解析），所以能進 worker；`applyGitRemoteChanges` 要解析遠端 glif，仍留在 main thread
+- `gitProxyUrlFor` 改讀 `self.location.origin`（`window` 在 worker 裡不存在）
+
+實測（production build，worker 直接建立並送請求）：worker 正常啟動、OPFS 寫出 `.git`、`remote.origin` 與 refspec 正確、`git.fetch` 真的發出請求，錯誤以訊息回傳而非 crash。
+
+仍未解決：**報告本身的成本沒有降低**，只是移出 main thread。每次報告都重新序列化與雜湊全部字形。下一步應該用 glyph digest 快取 blob OID，只重算變動過的字形。
+
 尚未完成：
 
 - **fetch / push 仍未對真實 GitHub 驗證。** 需要 OAuth 登入與 `wrangler pages dev`（vite dev 不會執行 `functions/`），本地無法完成。

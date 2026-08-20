@@ -19,8 +19,15 @@ vi.mock('src/lib/github/sync/kumikoUfoSync', () => ({
     syncedAt: 0,
   }),
 }))
+// The report runs in a worker; the routing under test is which transport the
+// engine picks, so the worker client stands in for it.
+vi.mock('src/lib/git/gitSyncWorkerClient', () => ({
+  buildGitSyncReportInWorker: (target: unknown) =>
+    buildGitSyncReport({ target }),
+}))
 vi.mock('src/lib/git/gitSync', () => ({
   buildGitSyncReport: (input: unknown) => buildGitSyncReport(input),
+  applyGitRemoteChanges: vi.fn(),
 }))
 vi.mock('src/lib/preferences/appPreferences', () => ({
   loadGitSyncEnabled: () => loadGitSyncEnabled(),
