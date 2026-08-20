@@ -25,7 +25,7 @@ export const globalCss = {
     cornerShape: 'squircle',
   },
   // opt-out: keep true round corners on pill/circle shapes (squircle distorts them)
-  '.corner-round': {
+  '.corner-round, .chakra-spinner': {
     cornerShape: 'round',
   },
   'html, body, #root': {
