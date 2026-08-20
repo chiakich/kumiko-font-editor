@@ -95,6 +95,18 @@ export const useGitHubSyncStatus = (input: {
   const setResolution = (path: string, resolution: SyncConflictResolution) =>
     setResolutions((current) => ({ ...current, [path]: resolution }))
 
+  // The conflict list is capped for rendering, so a large set can only be
+  // resolved in bulk.
+  const setAllResolutions = (resolution: SyncConflictResolution) =>
+    setResolutions(
+      Object.fromEntries(
+        (reportQuery.data?.conflicts ?? []).map((entry) => [
+          entry.path,
+          resolution,
+        ])
+      )
+    )
+
   const report = reportQuery.data ?? null
   const unresolvedConflictCount = report
     ? report.conflicts.filter((entry) => !resolutions[entry.path]).length
@@ -108,6 +120,7 @@ export const useGitHubSyncStatus = (input: {
     refetch: reportQuery.refetch,
     resolutions,
     setResolution,
+    setAllResolutions,
     applyRemote: applyMutation.mutateAsync,
     isApplying: applyMutation.isPending,
     unresolvedConflictCount,

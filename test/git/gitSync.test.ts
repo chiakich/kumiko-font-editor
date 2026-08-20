@@ -70,7 +70,11 @@ const makeFontData = (width: number): FontData => ({
   },
 })
 
-const saveProject = async (projectId: string, width = 500) =>
+const saveProject = async (
+  projectId: string,
+  width = 500,
+  githubSource: { commitSha: string | null } | null = null
+) =>
   saveProjectDraft({
     id: projectId,
     title: 'Kumiko',
@@ -79,6 +83,18 @@ const saveProject = async (projectId: string, width = 500) =>
     updatedAt: 2,
     sourceName: 'Kumiko.ufo',
     sourceType: 'github',
+    githubSource: githubSource
+      ? {
+          owner: 'owner',
+          repo: 'repo',
+          ref: 'main',
+          defaultBranch: 'main',
+          repoUrl: 'https://github.com/owner/repo',
+          zipballUrl: 'https://codeload.github.com/owner/repo/zip/main',
+          archiveRoot: 'repo-main',
+          commitSha: githubSource.commitSha,
+        }
+      : null,
     fontData: makeFontData(width),
     projectMetadata: null,
     projectSourceData: {
@@ -187,6 +203,91 @@ describe('git sync report', () => {
     expect(report.remoteChanges).toHaveLength(0)
     expect(report.localChanges).toHaveLength(0)
     expect(report.isUpToDate).toBe(true)
+  })
+
+  // A project imported from GitHub has never committed locally, so there is no
+  // merge base to compare against.
+  it('uses the imported commit as the base when there is no local history', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-imported')
+    const { worktree, base } = await seedRepo('gs-imported', store)
+    // re-save with the commit the import came from, now that it exists
+    await saveProject('gs-imported', 500, { commitSha: base })
+    await git.writeRef({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: 'refs/remotes/origin/main',
+      value: base,
+      force: true,
+    })
+    await git.deleteRef({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: 'refs/heads/main',
+    })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: base,
+      mergeBaseSha: null,
+      localHeadSha: null,
+    })
+
+    const report = await buildGitSyncReport({
+      target: target('gs-imported'),
+      store,
+    })
+
+    expect(report.mergeBaseSha).toBe(base)
+    expect(report.conflicts).toHaveLength(0)
+    expect(report.isUpToDate).toBe(true)
+  })
+
+  // Without a base, a locally edited glyph reads as "changed on both sides" —
+  // the false-conflict avalanche that made a whole imported font unusable.
+  it('reads a local edit as a local change, not a conflict, once the base is known', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-imported-edit')
+    const { worktree, base } = await seedRepo('gs-imported-edit', store)
+    await saveProject('gs-imported-edit', 500, { commitSha: base })
+    await git.writeRef({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: 'refs/remotes/origin/main',
+      value: base,
+      force: true,
+    })
+    await git.deleteRef({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: 'refs/heads/main',
+    })
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-imported-edit', 'A')
+    )
+    await saveKumikoGlyphRecord({
+      ...glyph!,
+      layers: {
+        ...glyph!.layers,
+        'public.default': {
+          ...glyph!.layers['public.default']!,
+          metrics: { width: 812, lsb: 0, rsb: 812 },
+        },
+      },
+    })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: base,
+      mergeBaseSha: null,
+      localHeadSha: null,
+    })
+
+    const report = await buildGitSyncReport({
+      target: target('gs-imported-edit'),
+      store,
+    })
+
+    expect(report.conflicts).toHaveLength(0)
+    expect(report.localChanges.map((entry) => entry.path)).toContain(
+      'Kumiko.ufo/glyphs/A.glif'
+    )
   })
 
   it('detects a remote-only change as a pullable update', async () => {

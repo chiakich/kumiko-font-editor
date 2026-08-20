@@ -28,6 +28,7 @@ export interface GitHubSyncSectionProps {
   isApplying: boolean
   unresolvedConflictCount: number
   onResolutionChange: (path: string, resolution: SyncConflictResolution) => void
+  onResolveAll: (resolution: SyncConflictResolution) => void
   onApplyRemote: () => void
 }
 
@@ -86,12 +87,18 @@ export function GitHubSyncSectionContainer({
       isApplying={syncStatus.isApplying}
       unresolvedConflictCount={syncStatus.unresolvedConflictCount}
       onResolutionChange={syncStatus.setResolution}
+      onResolveAll={syncStatus.setAllResolutions}
       onApplyRemote={() => void handleApplyRemoteSync()}
     />
   )
 }
 
 const shortSha = (sha: string) => sha.slice(0, 7)
+
+// A diverged CJK font can conflict in every glyph. Rendering one row per
+// conflict then costs tens of thousands of nodes and freezes the tab, so the
+// list is capped and the rest is handled by the bulk actions.
+const MAX_LISTED_CONFLICTS = 50
 
 function ConflictRow({
   entry,
@@ -142,6 +149,7 @@ export function GitHubSyncSection({
   isApplying,
   unresolvedConflictCount,
   onResolutionChange,
+  onResolveAll,
   onApplyRemote,
 }: GitHubSyncSectionProps) {
   const { t } = useTranslation()
@@ -208,7 +216,7 @@ export function GitHubSyncSection({
                 count: report.conflicts.length,
               })}
             </Text>
-            {report.conflicts.map((entry) => (
+            {report.conflicts.slice(0, MAX_LISTED_CONFLICTS).map((entry) => (
               <ConflictRow
                 key={entry.path}
                 entry={entry}
@@ -216,6 +224,22 @@ export function GitHubSyncSection({
                 onResolutionChange={onResolutionChange}
               />
             ))}
+            {report.conflicts.length > MAX_LISTED_CONFLICTS ? (
+              <Text fontSize="xs" color="mutedForeground">
+                {t('glyphInspector.syncConflictsTruncated', {
+                  shown: MAX_LISTED_CONFLICTS,
+                  count: report.conflicts.length,
+                })}
+              </Text>
+            ) : null}
+            <ButtonGroup size="xs" variant="outline">
+              <Button onClick={() => onResolveAll('keepLocal')}>
+                {t('glyphInspector.syncKeepAllLocal')}
+              </Button>
+              <Button onClick={() => onResolveAll('takeRemote')}>
+                {t('glyphInspector.syncTakeAllRemote')}
+              </Button>
+            </ButtonGroup>
           </Stack>
         ) : null}
 

@@ -121,6 +121,30 @@ const buildProjectAdapters = async (projectId: string) => {
   )
 }
 
+// The commit the project was imported from, when the fetch actually brought it
+// in. A force-pushed or pruned branch no longer contains it, and then there is
+// no honest base: reporting conflicts beats inventing a baseline.
+const resolveImportedBaseSha = async (
+  worktree: GitWorktree,
+  projectId: string
+) => {
+  const project = await loadKumikoProjectRecord(projectId)
+  const importedSha = project?.githubSource?.commitSha
+  if (!importedSha) {
+    return null
+  }
+  try {
+    const { type } = await git.readObject({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      oid: importedSha,
+    })
+    return type === 'commit' ? importedSha : null
+  } catch {
+    return null
+  }
+}
+
 // Builds a sync report by comparing the local materialization, the merge base
 // and the fetched remote head. No per-file baseline is stored anywhere: the
 // merge base commit is the baseline.
@@ -152,8 +176,18 @@ export const buildGitSyncReport = async (input: {
     return null
   }
 
+  // A project imported from GitHub has no local git history, so there is no
+  // merge base — and without a base every path looks changed on both sides,
+  // turning a clean project into one conflict per glyph. The import records the
+  // commit it came from, which is exactly the base that history would name.
+  const baseSha =
+    fetched.mergeBaseSha ??
+    (fetched.localHeadSha === null
+      ? await resolveImportedBaseSha(worktree, input.target.projectId)
+      : null)
+
   const [baseOids, remoteOids] = await Promise.all([
-    collectTreeOids(worktree, fetched.mergeBaseSha),
+    collectTreeOids(worktree, baseSha),
     collectTreeOids(worktree, fetched.remoteHeadSha),
   ])
 
@@ -183,7 +217,7 @@ export const buildGitSyncReport = async (input: {
   return {
     ...summarizeEntitySync(buildEntitySyncEntries(inputs)),
     remoteHeadSha: fetched.remoteHeadSha,
-    mergeBaseSha: fetched.mergeBaseSha,
+    mergeBaseSha: baseSha,
     localHeadSha: fetched.localHeadSha,
   }
 }
