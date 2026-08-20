@@ -387,6 +387,22 @@ UFO 格式沒有規定這些細節，而各家工具的選擇不同：
 
 commit / push 也走同一個 worker（`commit-and-push`），連同 `markGitCommitSynced` 的記帳——那是同樣數萬個檔案的工作量。compare status 仍留在 main thread（純 REST）。
 
+### 拉取也離開 main thread：DOM-free 的 XML 解析（2026-08-20）
+
+`applyGitRemoteChanges` 原本被 `DOMParser` 綁在 main thread 上——worker 裡沒有 DOMParser，而拉取要解析每一個被碰到的遠端 glif。
+
+`xmlTree.ts` 是一個只涵蓋 UFO 實際用到的語法的 XML reader：元素、屬性、文字、五個預定義實體與數值參照，加上跳過宣告 / DOCTYPE / 註解。`parseGlifText` 與 `parseXmlPlist` 改建在它上面（原本靠 `querySelector(':scope > x')`，都只是「取直接子元素」，改寫是機械式的）。
+
+順帶三個好處：
+
+- 整條解析路徑可以進 worker
+- 少了每個檔案的 DOM 配置
+- **測試終於能直接吃真實世界的檔案**。happy-dom 的 parser 不接受 fontTools 寫的 `<?xml version='1.0'?>`，先前得在測試裡手動改寫宣告；那個 workaround（`normalizeXmlDeclaration`）連同 DOMParser 一起移除了。
+
+驗證方式是差分：對真實的 JYRounded（14,562 個 glif）與 fixture UFO 全部重跑 parse → serialize 的逐位元比對，**14,562/14,562 與 27/27 相同，且沒有任何 DOMParser stub**。malformed 輸入會丟錯，而不是像 DOMParser 那樣回一份 `<parsererror>` 文件讓錯誤靜默流下去。
+
+現在 worker 處理三種請求：`build-git-sync-report`、`commit-and-push`、`apply-remote`。已知待處理：worker bundle 819 kB，裡面有 paper.js（透過 store 的 import chain 進來的），與 git 同步無關；那是浪費，不是錯誤。
+
 ### 錯誤要看得見（2026-08-20）
 
 實測回報：commit 失敗時 UI 只顯示 `MultipleGitError: There are multiple errors ... refer to the "errors" property`，完全無法判斷原因。兩個成因：

@@ -104,9 +104,11 @@ export const applyRemoteSnapshot = async (input: {
     return applyKumikoRemoteSnapshot(input)
   }
 
-  // Loaded on demand so projects on the REST path never ship the git stack.
-  const { applyGitRemoteChanges } = await import('src/lib/git/gitSync')
-  return applyGitRemoteChanges({
+  // Loaded on demand so projects on the REST path never ship the git stack, and
+  // run in the worker: a pull parses every remote glyph it touches.
+  const { applyGitRemoteChangesInWorker } =
+    await import('src/lib/git/gitSyncWorkerClient')
+  return applyGitRemoteChangesInWorker({
     ...input,
     remoteHeadSha: input.report.remoteHeadSha,
   })

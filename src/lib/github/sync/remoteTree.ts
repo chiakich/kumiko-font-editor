@@ -11,7 +11,8 @@ export const fetchRemoteTree = async (input: {
   repo: string
   ref: string
 }): Promise<RemoteTreeSnapshot> => {
-  const url = new URL('/api/github/tree', window.location.origin)
+  // self.location keeps this callable from a worker as well as the page.
+  const url = new URL('/api/github/tree', self.location.origin)
   url.searchParams.set('repo', input.repo)
   url.searchParams.set('ref', input.ref)
 

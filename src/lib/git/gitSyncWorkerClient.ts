@@ -1,8 +1,15 @@
 import type {
+  applyGitRemoteChanges,
   GitCommitAndPushResult,
   GitSyncReport,
   GitSyncTarget,
 } from 'src/lib/git/gitSync'
+import type {
+  ProjectSyncReport,
+  SyncConflictResolution,
+} from 'src/lib/github/sync/types'
+
+type ApplyRemoteResult = Awaited<ReturnType<typeof applyGitRemoteChanges>>
 
 interface ReportResponse {
   type: 'git-sync-report-success'
@@ -14,12 +21,21 @@ interface CommitResponse {
   payload: { requestId: string; result: GitCommitAndPushResult }
 }
 
+interface ApplyResponse {
+  type: 'git-apply-success'
+  payload: { requestId: string; result: ApplyRemoteResult }
+}
+
 interface ErrorResponse {
   type: 'git-sync-error'
   payload: { requestId: string; message: string }
 }
 
-type WorkerResponse = ReportResponse | CommitResponse | ErrorResponse
+type WorkerResponse =
+  | ReportResponse
+  | CommitResponse
+  | ApplyResponse
+  | ErrorResponse
 
 interface PendingRequest {
   resolve: (value: never) => void
@@ -51,7 +67,10 @@ const getWorker = () => {
           pending.resolve(event.data.payload.report as never)
           return
         }
-        if (event.data.type === 'git-commit-success') {
+        if (
+          event.data.type === 'git-commit-success' ||
+          event.data.type === 'git-apply-success'
+        ) {
           pending.resolve(event.data.payload.result as never)
           return
         }
@@ -105,3 +124,13 @@ export const commitAndPushProjectInWorker = (input: {
   baseBranch: string | null
   message: string
 }) => request<GitCommitAndPushResult>('commit-and-push', { ...input })
+
+// Pulling parses every remote glif it touches. That used to need DOMParser,
+// which pinned it to the main thread; the parser is DOM-free now, so it runs
+// here like the rest of the git work.
+export const applyGitRemoteChangesInWorker = (input: {
+  projectId: string
+  report: ProjectSyncReport
+  resolutions?: Record<string, SyncConflictResolution>
+  remoteHeadSha: string
+}) => request<ApplyRemoteResult>('apply-remote', { ...input })

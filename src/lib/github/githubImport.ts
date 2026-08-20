@@ -172,7 +172,9 @@ export const fetchGitHubArchiveSnapshot = async (input: {
   repo: string
   ref?: string
 }): Promise<GitHubArchiveSnapshot> => {
-  const archiveUrl = new URL('/api/github/archive', window.location.origin)
+  // self.location so this module stays usable from a worker: the sync path
+  // imports it even though the git transport never downloads an archive.
+  const archiveUrl = new URL('/api/github/archive', self.location.origin)
   archiveUrl.searchParams.set('repo', input.repo)
   if (input.ref?.trim()) {
     archiveUrl.searchParams.set('ref', input.ref.trim())

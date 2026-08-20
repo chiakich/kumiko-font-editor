@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import {
+  applyGitRemoteChanges,
   buildGitSyncReport,
   commitAndPushProject,
   markGitCommitSynced,
@@ -7,6 +8,10 @@ import {
   type GitSyncReport,
   type GitSyncTarget,
 } from 'src/lib/git/gitSync'
+import type {
+  ProjectSyncReport,
+  SyncConflictResolution,
+} from 'src/lib/github/sync/types'
 
 interface BuildReportRequest {
   type: 'build-git-sync-report'
@@ -29,7 +34,21 @@ interface CommitAndPushRequest {
   }
 }
 
-type GitSyncRequest = BuildReportRequest | CommitAndPushRequest
+interface ApplyRemoteRequest {
+  type: 'apply-remote'
+  payload: {
+    requestId: string
+    projectId: string
+    report: ProjectSyncReport
+    resolutions?: Record<string, SyncConflictResolution>
+    remoteHeadSha: string
+  }
+}
+
+type GitSyncRequest =
+  | BuildReportRequest
+  | CommitAndPushRequest
+  | ApplyRemoteRequest
 
 interface ReportSuccessResponse {
   type: 'git-sync-report-success'
@@ -47,6 +66,14 @@ interface CommitSuccessResponse {
   }
 }
 
+interface ApplySuccessResponse {
+  type: 'git-apply-success'
+  payload: {
+    requestId: string
+    result: Awaited<ReturnType<typeof applyGitRemoteChanges>>
+  }
+}
+
 interface ErrorResponse {
   type: 'git-sync-error'
   payload: {
@@ -58,6 +85,7 @@ interface ErrorResponse {
 type GitSyncResponse =
   | ReportSuccessResponse
   | CommitSuccessResponse
+  | ApplySuccessResponse
   | ErrorResponse
 
 const post = (message: GitSyncResponse) => self.postMessage(message)
@@ -102,6 +130,23 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         writtenPaths: result.writtenPaths,
       })
       post({ type: 'git-commit-success', payload: { requestId, result } })
+      return
+    }
+
+    if (request.type === 'apply-remote') {
+      const { projectId, report, resolutions, remoteHeadSha } = request.payload
+      post({
+        type: 'git-apply-success',
+        payload: {
+          requestId,
+          result: await applyGitRemoteChanges({
+            projectId,
+            report,
+            resolutions,
+            remoteHeadSha,
+          }),
+        },
+      })
     }
   } catch (error) {
     post({

@@ -28,6 +28,12 @@ import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import {
+  childrenNamed,
+  firstChildNamed,
+  parseXmlTree,
+  type XmlNode,
+} from 'src/lib/fontFormats/xmlTree'
+import {
   closeSelfClosing,
   detectGlifFileStyle,
   detectUfoTextStyle,
@@ -150,43 +156,29 @@ const parseNumeric = (value: string | null | undefined) => {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-const childrenOf = (element: Element) =>
-  Array.from(element.childNodes).filter(
-    (node): node is Element => node.nodeType === Node.ELEMENT_NODE
-  )
-
-const parsePlistElement = (element: Element): unknown => {
-  const tagName = element.tagName
+const parsePlistElement = (element: XmlNode): unknown => {
+  const tagName = element.tag
 
   if (tagName === 'dict') {
     const result: Record<string, unknown> = {}
-    const children = childrenOf(element)
+    const children = element.children
     for (let index = 0; index < children.length; index += 2) {
       const keyElement = children[index]
       const valueElement = children[index + 1]
-      if (!keyElement || keyElement.tagName !== 'key' || !valueElement) {
+      if (!keyElement || keyElement.tag !== 'key' || !valueElement) {
         continue
       }
-      result[keyElement.textContent ?? ''] = parsePlistElement(valueElement)
+      result[keyElement.text] = parsePlistElement(valueElement)
     }
     return result
   }
 
   if (tagName === 'array') {
-    return childrenOf(element).map((child) => parsePlistElement(child))
-  }
-
-  if (
-    tagName === 'string' ||
-    tagName === 'key' ||
-    tagName === 'date' ||
-    tagName === 'data'
-  ) {
-    return element.textContent ?? ''
+    return element.children.map((child) => parsePlistElement(child))
   }
 
   if (tagName === 'integer' || tagName === 'real') {
-    return parseNumeric(element.textContent) ?? 0
+    return parseNumeric(element.text) ?? 0
   }
 
   if (tagName === 'true') {
@@ -197,38 +189,14 @@ const parsePlistElement = (element: Element): unknown => {
     return false
   }
 
-  return element.textContent ?? ''
-}
-
-// fontTools writes `<?xml version='1.0' ...?>`, which is valid XML but which
-// happy-dom's parser rejects. The quoting carries no meaning, so normalize it
-// rather than making every caller pre-process real-world files.
-const normalizeXmlDeclaration = (text: string) =>
-  text.replace(
-    /^\s*<\?xml\s+version='([^']*)'(\s+encoding='([^']*)')?\s*\?>/,
-    (_match, version: string, _encodingGroup, encoding?: string) =>
-      `<?xml version="${version}"${encoding ? ` encoding="${encoding}"` : ''}?>`
-  )
-
-// DOMParser does not throw on malformed XML; it returns a document with a
-// <parsererror> element. Surface that instead of silently parsing garbage.
-const parseXmlDocument = (text: string, context: string) => {
-  const document = new DOMParser().parseFromString(
-    normalizeXmlDeclaration(text),
-    'application/xml'
-  )
-  if (document.querySelector('parsererror')) {
-    throw new Error(`Malformed XML: ${context}`)
-  }
-  return document
+  return element.text
 }
 
 export const parseXmlPlist = (
   text: string
 ): Record<string, unknown> | unknown[] => {
-  const document = parseXmlDocument(text, 'plist')
-  const root = document.documentElement
-  const plistChild = childrenOf(root)[0] ?? root
+  const root = parseXmlTree(text, 'plist')
+  const plistChild = root.children[0] ?? root
   return parsePlistElement(plistChild) as Record<string, unknown> | unknown[]
 }
 
@@ -341,138 +309,123 @@ export const parseGlifText = (
   UfoGlyphRecord,
   'projectId' | 'ufoId' | 'layerId' | 'dirty' | 'dirtyIndex' | 'updatedAt'
 > => {
-  const document = parseXmlDocument(text, fileName)
-  const glyphElement = document.querySelector('glyph')
-  if (!glyphElement) {
+  const glyphElement = parseXmlTree(text, fileName)
+  if (glyphElement.tag !== 'glyph') {
     throw new Error(`Invalid GLIF: ${fileName}`)
   }
   const glifStyle = detectGlifFileStyle(text)
+  // Attributes the format leaves optional are only emitted back when the source
+  // had them, so absence has to stay distinguishable from a default.
+  const optional = (
+    node: XmlNode,
+    name: string,
+    fallback: number
+  ): Record<string, number> =>
+    node.attrs[name] === undefined
+      ? {}
+      : { [name]: parseNumeric(node.attrs[name]) ?? fallback }
 
-  const unicodes = Array.from(glyphElement.querySelectorAll(':scope > unicode'))
-    .map((node) => normalizeUnicodeHex(node.getAttribute('hex')))
+  const unicodes = childrenNamed(glyphElement, 'unicode')
+    .map((node) => normalizeUnicodeHex(node.attrs.hex))
     .filter((value): value is string => Boolean(value))
 
-  const advanceElement = glyphElement.querySelector(':scope > advance')
+  const advanceElement = firstChildNamed(glyphElement, 'advance')
   const advance: UfoGlyphAdvance = {
-    width: parseNumeric(advanceElement?.getAttribute('width')) ?? null,
-    height: parseNumeric(advanceElement?.getAttribute('height')) ?? null,
+    width: parseNumeric(advanceElement?.attrs.width) ?? null,
+    height: parseNumeric(advanceElement?.attrs.height) ?? null,
   }
 
-  const anchors: UfoGlyphAnchor[] = Array.from(
-    glyphElement.querySelectorAll(':scope > anchor')
-  ).map((anchor) => ({
-    x: parseNumeric(anchor.getAttribute('x')) ?? 0,
-    y: parseNumeric(anchor.getAttribute('y')) ?? 0,
-    name: anchor.getAttribute('name') ?? '',
-    color: anchor.getAttribute('color'),
-    identifier: anchor.getAttribute('identifier'),
-  }))
+  const anchors: UfoGlyphAnchor[] = childrenNamed(glyphElement, 'anchor').map(
+    (anchor) => ({
+      x: parseNumeric(anchor.attrs.x) ?? 0,
+      y: parseNumeric(anchor.attrs.y) ?? 0,
+      name: anchor.attrs.name ?? '',
+      color: anchor.attrs.color ?? null,
+      identifier: anchor.attrs.identifier ?? null,
+    })
+  )
 
-  const guidelines: UfoGlyphGuideline[] = Array.from(
-    glyphElement.querySelectorAll(':scope > guideline')
+  const guidelines: UfoGlyphGuideline[] = childrenNamed(
+    glyphElement,
+    'guideline'
   ).map((guide) => ({
-    x: parseNumeric(guide.getAttribute('x')),
-    y: parseNumeric(guide.getAttribute('y')),
-    angle: parseNumeric(guide.getAttribute('angle')),
-    name: guide.getAttribute('name'),
-    color: guide.getAttribute('color'),
-    identifier: guide.getAttribute('identifier'),
+    x: parseNumeric(guide.attrs.x),
+    y: parseNumeric(guide.attrs.y),
+    angle: parseNumeric(guide.attrs.angle),
+    name: guide.attrs.name ?? null,
+    color: guide.attrs.color ?? null,
+    identifier: guide.attrs.identifier ?? null,
   }))
 
-  const outlineElement = glyphElement.querySelector(':scope > outline')
-  const contours: UfoGlyphContour[] = outlineElement
-    ? Array.from(outlineElement.querySelectorAll(':scope > contour')).map(
-        (contour) => ({
-          points: inferOffcurveType(
-            Array.from(contour.querySelectorAll(':scope > point')).map(
-              (point) => ({
-                x: parseNumeric(point.getAttribute('x')) ?? 0,
-                y: parseNumeric(point.getAttribute('y')) ?? 0,
-                type:
-                  (point.getAttribute('type') as
-                    | 'move'
-                    | 'line'
-                    | 'offcurve'
-                    | 'curve'
-                    | 'qcurve'
-                    | null) ?? undefined,
-                smooth: point.getAttribute('smooth') === 'yes',
-                name: point.getAttribute('name'),
-                color: point.getAttribute('color'),
-                identifier: point.getAttribute('identifier'),
-              })
-            )
-          ),
-        })
-      )
-    : []
+  const outlineElement = firstChildNamed(glyphElement, 'outline')
+  const contours: UfoGlyphContour[] = childrenNamed(
+    outlineElement,
+    'contour'
+  ).map((contour) => ({
+    points: inferOffcurveType(
+      childrenNamed(contour, 'point').map((point) => ({
+        x: parseNumeric(point.attrs.x) ?? 0,
+        y: parseNumeric(point.attrs.y) ?? 0,
+        type:
+          (point.attrs.type as
+            | 'move'
+            | 'line'
+            | 'offcurve'
+            | 'curve'
+            | 'qcurve'
+            | undefined) ?? undefined,
+        smooth: point.attrs.smooth === 'yes',
+        name: point.attrs.name ?? null,
+        color: point.attrs.color ?? null,
+        identifier: point.attrs.identifier ?? null,
+      }))
+    ),
+  }))
 
-  const components: UfoGlyphComponent[] = outlineElement
-    ? Array.from(outlineElement.querySelectorAll(':scope > component')).map(
-        (component) => ({
-          base: component.getAttribute('base') ?? '',
-          ...(component.hasAttribute('identifier')
-            ? { identifier: component.getAttribute('identifier') }
-            : {}),
-          ...(component.hasAttribute('xScale')
-            ? { xScale: parseNumeric(component.getAttribute('xScale')) ?? 1 }
-            : {}),
-          ...(component.hasAttribute('xyScale')
-            ? { xyScale: parseNumeric(component.getAttribute('xyScale')) ?? 0 }
-            : {}),
-          ...(component.hasAttribute('yxScale')
-            ? { yxScale: parseNumeric(component.getAttribute('yxScale')) ?? 0 }
-            : {}),
-          ...(component.hasAttribute('yScale')
-            ? { yScale: parseNumeric(component.getAttribute('yScale')) ?? 1 }
-            : {}),
-          ...(component.hasAttribute('xOffset')
-            ? { xOffset: parseNumeric(component.getAttribute('xOffset')) ?? 0 }
-            : {}),
-          ...(component.hasAttribute('yOffset')
-            ? { yOffset: parseNumeric(component.getAttribute('yOffset')) ?? 0 }
-            : {}),
-        })
-      )
-    : []
+  const components: UfoGlyphComponent[] = childrenNamed(
+    outlineElement,
+    'component'
+  ).map((component) => ({
+    base: component.attrs.base ?? '',
+    ...(component.attrs.identifier === undefined
+      ? {}
+      : { identifier: component.attrs.identifier }),
+    ...optional(component, 'xScale', 1),
+    ...optional(component, 'xyScale', 0),
+    ...optional(component, 'yxScale', 0),
+    ...optional(component, 'yScale', 1),
+    ...optional(component, 'xOffset', 0),
+    ...optional(component, 'yOffset', 0),
+  }))
 
-  const note = glyphElement.querySelector(':scope > note')?.textContent ?? null
-  const imageElement = glyphElement.querySelector(':scope > image')
+  const noteElement = firstChildNamed(glyphElement, 'note')
+  const note = noteElement ? noteElement.text : null
+  const imageElement = firstChildNamed(glyphElement, 'image')
   const image = imageElement
     ? {
-        fileName: imageElement.getAttribute('fileName') ?? '',
-        ...(imageElement.hasAttribute('xScale')
-          ? { xScale: parseNumeric(imageElement.getAttribute('xScale')) ?? 1 }
-          : {}),
-        ...(imageElement.hasAttribute('xyScale')
-          ? { xyScale: parseNumeric(imageElement.getAttribute('xyScale')) ?? 0 }
-          : {}),
-        ...(imageElement.hasAttribute('yxScale')
-          ? { yxScale: parseNumeric(imageElement.getAttribute('yxScale')) ?? 0 }
-          : {}),
-        ...(imageElement.hasAttribute('yScale')
-          ? { yScale: parseNumeric(imageElement.getAttribute('yScale')) ?? 1 }
-          : {}),
-        ...(imageElement.hasAttribute('xOffset')
-          ? { xOffset: parseNumeric(imageElement.getAttribute('xOffset')) ?? 0 }
-          : {}),
-        ...(imageElement.hasAttribute('yOffset')
-          ? { yOffset: parseNumeric(imageElement.getAttribute('yOffset')) ?? 0 }
-          : {}),
-        ...(imageElement.hasAttribute('color')
-          ? { color: imageElement.getAttribute('color') }
-          : {}),
+        fileName: imageElement.attrs.fileName ?? '',
+        ...optional(imageElement, 'xScale', 1),
+        ...optional(imageElement, 'xyScale', 0),
+        ...optional(imageElement, 'yxScale', 0),
+        ...optional(imageElement, 'yScale', 1),
+        ...optional(imageElement, 'xOffset', 0),
+        ...optional(imageElement, 'yOffset', 0),
+        ...(imageElement.attrs.color === undefined
+          ? {}
+          : { color: imageElement.attrs.color }),
       }
     : null
 
-  const libElement = glyphElement.querySelector(':scope > lib > dict')
+  const libElement = firstChildNamed(
+    firstChildNamed(glyphElement, 'lib'),
+    'dict'
+  )
   const lib = libElement
     ? (parsePlistElement(libElement) as Record<string, unknown>)
     : null
 
   return {
-    glyphName:
-      glyphElement.getAttribute('name') ?? fileName.replace(/\.glif$/i, ''),
+    glyphName: glyphElement.attrs.name ?? fileName.replace(/\.glif$/i, ''),
     fileName,
     sourceHash: hashString(text),
     unicodes,
