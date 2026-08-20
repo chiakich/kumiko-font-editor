@@ -5,7 +5,6 @@ import {
   type QueryClient,
 } from '@tanstack/react-query'
 import {
-  createGitHubCommit,
   createGitHubFork,
   fetchGitHubCompareStatus,
   fetchGitHubForkStatus,
@@ -15,6 +14,7 @@ import {
   type GitHubCompareStatusResponse,
   type GitHubForkStatus,
 } from 'src/lib/github/githubAuth'
+import { createGitHubCommitInBatches } from 'src/lib/github/githubCommitBatches'
 import { githubQueryKeys } from 'src/lib/github/githubQueryKeys'
 
 export const fetchCachedGitHubForkStatus = (
@@ -153,7 +153,7 @@ export const useMergeGitHubUpstreamMutation = () =>
 
 export const useCreateGitHubCommitMutation = () =>
   useMutation({
-    mutationFn: createGitHubCommit,
+    mutationFn: createGitHubCommitInBatches,
   })
 
 export const setForkStatusQueryData = (
