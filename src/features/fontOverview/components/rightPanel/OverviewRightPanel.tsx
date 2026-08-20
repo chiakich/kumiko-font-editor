@@ -106,7 +106,6 @@ export function OverviewRightPanel({
             activeLayer={panel.activeLayer ?? null}
             availableLayers={panel.availableLayers}
             glyph={panel.glyph}
-            isDirty={panel.isDirty}
             workspaceView={panel.workspaceView}
             onDeleteGlyph={panel.handleDeleteGlyph}
             onEnterEditor={() => {

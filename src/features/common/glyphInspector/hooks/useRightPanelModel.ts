@@ -44,7 +44,6 @@ export function useRightPanelModel() {
   )
   const projectId = useStore((state) => state.projectId)
   const projectTitle = useStore((state) => state.projectTitle)
-  const isDirty = useStore((state) => state.isDirty)
   const glyphEditTimes = useStore((state) => state.glyphEditTimes)
   const hasLocalChanges = useStore((state) => state.hasLocalChanges)
   const localDirtyGlyphIds = useStore((state) => state.localDirtyGlyphIds)
@@ -343,7 +342,6 @@ export function useRightPanelModel() {
     hasGitHubSource,
     hasLocalChanges,
     interpolationDiagnostics,
-    isDirty,
     isInterpolatedPreview,
     isEndpointNode,
     isOnCurveNode,

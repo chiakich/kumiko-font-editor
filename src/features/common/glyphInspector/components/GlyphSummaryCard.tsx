@@ -1,4 +1,4 @@
-import { Box, Button, Grid, GridItem, Stack, Tag, Text } from '@chakra-ui/react'
+import { Box, Button, Grid, GridItem, Stack, Text } from '@chakra-ui/react'
 import { NativeSelect } from '@/components/ui/native-select'
 import { GlyphColorLabelPicker } from 'src/features/common/glyphInspector/components/GlyphColorLabelPicker'
 import {
@@ -21,7 +21,6 @@ interface GlyphSummaryCardProps {
   activeLayer: GlyphLayerData | null
   availableLayers: Array<{ id: string; name: string }>
   glyph: GlyphData
-  isDirty: boolean
   workspaceView: WorkspaceView
   // The editor uses a dedicated LayerListCard instead of this inline select.
   showLayerSelect?: boolean
@@ -36,7 +35,6 @@ export function GlyphSummaryCard({
   activeLayer,
   availableLayers,
   glyph,
-  isDirty,
   workspaceView,
   showLayerSelect = true,
   onDeleteGlyph,
@@ -89,15 +87,6 @@ export function GlyphSummaryCard({
             </Text>
           </Box>
         )}
-        <Stack direction="row" gap={1} align="center">
-          <Tag.Root
-            fontSize="xs"
-            colorPalette={isDirty ? 'orange' : 'green'}
-            variant="subtle"
-          >
-            {isDirty ? '等待本機儲存' : '已同步到本機'}
-          </Tag.Root>
-        </Stack>
         <GlyphColorLabelPicker
           value={glyph.color}
           onChange={onGlyphColorChange}

@@ -671,6 +671,7 @@
     "localSaveFailedRetryTooltip": "本機儲存失敗：{{message}}。點擊重試。",
     "localSaveRetryFailed": "本機儲存仍失敗",
     "localSaveRetrySucceeded": "本機儲存已更新",
+    "localSaveNow": "立即儲存到本機",
     "localSaveStatus": {
       "queued": "等待本機儲存",
       "saving": "正在本機儲存",

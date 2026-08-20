@@ -671,6 +671,7 @@
     "localSaveFailedRetryTooltip": "Local save failed: {{message}}. Click to retry.",
     "localSaveRetryFailed": "Local save still failed",
     "localSaveRetrySucceeded": "Local save updated",
+    "localSaveNow": "Save locally now",
     "localSaveStatus": {
       "queued": "Waiting for local save",
       "saving": "Saving locally",

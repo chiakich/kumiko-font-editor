@@ -1,5 +1,5 @@
 import { toaster } from '@/components/ui/toaster'
-import { Box, HStack, IconButton, useDisclosure } from '@chakra-ui/react'
+import { HStack, IconButton, useDisclosure } from '@chakra-ui/react'
 import { Tooltip } from '@/components/ui/tooltip'
 import {
   CheckCircle,
@@ -39,7 +39,9 @@ export function ProjectControlActions({
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const persistenceError = useStore((state) => state.persistenceError)
   const retryLocalSave = useFlushCurrentDraft({ allowErrorRetry: true })
+  const saveToLocalNow = useFlushCurrentDraft()
   const [isRetryingLocalSave, setIsRetryingLocalSave] = useState(false)
+  const [isSavingToLocalNow, setIsSavingToLocalNow] = useState(false)
   const hasLocalSaveError = persistenceStatus === 'error'
   const localSaveErrorMessage =
     persistenceError ?? t('projectControl.localSaveFailedFallback')
@@ -52,6 +54,35 @@ export function ProjectControlActions({
   const localSaveStatusLabel = localSaveStatus
     ? t(`projectControl.localSaveStatus.${localSaveStatus}`)
     : ''
+  // while queued the control is actionable, so it is labelled by what it does
+  const localSaveActionLabel =
+    localSaveStatus === 'queued'
+      ? t('projectControl.localSaveNow')
+      : localSaveStatusLabel
+
+  // The 10s autosave debounce restarts on every edit, so a long editing burst
+  // never reaches it — this is the way to force the write.
+  const handleSaveToLocalNow = async () => {
+    if (isSavingToLocalNow) {
+      return
+    }
+
+    setIsSavingToLocalNow(true)
+    try {
+      await saveToLocalNow()
+    } catch (error) {
+      toaster.create({
+        title: t('projectControl.localSaveFailedFallback'),
+        description:
+          error instanceof Error ? error.message : localSaveErrorMessage,
+        type: 'error',
+        duration: 3600,
+        closable: true,
+      })
+    } finally {
+      setIsSavingToLocalNow(false)
+    }
+  }
 
   const handleRetryLocalSave = async () => {
     if (isRetryingLocalSave) {
@@ -207,18 +238,22 @@ export function ProjectControlActions({
           </Tooltip>
         ) : null}
         {localSaveStatus ? (
-          <Tooltip content={localSaveStatusLabel}>
-            <Box
-              role="status"
-              aria-label={localSaveStatusLabel}
+          <Tooltip content={localSaveActionLabel}>
+            <IconButton
+              aria-label={localSaveActionLabel}
+              size="sm"
               minW={9}
               h={9}
-              display="inline-flex"
-              alignItems="center"
-              justifyContent="center"
+              px={0}
+              borderRadius="full"
+              variant="ghost"
               color={
                 localSaveStatus === 'saved' ? 'success' : 'mutedForeground'
               }
+              _hover={{ bg: 'foreground', color: 'background' }}
+              onClick={() => void handleSaveToLocalNow()}
+              disabled={localSaveStatus !== 'queued'}
+              loading={localSaveStatus === 'saving' || isSavingToLocalNow}
             >
               {localSaveStatus === 'saved' ? (
                 <CheckCircle
@@ -235,7 +270,7 @@ export function ProjectControlActions({
                   aria-hidden="true"
                 />
               )}
-            </Box>
+            </IconButton>
           </Tooltip>
         ) : null}
         <Tooltip content={t('projectControl.export')}>
