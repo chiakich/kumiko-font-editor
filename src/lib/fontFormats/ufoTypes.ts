@@ -1,3 +1,7 @@
+import type {
+  GlifFileStyle,
+  UfoTextStyle,
+} from 'src/lib/fontFormats/ufoTextStyle'
 import type { GitHubProjectSource } from 'src/lib/project/projectTypes'
 import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
 
@@ -36,6 +40,8 @@ export interface UfoMetadataRecord {
   layers: UfoLayerRecord[]
   contents: Record<string, string>
   glyphOrder: string[]
+  // How this UFO's files were written; see UfoTextStyle.
+  textStyle?: UfoTextStyle | null
   updatedAt: number
 }
 
@@ -117,6 +123,9 @@ export interface UfoGlyphRecord {
   note: string | null
   image: UfoGlyphImage | null
   lib: Record<string, unknown> | null
+  // Formatting of this file as it was written; falls back to the UFO's style.
+  // Keeps a rewrite from producing a whitespace-only diff.
+  glifStyle?: GlifFileStyle | null
   dirty: boolean
   dirtyIndex: 0 | 1
   updatedAt: number

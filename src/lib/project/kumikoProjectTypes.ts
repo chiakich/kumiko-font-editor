@@ -2,6 +2,10 @@ import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
 import type { GitHubProjectSource } from 'src/lib/project/projectTypes'
 import type { Designspace } from 'src/lib/fontFormats/designspace'
 import type {
+  GlifFileStyle,
+  UfoTextStyle,
+} from 'src/lib/fontFormats/ufoTextStyle'
+import type {
   DevelopmentStatusDefinition,
   FontAxes,
   FontData,
@@ -55,6 +59,9 @@ export interface KumikoProjectSourceData {
       // Git blob SHA baseline for font-level files, keyed by repo path. Glyph
       // baselines live on each glyph record instead.
       remoteBlobShaByPath?: Record<string, string> | null
+      // How this UFO's files were written, so rewriting them produces no
+      // whitespace-only diff. See UfoTextStyle.
+      textStyle?: UfoTextStyle | null
     }>
     lastSync?: GitHubSyncTarget | null
   }
@@ -106,6 +113,9 @@ export interface KumikoLayerSourceData {
     remoteBlobSha?: string | null
     note?: string | null
     lib?: Record<string, unknown> | null
+    // Producers disagree within one UFO (a font can carry glyphs written by
+    // both Glyphs and fontTools), so this is remembered per file.
+    glifStyle?: GlifFileStyle | null
   }
 }
 

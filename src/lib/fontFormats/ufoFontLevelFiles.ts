@@ -23,12 +23,16 @@ export const buildUfoFontLevelFiles = (
     | 'kerning'
     | 'featuresText'
     | 'layers'
+    | 'textStyle'
   >
 ): UfoFontLevelFile[] => {
+  const serializeXmlPlist2 = (value: unknown) =>
+    serializeXmlPlist(value, metadata.textStyle)
+
   const files: UfoFontLevelFile[] = [
     {
       path: 'metainfo.plist',
-      text: serializeXmlPlist({
+      text: serializeXmlPlist2({
         creator: metadata.metainfo?.creator ?? DEFAULT_METAINFO_CREATOR,
         formatVersion:
           metadata.metainfo?.formatVersion ?? DEFAULT_UFO_FORMAT_VERSION,
@@ -37,23 +41,23 @@ export const buildUfoFontLevelFiles = (
     },
     {
       path: 'fontinfo.plist',
-      text: serializeXmlPlist(metadata.fontinfo ?? {}),
+      text: serializeXmlPlist2(metadata.fontinfo ?? {}),
     },
     {
       path: 'lib.plist',
-      text: serializeXmlPlist(metadata.lib ?? {}),
+      text: serializeXmlPlist2(metadata.lib ?? {}),
     },
     {
       path: 'groups.plist',
-      text: serializeXmlPlist(metadata.groups ?? {}),
+      text: serializeXmlPlist2(metadata.groups ?? {}),
     },
     {
       path: 'kerning.plist',
-      text: serializeXmlPlist(metadata.kerning ?? {}),
+      text: serializeXmlPlist2(metadata.kerning ?? {}),
     },
     {
       path: 'layercontents.plist',
-      text: serializeXmlPlist(
+      text: serializeXmlPlist2(
         metadata.layers.map((layer) => [layer.layerId, layer.glyphDir])
       ),
     },

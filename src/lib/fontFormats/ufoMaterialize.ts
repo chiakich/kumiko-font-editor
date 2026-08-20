@@ -150,7 +150,7 @@ export async function* materializeUfoTree(
       if (!isDefaultLayer && !isBackgroundLayer) {
         yield {
           path: joinPath(layerDir, 'contents.plist'),
-          text: serializeXmlPlist({}),
+          text: serializeXmlPlist({}, metadata.textStyle),
           entity: { kind: 'font', part: 'order' },
           countsTowardTotal: false,
         }
@@ -175,7 +175,7 @@ export async function* materializeUfoTree(
         })
 
         for (const glyph of glyphs) {
-          const text = serializeGlifRecord(glyph)
+          const text = serializeGlifRecord(glyph, metadata.textStyle)
           writtenContents[glyph.glyphName] = glyph.fileName
           if (isDefaultLayer) {
             options.onExportState?.({
@@ -210,7 +210,7 @@ export async function* materializeUfoTree(
           writtenContents[glyph.glyphName] = glyph.fileName
           yield {
             path: joinPath(layerDir, glyph.fileName),
-            text: serializeGlifRecord(glyph),
+            text: serializeGlifRecord(glyph, metadata.textStyle),
             entity: { kind: 'glyph', name: glyph.glyphName },
             countsTowardTotal: true,
           }
@@ -233,7 +233,7 @@ export async function* materializeUfoTree(
         : writtenContents
       yield {
         path: joinPath(layerDir, 'contents.plist'),
-        text: serializeXmlPlist(fullContents),
+        text: serializeXmlPlist(fullContents, metadata.textStyle),
         entity: { kind: 'font', part: 'order' },
         countsTowardTotal: false,
       }

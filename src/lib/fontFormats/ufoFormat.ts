@@ -28,6 +28,15 @@ import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
 import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import {
+  closeSelfClosing,
+  detectGlifFileStyle,
+  detectUfoTextStyle,
+  resolveUfoTextStyle,
+  UFOLIB_TEXT_STYLE,
+  xmlDeclaration,
+  type UfoTextStyle,
+} from 'src/lib/fontFormats/ufoTextStyle'
+import {
   defaultFontSource,
   fontInfoFromUfoFontInfo,
   fontAxesFromLib,
@@ -124,13 +133,14 @@ const findUfoRoot = (relativePath: string) => {
   return null
 }
 
+// Text content and attribute values escape different sets — matching what the
+// producers do, so an apostrophe in a copyright string is not rewritten as
+// &apos; and counted as a change.
+const escapeXmlText = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 const escapeXml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+  escapeXmlText(value).replace(/"/g, '&quot;')
 
 const parseNumeric = (value: string | null | undefined) => {
   if (!value) {
@@ -190,34 +200,55 @@ const parsePlistElement = (element: Element): unknown => {
   return element.textContent ?? ''
 }
 
+// fontTools writes `<?xml version='1.0' ...?>`, which is valid XML but which
+// happy-dom's parser rejects. The quoting carries no meaning, so normalize it
+// rather than making every caller pre-process real-world files.
+const normalizeXmlDeclaration = (text: string) =>
+  text.replace(
+    /^\s*<\?xml\s+version='([^']*)'(\s+encoding='([^']*)')?\s*\?>/,
+    (_match, version: string, _encodingGroup, encoding?: string) =>
+      `<?xml version="${version}"${encoding ? ` encoding="${encoding}"` : ''}?>`
+  )
+
 // DOMParser does not throw on malformed XML; it returns a document with a
 // <parsererror> element. Surface that instead of silently parsing garbage.
 const parseXmlDocument = (text: string, context: string) => {
-  const document = new DOMParser().parseFromString(text, 'application/xml')
+  const document = new DOMParser().parseFromString(
+    normalizeXmlDeclaration(text),
+    'application/xml'
+  )
   if (document.querySelector('parsererror')) {
     throw new Error(`Malformed XML: ${context}`)
   }
   return document
 }
 
-const parseXmlPlist = (text: string): Record<string, unknown> | unknown[] => {
+export const parseXmlPlist = (
+  text: string
+): Record<string, unknown> | unknown[] => {
   const document = parseXmlDocument(text, 'plist')
   const root = document.documentElement
   const plistChild = childrenOf(root)[0] ?? root
   return parsePlistElement(plistChild) as Record<string, unknown> | unknown[]
 }
 
-const serializePlistValue = (value: unknown, indentLevel = 1): string => {
-  const indent = '  '.repeat(indentLevel)
-  const childIndent = '  '.repeat(indentLevel + 1)
+const serializePlistValue = (
+  value: unknown,
+  indentLevel = 1,
+  style: UfoTextStyle = UFOLIB_TEXT_STYLE
+): string => {
+  const indent = style.plistIndent.repeat(indentLevel)
+  const childIndent = style.plistIndent.repeat(indentLevel + 1)
+  // Plists keep `<false/>` even in sources whose glifs pad it to `<false />`.
+  const selfClose = '/>'
 
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return `${indent}<array/>`
+      return `${indent}<array${selfClose}`
     }
     return [
       `${indent}<array>`,
-      ...value.map((item) => serializePlistValue(item, indentLevel + 1)),
+      ...value.map((item) => serializePlistValue(item, indentLevel + 1, style)),
       `${indent}</array>`,
     ].join('\n')
   }
@@ -227,37 +258,42 @@ const serializePlistValue = (value: unknown, indentLevel = 1): string => {
       ([, entryValue]) => entryValue !== undefined && entryValue !== null
     )
     if (entries.length === 0) {
-      return `${indent}<dict/>`
+      return `${indent}<dict${selfClose}`
     }
     return [
       `${indent}<dict>`,
       ...entries.flatMap(([key, entryValue]) => [
-        `${childIndent}<key>${escapeXml(key)}</key>`,
-        serializePlistValue(entryValue, indentLevel + 1),
+        `${childIndent}<key>${escapeXmlText(key)}</key>`,
+        serializePlistValue(entryValue, indentLevel + 1, style),
       ]),
       `${indent}</dict>`,
     ].join('\n')
   }
 
   if (typeof value === 'boolean') {
-    return `${indent}<${value ? 'true' : 'false'}/>`
+    return `${indent}<${value ? 'true' : 'false'}${selfClose}`
   }
 
   if (typeof value === 'number') {
     return `${indent}<${Number.isInteger(value) ? 'integer' : 'real'}>${value}</${Number.isInteger(value) ? 'integer' : 'real'}>`
   }
 
-  return `${indent}<string>${escapeXml(String(value ?? ''))}</string>`
+  const text = escapeXmlText(String(value ?? ''))
+  return `${indent}<string>${style.escapeQuotesInText ? text.replace(/"/g, '&quot;') : text}</string>`
 }
 
 export const serializeXmlPlist = (
-  value: unknown
-) => `<?xml version="1.0" encoding="UTF-8"?>
+  value: unknown,
+  textStyle?: Partial<UfoTextStyle> | null
+) => {
+  const style = resolveUfoTextStyle(textStyle)
+  return `${xmlDeclaration(style)}
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-${serializePlistValue(value)}
+${serializePlistValue(value, style.plistIndentRoot ? 1 : 0, style)}
 </plist>
 `
+}
 
 const inferOffcurveType = (
   points: Array<{
@@ -310,6 +346,7 @@ export const parseGlifText = (
   if (!glyphElement) {
     throw new Error(`Invalid GLIF: ${fileName}`)
   }
+  const glifStyle = detectGlifFileStyle(text)
 
   const unicodes = Array.from(glyphElement.querySelectorAll(':scope > unicode'))
     .map((node) => normalizeUnicodeHex(node.getAttribute('hex')))
@@ -447,6 +484,7 @@ export const parseGlifText = (
     note,
     image,
     lib,
+    glifStyle,
   }
 }
 
@@ -836,6 +874,7 @@ const buildFontDataFromUfoGlyphs = (
                     remoteBlobSha: record.remoteBlobSha ?? null,
                     note: record.note,
                     lib: record.lib,
+                    glifStyle: record.glifStyle ?? null,
                   },
                 },
                 image: record.image
@@ -1194,6 +1233,7 @@ export const buildMultiMasterFontData = (
             remoteBlobSha: record.remoteBlobSha ?? null,
             note: record.note,
             lib: record.lib,
+            glifStyle: record.glifStyle ?? null,
           },
         },
         image: record.image
@@ -1244,6 +1284,7 @@ export const buildMultiMasterFontData = (
             remoteBlobSha: record.remoteBlobSha ?? null,
             note: record.note,
             lib: record.lib,
+            glifStyle: record.glifStyle ?? null,
           },
         },
         image: record.image
@@ -1293,6 +1334,7 @@ export const buildMultiMasterFontData = (
             remoteBlobSha: record.remoteBlobSha ?? null,
             note: record.note,
             lib: record.lib,
+            glifStyle: record.glifStyle ?? null,
           },
         },
         image: record.image
@@ -1724,6 +1766,12 @@ export const parseUfoMetadataFiles = (input: {
     layers,
     contents: {},
     glyphOrder: [],
+    textStyle: detectUfoTextStyle({
+      plist: ufo.files['fontinfo.plist'] ?? ufo.files['metainfo.plist'],
+      glif: Object.entries(ufo.files).find(([name]) =>
+        name.endsWith('.glif')
+      )?.[1],
+    }),
     updatedAt,
   }
 
@@ -1918,6 +1966,7 @@ export const importUfoWorkspaceEntries = async (
         libExtra: record.lib,
         groupsExtra: record.groups,
         kerningExtra: record.kerning,
+        textStyle: record.textStyle ?? null,
         remoteBlobShaByPath: fontLevelBaselines.get(record.ufoId) ?? {},
       })),
       lastSync: project.lastSync,
@@ -1948,7 +1997,19 @@ export const importUfoWorkspace = async (
   })
 }
 
-export const serializeGlifRecord = (record: UfoGlyphRecord) => {
+export const serializeGlifRecord = (
+  record: UfoGlyphRecord,
+  textStyle?: Partial<UfoTextStyle> | null
+) => {
+  const style = resolveUfoTextStyle(
+    typeof record.glifStyle?.selfClosingSpace === 'boolean'
+      ? { ...textStyle, selfClosingSpace: record.glifStyle.selfClosingSpace }
+      : textStyle
+  )
+  const close = closeSelfClosing(style)
+  const tag = (indent: string, name: string, attrs: string[]) =>
+    `${indent}<${name} ${attrs.join(' ')}${close}`
+
   const contourXml = record.contours
     .map(
       (contour) => `    <contour>
@@ -1957,8 +2018,9 @@ ${contour.points
     const attrs = [
       `x="${point.x}"`,
       `y="${point.y}"`,
-      ...(point.type
-        ? [`type="${point.type === 'qcurve' ? 'qcurve' : point.type}"`]
+      // offcurve is the format's default and no producer writes it out
+      ...(point.type && point.type !== 'offcurve'
+        ? [`type="${point.type}"`]
         : []),
       ...(point.smooth ? ['smooth="yes"'] : []),
       ...(point.name ? [`name="${escapeXml(point.name)}"`] : []),
@@ -1967,7 +2029,7 @@ ${contour.points
         ? [`identifier="${escapeXml(point.identifier)}"`]
         : []),
     ]
-    return `      <point ${attrs.join(' ')}/>`
+    return tag('      ', 'point', attrs)
   })
   .join('\n')}
     </contour>`
@@ -1975,8 +2037,8 @@ ${contour.points
     .join('\n')
 
   const componentXml = record.components
-    .map((component) => {
-      const attrs = [
+    .map((component) =>
+      tag('    ', 'component', [
         `base="${escapeXml(component.base)}"`,
         ...(component.identifier
           ? [`identifier="${escapeXml(component.identifier)}"`]
@@ -1999,15 +2061,37 @@ ${contour.points
         ...(component.yOffset !== undefined
           ? [`yOffset="${component.yOffset}"`]
           : []),
-      ]
-      return `    <component ${attrs.join(' ')}/>`
-    })
+      ])
+    )
     .join('\n')
 
   const outlineChildren = [contourXml, componentXml].filter(Boolean).join('\n')
 
-  const imageXml = record.image
-    ? `  <image ${[
+  // Absent sections contribute nothing: an empty line here would show up as a
+  // change in every file that has no note, image or guidelines.
+  const body: string[] = []
+  if (record.advance.width !== null || record.advance.height !== null) {
+    body.push(
+      tag('  ', 'advance', [
+        ...(record.advance.width !== null
+          ? [`width="${record.advance.width}"`]
+          : []),
+        // vertical advance: CJK sources carry it and dropping it loses data
+        ...(record.advance.height !== null
+          ? [`height="${record.advance.height}"`]
+          : []),
+      ])
+    )
+  }
+  for (const unicode of record.unicodes) {
+    body.push(tag('  ', 'unicode', [`hex="${unicode}"`]))
+  }
+  if (record.note) {
+    body.push(`  <note>${escapeXmlText(record.note)}</note>`)
+  }
+  if (record.image) {
+    body.push(
+      tag('  ', 'image', [
         `fileName="${escapeXml(record.image.fileName)}"`,
         ...(record.image.xScale !== undefined
           ? [`xScale="${record.image.xScale}"`]
@@ -2030,48 +2114,62 @@ ${contour.points
         ...(record.image.color
           ? [`color="${escapeXml(record.image.color)}"`]
           : []),
-      ].join(' ')}/>`
-    : ''
+      ])
+    )
+  }
+  for (const guide of record.guidelines) {
+    body.push(
+      tag('  ', 'guideline', [
+        ...(guide.x !== null && guide.x !== undefined
+          ? [`x="${guide.x}"`]
+          : []),
+        ...(guide.y !== null && guide.y !== undefined
+          ? [`y="${guide.y}"`]
+          : []),
+        ...(guide.angle !== null && guide.angle !== undefined
+          ? [`angle="${guide.angle}"`]
+          : []),
+        ...(guide.name ? [`name="${escapeXml(guide.name)}"`] : []),
+        ...(guide.color ? [`color="${escapeXml(guide.color)}"`] : []),
+        ...(guide.identifier
+          ? [`identifier="${escapeXml(guide.identifier)}"`]
+          : []),
+      ])
+    )
+  }
+  for (const anchor of record.anchors) {
+    body.push(
+      tag('  ', 'anchor', [
+        `x="${anchor.x}"`,
+        `y="${anchor.y}"`,
+        `name="${escapeXml(anchor.name)}"`,
+        ...(anchor.color ? [`color="${escapeXml(anchor.color)}"`] : []),
+        ...(anchor.identifier
+          ? [`identifier="${escapeXml(anchor.identifier)}"`]
+          : []),
+      ])
+    )
+  }
+  // The outline element is always written, empty or not: that is what both
+  // fontTools and Glyphs do, and omitting it is a diff in every blank glyph.
+  if (outlineChildren) {
+    body.push(`  <outline>`, outlineChildren, `  </outline>`)
+  } else if (record.glifStyle?.emptyOutlineElement !== false) {
+    body.push(`  <outline>`, `  </outline>`)
+  }
+  if (record.lib) {
+    // A glif's embedded lib is always two-space indented, even in sources whose
+    // .plist files use tabs.
+    body.push(
+      `  <lib>`,
+      serializePlistValue(record.lib, 2, { ...style, plistIndent: '  ' }),
+      `  </lib>`
+    )
+  }
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  return `${xmlDeclaration(style)}
 <glyph name="${escapeXml(record.glyphName)}" format="2">
-${record.advance.width !== null ? `  <advance width="${record.advance.width}"/>` : ''}
-${record.unicodes.map((unicode) => `  <unicode hex="${unicode}"/>`).join('\n')}
-${record.note ? `  <note>${escapeXml(record.note)}</note>` : ''}
-${imageXml}
-${record.guidelines
-  .map((guide) => {
-    const attrs = [
-      ...(guide.x !== null && guide.x !== undefined ? [`x="${guide.x}"`] : []),
-      ...(guide.y !== null && guide.y !== undefined ? [`y="${guide.y}"`] : []),
-      ...(guide.angle !== null && guide.angle !== undefined
-        ? [`angle="${guide.angle}"`]
-        : []),
-      ...(guide.name ? [`name="${escapeXml(guide.name)}"`] : []),
-      ...(guide.color ? [`color="${escapeXml(guide.color)}"`] : []),
-      ...(guide.identifier
-        ? [`identifier="${escapeXml(guide.identifier)}"`]
-        : []),
-    ]
-    return `  <guideline ${attrs.join(' ')}/>`
-  })
-  .join('\n')}
-${record.anchors
-  .map((anchor) => {
-    const attrs = [
-      `x="${anchor.x}"`,
-      `y="${anchor.y}"`,
-      `name="${escapeXml(anchor.name)}"`,
-      ...(anchor.color ? [`color="${escapeXml(anchor.color)}"`] : []),
-      ...(anchor.identifier
-        ? [`identifier="${escapeXml(anchor.identifier)}"`]
-        : []),
-    ]
-    return `  <anchor ${attrs.join(' ')}/>`
-  })
-  .join('\n')}
-${outlineChildren ? `  <outline>\n${outlineChildren}\n  </outline>` : ''}
-${record.lib ? `  <lib>\n${serializePlistValue(record.lib, 2)}\n  </lib>` : ''}
+${body.join('\n')}
 </glyph>
 `
 }

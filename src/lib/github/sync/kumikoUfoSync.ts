@@ -742,6 +742,7 @@ const toUfoGlyphRecord = (input: {
           }
         : null,
     lib: isPrimaryDefaultGlyph ? (layerSource.lib ?? null) : null,
+    glifStyle: layerSource.glifStyle ?? null,
     dirty: input.glyph.syncDirty === 1,
     dirtyIndex: input.glyph.syncDirty,
     updatedAt: input.glyph.updatedAt,
@@ -873,6 +874,7 @@ const buildMetadata = (
     contents,
     glyphOrder:
       source.glyphOrder.length > 0 ? source.glyphOrder : project.glyphOrder,
+    textStyle: source.textStyle ?? null,
     updatedAt: project.updatedAt,
   }
 }
@@ -1183,7 +1185,7 @@ export const prepareKumikoGitHubCommit = async (input: {
         source,
         fileName,
       })
-      const glifText = serializeGlifRecord(ufoGlyph)
+      const glifText = serializeGlifRecord(ufoGlyph, metadata.textStyle)
       files.push({
         path: joinRepoPath(
           source.relativePath,
@@ -1229,7 +1231,7 @@ export const prepareKumikoGitHubCommit = async (input: {
           defaultLayer.glyphDir,
           'contents.plist'
         ),
-        content: serializeXmlPlist(metadata.contents),
+        content: serializeXmlPlist(metadata.contents, metadata.textStyle),
       })
     }
 

@@ -344,10 +344,38 @@ OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消
 - `mergePolicy: 'setMerge'` 讓 `contents.plist` / `order.plist` 這類衍生檔案永不產生衝突。先前兩個貢獻者各補一個新字就會撞出假衝突，而那正是 Kumiko 的主線情境。
 - `materializeUfoTree` 加上 `scope: 'dirty'`，`syncWorktreeFromProject` 預設 `auto`（首次全建、之後只寫變動的檔）。刪除偵測仍是完整的，因為預期路徑清單由 metadata 產生、不載入字形幾何。
 
+### 文字保真：為什麼同步靠的是「重寫要一模一樣」（2026-08-20）
+
+同步是**比對 blob OID**（內容雜湊）。所以只要重新寫出一個沒被改過的檔案時多了一個空白，那個檔案就是「變更」。實測：對 chiakich/JYRounded（14,562 字）與 repo 內的 fixture UFO，修正前**沒有任何一個檔案**能逐位元重現，於是整套字型每次同步都是全量衝突。
+
+UFO 格式沒有規定這些細節，而各家工具的選擇不同：
+
+|                    | fontTools ufoLib     | Glyphs.app              |
+| ------------------ | -------------------- | ----------------------- |
+| XML 宣告           | 單引號               | 單引號                  |
+| 自閉合標籤         | `<tag/>`             | `<tag />`               |
+| plist 縮排         | tab，`<dict>` 不縮排 | 兩空格，`<dict>` 縮一層 |
+| plist 字串裡的 `"` | 原樣                 | 寫成 `&quot;`           |
+
+沒有哪一種更正確，所以**寫出時重現來源的風格**，而不是挑一種強制套用：`UfoTextStyle` 在匯入時偵測（`detectUfoTextStyle`）並存在 `sourceData.ufo.ufos[].textStyle`。預設是 ufoLib 風格。
+
+同一個 UFO 內部也會混風格——JYRounded 裡有 216 個字形是另一個工具寫的——所以自閉合空白與「空白字形是否仍寫出 `<outline></outline>`」是**逐檔**記錄在 `sourceData.ufo.glifStyle` 上的。
+
+另外幾個與風格無關、原本就寫錯的地方（都會造成每個檔案都有 diff）：
+
+- 缺少 note / image / guideline 的區塊會留下空行
+- offcurve 點寫出 `type="offcurve"`（那是格式預設值，沒有工具會寫）
+- `<advance>` 漏掉 `height`——CJK 直排字形的資料**遺失**
+- glif 內嵌的 `<lib>` 一律兩空格縮排，即使該來源的 .plist 檔用 tab
+- 屬性與文字內容的 escape 集合不同（文字裡的 `'` 不該變成 `&apos;`）
+
+實測結果（`test/fontRoundTrip/ufoTextFidelity.test.ts` 以 fixture 守住，真實字型的數字為手動驗證）：JYRounded **14,562/14,562** 字形與全部 font-level plist 逐位元相同；fontTools 風格的 fixture 27/27 與全部 plist 相同。
+
+仍知道的限制：font-level plist 是從 canonical 資料重新產生的，所以逐位元相同也依賴鍵值內容本身沒有漂移；風格偵測樣本取 `fontinfo.plist`（`metainfo.plist` 太小，帶不出引號證據）。
+
 尚未完成：
 
 - **fetch / push 仍未對真實 GitHub 驗證。** 需要 OAuth 登入與 `wrangler pages dev`（vite dev 不會執行 `functions/`），本地無法完成。
-- **dirty-scoped materialization**（見上）。
 - **`remoteBlobSha` / `remoteBlobShaByPath` 尚未退役**：REST 路徑還在用。git 成為預設後才移除。
 - git 路徑沒有 `remoteTreeTruncated` 的概念（packfile 不會截斷），該欄位在 git 報告裡固定為 `false`。
 - git 堆疊是**動態載入**的（`syncEngine` 只在開關開啟時 `await import`），打包成獨立的 `gitSync` chunk（約 266 kB / gzip 80 kB）。走 REST 路徑的使用者不會下載它。
