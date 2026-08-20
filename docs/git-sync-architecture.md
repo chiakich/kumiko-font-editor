@@ -385,6 +385,17 @@ UFO 格式沒有規定這些細節，而各家工具的選擇不同：
 
 仍未解決：**報告本身的成本沒有降低**，只是移出 main thread。每次報告都重新序列化與雜湊全部字形。下一步應該用 glyph digest 快取 blob OID，只重算變動過的字形。
 
+commit / push 也走同一個 worker（`commit-and-push`），連同 `markGitCommitSynced` 的記帳——那是同樣數萬個檔案的工作量。compare status 仍留在 main thread（純 REST）。
+
+### 錯誤要看得見（2026-08-20）
+
+實測回報：commit 失敗時 UI 只顯示 `MultipleGitError: There are multiple errors ... refer to the "errors" property`，完全無法判斷原因。兩個成因：
+
+- isomorphic-git 的 `_add` 把並行走訪的失敗收進 `MultipleGitError`，訊息本身不含任何一個真正的錯誤 → `stageWorktreePaths` 現在會把前幾個實際錯誤展開到訊息裡。
+- **`opfsFileStore` 把所有例外都吞成 `null`**，而 `null` 在 gitFileSystem 會變成 ENOENT。也就是說鎖定衝突、配額不足、型別不符等任何真實失敗，都會以「檔案不存在」的面貌出現。現在只有 `NotFoundError` / `TypeMismatchError` 視為不存在，其餘往上拋。
+
+`git.add` 的批次大小也從「一次全部」改為 256 個一批：它會對傳入的每個路徑同時展開，一整套 CJK 字型就是數萬個並行 OPFS 操作。實測 14,589 個並行 `createWritable` 本身**不會**失敗（0 rejection / 2.6 秒），所以這不是已證實的成因，只是把資源用量收在可控範圍——`_add` 除了寫檔還會壓縮並保留每個 blob 的緩衝。
+
 尚未完成：
 
 - **fetch / push 仍未對真實 GitHub 驗證。** 需要 OAuth 登入與 `wrangler pages dev`（vite dev 不會執行 `functions/`），本地無法完成。

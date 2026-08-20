@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const commitAndPushProject = vi.fn()
-const markGitCommitSynced = vi.fn()
 const fetchGitHubCompareStatus = vi.fn()
 
-vi.mock('src/lib/git/gitSync', () => ({
-  commitAndPushProject: (input: unknown) => commitAndPushProject(input),
-  markGitCommitSynced: (input: unknown) => markGitCommitSynced(input),
+// The commit and its bookkeeping both run in the worker (see gitSyncWorker);
+// what this file covers is which repo and branch the UI asks for, and how the
+// result is presented back.
+vi.mock('src/lib/git/gitSyncWorkerClient', () => ({
+  commitAndPushProjectInWorker: (input: unknown) => commitAndPushProject(input),
 }))
 vi.mock('src/lib/github/githubAuth', () => ({
   fetchGitHubCompareStatus: (input: unknown) => fetchGitHubCompareStatus(input),
@@ -42,7 +43,6 @@ const forkStatus = {
 
 beforeEach(() => {
   commitAndPushProject.mockReset()
-  markGitCommitSynced.mockReset()
   fetchGitHubCompareStatus.mockReset()
   commitAndPushProject.mockResolvedValue({
     commitSha: 'a'.repeat(40),
@@ -103,25 +103,6 @@ describe('committing through git', () => {
       branchName: 'kumiko/patch-1',
       commitSha: 'a'.repeat(40),
       compare: { aheadBy: 1 },
-    })
-  })
-
-  it('marks canonical records synced after a successful push', async () => {
-    await commitThroughGit({
-      projectId: 'p1',
-      projectTitle: 'Kumiko',
-      branchName: 'kumiko/patch-1',
-      commitMessage: '',
-      forkStatus,
-    })
-
-    expect(markGitCommitSynced).toHaveBeenCalledWith({
-      projectId: 'p1',
-      pushedRepo: 'contributor/font',
-      pushedBranch: 'kumiko/patch-1',
-      commitSha: 'a'.repeat(40),
-      // Bookkeeping uses the paths the commit really wrote.
-      writtenPaths: ['Kumiko.ufo/glyphs/A_.glif'],
     })
   })
 

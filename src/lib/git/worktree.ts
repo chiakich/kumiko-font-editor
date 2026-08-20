@@ -95,23 +95,55 @@ export const syncWorktreeFromProject = async (input: {
   return { writtenPaths, removedPaths }
 }
 
+// isomorphic-git collects failures from its parallel walk into MultipleGitError,
+// whose own message says only "refer to the errors property" — useless in a
+// toast. Name the actual causes so a failure is diagnosable from the UI.
+const describeGitFailure = (error: unknown) => {
+  if (
+    error instanceof git.Errors.MultipleGitError &&
+    Array.isArray(error.errors)
+  ) {
+    const causes = error.errors
+      .slice(0, 3)
+      .map((cause) => (cause instanceof Error ? cause.message : String(cause)))
+    const rest = error.errors.length - causes.length
+    return new Error(
+      `${error.errors.length} 個檔案操作失敗：${causes.join('；')}${
+        rest > 0 ? `（另有 ${rest} 個）` : ''
+      }`
+    )
+  }
+  return error
+}
+
+// git.add fans out over every path it is given at once, so a whole CJK font in
+// one call means tens of thousands of concurrent OPFS operations. Each call also
+// rewrites the entire index, which is why one path per call is quadratic
+// (measured: ~7.9ms/file one at a time against ~1.3ms/file batched). Chunking
+// bounds the concurrency while keeping the index rewrites to a few dozen.
+const STAGE_CHUNK_SIZE = 256
+
 // Stages exactly the paths the caller names, so a CJK-scale worktree never gets
 // hashed wholesale by a status scan.
-//
-// The paths go in as one array on purpose: each git.add call rewrites the whole
-// index, so staging one path at a time is quadratic. Measured in Chrome on
-// OPFS, a per-path loop costs ~7.9ms/file against ~1.3ms/file batched.
 export const stageWorktreePaths = async (input: {
   worktree: GitWorktree
   writtenPaths: readonly string[]
   removedPaths?: readonly string[]
 }) => {
-  if (input.writtenPaths.length > 0) {
-    await git.add({
-      fs: input.worktree.fs,
-      dir: input.worktree.dir,
-      filepath: [...input.writtenPaths],
-    })
+  for (
+    let index = 0;
+    index < input.writtenPaths.length;
+    index += STAGE_CHUNK_SIZE
+  ) {
+    try {
+      await git.add({
+        fs: input.worktree.fs,
+        dir: input.worktree.dir,
+        filepath: input.writtenPaths.slice(index, index + STAGE_CHUNK_SIZE),
+      })
+    } catch (error) {
+      throw describeGitFailure(error)
+    }
   }
   for (const path of input.removedPaths ?? []) {
     await git

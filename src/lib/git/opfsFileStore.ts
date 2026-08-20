@@ -9,6 +9,15 @@ import {
 const segmentsOf = (path: string) =>
   normalizeStorePath(path).split('/').filter(Boolean)
 
+// A missing entry is an expected answer; anything else — a locked file, a quota
+// failure, a path that is the wrong kind — must not be flattened into "absent",
+// or the git layer reports every real failure as ENOENT and the actual cause is
+// lost. TypeMismatchError says the path exists as the other kind.
+const ABSENT_ERRORS = new Set(['NotFoundError', 'TypeMismatchError'])
+
+const isAbsent = (error: unknown) =>
+  error instanceof DOMException && ABSENT_ERRORS.has(error.name)
+
 const resolveDir = async (
   root: FileSystemDirectoryHandle,
   path: string,
@@ -18,8 +27,11 @@ const resolveDir = async (
   for (const segment of segmentsOf(path)) {
     try {
       handle = await handle.getDirectoryHandle(segment, { create })
-    } catch {
-      return null
+    } catch (error) {
+      if (isAbsent(error)) {
+        return null
+      }
+      throw error
     }
   }
   return handle
@@ -37,8 +49,11 @@ const resolveFile = async (
   }
   try {
     return await parent.getFileHandle(name, { create })
-  } catch {
-    return null
+  } catch (error) {
+    if (isAbsent(error)) {
+      return null
+    }
+    throw error
   }
 }
 
@@ -60,8 +75,16 @@ const writeFileHandle = async (
       } finally {
         accessHandle.close()
       }
-    } catch {
-      // Fall through: some engines expose the method but reject off-worker.
+    } catch (error) {
+      // Off-worker some engines expose the method but reject it; that is the
+      // only case worth falling back for. A lock or quota failure must surface.
+      if (
+        error instanceof DOMException &&
+        error.name !== 'InvalidStateError' &&
+        error.name !== 'NotSupportedError'
+      ) {
+        throw error
+      }
     }
   }
 

@@ -27,11 +27,13 @@ export const commitThroughGit = async (input: {
     throw new Error('請輸入有效的 branch 名稱')
   }
 
-  const { commitAndPushProject, markGitCommitSynced } =
-    await import('src/lib/git/gitSync')
+  const { commitAndPushProjectInWorker } =
+    await import('src/lib/git/gitSyncWorkerClient')
 
   const sourceRepo = input.forkStatus?.sourceRepo ?? null
-  const pushed = await commitAndPushProject({
+  // Runs in the worker along with its bookkeeping: materializing, staging and
+  // pushing a CJK-scale font is tens of thousands of files.
+  const pushed = await commitAndPushProjectInWorker({
     projectId: input.projectId,
     pushRepo: targetRepo.fullName,
     pushBranch: input.branchName,
@@ -40,14 +42,6 @@ export const commitThroughGit = async (input: {
     baseRepo: sourceRepo?.fullName ?? null,
     baseBranch: sourceRepo?.defaultBranch ?? null,
     message: input.commitMessage || `Update ${input.projectTitle}`,
-  })
-
-  await markGitCommitSynced({
-    projectId: input.projectId,
-    pushedRepo: pushed.pushedRepo,
-    pushedBranch: pushed.pushedBranch,
-    commitSha: pushed.commitSha,
-    writtenPaths: pushed.writtenPaths,
   })
 
   // The PR affordances read compare status, which stays a REST concern.

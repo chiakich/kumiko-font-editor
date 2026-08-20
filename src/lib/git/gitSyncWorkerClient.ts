@@ -1,19 +1,28 @@
-import type { GitSyncReport, GitSyncTarget } from 'src/lib/git/gitSync'
+import type {
+  GitCommitAndPushResult,
+  GitSyncReport,
+  GitSyncTarget,
+} from 'src/lib/git/gitSync'
 
-interface SuccessResponse {
+interface ReportResponse {
   type: 'git-sync-report-success'
   payload: { requestId: string; report: GitSyncReport }
 }
 
+interface CommitResponse {
+  type: 'git-commit-success'
+  payload: { requestId: string; result: GitCommitAndPushResult }
+}
+
 interface ErrorResponse {
-  type: 'git-sync-report-error'
+  type: 'git-sync-error'
   payload: { requestId: string; message: string }
 }
 
-type WorkerResponse = SuccessResponse | ErrorResponse
+type WorkerResponse = ReportResponse | CommitResponse | ErrorResponse
 
 interface PendingRequest {
-  resolve: (report: GitSyncReport) => void
+  resolve: (value: never) => void
   reject: (error: Error) => void
 }
 
@@ -39,7 +48,11 @@ const getWorker = () => {
         }
         pendingRequests.delete(requestId)
         if (event.data.type === 'git-sync-report-success') {
-          pending.resolve(event.data.payload.report)
+          pending.resolve(event.data.payload.report as never)
+          return
+        }
+        if (event.data.type === 'git-commit-success') {
+          pending.resolve(event.data.payload.result as never)
           return
         }
         pending.reject(new Error(event.data.payload.message))
@@ -58,19 +71,15 @@ const getWorker = () => {
   return workerInstance
 }
 
-// The report materializes and hashes the whole project: on a CJK-scale font
-// that is tens of thousands of files, which freezes the tab if it runs on the
-// main thread. OPFS and IndexedDB are both available to a worker, and the
-// worker also gets the createSyncAccessHandle fast path.
-export const buildGitSyncReportInWorker = (target: GitSyncTarget) =>
-  new Promise<GitSyncReport>((resolve, reject) => {
+const request = <T>(type: string, payload: Record<string, unknown>) =>
+  new Promise<T>((resolve, reject) => {
     const requestId = createRequestId()
-    pendingRequests.set(requestId, { resolve, reject })
+    pendingRequests.set(requestId, {
+      resolve: resolve as (value: never) => void,
+      reject,
+    })
     try {
-      getWorker().postMessage({
-        type: 'build-git-sync-report',
-        payload: { requestId, target },
-      })
+      getWorker().postMessage({ type, payload: { requestId, ...payload } })
     } catch (error) {
       pendingRequests.delete(requestId)
       reject(
@@ -78,3 +87,21 @@ export const buildGitSyncReportInWorker = (target: GitSyncTarget) =>
       )
     }
   })
+
+// The report materializes and hashes the whole project: on a CJK-scale font
+// that is tens of thousands of files, which freezes the tab if it runs on the
+// main thread. OPFS and IndexedDB are both available to a worker, and the worker
+// also gets the createSyncAccessHandle fast path.
+export const buildGitSyncReportInWorker = (target: GitSyncTarget) =>
+  request<GitSyncReport>('build-git-sync-report', { target })
+
+// Materializing, staging and pushing a CJK-scale font is the same tens of
+// thousands of files the report walks — it has no business on the main thread.
+export const commitAndPushProjectInWorker = (input: {
+  projectId: string
+  pushRepo: string
+  pushBranch: string
+  baseRepo: string | null
+  baseBranch: string | null
+  message: string
+}) => request<GitCommitAndPushResult>('commit-and-push', { ...input })
