@@ -7,12 +7,16 @@ import type {
   PathData,
   PathNode,
 } from 'src/store'
+// From the defining module, not the src/store barrel: the barrel creates the
+// zustand store and pulls every action — including paper.js — into any bundle
+// that touches it, which is how a worker ended up shipping the path-boolean
+// library.
 import {
   getNodeSegmentType,
   getNodeType,
   isOffCurveNode,
   isOnCurveNode,
-} from 'src/store'
+} from 'src/store/glyphGeometry'
 import {
   designspaceDefaultLocation,
   designspaceToExportInstances,

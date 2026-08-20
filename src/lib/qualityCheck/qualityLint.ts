@@ -1,12 +1,13 @@
-import {
-  getGlyphLayer,
-  type FontData,
-  type GlyphData,
-  type GlyphLayerData,
-  type PathData,
-  type PathNode,
-  isOffCurveNode,
+import type {
+  FontData,
+  GlyphData,
+  GlyphLayerData,
+  PathData,
+  PathNode,
 } from 'src/store'
+// Leaf modules rather than the src/store barrel: see the note in ufoFormat.
+import { getGlyphLayer } from 'src/store/glyphLayer'
+import { isOffCurveNode } from 'src/store/glyphGeometry'
 import { isHanGlyph } from 'src/lib/qualityCheck/hanClassification'
 import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
 

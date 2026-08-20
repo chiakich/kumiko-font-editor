@@ -1,9 +1,5 @@
-import {
-  getGlyphLayer,
-  type FontData,
-  type GlyphComponentRef,
-  type PathData,
-} from 'src/store'
+import type { FontData, GlyphComponentRef, PathData } from 'src/store'
+import { getGlyphLayer } from 'src/store/glyphLayer'
 import {
   getStructureBodyBox,
   type StructureBodyBox,

@@ -4,7 +4,11 @@ import {
   getComponentMatrix,
   isIdentityComponentMatrix,
 } from 'src/lib/components/componentTransform'
-import { getNodeSegmentType, getNodeType, isOffCurveNode } from 'src/store'
+import {
+  getNodeSegmentType,
+  getNodeType,
+  isOffCurveNode,
+} from 'src/store/glyphGeometry'
 import type {
   FontData,
   GlyphData,

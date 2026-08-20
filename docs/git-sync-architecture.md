@@ -401,7 +401,22 @@ commit / push 也走同一個 worker（`commit-and-push`），連同 `markGitCom
 
 驗證方式是差分：對真實的 JYRounded（14,562 個 glif）與 fixture UFO 全部重跑 parse → serialize 的逐位元比對，**14,562/14,562 與 27/27 相同，且沒有任何 DOMParser stub**。malformed 輸入會丟錯，而不是像 DOMParser 那樣回一份 `<parsererror>` 文件讓錯誤靜默流下去。
 
-現在 worker 處理三種請求：`build-git-sync-report`、`commit-and-push`、`apply-remote`。已知待處理：worker bundle 819 kB，裡面有 paper.js（透過 store 的 import chain 進來的），與 git 同步無關；那是浪費，不是錯誤。
+現在 worker 處理三種請求：`build-git-sync-report`、`commit-and-push`、`apply-remote`。
+
+### `src/store` barrel 會把 paper.js 拖進 worker（2026-08-20）
+
+`src/store/index.ts` 會建立 zustand store 並 import 全部 action builder，其中 `pathActions` 依賴 `pathBooleanOperations` → paper.js。因此**任何**對 `'src/store'` 的 value import（不是 `import type`）都會把 paper.js 拉進那個 bundle。
+
+`ufoFormat.ts` 只是要 `getNodeSegmentType` 這類純函式，卻因為從 barrel 取而付了整包代價。改成從定義它們的 leaf module（`src/store/glyphGeometry`、`src/store/glyphLayer`）取用：
+
+| bundle               | 之前    | 之後            |
+| -------------------- | ------- | --------------- |
+| `gitSyncWorker`      | 819,552 | 382,887（−53%） |
+| `ufoZipExportWorker` | 497,329 | 59,338（−88%）  |
+
+`ufoZipExportWorker` 是意外收穫——它跟 git 同步無關，每次本機匯出 UFO 都會載入。`index` chunk 仍然含 paper.js，那是正當的（編輯器的布林運算與描邊偏移就在主程式裡），大小沒有變化。
+
+規則：`src/lib` 與 `src/font` 底下對 `'src/store'` 只做 `import type`；需要純函式就直接從 leaf module 取。
 
 ### 錯誤要看得見（2026-08-20）
 

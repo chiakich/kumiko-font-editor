@@ -12,7 +12,12 @@ import type {
   PathNode,
   PathSegmentType,
 } from 'src/store'
-import { getNodeSegmentType, isOffCurveNode, isOnCurveNode } from 'src/store'
+// Leaf module rather than the src/store barrel: see the note in ufoFormat.
+import {
+  getNodeSegmentType,
+  isOffCurveNode,
+  isOnCurveNode,
+} from 'src/store/glyphGeometry'
 import { activeLayer } from 'src/store/glyphLayer'
 import {
   getComponentMatrix,
