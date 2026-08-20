@@ -6,6 +6,7 @@ import {
   HStack,
   IconButton,
   Input,
+  SimpleGrid,
   Stack,
   Text,
   Field,
@@ -34,6 +35,8 @@ export interface GitHubCommitModalProps {
   isMergingGitHubUpstream: boolean
   canCommitToGitHub: boolean
   gitHubCommitMessage: string
+  // What the commit will say when the field is left empty.
+  suggestedCommitMessage: string
   gitHubBranchName: string
   isCreatingNewBranch: boolean
   onLoginGitHub: () => void
@@ -67,6 +70,7 @@ export function GitHubCommitModal({
   isMergingGitHubUpstream,
   canCommitToGitHub,
   gitHubCommitMessage,
+  suggestedCommitMessage,
   gitHubBranchName,
   isCreatingNewBranch,
   onLoginGitHub,
@@ -204,7 +208,13 @@ export function GitHubCommitModal({
                         {t('glyphInspector.loadingForkBranch')}
                       </Text>
                     ) : (
-                      <>
+                      // Source and editing repo read as a pair: same row, so
+                      // the difference between them is visible at a glance.
+                      <SimpleGrid
+                        columns={{ base: 1, md: 2 }}
+                        gap={3}
+                        alignItems="stretch"
+                      >
                         <GitHubRepoCard
                           title={t('glyphInspector.sourceRepo')}
                           repo={sourceRepo}
@@ -243,7 +253,7 @@ export function GitHubCommitModal({
                             shouldShowForkAction ? onCreateFork : undefined
                           }
                         />
-                      </>
+                      </SimpleGrid>
                     )}
 
                     {!isEditableRepoReadonly && editableRepo ? (
@@ -314,6 +324,7 @@ export function GitHubCommitModal({
                                 onChange={(event) =>
                                   onCommitMessageChange(event.target.value)
                                 }
+                                placeholder={suggestedCommitMessage}
                                 disabled={isPreparingGitHubCommit}
                               />
                             </Field.Root>

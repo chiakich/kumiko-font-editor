@@ -1,6 +1,6 @@
 import { toaster } from '@/components/ui/toaster'
 import { useDisclosure } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   startGitHubOAuthLogin,
@@ -35,7 +35,11 @@ import {
   resolveGitHubBranchSelection,
 } from 'src/features/common/glyphInspector/utils/githubCommitFlowUtils'
 import type { GitHubCommitModalProps } from 'src/features/common/glyphInspector/components/GitHubCommitModal'
-import { githubSyncReportQueryKey } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
+import {
+  githubSyncReportQueryKey,
+  useGitHubSyncStatus,
+} from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
+import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
 import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
 import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
 import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
@@ -122,6 +126,33 @@ export const useGitHubCommitFlow = ({
       ? gitHubCommitDraft
       : createEmptyCommitDraft(githubRepoFullName)
   const gitHubCommitMessage = activeCommitDraft.commitMessage
+  // Shares the report the modal already renders (same query key, so no extra
+  // fetch): it is the transport-agnostic answer to "is this glyph new upstream".
+  const syncReport = useGitHubSyncStatus({
+    projectId,
+    enabled: gitHubModal.open && hasGitHubSource,
+  }).report
+  const suggestedCommitMessage = useMemo(() => {
+    const glyphOf = (glyphName: string) => ({
+      glyphName,
+      unicodes: fontData?.glyphs[glyphName]?.unicodes,
+    })
+    const localChanges = (syncReport?.localChanges ?? []).filter(
+      (entry) => entry.kind === 'glyph' && entry.glyphName
+    )
+    return buildGlyphCommitMessage({
+      added: localChanges
+        .filter((entry) => entry.status !== 'localDeleted' && !entry.remoteSha)
+        .map((entry) => glyphOf(entry.glyphName!)),
+      updated: localChanges
+        .filter((entry) => entry.status !== 'localDeleted' && entry.remoteSha)
+        .map((entry) => glyphOf(entry.glyphName!)),
+      deleted: localChanges
+        .filter((entry) => entry.status === 'localDeleted')
+        .map((entry) => glyphOf(entry.glyphName!)),
+      fallbackTitle: projectTitle,
+    })
+  }, [fontData, projectTitle, syncReport])
   const gitHubBranchName = activeCommitDraft.branchName
   const isCreatingNewGitHubBranch = activeCommitDraft.isCreatingNewBranch
   const updateGitHubCommitDraft = (
@@ -461,8 +492,7 @@ export const useGitHubCommitFlow = ({
         })
         const restResult = await createCommitMutation.mutateAsync({
           ...preparedCommit.request,
-          commitMessage:
-            gitHubCommitMessage.trim() || preparedCommit.request.commitMessage,
+          commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
           branchName: gitHubBranchName.trim(),
         })
         await markGitHubCommitSynced(preparedCommit.exportStateUpdates, {
@@ -480,7 +510,7 @@ export const useGitHubCommitFlow = ({
             projectId,
             projectTitle,
             branchName: gitHubBranchName.trim(),
-            commitMessage: gitHubCommitMessage.trim(),
+            commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
             forkStatus: githubForkStatus,
           })
         : await commitThroughRest()
@@ -590,6 +620,7 @@ export const useGitHubCommitFlow = ({
     isMergingGitHubUpstream: mergeUpstreamMutation.isPending,
     canCommitToGitHub,
     gitHubCommitMessage,
+    suggestedCommitMessage,
     gitHubBranchName,
     isCreatingNewBranch: isCreatingNewGitHubBranch,
     onLoginGitHub: () => void handleLoginGitHub(),

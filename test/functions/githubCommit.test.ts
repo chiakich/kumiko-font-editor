@@ -14,6 +14,11 @@ const jsonResponse = (payload: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   })
 
+let canPushToSource = false
+// The repo owner's own account holds a repository of the same name that is not
+// a fork of anything.
+let viewerRepoIsFork = true
+
 const stubGitHubApi = (calls: RecordedCall[]) => {
   const handler = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
@@ -30,7 +35,7 @@ const stubGitHubApi = (calls: RecordedCall[]) => {
         full_name: 'upstream/font',
         owner: { login: 'upstream' },
         default_branch: 'main',
-        permissions: { push: false },
+        permissions: { push: canPushToSource },
       })
     }
     if (url === 'https://api.github.com/user') {
@@ -42,7 +47,7 @@ const stubGitHubApi = (calls: RecordedCall[]) => {
         full_name: 'viewer/font',
         owner: { login: 'viewer' },
         default_branch: 'main',
-        parent: { full_name: 'upstream/font' },
+        ...(viewerRepoIsFork ? { parent: { full_name: 'upstream/font' } } : {}),
         permissions: { push: true },
       })
     }
@@ -109,6 +114,8 @@ const glyphFiles = (count: number) =>
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  canPushToSource = false
+  viewerRepoIsFork = true
 })
 
 describe('github commit endpoint', () => {
@@ -138,6 +145,29 @@ describe('github commit endpoint', () => {
       (call) => call.method === 'POST' && call.url.endsWith('/git/commits')
     )
     expect(commitCall?.body?.tree).toBe('tree-2')
+  })
+
+  // The repo owner always owns a same-named repository — their own — so a fork
+  // lookup keyed on the name used to report "no fork" and block them.
+  it('commits straight to the source repo when the viewer can push', async () => {
+    const calls: RecordedCall[] = []
+    canPushToSource = true
+    viewerRepoIsFork = false
+    stubGitHubApi(calls)
+
+    const response = await postCommit(glyphFiles(1))
+    expect(response.status).toBe(200)
+    expect((await response.json()).headOwner).toBe('upstream')
+
+    // never looks for a fork under the viewer's account
+    expect(
+      calls.filter((call) => call.url.includes('/repos/viewer/'))
+    ).toHaveLength(0)
+    expect(
+      calls.filter(
+        (call) => call.method === 'POST' && call.url.endsWith('/git/trees')
+      )[0].url
+    ).toBe('https://api.github.com/repos/upstream/font/git/trees')
   })
 
   it('rejects a commit that cannot finish within the platform limits', async () => {

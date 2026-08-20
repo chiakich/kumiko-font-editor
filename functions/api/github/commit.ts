@@ -124,7 +124,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const targetRepo = forkInfo.targetRepo
 
     if (!targetRepo) {
-      throw new Error('尚未找到你的 fork，請先建立 fork。')
+      throw new Error(
+        '你對這個 repo 沒有寫入權限，也還沒有 fork；請先建立 fork。'
+      )
     }
 
     const branchName = sanitizeBranchName(

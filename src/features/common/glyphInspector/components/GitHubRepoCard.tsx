@@ -38,8 +38,9 @@ export function GitHubRepoCard({
   const { t } = useTranslation()
 
   return (
-    <Box borderWidth={1} borderRadius="lg" p={4}>
-      <Stack gap={3}>
+    // h="100%" keeps the two side-by-side cards the same height
+    <Box borderWidth={1} borderRadius="lg" p={4} h="100%">
+      <Stack gap={3} h="100%">
         <HStack justify="space-between" align="start" gap={3}>
           <Box minW={0}>
             <HStack gap={2} mb={1} align="center">

@@ -467,6 +467,18 @@ export const findViewerForkRepo = async (
 
   const sourceRepo = await getRepoSummary(token, sourceOwner, repo)
 
+  // Write access makes a fork unnecessary, and it has to be checked first: the
+  // viewer may own an unrelated repository of the same name — the repo owner
+  // always does — which would otherwise read as "no fork" and block committing.
+  if (sourceRepo.canPush) {
+    return {
+      viewerLogin,
+      targetRepo: sourceRepo,
+      forked: false,
+      canDirectCommit: true,
+    }
+  }
+
   try {
     const payload = await githubApiJson<GitHubRepoApiResponse>(
       token,
@@ -498,15 +510,7 @@ export const findViewerForkRepo = async (
       canDirectCommit: false,
     }
   } catch {
-    if (sourceRepo.canPush) {
-      return {
-        viewerLogin,
-        targetRepo: sourceRepo,
-        forked: false,
-        canDirectCommit: true,
-      }
-    }
-
+    // No fork yet, and no write access either.
     return {
       viewerLogin,
       targetRepo: null,

@@ -19,7 +19,9 @@ export const commitThroughGit = async (input: {
 }): Promise<GitCommitSubmissionResult> => {
   const targetRepo = input.forkStatus?.targetRepo
   if (!targetRepo) {
-    throw new Error('尚未找到你的 fork，請先建立 fork。')
+    throw new Error(
+      '你對這個 repo 沒有寫入權限，也還沒有 fork；請先建立 fork。'
+    )
   }
   if (!input.branchName) {
     throw new Error('請輸入有效的 branch 名稱')

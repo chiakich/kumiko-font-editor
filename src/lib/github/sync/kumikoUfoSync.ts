@@ -7,6 +7,7 @@ import {
   parseUfoMetadataFiles,
 } from 'src/lib/fontFormats/ufoFormat'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
+import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
 import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
 import {
   buildSyncReport,
@@ -1291,10 +1292,25 @@ export const prepareKumikoGitHubCommit = async (input: {
   }))
 
   const changedGlyphNames = [...dirtyGlyphIds]
-  const titleSummary =
-    changedGlyphNames.length > 0
-      ? `Update ${changedGlyphNames.slice(0, 3).join(', ')}`
-      : `Update ${input.projectTitle}`
+  // A glyph with no recorded remote baseline has never been pushed, so it reads
+  // as an addition rather than an edit.
+  const isNewOnRemote = (glyph: KumikoGlyphRecord) => {
+    const source = readGlyphUfoSource(glyph)
+    return (
+      !source.remoteBlobSha &&
+      Object.keys(source.remoteBlobShaByUfoId ?? {}).length === 0
+    )
+  }
+  const titleSummary = buildGlyphCommitMessage({
+    added: dirtyGlyphs.filter(isNewOnRemote).map((glyph) => ({
+      glyphName: glyph.glyphId,
+      unicodes: glyph.unicodes,
+    })),
+    updated: dirtyGlyphs
+      .filter((glyph) => !isNewOnRemote(glyph))
+      .map((glyph) => ({ glyphName: glyph.glyphId, unicodes: glyph.unicodes })),
+    fallbackTitle: input.projectTitle,
+  })
 
   return {
     request: {
