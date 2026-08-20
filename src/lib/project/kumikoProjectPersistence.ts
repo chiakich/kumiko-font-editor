@@ -136,27 +136,56 @@ export const replaceKumikoProjectData = async (
   await transactionDone(transaction)
 }
 
+const listKumikoGlyphIdsForProject = async (projectId: string) => {
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
+  const keys = (await requestToPromise(
+    transaction
+      .objectStore(KUMIKO_GLYPHS_STORE)
+      .getAllKeys(IDBKeyRange.bound([projectId, ''], [projectId, '\uffff']))
+  )) as Array<[string, string]>
+  return keys.map(([, glyphId]) => glyphId)
+}
+
 export const replaceKumikoProjectDataInBatches = async (
   project: KumikoProjectRecord,
   glyphBatches: Iterable<KumikoGlyphRecord[]>
 ) => {
-  const database = await openDatabase()
-  const transaction = database.transaction(
-    [KUMIKO_PROJECTS_STORE, KUMIKO_GLYPHS_STORE],
-    'readwrite'
+  const existingProject = await loadKumikoProjectRecord(project.projectId)
+  // Glyphs are overwritten in place and the leftovers pruned afterwards rather
+  // than cleared up front: the batches cannot share the project transaction
+  // (IndexedDB commits one as soon as it goes idle), so clearing first would
+  // leave a project with no glyphs at all if a later batch throws.
+  const staleGlyphIds = new Set(
+    existingProject ? await listKumikoGlyphIdsForProject(project.projectId) : []
   )
-  const projectStore = transaction.objectStore(KUMIKO_PROJECTS_STORE)
-  const glyphStore = transaction.objectStore(KUMIKO_GLYPHS_STORE)
 
-  projectStore.put(project)
-  glyphStore.delete(
-    IDBKeyRange.bound([project.projectId, ''], [project.projectId, '\uffff'])
-  )
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_PROJECTS_STORE, 'readwrite')
+  transaction.objectStore(KUMIKO_PROJECTS_STORE).put(project)
   await transactionDone(transaction)
 
-  for (const glyphs of glyphBatches) {
-    await saveKumikoGlyphRecordBatch(glyphs)
+  try {
+    for (const glyphs of glyphBatches) {
+      await saveKumikoGlyphRecordBatch(glyphs)
+      for (const glyph of glyphs) {
+        staleGlyphIds.delete(glyph.glyphId)
+      }
+    }
+  } catch (error) {
+    // nothing existed to preserve, so drop the half-written project instead of
+    // leaving an empty one behind (a failed import used to show up in the list)
+    if (!existingProject) {
+      await deleteKumikoProjectRecord(project.projectId)
+    }
+    throw error
   }
+
+  await deleteKumikoGlyphRecordBatch(
+    [...staleGlyphIds].map((glyphId) =>
+      makeKumikoGlyphKey(project.projectId, glyphId)
+    )
+  )
 }
 
 export const patchKumikoProjectData = async (input: {

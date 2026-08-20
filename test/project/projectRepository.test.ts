@@ -1063,4 +1063,83 @@ describe('projectRepository canonical storage', () => {
     )
     expect(glyph?.sourceData).toBeUndefined()
   })
+  it('prunes glyphs dropped from the font data on a full save', async () => {
+    const draft = {
+      id: 'project-prune',
+      title: 'Prune',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      sourceName: 'Prune.ufo',
+      sourceType: 'local' as const,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'ufo' as const,
+    }
+    await saveProjectDraft({
+      ...draft,
+      fontData: {
+        ...fontData,
+        glyphOrder: ['A', 'B'],
+        glyphs: {
+          ...fontData.glyphs,
+          B: { ...fontData.glyphs.A, id: 'B', name: 'B', unicodes: ['0042'] },
+        },
+      },
+    })
+    await saveProjectDraft({ ...draft, fontData })
+
+    expect(
+      await loadKumikoGlyphRecord(makeKumikoGlyphKey('project-prune', 'A'))
+    ).toBeDefined()
+    expect(
+      await loadKumikoGlyphRecord(makeKumikoGlyphKey('project-prune', 'B'))
+    ).toBeUndefined()
+  })
+
+  it('rolls back a failed first save instead of leaving an empty project', async () => {
+    const brokenFontData: FontData = {
+      ...fontData,
+      glyphOrder: ['A', 'B'],
+      glyphs: {
+        ...fontData.glyphs,
+        // metadata-only glyph: rejected while serializing the glyph records,
+        // after the project record is already committed
+        B: { id: 'B', name: 'B', unicodes: ['0042'], layers: {} },
+      },
+    }
+    const draft = {
+      id: 'project-failed-first-save',
+      title: 'Failed First Save',
+      lastModified: 20,
+      createdAt: 10,
+      updatedAt: 20,
+      sourceName: 'Failed.ufo',
+      sourceType: 'local' as const,
+      projectMetadata: null,
+      projectSourceData: null,
+      projectSourceFormat: 'ufo' as const,
+    }
+
+    await expect(
+      saveProjectDraft({ ...draft, fontData: brokenFontData })
+    ).rejects.toThrow(/metadata-only glyph/)
+    expect(
+      await loadKumikoProjectRecord('project-failed-first-save')
+    ).toBeUndefined()
+
+    // a project that already exists keeps its data when a later save fails
+    await saveProjectDraft({ ...draft, fontData })
+    await expect(
+      saveProjectDraft({ ...draft, fontData: brokenFontData })
+    ).rejects.toThrow(/metadata-only glyph/)
+    expect(
+      await loadKumikoProjectRecord('project-failed-first-save')
+    ).toBeDefined()
+    expect(
+      await loadKumikoGlyphRecord(
+        makeKumikoGlyphKey('project-failed-first-save', 'A')
+      )
+    ).toBeDefined()
+  })
 })
