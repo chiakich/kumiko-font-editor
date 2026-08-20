@@ -461,6 +461,8 @@
     },
     "contoursComponents": "Contours / Components",
     "createBranch": "Create branch",
+    "checkingRemote": "Checking the remote…",
+    "pushingCommit": "Pushing…",
     "createCommit": "Create commit",
     "defaultBranchLabel": "Default branch:",
     "deleteGlyph": "Delete glyph",

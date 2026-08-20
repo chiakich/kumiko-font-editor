@@ -112,6 +112,9 @@ export const useGitHubCommitFlow = ({
   const overviewGridState = useStore((state) => state.overviewGridState)
   const gitHubModal = useDisclosure()
   const [isPreparingGitHubCommit, setIsPreparingGitHubCommit] = useState(false)
+  // The git transport does not go through a mutation, so its pending state has
+  // to be tracked here or the button stays idle for the whole push.
+  const [isCommittingToGitHub, setIsCommittingToGitHub] = useState(false)
   const [hasBlockingSyncConflicts, setHasBlockingSyncConflicts] =
     useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
@@ -128,10 +131,11 @@ export const useGitHubCommitFlow = ({
   const gitHubCommitMessage = activeCommitDraft.commitMessage
   // Shares the report the modal already renders (same query key, so no extra
   // fetch): it is the transport-agnostic answer to "is this glyph new upstream".
-  const syncReport = useGitHubSyncStatus({
+  const syncStatus = useGitHubSyncStatus({
     projectId,
     enabled: gitHubModal.open && hasGitHubSource,
-  }).report
+  })
+  const syncReport = syncStatus.report
   const suggestedCommitMessage = useMemo(() => {
     const glyphOf = (glyphName: string) => ({
       glyphName,
@@ -459,11 +463,12 @@ export const useGitHubCommitFlow = ({
       return
     }
 
-    if (persistenceStatus === 'error') {
+    if (persistenceStatus === 'error' || isCommittingToGitHub) {
       return
     }
 
     try {
+      setIsCommittingToGitHub(true)
       await flushPendingDraft(
         buildCurrentDraftFlushInput({
           activeMasterId,
@@ -567,6 +572,8 @@ export const useGitHubCommitFlow = ({
         closable: true,
       })
       console.warn('GitHub commit failed.', error)
+    } finally {
+      setIsCommittingToGitHub(false)
     }
   }
 
@@ -616,7 +623,10 @@ export const useGitHubCommitFlow = ({
     isLoadingGitHubForkStatus: forkStatusQuery.isFetching,
     isCreatingGitHubFork: createForkMutation.isPending,
     isPreparingGitHubCommit,
-    isCreatingGitHubCommit: createCommitMutation.isPending,
+    isCreatingGitHubCommit:
+      isCommittingToGitHub || createCommitMutation.isPending,
+    // Committing before the report lands would skip the conflict gate.
+    isCheckingSyncStatus: syncStatus.isLoading,
     isMergingGitHubUpstream: mergeUpstreamMutation.isPending,
     canCommitToGitHub,
     gitHubCommitMessage,

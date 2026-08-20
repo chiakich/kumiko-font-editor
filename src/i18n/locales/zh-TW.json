@@ -461,6 +461,8 @@
     },
     "contoursComponents": "Contours / Components",
     "createBranch": "建立新 branch",
+    "checkingRemote": "正在檢查遠端…",
+    "pushingCommit": "推送中…",
     "createCommit": "建立 Commit",
     "defaultBranchLabel": "預設分支：",
     "deleteGlyph": "刪除字符",

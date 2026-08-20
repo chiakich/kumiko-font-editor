@@ -32,6 +32,8 @@ export interface GitHubCommitModalProps {
   isCreatingGitHubFork: boolean
   isPreparingGitHubCommit: boolean
   isCreatingGitHubCommit: boolean
+  // The sync report gates the commit, so committing has to wait for it.
+  isCheckingSyncStatus: boolean
   isMergingGitHubUpstream: boolean
   canCommitToGitHub: boolean
   gitHubCommitMessage: string
@@ -67,6 +69,7 @@ export function GitHubCommitModal({
   isCreatingGitHubFork,
   isPreparingGitHubCommit,
   isCreatingGitHubCommit,
+  isCheckingSyncStatus,
   isMergingGitHubUpstream,
   canCommitToGitHub,
   gitHubCommitMessage,
@@ -373,14 +376,17 @@ export function GitHubCommitModal({
                   !editableRepo ||
                   !canCommitToGitHub ||
                   isPreparingGitHubCommit ||
+                  isCheckingSyncStatus ||
                   hasBlockingSyncConflicts ||
                   Boolean(qualitySummary?.hasBlockingIssues)
                 }
-                loadingText="推送中..."
+                loadingText={t('glyphInspector.pushingCommit')}
               >
                 {qualitySummary?.hasBlockingIssues
                   ? '修正品質問題後提交'
-                  : t('glyphInspector.createCommit')}
+                  : isCheckingSyncStatus
+                    ? t('glyphInspector.checkingRemote')
+                    : t('glyphInspector.createCommit')}
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

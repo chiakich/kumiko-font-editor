@@ -233,10 +233,16 @@ export function GitHubSyncSection({
               </Text>
             ) : null}
             <ButtonGroup size="xs" variant="outline">
-              <Button onClick={() => onResolveAll('keepLocal')}>
+              <Button
+                disabled={isApplying}
+                onClick={() => onResolveAll('keepLocal')}
+              >
                 {t('glyphInspector.syncKeepAllLocal')}
               </Button>
-              <Button onClick={() => onResolveAll('takeRemote')}>
+              <Button
+                disabled={isApplying}
+                onClick={() => onResolveAll('takeRemote')}
+              >
                 {t('glyphInspector.syncTakeAllRemote')}
               </Button>
             </ButtonGroup>
