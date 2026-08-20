@@ -108,7 +108,10 @@ export const buildUpstreamHeaders = (input: {
   token: string
 }) => {
   const headers = new Headers()
-  headers.set('Authorization', `Bearer ${input.token}`)
+  // github.com's git endpoints only accept HTTP Basic — a Bearer token is
+  // rejected as `invalid credentials` before the token is even looked at.
+  // Bearer works on api.github.com, which is why the REST endpoints differ.
+  headers.set('Authorization', `Basic ${btoa(`x-access-token:${input.token}`)}`)
   headers.set('User-Agent', 'Kumiko-Font-Editor')
   headers.set('Accept', input.route.accept)
   if (input.route.contentType) {

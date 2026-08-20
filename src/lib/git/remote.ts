@@ -26,6 +26,27 @@ export interface FetchRemoteResult {
   localHeadSha: string | null
 }
 
+// isomorphic-git surfaces only `HTTP Error: 401`, hiding both the proxy's own
+// "not logged in" JSON and GitHub's reason for refusing the token.
+const withRemoteErrorContext = async <T>(run: () => Promise<T>): Promise<T> => {
+  try {
+    return await run()
+  } catch (error) {
+    if (
+      error instanceof git.Errors.HttpError &&
+      (error.data.statusCode === 401 || error.data.statusCode === 403)
+    ) {
+      const detail = error.data.response?.trim()
+      throw new Error(
+        `GitHub 拒絕這次 git 連線（HTTP ${error.data.statusCode}）：${
+          detail || '請重新登入 GitHub 後再試。'
+        }`
+      )
+    }
+    throw error
+  }
+}
+
 const resolveOrNull = async (worktree: GitWorktree, ref: string) => {
   try {
     return await git.resolveRef({
@@ -48,19 +69,21 @@ export const fetchRemoteBranch = async (input: {
 }): Promise<FetchRemoteResult> => {
   const { worktree } = input
 
-  await git.fetch({
-    fs: worktree.fs,
-    http,
-    dir: worktree.dir,
-    url: gitProxyUrlFor(input.repo),
-    remote: REMOTE_NAME,
-    ref: input.branch,
-    singleBranch: true,
-    tags: false,
-    // Credentials ride on the proxy's session cookie.
-    headers: {},
-    ...(input.depth ? { depth: input.depth } : {}),
-  })
+  await withRemoteErrorContext(() =>
+    git.fetch({
+      fs: worktree.fs,
+      http,
+      dir: worktree.dir,
+      url: gitProxyUrlFor(input.repo),
+      remote: REMOTE_NAME,
+      ref: input.branch,
+      singleBranch: true,
+      tags: false,
+      // Credentials ride on the proxy's session cookie.
+      headers: {},
+      ...(input.depth ? { depth: input.depth } : {}),
+    })
+  )
 
   const remoteHeadSha = await resolveOrNull(
     worktree,
@@ -97,16 +120,18 @@ export const pushBranch = async (input: {
   remoteRef?: string
   force?: boolean
 }) => {
-  const result = await git.push({
-    fs: input.worktree.fs,
-    http,
-    dir: input.worktree.dir,
-    url: gitProxyUrlFor(input.repo),
-    ref: input.localRef,
-    remoteRef: input.remoteRef ?? input.localRef,
-    force: input.force ?? false,
-    headers: {},
-  })
+  const result = await withRemoteErrorContext(() =>
+    git.push({
+      fs: input.worktree.fs,
+      http,
+      dir: input.worktree.dir,
+      url: gitProxyUrlFor(input.repo),
+      ref: input.localRef,
+      remoteRef: input.remoteRef ?? input.localRef,
+      force: input.force ?? false,
+      headers: {},
+    })
+  )
 
   if (result.ok === false || result.error) {
     throw new Error(result.error ?? 'git push 被遠端拒絕')

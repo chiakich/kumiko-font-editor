@@ -111,7 +111,10 @@ describe('git proxy headers', () => {
     }
     const headers = buildUpstreamHeaders({ route: result.route, token: 'tok' })
 
-    expect(headers.get('Authorization')).toBe('Bearer tok')
+    // Basic, not Bearer: github.com's git endpoints reject Bearer outright
+    expect(headers.get('Authorization')).toBe(
+      `Basic ${btoa('x-access-token:tok')}`
+    )
     expect(headers.get('Accept')).toBe('application/x-git-upload-pack-result')
     expect(headers.get('Cookie')).toBeNull()
   })

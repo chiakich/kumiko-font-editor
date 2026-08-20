@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import git from 'isomorphic-git'
 import { createGitFs } from 'src/lib/git/gitFileSystem'
 import {
+  fetchRemoteBranch,
   gitProxyUrlFor,
   readBlobAtCommit,
   trackingRefFor,
@@ -95,5 +96,23 @@ describe('reading blobs at a commit', () => {
     expect(
       await readBlobAtCommit({ worktree, oid: head, filepath: 'a.glif' })
     ).toBe('second')
+  })
+})
+
+describe('remote auth failures', () => {
+  it('reports what the remote said instead of a bare status code', async () => {
+    const worktree = await makeWorktree()
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn(
+      async () => new Response('invalid credentials', { status: 401 })
+    ) as typeof globalThis.fetch
+
+    try {
+      await expect(
+        fetchRemoteBranch({ worktree, repo: 'owner/repo', branch: 'main' })
+      ).rejects.toThrow(/401.*invalid credentials/)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 })
