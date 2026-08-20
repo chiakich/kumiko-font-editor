@@ -114,5 +114,14 @@ describe('remote auth failures', () => {
     } finally {
       globalThis.fetch = originalFetch
     }
+
+    // the refspec git.fetch needs to write tracking refs
+    expect(
+      await git.getConfig({
+        fs: worktree.fs,
+        dir: worktree.dir,
+        path: 'remote.origin.fetch',
+      })
+    ).toBe('+refs/heads/*:refs/remotes/origin/*')
   })
 })

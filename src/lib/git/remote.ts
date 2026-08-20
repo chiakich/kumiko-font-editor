@@ -69,6 +69,17 @@ export const fetchRemoteBranch = async (input: {
 }): Promise<FetchRemoteResult> => {
   const { worktree } = input
 
+  // git.fetch resolves the tracking refs through `remote.origin.fetch`, so the
+  // refspec has to exist in the config before fetching. The url is rewritten
+  // every time because fetch and push can target different repositories.
+  await git.addRemote({
+    fs: worktree.fs,
+    dir: worktree.dir,
+    remote: REMOTE_NAME,
+    url: gitProxyUrlFor(input.repo),
+    force: true,
+  })
+
   await withRemoteErrorContext(() =>
     git.fetch({
       fs: worktree.fs,
