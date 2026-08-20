@@ -25,6 +25,11 @@ interface GitHubCommitPayload {
   files: GitHubCommitFilePayload[]
 }
 
+// Each chunk is one subrequest carrying that many files' contents; the platform
+// caps subrequests per request, and GitHub rejects oversized tree bodies.
+const COMMIT_TREE_CHUNK_SIZE = 100
+const COMMIT_MAX_FILES = 3000
+
 const loadBranchRef = async (
   token: string,
   owner: string,
@@ -77,6 +82,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         message: '沒有可提交的檔案變更',
       },
       { status: 400 }
+    )
+  }
+
+  // Beyond this the request cannot finish inside the platform's limits; say so
+  // instead of letting it die as an opaque 502.
+  if (payload.files.length > COMMIT_MAX_FILES) {
+    return json(
+      {
+        error: 'too_many_files',
+        message: `這次變更有 ${payload.files.length} 個檔案，超過單次 commit 上限 ${COMMIT_MAX_FILES}；請分批同步，或改用 git 同步推送。`,
+      },
+      { status: 413 }
     )
   }
 
@@ -163,49 +180,40 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       )
     }
 
-    const treeEntries = await Promise.all(
-      payload.files.map(async (file) => {
-        if (file.deleted) {
-          return {
+    // Inline file contents in the tree instead of creating one blob per file:
+    // a blob POST per file blows the platform's per-request subrequest budget
+    // as soon as a commit touches a few dozen glyphs. Chunked so both the
+    // subrequest count and each request body stay bounded.
+    const treeEntries = payload.files.map((file) =>
+      file.deleted
+        ? { path: file.path, mode: '100644', type: 'blob', sha: null }
+        : {
             path: file.path,
             mode: '100644',
             type: 'blob',
-            sha: null,
+            content: file.content ?? '',
           }
-        }
-
-        const blob = await githubApiJson<{ sha: string }>(
-          token,
-          `/repos/${targetRepo.owner}/${targetRepo.repo}/git/blobs`,
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              content: file.content ?? '',
-              encoding: 'utf-8',
-            }),
-          }
-        )
-
-        return {
-          path: file.path,
-          mode: '100644',
-          type: 'blob',
-          sha: blob.sha,
-        }
-      })
     )
 
-    const createdTree = await githubApiJson<{ sha: string }>(
-      token,
-      `/repos/${targetRepo.owner}/${targetRepo.repo}/git/trees`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          base_tree: baseTreeSha,
-          tree: treeEntries,
-        }),
-      }
-    )
+    let treeSha = baseTreeSha
+    for (
+      let index = 0;
+      index < treeEntries.length;
+      index += COMMIT_TREE_CHUNK_SIZE
+    ) {
+      const createdTree = await githubApiJson<{ sha: string }>(
+        token,
+        `/repos/${targetRepo.owner}/${targetRepo.repo}/git/trees`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            base_tree: treeSha,
+            tree: treeEntries.slice(index, index + COMMIT_TREE_CHUNK_SIZE),
+          }),
+        }
+      )
+      treeSha = createdTree.sha
+    }
 
     const createdCommit = await githubApiJson<{ sha: string }>(
       token,
@@ -214,7 +222,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         method: 'POST',
         body: JSON.stringify({
           message: payload.commitMessage,
-          tree: createdTree.sha,
+          tree: treeSha,
           parents: [parentCommitSha],
         }),
       }
