@@ -491,7 +491,9 @@ export const statusDefinitionsFromLib = (
 
 export const settingsFromLib = (
   lib: Record<string, unknown> | null | undefined,
-  axes: FontAxes | undefined
+  axes: FontAxes | undefined,
+  // used when the source has no Kumiko settings — derived from its own outlines
+  fallbackOutlineType?: 'cubic' | 'quadratic'
 ): FontProjectSettings => {
   const settingsValue = lib?.[KUMIKO_SETTINGS_LIB_KEY]
   const settings = isRecord(settingsValue) ? settingsValue : {}
@@ -502,7 +504,10 @@ export const settingsFromLib = (
         : axes?.axes.length
           ? 'variable'
           : 'static',
-    outlineType: settings.outlineType === 'quadratic' ? 'quadratic' : 'cubic',
+    outlineType:
+      settings.outlineType === 'quadratic' || settings.outlineType === 'cubic'
+        ? settings.outlineType
+        : (fallbackOutlineType ?? 'cubic'),
     customParameters: isRecord(settings.customParameters)
       ? settings.customParameters
       : {},

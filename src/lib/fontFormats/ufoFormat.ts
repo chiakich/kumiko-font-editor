@@ -721,6 +721,32 @@ export const glyphRecordToLayerContent = (
   }
 }
 
+// Third-party UFOs carry no Kumiko settings, so the project outline type has to
+// be read back from the outlines — otherwise a TrueType source imports as cubic.
+// Real sources mix kinds (a mostly-quadratic font with a few converted cubic
+// glyphs), so the dominant kind wins rather than giving up on a tie-breaker.
+const inferOutlineTypeFromRecords = (
+  glyphRecords: UfoGlyphRecord[]
+): 'cubic' | 'quadratic' | undefined => {
+  let quadraticPoints = 0
+  let cubicPoints = 0
+  for (const record of glyphRecords) {
+    for (const contour of record.contours) {
+      for (const point of contour.points) {
+        if (point.type === 'qcurve') {
+          quadraticPoints += 1
+        } else if (point.type === 'curve') {
+          cubicPoints += 1
+        }
+      }
+    }
+  }
+  if (quadraticPoints === 0 && cubicPoints === 0) {
+    return undefined
+  }
+  return quadraticPoints > cubicPoints ? 'quadratic' : 'cubic'
+}
+
 const buildFontDataFromUfoGlyphs = (
   glyphRecords: UfoGlyphRecord[],
   metadata: UfoMetadataRecord,
@@ -849,7 +875,11 @@ const buildFontDataFromUfoGlyphs = (
     },
     exportInstances: exportInstancesFromLib(metadata.lib) ?? [],
     statusDefinitions: statusDefinitionsFromLib(metadata.lib) ?? [],
-    settings: settingsFromLib(metadata.lib, axes),
+    settings: settingsFromLib(
+      metadata.lib,
+      axes,
+      inferOutlineTypeFromRecords(glyphRecords)
+    ),
     glyphOrder: metadata.glyphOrder,
     unitsPerEm: getUnitsPerEm(metadata.fontinfo),
     lineMetricsHorizontalLayout: buildLineMetrics(metadata.fontinfo),

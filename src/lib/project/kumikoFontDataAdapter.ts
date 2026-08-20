@@ -218,9 +218,11 @@ export const createKumikoGlyphDigest = (record: KumikoGlyphRecord) => {
   return hashString(deterministicStringify(content))
 }
 
-const deriveLayerOutlineKind = (
+// null when the layer has no curve segments at all (empty, components only, or
+// straight lines): such a layer is compatible with either outline type.
+const deriveLayerCurveKind = (
   layer: Pick<GlyphLayerData, 'paths'>
-): 'cubic' | 'quadratic' => {
+): 'cubic' | 'quadratic' | null => {
   const segmentTypes = new Set<PathSegmentType>()
   for (const path of layer.paths) {
     for (const node of path.nodes) {
@@ -232,33 +234,35 @@ const deriveLayerOutlineKind = (
   if (segmentTypes.has('quadratic') && segmentTypes.has('cubic')) {
     throw new Error('Kumiko glyph layer mixes cubic and quadratic segments')
   }
-  return segmentTypes.has('quadratic') ? 'quadratic' : 'cubic'
+  return segmentTypes.has('quadratic')
+    ? 'quadratic'
+    : segmentTypes.has('cubic')
+      ? 'cubic'
+      : null
 }
 
+const deriveLayerOutlineKind = (
+  layer: Pick<GlyphLayerData, 'paths'>,
+  projectOutlineType?: 'cubic' | 'quadratic'
+): 'cubic' | 'quadratic' =>
+  deriveLayerCurveKind(layer) ?? projectOutlineType ?? 'cubic'
+
+// Only masters of the same glyph have to agree: interpolating a cubic layer
+// against a quadratic one is undefined. A single glyph deviating from the
+// project's outlineType is legal source data (real UFOs mix kinds), so it is
+// recorded per layer instead of rejected.
 const validateInterpolableLayerOutlineKind = (
   glyph: GlyphData,
-  layers: Record<string, KumikoGlyphLayerRecord>,
-  projectOutlineType?: 'cubic' | 'quadratic'
+  layers: Record<string, Pick<GlyphLayerData, 'id' | 'type' | 'paths'>>
 ) => {
-  const masterLayers = Object.values(layers).filter(
-    (layer) => layer.type === 'master'
-  )
-  if (masterLayers.length === 0) {
-    return
-  }
-
-  const firstKind = masterLayers[0].outlineKind
-  for (const layer of masterLayers) {
-    if (layer.outlineKind !== firstKind) {
-      throw new Error(
-        `Glyph ${glyph.id} has interpolable master layers with mixed outline kinds`
-      )
-    }
-    if (projectOutlineType && layer.outlineKind !== projectOutlineType) {
-      throw new Error(
-        `Glyph ${glyph.id} layer ${layer.id} outlineKind ${layer.outlineKind} does not match project outlineType ${projectOutlineType}`
-      )
-    }
+  const masterCurveKinds = Object.values(layers)
+    .filter((layer) => (layer.type ?? 'master') === 'master')
+    .map((layer) => deriveLayerCurveKind(layer))
+    .filter((curveKind) => curveKind !== null)
+  if (masterCurveKinds.some((kind) => kind !== masterCurveKinds[0])) {
+    throw new Error(
+      `Glyph ${glyph.id} has interpolable master layers with mixed outline kinds`
+    )
   }
 }
 
@@ -384,7 +388,10 @@ const toGlyphLayerContent = (
   metrics: content.metrics,
 })
 
-const toKumikoLayerRecord = (layer: GlyphLayerData): KumikoGlyphLayerRecord => {
+const toKumikoLayerRecord = (
+  layer: GlyphLayerData,
+  projectOutlineType?: 'cubic' | 'quadratic'
+): KumikoGlyphLayerRecord => {
   assertSourceDataHasNoGeometry(
     layer.sourceData,
     `layer(${layer.id}).sourceData`
@@ -397,7 +404,7 @@ const toKumikoLayerRecord = (layer: GlyphLayerData): KumikoGlyphLayerRecord => {
     associatedMasterId: layer.associatedMasterId,
     braceLocation: layer.braceLocation,
     bracketAxisRules: layer.bracketAxisRules,
-    outlineKind: deriveLayerOutlineKind(layer),
+    outlineKind: deriveLayerOutlineKind(layer, projectOutlineType),
     paths: layer.paths,
     componentRefs: layer.componentRefs.map(toKumikoComponentRefRecord),
     anchors: layer.anchors,
@@ -485,7 +492,7 @@ export const glyphDataToKumikoGlyphRecord = (input: {
   const layers = Object.fromEntries(
     Object.entries(input.glyph.layers ?? {}).map(([layerId, layer]) => [
       layerId,
-      toKumikoLayerRecord(layer),
+      toKumikoLayerRecord(layer, input.projectOutlineType),
     ])
   )
   const exportDirty = input.exportDirty ?? false
@@ -493,11 +500,7 @@ export const glyphDataToKumikoGlyphRecord = (input: {
   const unicodes = getGlyphUnicodes(input.glyph)
   const componentGlyphIds = deriveComponentGlyphIds(layers)
   const hasDrawableContent = deriveHasDrawableContent(layers)
-  validateInterpolableLayerOutlineKind(
-    input.glyph,
-    layers,
-    input.projectOutlineType
-  )
+  validateInterpolableLayerOutlineKind(input.glyph, input.glyph.layers)
   assertSourceDataHasNoGeometry(
     input.glyph.sourceData,
     `glyph(${input.glyph.id}).sourceData`

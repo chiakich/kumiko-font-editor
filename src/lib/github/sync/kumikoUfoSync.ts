@@ -75,12 +75,7 @@ import {
   kumikoGlyphRecordToGlyphData,
   kumikoGlyphRecordToGlyphMetadata,
 } from 'src/lib/project/kumikoFontDataAdapter'
-import type {
-  FontData,
-  GlyphData,
-  GlyphLayerData,
-  PathSegmentType,
-} from 'src/store'
+import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
 
 export interface GitHubCommitFileInput {
   path: string
@@ -751,22 +746,6 @@ const toUfoGlyphRecord = (input: {
     dirtyIndex: input.glyph.syncDirty,
     updatedAt: input.glyph.updatedAt,
   }
-}
-
-const deriveLayerOutlineKind = (
-  layer: Pick<GlyphLayerData, 'paths'>
-): 'cubic' | 'quadratic' => {
-  const segmentTypes = new Set<PathSegmentType>()
-  for (const path of layer.paths) {
-    for (const node of path.nodes) {
-      if (node.kind === 'oncurve' && node.segmentType) {
-        segmentTypes.add(node.segmentType)
-      }
-    }
-  }
-  return segmentTypes.has('quadratic') && !segmentTypes.has('cubic')
-    ? 'quadratic'
-    : 'cubic'
 }
 
 type UfoLayerContent = ReturnType<typeof glyphRecordToLayerContent>
@@ -1714,6 +1693,7 @@ export const applyKumikoRemoteSnapshot = async (input: {
       updatedAt: timestamp,
       exportDirty: false,
       syncDirty: false,
+      projectOutlineType: project.settings?.outlineType,
     })
     recordsToSave.set(parsedGlyph.glyphName, {
       ...record,
@@ -1730,15 +1710,6 @@ export const applyKumikoRemoteSnapshot = async (input: {
           },
         },
       },
-      layers: Object.fromEntries(
-        Object.entries(record.layers).map(([layerId, layer]) => [
-          layerId,
-          {
-            ...layer,
-            outlineKind: deriveLayerOutlineKind(layer),
-          },
-        ])
-      ),
     })
     const contents = nextContentsByUfoId.get(source.ufoId)
     if (contents) {
