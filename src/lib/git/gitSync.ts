@@ -145,6 +145,56 @@ const resolveImportedBaseSha = async (
   }
 }
 
+// True for the paths this project produces. Everything else in the repository —
+// README, licence, build tooling — belongs to the repo, not to the font, and
+// Kumiko must carry it through untouched.
+const buildManagedPathTest = async (projectId: string) => {
+  const adapters = await buildProjectAdapters(projectId)
+  return (path: string) =>
+    adapters.some((adapter) => adapter.entityOwning(path) !== null)
+}
+
+// A commit is built from the index, and the index of a fresh worktree holds
+// only what we staged. Without this the commit reads as "delete everything the
+// project does not manage" — it wiped a repository's README, licence and docs.
+const carryUnmanagedPaths = async (input: {
+  worktree: GitWorktree
+  baseSha: string
+  isManaged: (path: string) => boolean
+}) => {
+  const { worktree } = input
+  const baseOids = await collectTreeOids(worktree, input.baseSha)
+  const tracked = new Set(
+    await git
+      .listFiles({ fs: worktree.fs, dir: worktree.dir })
+      .catch(() => [] as string[])
+  )
+
+  for (const [path, oid] of baseOids) {
+    if (input.isManaged(path) || tracked.has(path)) {
+      continue
+    }
+    const blob = await git.readBlob({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      oid,
+    })
+    await worktree.fs.promises.writeFile(`${worktree.dir}/${path}`, blob.blob)
+    await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: path })
+  }
+
+  // Mirror deletions too: an unmanaged file the base no longer has must not be
+  // resurrected by our index.
+  for (const path of tracked) {
+    if (input.isManaged(path) || baseOids.has(path)) {
+      continue
+    }
+    await git
+      .remove({ fs: worktree.fs, dir: worktree.dir, filepath: path })
+      .catch(() => undefined)
+  }
+}
+
 // Builds a sync report by comparing the local materialization, the merge base
 // and the fetched remote head. No per-file baseline is stored anywhere: the
 // merge base commit is the baseline.
@@ -268,11 +318,41 @@ export const commitAndPushProject = async (input: {
     branch: input.pushBranch,
     startAt,
   })
+
+  const isManaged = await buildManagedPathTest(input.projectId)
+  const baseSha =
+    startAt ??
+    (await git
+      .resolveRef({ fs: worktree.fs, dir: worktree.dir, ref: 'HEAD' })
+      .catch(() => null))
+  if (baseSha) {
+    await carryUnmanagedPaths({ worktree, baseSha, isManaged })
+  }
+
   const synced = await syncWorktreeFromProject({
     projectId: input.projectId,
     worktree,
+    isManaged,
   })
   await stageWorktreePaths({ worktree, ...synced })
+
+  // Fail closed rather than push a commit that drops repository files. The
+  // commit takes its tree from the index, so checking the index is exactly a
+  // check of what is about to be committed — and nothing has been pushed yet.
+  if (baseSha) {
+    const staged = new Set(
+      await git.listFiles({ fs: worktree.fs, dir: worktree.dir })
+    )
+    const dropped = [...(await collectTreeOids(worktree, baseSha)).keys()]
+      .filter((path) => !isManaged(path) && !staged.has(path))
+      .slice(0, 5)
+    if (dropped.length > 0) {
+      throw new Error(
+        `這次 commit 會刪掉專案不管理的檔案（${dropped.join('、')}），已中止。`
+      )
+    }
+  }
+
   const commitSha = await commitWorktree({ worktree, message: input.message })
 
   await pushBranch({

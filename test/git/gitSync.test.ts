@@ -451,6 +451,69 @@ describe('commit and push', () => {
     expect(new TextDecoder().decode(blob.blob)).toContain('<glyph')
   })
 
+  // A commit is built from the index, which on a fresh worktree holds only what
+  // Kumiko staged. This wiped a real repository's README, licence and tooling.
+  it('keeps files the project does not manage', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-push-unmanaged')
+    const worktree = await openGitWorktree({
+      projectId: 'gs-push-unmanaged',
+      store,
+    })
+    // an upstream commit carrying both font sources and ordinary repo files
+    for (const [path, text] of Object.entries({
+      'README.md': '# JYRounded\n',
+      LICENSE: 'OFL\n',
+      'docs/CONTRIBUTING.md': 'contribute\n',
+      'Kumiko.ufo/glyphs/A.glif': '<glyph name="A"/>',
+    })) {
+      await worktree.fs.promises.writeFile(`${worktree.dir}/${path}`, text)
+      await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: path })
+    }
+    const upstream = await git.commit({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      message: 'upstream',
+      author: { name: 'Other', email: 'other@example.test' },
+    })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: upstream,
+      mergeBaseSha: null,
+      localHeadSha: null,
+    })
+
+    const result = await commitAndPushProject({
+      projectId: 'gs-push-unmanaged',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-unmanaged',
+      baseRepo: 'upstream/repo',
+      baseBranch: 'main',
+      message: "Add '珢'",
+      store,
+    })
+
+    const committed = new Set<string>()
+    await git.walk({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      trees: [git.TREE({ ref: result.commitSha })],
+      map: async (path, [entry]) => {
+        if (path !== '.' && (await entry?.type()) === 'blob') {
+          committed.add(path)
+        }
+      },
+    })
+
+    expect([...committed]).toEqual(
+      expect.arrayContaining([
+        'README.md',
+        'LICENSE',
+        'docs/CONTRIBUTING.md',
+        'Kumiko.ufo/glyphs/A.glif',
+      ])
+    )
+  })
+
   it('lands the commit on the named branch, not on main', async () => {
     const store = createMemoryFileStore()
     await saveProject('gs-push-branch')

@@ -62,6 +62,10 @@ export const syncWorktreeFromProject = async (input: {
   projectId: string
   worktree: GitWorktree
   scope?: 'auto' | 'all' | 'dirty'
+  // Files the project does not produce (README, licence, build tooling) are
+  // carried through untouched: they are tracked but must never be treated as
+  // "the project no longer produces this, so delete it".
+  isManaged?: (path: string) => boolean
 }): Promise<WorktreeSyncResult> => {
   const { worktree } = input
   const tracked = await listTrackedPaths(worktree)
@@ -85,7 +89,10 @@ export const syncWorktreeFromProject = async (input: {
     scope === 'all'
       ? new Set(writtenPaths)
       : new Set(await listUfoTreePaths(input.projectId))
-  const removedPaths = [...tracked].filter((path) => !expected.has(path))
+  const isManaged = input.isManaged ?? (() => true)
+  const removedPaths = [...tracked].filter(
+    (path) => isManaged(path) && !expected.has(path)
+  )
   for (const path of removedPaths) {
     await worktree.fs.promises
       .unlink(`${worktree.dir}/${path}`)

@@ -418,6 +418,20 @@ commit / push 也走同一個 worker（`commit-and-push`），連同 `markGitCom
 
 規則：`src/lib` 與 `src/font` 底下對 `'src/store'` 只做 `import type`；需要純函式就直接從 leaf module 取。
 
+### commit 必須是「父 tree ＋ 我們的覆蓋」（2026-08-21）
+
+實際造成資料損失的 bug：推上去的 commit **刪掉了 repo 裡所有非字型檔案**（README、LICENSE、docs/、tools/）。
+
+成因是 index。`checkoutWorktreeBranch` 用 `git.branch({ checkout: true })` 只移動 HEAD——它不會把父 commit 的內容填進 index。而 `git.commit` 是**從 index 建 tree**，於是 tree 裡只有我們 stage 的那些 materialize 出來的檔案，其餘一律視為刪除。原本 worktree.ts 的註解寫著「只移動 HEAD，不需要 checkout 幾萬個檔案」——那個推論針對的是磁碟上的檔案，漏掉了 index 才是 commit 的來源。
+
+要維持的不變式：**一次 Kumiko commit 是父 tree 疊上我們管理的檔案，絕不是只由我們管理的檔案構成的 tree。**
+
+- `carryUnmanagedPaths` 在 checkout 之後，把父 commit 裡「adapter 不擁有」的路徑寫進 worktree 並 stage。也處理反向：父 commit 已經沒有、而 index 還留著的，要一併移除，否則我們會把上游刪掉的檔案復活。
+- `syncWorktreeFromProject` 的刪除偵測改成只作用在 managed 路徑上，否則 README 一旦進了 index，下一輪就會被當成「專案不再產生這個檔案」而刪掉。
+- push 前有一道 fail-closed 檢查：commit 會從 index 建 tree，所以比對 index 與父 tree 的 unmanaged 路徑就等於檢查即將送出的內容。有缺就中止，而且是在 push 之前。
+
+REST 路徑沒有這個問題：它送的是檔案清單並以 `base_tree` 疊加，本來就只會新增與修改。
+
 ### 錯誤要看得見（2026-08-20）
 
 實測回報：commit 失敗時 UI 只顯示 `MultipleGitError: There are multiple errors ... refer to the "errors" property`，完全無法判斷原因。兩個成因：
