@@ -671,6 +671,9 @@ export const glyphRecordToLayerContent = (
     components: record.components.map((component) => component.base),
     componentRefs: record.components.map((component, index) => ({
       id: component.identifier ?? `c${index}`,
+      // Kept apart from the internal id: an absent identifier must stay absent,
+      // or writing the glyph back invents one the source never had.
+      identifier: component.identifier,
       glyphId: component.base,
       x: component.xOffset ?? 0,
       y: component.yOffset ?? 0,
@@ -682,6 +685,7 @@ export const glyphRecordToLayerContent = (
     })),
     anchors: record.anchors.map((anchor, index) => ({
       id: anchor.identifier ?? `a${index}`,
+      identifier: anchor.identifier,
       name: anchor.name,
       x: anchor.x,
       y: anchor.y,
@@ -689,6 +693,7 @@ export const glyphRecordToLayerContent = (
     })),
     guidelines: record.guidelines.map((guide, index) => ({
       id: guide.identifier ?? `g${index}`,
+      identifier: guide.identifier,
       x: guide.x ?? 0,
       y: guide.y ?? 0,
       angle: guide.angle ?? 0,

@@ -20,6 +20,8 @@ import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
 import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
 import type { FontData, GlyphData } from 'src/store'
 import { getGlyphLayer } from 'src/store/glyphLayer'
+import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
+import { saveProjectDraft } from 'src/lib/project/projectRepository'
 import { exportCanonicalFontDataAsUfoZip } from './canonicalUfoExportTestUtils'
 const layerOf = (g: GlyphData) => getGlyphLayer(g, null)!
 
@@ -110,6 +112,109 @@ describe('UFO import → export → reimport round-trip', () => {
         expect(afterPath.nodes, `${id} nodes@${pathIndex}`).toEqual(path.nodes)
       })
     }
+  })
+
+  // The property that matters for collaboration: rewriting a project nobody
+  // edited must produce the same bytes, so a rebuilt worktree commits an empty
+  // diff. Renaming the family rebuilds the whole tree, and any per-glyph
+  // difference between what was read and what gets written turns that into a
+  // diff on every glyph in the font. This fixture carries no anchors, so it is
+  // not a substitute for the identifier test below.
+  it('rewrites an untouched project byte for byte', async () => {
+    const entries = await readUfoEntries()
+    const imported = await importWorkspace(entries, UFO_NAME)
+    await saveProjectDraft({
+      id: 'canonical-ufo-bytes',
+      title: 'OpenSourceFont',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: UFO_NAME,
+      sourceType: 'local',
+      githubSource: null,
+      fontData: imported.fontData,
+      projectMetadata: null,
+      projectSourceData: imported.projectSourceData,
+      projectSourceFormat: imported.projectSourceFormat,
+      projectRoundTripFormat: null,
+      projectGlyphsPackage: null,
+    })
+
+    const written = new Map<string, string>()
+    for await (const file of materializeUfoTree({
+      projectId: 'canonical-ufo-bytes',
+    })) {
+      written.set(file.path, file.text)
+    }
+
+    const sourceGlifs = entries.filter((entry) =>
+      entry.relativePath.endsWith('.glif')
+    )
+    expect(sourceGlifs.length).toBeGreaterThan(0)
+    for (const entry of sourceGlifs) {
+      expect(
+        written.get(entry.relativePath),
+        `rewrote ${entry.relativePath}`
+      ).toBe(entry.text)
+    }
+  })
+
+  // A UFO anchor, guideline or component may have no identifier at all, and it
+  // must come back out without one. Kumiko gives every element an internal id,
+  // and exporting that id as the identifier rewrote every glyph in the font the
+  // first time anything was committed — a whole-font diff from renaming the
+  // family. Neither the glif-level fidelity suite nor the canonical round-trip
+  // covered it: both compared parsed structures, never the attribute's absence.
+  it('does not invent identifiers for elements the source left without one', async () => {
+    const entries = await readUfoEntries()
+    const firstGlif = entries.find((entry) =>
+      entry.relativePath.endsWith('.glif')
+    )
+    expect(firstGlif).toBeDefined()
+    const fileName = firstGlif!.relativePath.split('/').pop() ?? 'A.glif'
+    const glyphName = parseGlifText(firstGlif!.text, fileName).glyphName
+    const probeGlif = `<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="${glyphName}" format="2">
+  <advance width="500"/>
+  <anchor x="250" y="0" name="bottom"/>
+  <anchor x="250" y="700" name="top" identifier="keepMe"/>
+  <guideline x="0" y="500" angle="0" name="xheight"/>
+  <outline>
+    <contour>
+      <point x="10" y="20" type="line"/>
+      <point x="110" y="20" type="line"/>
+      <point x="110" y="120" type="line"/>
+    </contour>
+  </outline>
+</glyph>`
+    const withProbe = entries.filter(
+      (entry) => entry.relativePath !== firstGlif!.relativePath
+    )
+    withProbe.push({ relativePath: firstGlif!.relativePath, text: probeGlif })
+
+    const imported = await importWorkspace(withProbe, UFO_NAME)
+    const blob = await exportCanonicalFontDataAsUfoZip({
+      fontData: imported.fontData,
+      projectId: 'canonical-ufo-identifiers',
+      projectTitle: 'OpenSourceFont',
+      projectSourceData: imported.projectSourceData,
+      projectSourceFormat: imported.projectSourceFormat,
+    })
+    const exported = zipToEntries(new Uint8Array(await blob.arrayBuffer()))
+    const written = exported.find((entry) =>
+      entry.relativePath.endsWith(`/glyphs/${fileName}`)
+    )
+    expect(written).toBeDefined()
+
+    const anchorLines = written!.text
+      .split('\n')
+      .filter((line) => line.includes('<anchor'))
+    expect(anchorLines).toHaveLength(2)
+    expect(anchorLines[0]).not.toContain('identifier')
+    expect(anchorLines[1]).toContain('identifier="keepMe"')
+    expect(
+      written!.text.split('\n').find((line) => line.includes('<guideline'))
+    ).not.toContain('identifier')
   })
 
   it('keeps kerning and feature sources in the exported UFO', async () => {

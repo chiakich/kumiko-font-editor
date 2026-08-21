@@ -741,7 +741,7 @@ const toUfoGlyphRecord = (input: {
       y: anchor.y,
       name: anchor.name,
       color: serializeUfoColor(anchor.color),
-      identifier: anchor.identifier ?? anchor.id,
+      identifier: anchor.identifier ?? null,
     })),
     guidelines: content.guidelines.map((guide) => ({
       x: guide.x,
@@ -749,14 +749,14 @@ const toUfoGlyphRecord = (input: {
       angle: guide.angle,
       name: guide.name ?? null,
       color: serializeUfoColor(guide.color),
-      identifier: guide.identifier ?? guide.id,
+      identifier: guide.identifier ?? null,
     })),
     contours: content.paths.map((path) => pathToUfoContour(path)),
     components: content.componentRefs.map((component) => {
       const matrix = getKumikoComponentRefMatrix(component)
       return {
         base: component.glyphId,
-        identifier: component.identifier ?? component.id,
+        identifier: component.identifier ?? null,
         xScale: matrix.a,
         yScale: matrix.d,
         ...(matrix.b !== 0 ? { xyScale: matrix.b } : {}),
