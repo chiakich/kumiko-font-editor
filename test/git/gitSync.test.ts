@@ -42,6 +42,7 @@ const {
   commitAndPushProject,
   markGitCommitSynced,
   readRemoteUfoFolders,
+  switchGitProjectBranch,
 } = await import('src/lib/git/gitSync')
 
 const makeFontData = (width: number): FontData => ({
@@ -265,6 +266,7 @@ describe('git sync report', () => {
     )
     await saveKumikoGlyphRecord({
       ...glyph!,
+      syncDirty: 1,
       layers: {
         ...glyph!.layers,
         'public.default': {
@@ -333,6 +335,7 @@ describe('git sync report', () => {
     )
     await saveKumikoGlyphRecord({
       ...glyph!,
+      syncDirty: 1,
       layers: {
         ...glyph!.layers,
         'public.default': {
@@ -373,6 +376,7 @@ describe('git sync report', () => {
     )
     await saveKumikoGlyphRecord({
       ...glyph!,
+      syncDirty: 1,
       layers: {
         ...glyph!.layers,
         'public.default': {
@@ -591,6 +595,46 @@ describe('commit and push', () => {
       'first',
     ])
   })
+
+  it('does not refetch upstream when updating an existing change draft', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-push-no-refetch')
+    await commitAndPushProject({
+      projectId: 'gs-push-no-refetch',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-4',
+      message: 'first',
+      store,
+    })
+    fetchRemoteBranch.mockClear()
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-push-no-refetch', 'A')
+    )
+    await saveKumikoGlyphRecord({
+      ...glyph!,
+      syncDirty: 1,
+      layers: {
+        ...glyph!.layers,
+        'public.default': {
+          ...glyph!.layers['public.default']!,
+          metrics: { width: 720, lsb: 0, rsb: 720 },
+        },
+      },
+    })
+
+    await commitAndPushProject({
+      projectId: 'gs-push-no-refetch',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-4',
+      baseRepo: 'upstream/repo',
+      baseBranch: 'main',
+      message: 'second',
+      store,
+    })
+
+    expect(fetchRemoteBranch).not.toHaveBeenCalled()
+  })
 })
 
 describe('applying remote changes from git', () => {
@@ -723,6 +767,7 @@ describe('bookkeeping after a git commit', () => {
   it('records the file names the commit actually wrote', async () => {
     const store = createMemoryFileStore()
     await saveProject('gs-mark')
+    await saveProject('gs-mark', 500, { commitSha: null })
 
     const pushed = await commitAndPushProject({
       projectId: 'gs-mark',
@@ -749,6 +794,17 @@ describe('bookkeeping after a git commit', () => {
       repo: 'repo',
       ref: 'kumiko/patch',
       commitSha: pushed.commitSha,
+    })
+    expect(project?.sourceData?.ufo?.gitCollaboration).toMatchObject({
+      base: { owner: 'owner', repo: 'repo', ref: 'main' },
+      changeDrafts: [
+        {
+          owner: 'contributor',
+          repo: 'repo',
+          ref: 'kumiko/patch',
+          commitSha: pushed.commitSha,
+        },
+      ],
     })
   })
 
@@ -781,5 +837,76 @@ describe('bookkeeping after a git commit', () => {
     expect(updated?.syncDirty).toBe(0)
     // git tracks the baseline in the commit, so no per-glyph blob sha is written.
     expect(updated?.sourceData?.ufo?.remoteBlobShaByUfoId ?? null).toBeNull()
+  })
+})
+
+describe('switching git collaboration branches', () => {
+  it('hydrates the selected branch and keeps a submitted draft after returning to the base', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-switch')
+    const { base } = await seedRepo('gs-switch', store)
+    await saveProject('gs-switch', 500, { commitSha: base })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-switch', 'A')
+    )
+    await saveKumikoGlyphRecord({
+      ...glyph!,
+      syncDirty: 1,
+      layers: {
+        ...glyph!.layers,
+        'public.default': {
+          ...glyph!.layers['public.default']!,
+          metrics: { width: 812, lsb: 0, rsb: 812 },
+        },
+      },
+    })
+    const pushed = await commitAndPushProject({
+      projectId: 'gs-switch',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-switch',
+      message: 'Update A',
+      store,
+    })
+    await markGitCommitSynced({
+      projectId: 'gs-switch',
+      pushedRepo: pushed.pushedRepo,
+      pushedBranch: pushed.pushedBranch,
+      commitSha: pushed.commitSha,
+      writtenPaths: pushed.writtenPaths,
+    })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: base,
+      mergeBaseSha: base,
+      localHeadSha: pushed.commitSha,
+    })
+
+    await switchGitProjectBranch({
+      target: target('gs-switch'),
+      store,
+    })
+
+    const switchedGlyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-switch', 'A')
+    )
+    const project = await loadKumikoProjectRecord('gs-switch')
+    expect(switchedGlyph?.layers['public.default']?.metrics.width).toBe(500)
+    expect(project?.sourceData?.ufo?.lastSync).toMatchObject({
+      owner: 'owner',
+      repo: 'repo',
+      ref: 'main',
+      commitSha: base,
+    })
+    expect(project?.sourceData?.ufo?.gitCollaboration).toMatchObject({
+      base: { owner: 'owner', repo: 'repo', ref: 'main' },
+      changeDrafts: [
+        {
+          owner: 'contributor',
+          repo: 'repo',
+          ref: 'kumiko/patch-switch',
+          commitSha: pushed.commitSha,
+        },
+      ],
+    })
   })
 })

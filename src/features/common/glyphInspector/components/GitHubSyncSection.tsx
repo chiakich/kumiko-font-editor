@@ -43,6 +43,7 @@ export function GitHubSyncSectionContainer({
   projectId,
   onBlockingSyncConflictsChange,
 }: GitHubSyncSectionContainerProps) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const syncStatus = useGitHubSyncStatus({ projectId, enabled })
   const hasBlockingSyncConflicts = Boolean(
@@ -60,17 +61,21 @@ export function GitHubSyncSectionContainer({
         queryKey: projectSyncDirtyStatusQueryKey(projectId),
       })
       toaster.create({
-        title: '已套用遠端更新',
-        description: `更新了 ${result.appliedCount} 個檔案。`,
+        title: t('glyphInspector.toast.applyRemoteSuccessTitle'),
+        description: t('glyphInspector.toast.applyRemoteSuccessDescription', {
+          count: result.appliedCount,
+        }),
         type: 'success',
         duration: 3200,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: '套用遠端更新失敗',
+        title: t('glyphInspector.toast.applyRemoteFailedTitle'),
         description:
-          error instanceof Error ? error.message : '目前無法套用遠端更新。',
+          error instanceof Error
+            ? error.message
+            : t('glyphInspector.toast.applyRemoteFailedDescription'),
         type: 'error',
         duration: 4200,
         closable: true,
@@ -92,8 +97,6 @@ export function GitHubSyncSectionContainer({
     />
   )
 }
-
-const shortSha = (sha: string) => sha.slice(0, 7)
 
 // A diverged CJK font can conflict in every glyph. Rendering one row per
 // conflict then costs tens of thousands of nodes and freezes the tab, so the
@@ -178,13 +181,15 @@ export function GitHubSyncSection({
   }
 
   if (report.isUpToDate) {
+    const hasLocalChanges = report.localChanges.length > 0
     return (
       <Box borderWidth={1} borderRadius="lg" p={3} borderColor="green.200">
         <Text fontSize="sm" color="green.600">
-          {t('glyphInspector.syncUpToDate', {
-            ref: report.target.ref,
-            sha: shortSha(report.remoteHeadSha),
-          })}
+          {hasLocalChanges
+            ? t('glyphInspector.syncLocalChanges', {
+                count: report.localChanges.length,
+              })
+            : t('glyphInspector.syncUpToDate')}
         </Text>
       </Box>
     )

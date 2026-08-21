@@ -4,6 +4,7 @@ import {
   buildGitSyncReport,
   commitAndPushProject,
   markGitCommitSynced,
+  switchGitProjectBranch,
   type GitCommitAndPushResult,
   type GitSyncReport,
   type GitSyncTarget,
@@ -45,10 +46,16 @@ interface ApplyRemoteRequest {
   }
 }
 
+interface SwitchBranchRequest {
+  type: 'switch-git-branch'
+  payload: { requestId: string; target: GitSyncTarget }
+}
+
 type GitSyncRequest =
   | BuildReportRequest
   | CommitAndPushRequest
   | ApplyRemoteRequest
+  | SwitchBranchRequest
 
 interface ReportSuccessResponse {
   type: 'git-sync-report-success'
@@ -74,6 +81,14 @@ interface ApplySuccessResponse {
   }
 }
 
+interface SwitchBranchSuccessResponse {
+  type: 'git-switch-branch-success'
+  payload: {
+    requestId: string
+    result: Awaited<ReturnType<typeof switchGitProjectBranch>>
+  }
+}
+
 interface ErrorResponse {
   type: 'git-sync-error'
   payload: {
@@ -86,6 +101,7 @@ type GitSyncResponse =
   | ReportSuccessResponse
   | CommitSuccessResponse
   | ApplySuccessResponse
+  | SwitchBranchSuccessResponse
   | ErrorResponse
 
 const post = (message: GitSyncResponse) => self.postMessage(message)
@@ -144,6 +160,19 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
             report,
             resolutions,
             remoteHeadSha,
+          }),
+        },
+      })
+      return
+    }
+
+    if (request.type === 'switch-git-branch') {
+      post({
+        type: 'git-switch-branch-success',
+        payload: {
+          requestId,
+          result: await switchGitProjectBranch({
+            target: request.payload.target,
           }),
         },
       })

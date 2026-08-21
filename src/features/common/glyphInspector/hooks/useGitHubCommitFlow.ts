@@ -44,6 +44,17 @@ import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspect
 import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
 import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
+import {
+  listSyncDirtyKumikoGlyphIds,
+  loadKumikoProjectRecord,
+  loadKumikoUiValue,
+} from 'src/lib/project/kumikoProjectPersistence'
+import { loadProjectDraftMetadata } from 'src/lib/project/projectRepository'
+import {
+  sanitizeGlyphEditTimes,
+  UFO_GLYPH_EDIT_TIMES_KEY,
+} from 'src/lib/glyph/glyphEditTimes'
+import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
 
 interface UseGitHubCommitFlowInput {
   projectId: string | null
@@ -76,6 +87,11 @@ interface ScopedGitHubCommitDraft {
   isCreatingNewBranch: boolean
 }
 
+interface GitCollaborationState {
+  activeTarget: GitHubSyncTarget | null
+  changeDrafts: GitHubSyncTarget[]
+}
+
 const createEmptyCommitDraft = (
   repoFullName: string | null
 ): ScopedGitHubCommitDraft => ({
@@ -104,6 +120,10 @@ export const useGitHubCommitFlow = ({
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const persistenceQueue = useStore((state) => state.persistenceQueue)
   const markLocalSaved = useStore((state) => state.markLocalSaved)
+  const loadProjectState = useStore((state) => state.loadProjectState)
+  const hydratePersistedLocalChanges = useStore(
+    (state) => state.hydratePersistedLocalChanges
+  )
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
   const editLocation = useStore((state) => state.editLocation)
@@ -115,6 +135,12 @@ export const useGitHubCommitFlow = ({
   // The git transport does not go through a mutation, so its pending state has
   // to be tracked here or the button stays idle for the whole push.
   const [isCommittingToGitHub, setIsCommittingToGitHub] = useState(false)
+  const [isSwitchingGitBranch, setIsSwitchingGitBranch] = useState(false)
+  const [gitCollaboration, setGitCollaboration] =
+    useState<GitCollaborationState>({
+      activeTarget: null,
+      changeDrafts: [],
+    })
   const [hasBlockingSyncConflicts, setHasBlockingSyncConflicts] =
     useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
@@ -197,7 +223,10 @@ export const useGitHubCommitFlow = ({
   const createCommitMutation = useCreateGitHubCommitMutation()
   const mergeUpstreamMutation = useMergeGitHubUpstreamMutation()
   const githubForkStatus = forkStatusOverride ?? forkStatusQuery.data ?? null
-  const loadGitHubForkStatus = async (branchName?: string) => {
+  const loadGitHubForkStatus = async (
+    branchName?: string,
+    options: { syncDraftSelection?: boolean } = {}
+  ) => {
     if (!githubRepoFullName) {
       return null
     }
@@ -212,7 +241,7 @@ export const useGitHubCommitFlow = ({
         forkStatus,
         branchName
       )
-      if (resolvedBranch) {
+      if (resolvedBranch && options.syncDraftSelection !== false) {
         updateGitHubCommitDraft({
           branchName: resolvedBranch,
           isCreatingNewBranch: !isExistingGitHubBranch(
@@ -223,7 +252,10 @@ export const useGitHubCommitFlow = ({
       }
       return forkStatus
     } catch (error) {
-      const message = getErrorMessage(error, '目前無法讀取 GitHub fork 狀態。')
+      const message = getErrorMessage(
+        error,
+        t('glyphInspector.toast.forkStatusFailedDescription')
+      )
 
       if (isMissingGitHubTokenError(message)) {
         setForkStatusOverride(null)
@@ -231,7 +263,7 @@ export const useGitHubCommitFlow = ({
       }
 
       toaster.create({
-        title: '讀取 GitHub 狀態失敗',
+        title: t('glyphInspector.toast.forkStatusFailedTitle'),
         description: message,
         type: 'error',
         duration: 3600,
@@ -265,23 +297,128 @@ export const useGitHubCommitFlow = ({
     )
   }
 
+  const reloadProjectFromPersistence = async (nextProjectId: string) => {
+    const loadedProject = await loadProjectDraftMetadata(nextProjectId)
+    if (!loadedProject) {
+      return
+    }
+    loadProjectState(
+      loadedProject.id,
+      loadedProject.title,
+      loadedProject.fontData!,
+      loadedProject.projectMetadata,
+      loadedProject.projectSourceFormat ?? null,
+      loadedProject.projectRoundTripFormat ?? null,
+      loadedProject.projectUiState
+    )
+    hydratePersistedLocalChanges(
+      await listSyncDirtyKumikoGlyphIds(nextProjectId),
+      [],
+      sanitizeGlyphEditTimes(
+        await loadKumikoUiValue(nextProjectId, UFO_GLYPH_EDIT_TIMES_KEY)
+      )
+    )
+  }
+
+  const refreshGitCollaboration = async (
+    nextProjectId: string
+  ): Promise<GitCollaborationState> => {
+    const project = await loadKumikoProjectRecord(nextProjectId)
+    const nextCollaboration = {
+      activeTarget: project?.sourceData?.ufo?.lastSync ?? null,
+      changeDrafts:
+        project?.sourceData?.ufo?.gitCollaboration?.changeDrafts ?? [],
+    }
+    setGitCollaboration(nextCollaboration)
+    return nextCollaboration
+  }
+
+  const handleSwitchGitBranch = async (target: {
+    repo: string
+    branch: string
+  }) => {
+    if (
+      !loadGitSyncEnabled() ||
+      !projectId ||
+      !target.repo ||
+      !target.branch.trim() ||
+      isSwitchingGitBranch
+    ) {
+      return
+    }
+    try {
+      setIsSwitchingGitBranch(true)
+      const { switchGitProjectBranchInWorker } =
+        await import('src/lib/git/gitSyncWorkerClient')
+      await switchGitProjectBranchInWorker({
+        projectId,
+        repo: target.repo,
+        branch: target.branch.trim(),
+      })
+      await reloadProjectFromPersistence(projectId)
+      await refreshGitCollaboration(projectId)
+      updateGitHubCommitDraft({
+        branchName: target.branch.trim(),
+        isCreatingNewBranch: false,
+      })
+      if (target.repo === githubForkStatus?.targetRepo?.fullName) {
+        await refreshGitHubCompareStatus(target.branch)
+      }
+      void queryClient.invalidateQueries({
+        queryKey: githubSyncReportQueryKey(projectId),
+      })
+      toaster.create({
+        title: t('glyphInspector.toast.switchSuccessTitle'),
+        description: t('glyphInspector.toast.switchSuccessDescription', {
+          branch: target.branch,
+        }),
+        type: 'success',
+        duration: 3200,
+        closable: true,
+      })
+    } catch (error) {
+      toaster.create({
+        title: t('glyphInspector.toast.switchFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.switchFailedDescription')
+        ),
+        type: 'error',
+        duration: 4200,
+        closable: true,
+      })
+    } finally {
+      setIsSwitchingGitBranch(false)
+    }
+  }
+
   const handleLoginGitHub = async () => {
     try {
       const viewer = await loginMutation.mutateAsync(startGitHubOAuthLogin)
       if (githubRepoFullName) {
-        await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
+        await loadGitHubForkStatus(gitHubBranchName.trim() || undefined, {
+          // A fork-status response defaults to its default branch. In git mode
+          // that is the merge base, not an implicit destination for a change.
+          syncDraftSelection:
+            !loadGitSyncEnabled() || Boolean(gitHubBranchName.trim()),
+        })
       }
       toaster.create({
-        title: 'GitHub 已登入',
-        description: `目前登入帳號：${viewer.login}`,
+        title: t('glyphInspector.toast.loginSuccessTitle'),
+        description: t('glyphInspector.toast.loginSuccessDescription', {
+          login: viewer.login,
+        }),
         type: 'success',
         duration: 2600,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: 'GitHub 登入失敗',
-        description: getErrorMessage(error, '目前無法完成 GitHub 登入。'),
+        title: t('glyphInspector.toast.loginFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.loginFailedDescription')
+        ),
         type: 'error',
         duration: 3200,
         closable: true,
@@ -298,16 +435,19 @@ export const useGitHubCommitFlow = ({
       await logoutMutation.mutateAsync()
       setForkStatusOverride(null)
       toaster.create({
-        title: 'GitHub 已登出',
-        description: '目前 session 已清除。',
+        title: t('glyphInspector.toast.logoutSuccessTitle'),
+        description: t('glyphInspector.toast.logoutSuccessDescription'),
         type: 'success',
         duration: 2200,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: 'GitHub 登出失敗',
-        description: getErrorMessage(error, '目前無法登出 GitHub。'),
+        title: t('glyphInspector.toast.logoutFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.logoutFailedDescription')
+        ),
         type: 'error',
         duration: 3200,
         closable: true,
@@ -322,8 +462,22 @@ export const useGitHubCommitFlow = ({
       return
     }
 
+    const gitSyncEnabled = loadGitSyncEnabled()
+    const collaboration = gitSyncEnabled
+      ? await refreshGitCollaboration(projectId)
+      : null
+    const selectedBranch = gitHubBranchName.trim()
+    const activeBranch = collaboration?.activeTarget?.ref ?? ''
     const forkStatus = githubViewer
-      ? await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
+      ? await loadGitHubForkStatus(
+          selectedBranch || activeBranch || undefined,
+          {
+            // Do not let fork-status turn a new contribution into a commit to
+            // the fork's default branch. An explicit draft or active submitted
+            // draft is restored below instead.
+            syncDraftSelection: !gitSyncEnabled || Boolean(selectedBranch),
+          }
+        )
       : null
 
     if (!canCommitToGitHub || persistenceStatus === 'error') {
@@ -352,6 +506,41 @@ export const useGitHubCommitFlow = ({
           setPersistenceStatus,
         })
       )
+
+      if (gitSyncEnabled) {
+        const nextDraft: Partial<
+          Omit<ScopedGitHubCommitDraft, 'repoFullName'>
+        > = {
+          // The git worker materializes the actual files exactly once when it
+          // commits. Preparing the legacy REST payload here used to serialize
+          // and hash the same glyphs a second time just to fill this field.
+          commitMessage: buildGlyphCommitMessage({
+            fallbackTitle: projectTitle,
+          }),
+        }
+        if (!selectedBranch) {
+          const activeTarget = collaboration?.activeTarget
+          const activeDraft = Boolean(
+            activeTarget &&
+            forkStatus?.targetRepo &&
+            activeTarget.owner === forkStatus.targetRepo.owner &&
+            activeTarget.repo === forkStatus.targetRepo.repo &&
+            collaboration.changeDrafts.some(
+              (draft) =>
+                draft.owner === activeTarget.owner &&
+                draft.repo === activeTarget.repo &&
+                draft.ref === activeTarget.ref
+            )
+          )
+          nextDraft.branchName = activeDraft
+            ? activeTarget!.ref
+            : buildSuggestedGitHubBranchName(localDirtyGlyphIds)
+          nextDraft.isCreatingNewBranch = !activeDraft
+        }
+        updateGitHubCommitDraft(nextDraft)
+        return
+      }
+
       const preparedCommit = await prepareGitHubCommit({
         projectId,
         projectTitle,
@@ -361,21 +550,22 @@ export const useGitHubCommitFlow = ({
           commitMessage: preparedCommit.request.commitMessage,
         }
       if (!gitHubBranchName.trim()) {
-        if (forkStatus?.selectedBranch) {
-          nextDraft.branchName = forkStatus.selectedBranch
-          nextDraft.isCreatingNewBranch = false
-        } else {
-          nextDraft.branchName =
-            preparedCommit.request.branchName ??
-            buildSuggestedGitHubBranchName(preparedCommit.changedGlyphNames)
-          nextDraft.isCreatingNewBranch = true
-        }
+        // A fork's default branch is a copy of the merge target, not a place
+        // for a contributor's edits. Start a named change draft instead; the
+        // branch picker remains available under advanced options when needed.
+        nextDraft.branchName =
+          preparedCommit.request.branchName ??
+          buildSuggestedGitHubBranchName(preparedCommit.changedGlyphNames)
+        nextDraft.isCreatingNewBranch = true
       }
       updateGitHubCommitDraft(nextDraft)
     } catch (error) {
       toaster.create({
-        title: '無法準備 GitHub commit',
-        description: getErrorMessage(error, '目前沒有可提交到 GitHub 的變更。'),
+        title: t('glyphInspector.toast.prepareFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.prepareFailedDescription')
+        ),
         type: 'error',
         duration: 3200,
         closable: true,
@@ -393,14 +583,18 @@ export const useGitHubCommitFlow = ({
     try {
       const result = await createForkMutation.mutateAsync(githubRepoFullName)
       setForkStatusOverride(result)
-      if (!gitHubBranchName.trim() && result.selectedBranch) {
+      if (
+        !loadGitSyncEnabled() &&
+        !gitHubBranchName.trim() &&
+        result.selectedBranch
+      ) {
         updateGitHubCommitDraft({
           branchName: result.selectedBranch,
           isCreatingNewBranch: false,
         })
       }
       toaster.create({
-        title: 'GitHub fork 已建立',
+        title: t('glyphInspector.toast.forkCreatedTitle'),
         description: result.targetRepo?.fullName ?? githubRepoFullName,
         type: 'success',
         duration: 3200,
@@ -408,8 +602,11 @@ export const useGitHubCommitFlow = ({
       })
     } catch (error) {
       toaster.create({
-        title: '建立 fork 失敗',
-        description: getErrorMessage(error, '目前無法建立 GitHub fork。'),
+        title: t('glyphInspector.toast.forkCreateFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.forkCreateFailedDescription')
+        ),
         type: 'error',
         duration: 3600,
         closable: true,
@@ -431,8 +628,8 @@ export const useGitHubCommitFlow = ({
 
     if (!gitHubBranchName.trim()) {
       toaster.create({
-        title: '請先指定 branch',
-        description: '你可以選現有 branch，或輸入一個新的 branch 名稱。',
+        title: t('glyphInspector.toast.draftUnavailableTitle'),
+        description: t('glyphInspector.toast.draftUnavailableDescription'),
         type: 'warning',
         duration: 2800,
         closable: true,
@@ -442,9 +639,8 @@ export const useGitHubCommitFlow = ({
 
     if (hasBlockingSyncConflicts) {
       toaster.create({
-        title: '有尚未處理的同步衝突',
-        description:
-          '請先在上方選擇每個衝突字符要保留哪個版本，再套用遠端更新。',
+        title: t('glyphInspector.toast.syncConflictsTitle'),
+        description: t('glyphInspector.toast.syncConflictsDescription'),
         type: 'warning',
         duration: 3600,
         closable: true,
@@ -542,20 +738,26 @@ export const useGitHubCommitFlow = ({
         branchName: result.branchName,
         isCreatingNewBranch: false,
       })
+      if (loadGitSyncEnabled()) {
+        await refreshGitCollaboration(projectId)
+      }
       toaster.create({
-        title: 'GitHub commit 已推送',
-        description: `已更新 ${result.headOwner}:${result.branchName}`,
+        title: t('glyphInspector.toast.commitSentTitle'),
+        description: t('glyphInspector.toast.commitSentDescription'),
         type: 'success',
         duration: 3600,
         closable: true,
       })
     } catch (error) {
-      const message = getErrorMessage(error, '目前無法建立 GitHub commit。')
+      const message = getErrorMessage(
+        error,
+        t('glyphInspector.toast.commitFailedDescription')
+      )
 
       if (isMissingGitHubTokenError(message)) {
         toaster.create({
-          title: '需要 GitHub 登入',
-          description: '請先登入 GitHub，再重新提交 commit。',
+          title: t('glyphInspector.toast.loginRequiredTitle'),
+          description: t('glyphInspector.toast.loginRequiredDescription'),
           type: 'warning',
           duration: 3200,
           closable: true,
@@ -565,7 +767,7 @@ export const useGitHubCommitFlow = ({
       }
 
       toaster.create({
-        title: '建立 commit 失敗',
+        title: t('glyphInspector.toast.commitFailedTitle'),
         description: message,
         type: 'error',
         duration: 4200,
@@ -593,7 +795,7 @@ export const useGitHubCommitFlow = ({
       })
       await refreshGitHubCompareStatus(result.branchName)
       toaster.create({
-        title: '已合併上游變更',
+        title: t('glyphInspector.toast.mergeSuccessTitle'),
         description: result.message,
         type: 'success',
         duration: 3600,
@@ -601,8 +803,11 @@ export const useGitHubCommitFlow = ({
       })
     } catch (error) {
       toaster.create({
-        title: '合併上游失敗',
-        description: getErrorMessage(error, '目前無法合併上游變更。'),
+        title: t('glyphInspector.toast.mergeFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.mergeFailedDescription')
+        ),
         type: 'error',
         duration: 4200,
         closable: true,
@@ -628,6 +833,7 @@ export const useGitHubCommitFlow = ({
     // Committing before the report lands would skip the conflict gate.
     isCheckingSyncStatus: syncStatus.isLoading,
     isMergingGitHubUpstream: mergeUpstreamMutation.isPending,
+    isSwitchingGitBranch,
     canCommitToGitHub,
     gitHubCommitMessage,
     suggestedCommitMessage,
@@ -636,12 +842,31 @@ export const useGitHubCommitFlow = ({
     onLoginGitHub: () => void handleLoginGitHub(),
     onLogoutGitHub: () => void handleLogoutGitHub(),
     onCreateFork: () => void handleCreateFork(),
+    activeGitTarget: gitCollaboration.activeTarget,
+    changeDrafts: gitCollaboration.changeDrafts,
     onBranchSelect: (branch) => {
+      if (loadGitSyncEnabled()) {
+        if (githubForkStatus?.targetRepo) {
+          void handleSwitchGitBranch({
+            repo: githubForkStatus.targetRepo.fullName,
+            branch,
+          })
+        }
+        return
+      }
       updateGitHubCommitDraft({
         branchName: branch,
         isCreatingNewBranch: false,
       })
       void refreshGitHubCompareStatus(branch)
+    },
+    onSwitchToMergeTarget: () => {
+      if (githubForkStatus?.sourceRepo) {
+        void handleSwitchGitBranch({
+          repo: githubForkStatus.sourceRepo.fullName,
+          branch: githubForkStatus.sourceRepo.defaultBranch,
+        })
+      }
     },
     onCommitMessageChange: (commitMessage) =>
       updateGitHubCommitDraft({ commitMessage }),

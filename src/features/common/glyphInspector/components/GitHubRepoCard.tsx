@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 interface GitHubRepoCardProps {
   title: string
   repo: GitHubRepoSummary | null
+  branchLabel?: string
+  showDefaultBranch?: boolean
   badgeLabel?: string | null
   badgeColorScheme?: string
   statusText?: string | null
@@ -22,6 +24,8 @@ interface GitHubRepoCardProps {
 export function GitHubRepoCard({
   title,
   repo,
+  branchLabel,
+  showDefaultBranch = true,
   badgeLabel,
   badgeColorScheme = 'gray',
   statusText,
@@ -59,10 +63,12 @@ export function GitHubRepoCard({
                 >
                   {repo.fullName}
                 </Link>
-                <Text fontSize="sm" color="mutedForeground">
-                  {t('glyphInspector.defaultBranchLabel')}
-                  {repo.defaultBranch}
-                </Text>
+                {showDefaultBranch ? (
+                  <Text fontSize="sm" color="mutedForeground">
+                    {branchLabel ?? t('glyphInspector.defaultBranchLabel')}
+                    {repo.defaultBranch}
+                  </Text>
+                ) : null}
               </Stack>
             ) : (
               <Text fontSize="sm" color="mutedForeground">
