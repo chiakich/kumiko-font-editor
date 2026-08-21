@@ -9,6 +9,11 @@ import {
   type SceneModel,
 } from 'src/sceneView'
 import { SceneController } from 'src/features/editor/tools'
+import {
+  DEFAULT_BRUSH_SETTINGS,
+  normalizeBrushSettings,
+  type BrushSettings,
+} from 'src/features/editor/tools/vectorBrush'
 import { useStore, useTemporalStore, getGlyphLayer } from 'src/store'
 import { CanvasContextMenu } from 'src/features/editor/canvas/workspace/components/CanvasContextMenu'
 import { CanvasWorkspaceOverlay } from 'src/features/editor/canvas/workspace/components/CanvasWorkspaceOverlay'
@@ -46,6 +51,9 @@ export function CanvasWorkspace() {
     []
   )
   const [activeToolId, setActiveToolId] = useState<ToolId>('pointer')
+  const [brushSettings, setBrushSettings] = useState<BrushSettings>(
+    DEFAULT_BRUSH_SETTINGS
+  )
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -174,6 +182,17 @@ export function CanvasWorkspace() {
       setSelectedSegment(null)
     },
     [setSelectedNodeIds, setSelectedSegment]
+  )
+
+  const handleBrushSettingsChange = useCallback(
+    (settings: Partial<BrushSettings>) => {
+      setBrushSettings((previous) => {
+        const next = normalizeBrushSettings({ ...previous, ...settings })
+        sceneControllerRef.current?.setBrushSettings(next)
+        return next
+      })
+    },
+    []
   )
 
   const adjacentOverviewGlyphs = useMemo(() => {
@@ -656,6 +675,7 @@ export function CanvasWorkspace() {
           height: '100%',
           display: 'block',
           cursor: 'default',
+          touchAction: 'none',
         }}
       />
 
@@ -694,6 +714,7 @@ export function CanvasWorkspace() {
 
       <CanvasWorkspaceOverlay
         activeToolId={activeToolId}
+        brushSettings={brushSettings}
         canRedo={futureStatesLength > 0}
         canUndo={pastStatesLength > 0}
         hasNextGlyph={Boolean(adjacentOverviewGlyphs.next)}
@@ -710,6 +731,7 @@ export function CanvasWorkspace() {
         onPreviousGlyph={() =>
           selectAdjacentGlyph(adjacentOverviewGlyphs.previous?.id ?? null)
         }
+        onBrushSettingsChange={handleBrushSettingsChange}
         previousGlyphLabel={
           adjacentOverviewGlyphs.previous
             ? getGlyphDisplayCharacter(adjacentOverviewGlyphs.previous) ||

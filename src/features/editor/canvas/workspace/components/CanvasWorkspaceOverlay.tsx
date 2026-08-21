@@ -5,9 +5,12 @@ import type { ToolId } from 'src/features/editor/canvas/workspace/types'
 import { AVAILABLE_TOOLS } from 'src/features/editor/canvas/workspace/types'
 import { HistoryButton } from 'src/features/editor/canvas/workspace/components/HistoryButton'
 import { ToolButton } from 'src/features/editor/canvas/workspace/components/ToolButton'
+import { BrushOptions } from 'src/features/editor/canvas/workspace/components/BrushOptions'
+import type { BrushSettings } from 'src/features/editor/tools/vectorBrush'
 
 interface CanvasWorkspaceOverlayProps {
   activeToolId: ToolId
+  brushSettings: BrushSettings
   canRedo: boolean
   canUndo: boolean
   hasNextGlyph: boolean
@@ -15,6 +18,7 @@ interface CanvasWorkspaceOverlayProps {
   nextGlyphLabel: string | null
   onNextGlyph: () => void
   onPreviousGlyph: () => void
+  onBrushSettingsChange: (settings: Partial<BrushSettings>) => void
   previousGlyphLabel: string | null
   onRedo: () => void
   onSelectTool: (toolId: ToolId) => void
@@ -23,6 +27,7 @@ interface CanvasWorkspaceOverlayProps {
 
 export function CanvasWorkspaceOverlay({
   activeToolId,
+  brushSettings,
   canRedo,
   canUndo,
   hasNextGlyph,
@@ -30,6 +35,7 @@ export function CanvasWorkspaceOverlay({
   nextGlyphLabel,
   onNextGlyph,
   onPreviousGlyph,
+  onBrushSettingsChange,
   previousGlyphLabel,
   onRedo,
   onSelectTool,
@@ -39,6 +45,12 @@ export function CanvasWorkspaceOverlay({
 
   return (
     <>
+      {activeToolId === 'brush' ? (
+        <BrushOptions
+          settings={brushSettings}
+          onChange={onBrushSettingsChange}
+        />
+      ) : null}
       <Button
         position="absolute"
         top={4}

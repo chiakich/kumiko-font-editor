@@ -10,6 +10,8 @@ export interface ToolEvent {
   pageY: number
   detail?: number
   myTapCount?: number
+  pressure?: number
+  pointerType?: string
   altKey: boolean
   ctrlKey: boolean
   shiftKey: boolean

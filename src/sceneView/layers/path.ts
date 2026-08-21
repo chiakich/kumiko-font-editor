@@ -263,6 +263,34 @@ registerVisualizationLayerDefinition({
 })
 
 registerVisualizationLayerDefinition({
+  identifier: 'main.brush.preview',
+  name: 'Brush Preview',
+  selectionFunc: glyphSelector('editing'),
+  zIndex: 546,
+  screenParameters: { strokeWidth: 1.5 },
+  colors: { strokeColor: '#00AFC9', fillColor: '#25DAF233' },
+  colorsDarkMode: { strokeColor: '#81e6d9', fillColor: '#81e6d933' },
+  draw: (
+    canvasController: CanvasController,
+    _positionedGlyph: PositionedGlyph,
+    parameters: Record<string, number | number[] | string>,
+    model: SceneModel
+  ) => {
+    if (isHandTool(model) || !model.brushPreviewPath) return
+
+    const context = canvasController.context
+    context.fillStyle = parameters.fillColor as string
+    context.strokeStyle = parameters.strokeColor as string
+    context.lineWidth = screenLength(
+      canvasController,
+      parameters.strokeWidth as number
+    )
+    context.fill(model.brushPreviewPath)
+    context.stroke(model.brushPreviewPath)
+  },
+})
+
+registerVisualizationLayerDefinition({
   identifier: 'main.shape.preview',
   name: 'Shape Preview',
   selectionFunc: glyphSelector('editing'),

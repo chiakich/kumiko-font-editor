@@ -1,4 +1,4 @@
-// Brush tool - freehand drawing, smoothed into cubic Béziers
+// Brush tool - pressure-sensitive freehand drawing as editable vector outlines.
 
 import {
   BaseTool,
@@ -7,22 +7,33 @@ import {
 } from 'src/features/editor/tools/BaseTool'
 import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
 import {
-  useStore,
-  type PathData,
-  type PathNode,
-  type PathSegmentType,
-} from 'src/store'
-import { fitCurve } from 'src/font/fitCurve'
-
-// Squared distance tolerance (font units) for the freehand curve fit.
-const FIT_TOLERANCE = 10
-type NodeRole = 'corner' | 'smooth' | 'offcurve'
+  appendBrushSample,
+  buildVectorBrushOutline,
+  clampPressure,
+  DEFAULT_BRUSH_SETTINGS,
+  normalizeBrushSettings,
+  type BrushPoint,
+  type BrushSample,
+  type BrushSettings,
+} from 'src/features/editor/tools/vectorBrush'
+import { useStore, type PathData, type PathNode } from 'src/store'
 
 export class BrushTool extends BaseTool {
   identifier = 'brush'
+  private settings: BrushSettings = DEFAULT_BRUSH_SETTINGS
+
+  setSettings(settings: Partial<BrushSettings>): void {
+    this.settings = normalizeBrushSettings({ ...this.settings, ...settings })
+  }
 
   override activate(): void {
     this.setCursor('crosshair')
+    this.canvasController.requestUpdate()
+  }
+
+  override deactivate(): void {
+    super.deactivate()
+    this.sceneModel.brushPreviewPath = undefined
     this.canvasController.requestUpdate()
   }
 
@@ -37,75 +48,149 @@ export class BrushTool extends BaseTool {
   ): Promise<void> {
     initialEvent.preventDefault()
 
-    if (!this.sceneModel.canEdit || !this.sceneModel.glyph?.glyphId) {
+    const glyphId = this.sceneModel.glyph?.glyphId
+    if (!this.sceneModel.canEdit || !glyphId) {
       eventStream.done()
       return
     }
 
-    const glyphId = this.sceneModel.glyph.glyphId
-    const points = [this.localPoint(initialEvent)]
+    let samples = [this.toSample(initialEvent)]
+    this.updatePreview(samples)
 
     for await (const event of asyncEventIterator(eventStream)) {
-      const point = this.localPoint(event)
-      const previous = points.at(-1)!
-      if (Math.hypot(point.x - previous.x, point.y - previous.y) >= 8) {
-        points.push(point)
-      }
+      event.preventDefault()
+      samples = appendBrushSample(samples, this.toSample(event))
+      this.updatePreview(samples)
     }
 
-    if (points.length === 1) {
-      points.push({ ...points[0] })
-    }
-
-    const pathId = this.generateId('path')
-    const node = (
-      point: { x: number; y: number },
-      type: NodeRole,
-      segmentType: PathSegmentType = 'line'
-    ): PathNode => {
-      const base = {
-        id: this.generateId('node'),
-        x: Math.round(point.x),
-        y: Math.round(point.y),
-      }
-      if (type === 'offcurve') {
-        return { ...base, kind: 'offcurve' }
-      }
-      return {
-        ...base,
-        kind: 'oncurve',
-        segmentType,
-        smooth: type === 'smooth',
-      }
-    }
-
-    const segments = fitCurve(points, FIT_TOLERANCE * FIT_TOLERANCE)
-    const nodes: PathNode[] = []
-    if (segments.length) {
-      nodes.push(node(segments[0].points[0], 'corner'))
-      segments.forEach((segment, index) => {
-        const [, control1, control2, end] = segment.points
-        // Joins between segments are tangent-continuous, so mark them smooth;
-        // the two outer endpoints stay corners.
-        const isLast = index === segments.length - 1
-        nodes.push(node(control1, 'offcurve'))
-        nodes.push(node(control2, 'offcurve'))
-        nodes.push(node(end, isLast ? 'corner' : 'smooth', 'cubic'))
-      })
-    } else {
-      nodes.push(node(points[0], 'corner'))
-    }
-
-    const path: PathData = {
-      id: pathId,
-      closed: false,
-      nodes,
-    }
-
+    this.sceneModel.brushPreviewPath = undefined
+    const path = this.buildPath(samples)
     const store = useStore.getState()
     store.createPath(glyphId, path)
-    store.setSelectedNodeIds([`${pathId}:${nodes.at(-1)!.id}`])
+    store.setSelectedNodeIds(path.nodes.map((node) => `${path.id}:${node.id}`))
     this.canvasController.requestUpdate()
+  }
+
+  private toSample(event: ToolEvent): BrushSample {
+    const point = this.localPoint(event)
+    return {
+      ...point,
+      // Mouse pointer events conventionally report 0.5. This provides a
+      // predictable medium stroke while pen events preserve their real value.
+      pressure: this.settings.pressureEnabled
+        ? clampPressure(event.pressure)
+        : 0.5,
+    }
+  }
+
+  private updatePreview(samples: BrushSample[]) {
+    const path = this.buildPath(samples)
+    this.sceneModel.brushPreviewPath = this.toPath2D(path.nodes)
+    this.canvasController.requestUpdate()
+  }
+
+  private buildPath(samples: BrushSample[]): PathData {
+    const pathId = this.generateId('path')
+    if (samples.length < 2) {
+      return {
+        id: pathId,
+        closed: true,
+        nodes: this.buildDotNodes(samples[0]!),
+      }
+    }
+
+    const outline = buildVectorBrushOutline(
+      samples,
+      this.settings.size,
+      this.settings.style
+    )
+    return {
+      id: pathId,
+      closed: true,
+      nodes: outline.map((point) => this.createLineNode(point)),
+    }
+  }
+
+  private buildDotNodes(sample: BrushSample): PathNode[] {
+    const radius =
+      (this.settings.size / 2) * (0.2 + clampPressure(sample.pressure) * 0.8)
+    const kappa = 0.5522847498307936
+    const handle = radius * kappa
+    const smoothNode = (x: number, y: number): PathNode => ({
+      id: this.generateId('node'),
+      x: Math.round(x),
+      y: Math.round(y),
+      kind: 'oncurve',
+      segmentType: 'cubic',
+      smooth: true,
+    })
+    const handleNode = (x: number, y: number): PathNode => ({
+      id: this.generateId('node'),
+      x: Math.round(x),
+      y: Math.round(y),
+      kind: 'offcurve',
+    })
+    const { x, y } = sample
+    return [
+      smoothNode(x + radius, y),
+      handleNode(x + radius, y + handle),
+      handleNode(x + handle, y + radius),
+      smoothNode(x, y + radius),
+      handleNode(x - handle, y + radius),
+      handleNode(x - radius, y + handle),
+      smoothNode(x - radius, y),
+      handleNode(x - radius, y - handle),
+      handleNode(x - handle, y - radius),
+      smoothNode(x, y - radius),
+      handleNode(x + handle, y - radius),
+      handleNode(x + radius, y - handle),
+    ]
+  }
+
+  private createLineNode(point: BrushPoint): PathNode {
+    return {
+      id: this.generateId('node'),
+      x: Math.round(point.x),
+      y: Math.round(point.y),
+      kind: 'oncurve',
+      segmentType: 'line',
+      smooth: false,
+    }
+  }
+
+  private toPath2D(nodes: PathNode[]): Path2D {
+    const path = new Path2D()
+    const first = nodes.find((node) => node.kind === 'oncurve')
+    if (!first) return path
+
+    path.moveTo(first.x, first.y)
+    const firstIndex = nodes.indexOf(first)
+    const orderedNodes = [
+      ...nodes.slice(firstIndex + 1),
+      ...nodes.slice(0, firstIndex + 1),
+    ]
+    let handles: PathNode[] = []
+    for (const node of orderedNodes) {
+      if (node.kind === 'offcurve') {
+        handles.push(node)
+        continue
+      }
+      if (handles.length === 2) {
+        path.bezierCurveTo(
+          handles[0]!.x,
+          handles[0]!.y,
+          handles[1]!.x,
+          handles[1]!.y,
+          node.x,
+          node.y
+        )
+      } else {
+        path.lineTo(node.x, node.y)
+      }
+      handles = []
+    }
+    path.closePath()
+    return path
   }
 
   private generateId(prefix: string) {

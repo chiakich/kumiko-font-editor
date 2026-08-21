@@ -17,6 +17,7 @@ import { EllipseTool, RectangleTool } from 'src/features/editor/tools/ShapeTool'
 import { KnifeTool } from 'src/features/editor/tools/KnifeTool'
 import { PowerRulerTool } from 'src/features/editor/tools/PowerRulerTool'
 import type { BaseTool, ToolEvent } from 'src/features/editor/tools/BaseTool'
+import type { BrushSettings } from 'src/features/editor/tools/vectorBrush'
 
 export interface SceneControllerOptions {
   canvasController: CanvasController
@@ -76,9 +77,9 @@ export class SceneController {
   private activeTool: BaseTool | null = null
   activeToolIdentifier = 'pointer'
   private _eventStream: EventStreamImpl | null = null
-  private readonly boundHandleMouseDown = this.handleMouseDown.bind(this)
-  private readonly boundHandleMouseMove = this.handleMouseMove.bind(this)
-  private readonly boundHandleMouseUp = this.handleMouseUp.bind(this)
+  private readonly boundHandlePointerDown = this.handlePointerDown.bind(this)
+  private readonly boundHandlePointerMove = this.handlePointerMove.bind(this)
+  private readonly boundHandlePointerUp = this.handlePointerUp.bind(this)
   private readonly boundHandleDoubleClick = this.handleDoubleClick.bind(this)
   private readonly boundPreventContextMenu = (e: MouseEvent) =>
     e.preventDefault()
@@ -89,6 +90,7 @@ export class SceneController {
   onUpdateNodeType: SceneControllerOptions['onUpdateNodeType']
   onPreviewGlyphMetrics: SceneControllerOptions['onPreviewGlyphMetrics']
   onClearPreviewGlyphMetrics: SceneControllerOptions['onClearPreviewGlyphMetrics']
+  private activePointerId: number | null = null
 
   constructor(options: SceneControllerOptions) {
     this.canvasController = options.canvasController
@@ -162,6 +164,14 @@ export class SceneController {
     this.canvasController.requestUpdate()
   }
 
+  setBrushSettings(settings: Partial<BrushSettings>) {
+    const brushTool = this.tools.get('brush')
+    if (brushTool instanceof BrushTool) {
+      brushTool.setSettings(settings)
+      this.canvasController.requestUpdate()
+    }
+  }
+
   setSelection(selection: Set<string>) {
     this.selection = new Set(selection)
     this.sceneModel.selection = new Set(selection)
@@ -191,58 +201,81 @@ export class SceneController {
 
   private bindEvents() {
     const canvas = this.canvasController.canvas
-    canvas.addEventListener('mousedown', this.boundHandleMouseDown)
-    canvas.addEventListener('mousemove', this.boundHandleMouseMove)
-    canvas.addEventListener('mouseup', this.boundHandleMouseUp)
+    canvas.addEventListener('pointerdown', this.boundHandlePointerDown)
+    canvas.addEventListener('pointermove', this.boundHandlePointerMove)
+    canvas.addEventListener('pointerup', this.boundHandlePointerUp)
+    canvas.addEventListener('pointercancel', this.boundHandlePointerUp)
     canvas.addEventListener('dblclick', this.boundHandleDoubleClick)
     canvas.addEventListener('contextmenu', this.boundPreventContextMenu)
   }
 
   destroy() {
     const canvas = this.canvasController.canvas
-    canvas.removeEventListener('mousedown', this.boundHandleMouseDown)
-    canvas.removeEventListener('mousemove', this.boundHandleMouseMove)
-    canvas.removeEventListener('mouseup', this.boundHandleMouseUp)
+    canvas.removeEventListener('pointerdown', this.boundHandlePointerDown)
+    canvas.removeEventListener('pointermove', this.boundHandlePointerMove)
+    canvas.removeEventListener('pointerup', this.boundHandlePointerUp)
+    canvas.removeEventListener('pointercancel', this.boundHandlePointerUp)
     canvas.removeEventListener('dblclick', this.boundHandleDoubleClick)
     canvas.removeEventListener('contextmenu', this.boundPreventContextMenu)
     this._eventStream?.end()
     this._eventStream = null
   }
 
-  private handleMouseDown(event: MouseEvent) {
+  private handlePointerDown(event: PointerEvent) {
     if (!this.activeTool) return
-    if (event.button !== 0) return
+    if (
+      event.button !== 0 ||
+      !event.isPrimary ||
+      this.activePointerId !== null
+    ) {
+      return
+    }
 
-    const toolEvent = this.mouseEventToToolEvent(event)
+    event.preventDefault()
+    this.activePointerId = event.pointerId
+    this.canvasController.canvas.setPointerCapture(event.pointerId)
+    const toolEvent = this.pointerEventToToolEvent(event)
     this._eventStream = new EventStreamImpl()
     this.activeTool
       .handleDrag(this._eventStream, toolEvent)
       .catch(console.error)
   }
 
-  private handleMouseMove(event: MouseEvent) {
+  private handlePointerMove(event: PointerEvent) {
     if (!this.activeTool) return
 
-    const toolEvent = this.mouseEventToToolEvent(event)
     if (this._eventStream && !this._eventStream.done_) {
-      this._eventStream.push(toolEvent)
+      if (event.pointerId !== this.activePointerId) return
+      event.preventDefault()
+      const coalesced = event.getCoalescedEvents?.() ?? []
+      const events = coalesced.length > 0 ? coalesced : [event]
+      for (const pointerEvent of events) {
+        this._eventStream.push(this.pointerEventToToolEvent(pointerEvent))
+      }
     } else {
-      this.activeTool.handleHover(toolEvent)
+      this.activeTool.handleHover(this.pointerEventToToolEvent(event))
     }
   }
 
-  private handleMouseUp() {
+  private handlePointerUp(event: PointerEvent) {
+    if (event.pointerId !== this.activePointerId) return
+    event.preventDefault()
     if (this._eventStream) {
+      this._eventStream.push(this.pointerEventToToolEvent(event))
       this._eventStream.end()
       this._eventStream = null
     }
+    if (this.canvasController.canvas.hasPointerCapture(event.pointerId)) {
+      this.canvasController.canvas.releasePointerCapture(event.pointerId)
+    }
+    this.activePointerId = null
   }
 
   private handleDoubleClick() {
     // handled in mousedown via detail
   }
 
-  private mouseEventToToolEvent(event: MouseEvent): ToolEvent {
+  private pointerEventToToolEvent(event: PointerEvent): ToolEvent {
     const rect = this.canvasController.canvas.getBoundingClientRect()
     return {
       x: event.clientX - rect.left,
@@ -250,6 +283,8 @@ export class SceneController {
       pageX: event.pageX,
       pageY: event.pageY,
       detail: event.detail,
+      pressure: event.pressure,
+      pointerType: event.pointerType,
       altKey: event.altKey,
       ctrlKey: event.ctrlKey,
       shiftKey: event.shiftKey,

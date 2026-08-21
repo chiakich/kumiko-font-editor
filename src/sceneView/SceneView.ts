@@ -35,6 +35,7 @@ export interface SceneModel {
   pathInsertHandles?: { points: Array<{ x: number; y: number }> }
   penPreviewPath?: Path2D
   shapePreviewPath?: Path2D
+  brushPreviewPath?: Path2D
   // Translucent preview of a component about to be inserted (glyph-local).
   componentGhostPath?: Path2D
   // Destination region of the component being searched (glyph-local).
