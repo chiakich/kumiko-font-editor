@@ -43,6 +43,7 @@ export function GitHubSyncSectionContainer({
   projectId,
   onBlockingSyncConflictsChange,
 }: GitHubSyncSectionContainerProps) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const syncStatus = useGitHubSyncStatus({ projectId, enabled })
   const hasBlockingSyncConflicts = Boolean(
@@ -60,17 +61,21 @@ export function GitHubSyncSectionContainer({
         queryKey: projectSyncDirtyStatusQueryKey(projectId),
       })
       toaster.create({
-        title: '已套用遠端更新',
-        description: `更新了 ${result.appliedCount} 個檔案。`,
+        title: t('glyphInspector.toast.applyRemoteSuccessTitle'),
+        description: t('glyphInspector.toast.applyRemoteSuccessDescription', {
+          count: result.appliedCount,
+        }),
         type: 'success',
         duration: 3200,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: '套用遠端更新失敗',
+        title: t('glyphInspector.toast.applyRemoteFailedTitle'),
         description:
-          error instanceof Error ? error.message : '目前無法套用遠端更新。',
+          error instanceof Error
+            ? error.message
+            : t('glyphInspector.toast.applyRemoteFailedDescription'),
         type: 'error',
         duration: 4200,
         closable: true,

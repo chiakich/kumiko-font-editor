@@ -252,7 +252,10 @@ export const useGitHubCommitFlow = ({
       }
       return forkStatus
     } catch (error) {
-      const message = getErrorMessage(error, '目前無法讀取 GitHub fork 狀態。')
+      const message = getErrorMessage(
+        error,
+        t('glyphInspector.toast.forkStatusFailedDescription')
+      )
 
       if (isMissingGitHubTokenError(message)) {
         setForkStatusOverride(null)
@@ -260,7 +263,7 @@ export const useGitHubCommitFlow = ({
       }
 
       toaster.create({
-        title: '讀取 GitHub 狀態失敗',
+        title: t('glyphInspector.toast.forkStatusFailedTitle'),
         description: message,
         type: 'error',
         duration: 3600,
@@ -365,16 +368,21 @@ export const useGitHubCommitFlow = ({
         queryKey: githubSyncReportQueryKey(projectId),
       })
       toaster.create({
-        title: '已切換目前檢視版本',
-        description: `目前正在檢視 ${target.branch} 的內容。`,
+        title: t('glyphInspector.toast.switchSuccessTitle'),
+        description: t('glyphInspector.toast.switchSuccessDescription', {
+          branch: target.branch,
+        }),
         type: 'success',
         duration: 3200,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: '無法切換版本',
-        description: getErrorMessage(error, '目前無法切換 GitHub 版本。'),
+        title: t('glyphInspector.toast.switchFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.switchFailedDescription')
+        ),
         type: 'error',
         duration: 4200,
         closable: true,
@@ -396,16 +404,21 @@ export const useGitHubCommitFlow = ({
         })
       }
       toaster.create({
-        title: 'GitHub 已登入',
-        description: `目前登入帳號：${viewer.login}`,
+        title: t('glyphInspector.toast.loginSuccessTitle'),
+        description: t('glyphInspector.toast.loginSuccessDescription', {
+          login: viewer.login,
+        }),
         type: 'success',
         duration: 2600,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: 'GitHub 登入失敗',
-        description: getErrorMessage(error, '目前無法完成 GitHub 登入。'),
+        title: t('glyphInspector.toast.loginFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.loginFailedDescription')
+        ),
         type: 'error',
         duration: 3200,
         closable: true,
@@ -422,16 +435,19 @@ export const useGitHubCommitFlow = ({
       await logoutMutation.mutateAsync()
       setForkStatusOverride(null)
       toaster.create({
-        title: 'GitHub 已登出',
-        description: '目前 session 已清除。',
+        title: t('glyphInspector.toast.logoutSuccessTitle'),
+        description: t('glyphInspector.toast.logoutSuccessDescription'),
         type: 'success',
         duration: 2200,
         closable: true,
       })
     } catch (error) {
       toaster.create({
-        title: 'GitHub 登出失敗',
-        description: getErrorMessage(error, '目前無法登出 GitHub。'),
+        title: t('glyphInspector.toast.logoutFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.logoutFailedDescription')
+        ),
         type: 'error',
         duration: 3200,
         closable: true,
@@ -545,8 +561,11 @@ export const useGitHubCommitFlow = ({
       updateGitHubCommitDraft(nextDraft)
     } catch (error) {
       toaster.create({
-        title: '無法準備 GitHub commit',
-        description: getErrorMessage(error, '目前沒有可提交到 GitHub 的變更。'),
+        title: t('glyphInspector.toast.prepareFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.prepareFailedDescription')
+        ),
         type: 'error',
         duration: 3200,
         closable: true,
@@ -575,7 +594,7 @@ export const useGitHubCommitFlow = ({
         })
       }
       toaster.create({
-        title: 'GitHub fork 已建立',
+        title: t('glyphInspector.toast.forkCreatedTitle'),
         description: result.targetRepo?.fullName ?? githubRepoFullName,
         type: 'success',
         duration: 3200,
@@ -583,8 +602,11 @@ export const useGitHubCommitFlow = ({
       })
     } catch (error) {
       toaster.create({
-        title: '建立 fork 失敗',
-        description: getErrorMessage(error, '目前無法建立 GitHub fork。'),
+        title: t('glyphInspector.toast.forkCreateFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.forkCreateFailedDescription')
+        ),
         type: 'error',
         duration: 3600,
         closable: true,
@@ -606,8 +628,8 @@ export const useGitHubCommitFlow = ({
 
     if (!gitHubBranchName.trim()) {
       toaster.create({
-        title: '無法準備修改草稿',
-        description: '請重新開啟送出修改視窗後再試一次。',
+        title: t('glyphInspector.toast.draftUnavailableTitle'),
+        description: t('glyphInspector.toast.draftUnavailableDescription'),
         type: 'warning',
         duration: 2800,
         closable: true,
@@ -617,9 +639,8 @@ export const useGitHubCommitFlow = ({
 
     if (hasBlockingSyncConflicts) {
       toaster.create({
-        title: '有尚未處理的同步衝突',
-        description:
-          '請先在上方選擇每個衝突字符要保留哪個版本，再套用遠端更新。',
+        title: t('glyphInspector.toast.syncConflictsTitle'),
+        description: t('glyphInspector.toast.syncConflictsDescription'),
         type: 'warning',
         duration: 3600,
         closable: true,
@@ -721,19 +742,22 @@ export const useGitHubCommitFlow = ({
         await refreshGitCollaboration(projectId)
       }
       toaster.create({
-        title: '修改已送出',
-        description: '你的修改已送到 GitHub，現在可以等待合併或查看修改提案。',
+        title: t('glyphInspector.toast.commitSentTitle'),
+        description: t('glyphInspector.toast.commitSentDescription'),
         type: 'success',
         duration: 3600,
         closable: true,
       })
     } catch (error) {
-      const message = getErrorMessage(error, '目前無法建立 GitHub commit。')
+      const message = getErrorMessage(
+        error,
+        t('glyphInspector.toast.commitFailedDescription')
+      )
 
       if (isMissingGitHubTokenError(message)) {
         toaster.create({
-          title: '需要 GitHub 登入',
-          description: '請先登入 GitHub，再重新提交 commit。',
+          title: t('glyphInspector.toast.loginRequiredTitle'),
+          description: t('glyphInspector.toast.loginRequiredDescription'),
           type: 'warning',
           duration: 3200,
           closable: true,
@@ -743,7 +767,7 @@ export const useGitHubCommitFlow = ({
       }
 
       toaster.create({
-        title: '建立 commit 失敗',
+        title: t('glyphInspector.toast.commitFailedTitle'),
         description: message,
         type: 'error',
         duration: 4200,
@@ -771,7 +795,7 @@ export const useGitHubCommitFlow = ({
       })
       await refreshGitHubCompareStatus(result.branchName)
       toaster.create({
-        title: '已合併上游變更',
+        title: t('glyphInspector.toast.mergeSuccessTitle'),
         description: result.message,
         type: 'success',
         duration: 3600,
@@ -779,8 +803,11 @@ export const useGitHubCommitFlow = ({
       })
     } catch (error) {
       toaster.create({
-        title: '合併上游失敗',
-        description: getErrorMessage(error, '目前無法合併上游變更。'),
+        title: t('glyphInspector.toast.mergeFailedTitle'),
+        description: getErrorMessage(
+          error,
+          t('glyphInspector.toast.mergeFailedDescription')
+        ),
         type: 'error',
         duration: 4200,
         closable: true,
