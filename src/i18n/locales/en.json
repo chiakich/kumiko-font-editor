@@ -463,6 +463,8 @@
     "createBranch": "Create branch",
     "checkingRemote": "Checking the remote…",
     "pushingCommit": "Pushing…",
+    "missingPushScope": "This GitHub authorization cannot write to repositories (scopes: {{scopes}}). Re-authorize before committing.",
+    "reauthorizeGitHub": "Re-authorize GitHub",
     "createCommit": "Create commit",
     "defaultBranchLabel": "Default branch:",
     "deleteGlyph": "Delete glyph",

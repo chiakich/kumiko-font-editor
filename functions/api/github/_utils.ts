@@ -311,6 +311,34 @@ export const githubApiJson = async <T>(
   return payload as T
 }
 
+// GitHub reports the granted scopes on every API response. A token without a
+// write scope authenticates fine and only fails at push time, with git's raw
+// "Permission to X denied to Y" — so the scopes are read here and surfaced.
+export const getGitHubViewerWithScopes = async (token: string) => {
+  const response = await githubApiFetch(token, '/user')
+  const rawText = await response.text()
+  if (!response.ok) {
+    let message: string | undefined
+    try {
+      message = (JSON.parse(rawText) as { message?: string }).message
+    } catch {
+      message = rawText.trim().slice(0, 200)
+    }
+    throw new Error(message || `GitHub API 失敗（HTTP ${response.status}）`)
+  }
+  return {
+    viewer: JSON.parse(rawText) as GitHubViewerResponse,
+    scopes: (response.headers.get('x-oauth-scopes') ?? '')
+      .split(',')
+      .map((scope) => scope.trim())
+      .filter(Boolean),
+  }
+}
+
+// Pushing needs one of these; `repo` also covers private repositories.
+export const canScopesPush = (scopes: readonly string[]) =>
+  scopes.includes('repo') || scopes.includes('public_repo')
+
 export const getGitHubViewer = async (token: string) =>
   githubApiJson<GitHubViewerResponse>(token, '/user')
 

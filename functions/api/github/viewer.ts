@@ -1,6 +1,7 @@
 import type { PagesFunction } from '../../pages'
 import {
-  getGitHubViewer,
+  canScopesPush,
+  getGitHubViewerWithScopes,
   json,
   readGitHubAccessToken,
   type Env,
@@ -16,12 +17,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const payload = await getGitHubViewer(token)
+    const { viewer, scopes } = await getGitHubViewerWithScopes(token)
     return json({
-      login: payload.login ?? null,
-      avatarUrl: payload.avatar_url ?? null,
-      profileUrl: payload.html_url ?? null,
-      name: payload.name ?? null,
+      login: viewer.login ?? null,
+      avatarUrl: viewer.avatar_url ?? null,
+      profileUrl: viewer.html_url ?? null,
+      name: viewer.name ?? null,
+      scopes,
+      canPush: canScopesPush(scopes),
     })
   } catch (error) {
     return json(

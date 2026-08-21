@@ -3,6 +3,10 @@ export interface GitHubViewer {
   name: string | null
   profileUrl: string | null
   avatarUrl: string | null
+  // OAuth scopes the session token carries. A token without a write scope still
+  // authenticates, and only fails when git refuses the push.
+  scopes?: string[]
+  canPush?: boolean
 }
 
 export interface GitHubRepoSummary {

@@ -463,6 +463,8 @@
     "createBranch": "建立新 branch",
     "checkingRemote": "正在檢查遠端…",
     "pushingCommit": "推送中…",
+    "missingPushScope": "目前的 GitHub 授權沒有寫入權限（scope：{{scopes}}），提交前請重新授權。",
+    "reauthorizeGitHub": "重新授權 GitHub",
     "createCommit": "建立 Commit",
     "defaultBranchLabel": "預設分支：",
     "deleteGlyph": "刪除字符",

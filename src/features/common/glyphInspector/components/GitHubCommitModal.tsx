@@ -191,6 +191,26 @@ export function GitHubCommitModal({
                   </HStack>
                 </Box>
 
+                {githubViewer && githubViewer.canPush === false ? (
+                  // A read-only token authenticates fine and only fails at push
+                  // time, with git's own "Permission to X denied to Y".
+                  <Box
+                    borderWidth={1}
+                    borderRadius="lg"
+                    p={3}
+                    borderColor="orange.300"
+                  >
+                    <Text fontSize="sm" color="orange.600" mb={2}>
+                      {t('glyphInspector.missingPushScope', {
+                        scopes: githubViewer.scopes?.join(', ') || '—',
+                      })}
+                    </Text>
+                    <Button size="xs" onClick={onLoginGitHub}>
+                      {t('glyphInspector.reauthorizeGitHub')}
+                    </Button>
+                  </Box>
+                ) : null}
+
                 <GitHubSyncSectionContainer
                   enabled={isSyncEnabled}
                   projectId={projectId}
@@ -375,6 +395,7 @@ export function GitHubCommitModal({
                   isEditableRepoReadonly ||
                   !editableRepo ||
                   !canCommitToGitHub ||
+                  githubViewer.canPush === false ||
                   isPreparingGitHubCommit ||
                   isCheckingSyncStatus ||
                   hasBlockingSyncConflicts ||
