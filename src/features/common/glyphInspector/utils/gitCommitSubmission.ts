@@ -1,5 +1,6 @@
 import { fetchGitHubCompareStatus } from 'src/lib/github/githubAuth'
 import type { GitHubForkStatus } from 'src/lib/github/githubAuth'
+import type { GitCommitAuthor } from 'src/lib/git/worktree'
 
 export interface GitCommitSubmissionResult {
   headOwner: string
@@ -16,6 +17,7 @@ export const commitThroughGit = async (input: {
   branchName: string
   commitMessage: string
   forkStatus: GitHubForkStatus | null
+  author: GitCommitAuthor
 }): Promise<GitCommitSubmissionResult> => {
   const targetRepo = input.forkStatus?.targetRepo
   if (!targetRepo) {
@@ -42,6 +44,7 @@ export const commitThroughGit = async (input: {
     baseRepo: sourceRepo?.fullName ?? null,
     baseBranch: sourceRepo?.defaultBranch ?? null,
     message: input.commitMessage || `Update ${input.projectTitle}`,
+    author: input.author,
   })
 
   // The PR affordances read compare status, which stays a REST concern.

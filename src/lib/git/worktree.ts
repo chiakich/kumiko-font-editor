@@ -18,9 +18,14 @@ export interface GitWorktree {
   dir: string
 }
 
-const COMMIT_AUTHOR = {
+const DEFAULT_COMMIT_AUTHOR = {
   name: 'Kumiko',
   email: 'noreply@kumiko.font',
+}
+
+export interface GitCommitAuthor {
+  name: string
+  email: string
 }
 
 export const openGitWorktree = async (input: {
@@ -198,12 +203,13 @@ export const checkoutWorktreeBranch = async (input: {
 export const commitWorktree = async (input: {
   worktree: GitWorktree
   message: string
+  author?: GitCommitAuthor
 }) =>
   git.commit({
     fs: input.worktree.fs,
     dir: input.worktree.dir,
     message: input.message,
-    author: COMMIT_AUTHOR,
+    author: input.author ?? DEFAULT_COMMIT_AUTHOR,
   })
 
 // Deletes the whole repository. The worktree is rebuildable from IndexedDB, so

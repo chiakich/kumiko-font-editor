@@ -41,6 +41,11 @@ const forkStatus = {
   compare: null,
 } as never
 
+const author = {
+  name: 'Contributor',
+  email: '123+contributor@users.noreply.github.com',
+}
+
 beforeEach(() => {
   commitAndPushProject.mockReset()
   fetchGitHubCompareStatus.mockReset()
@@ -61,6 +66,7 @@ describe('committing through git', () => {
       branchName: 'kumiko/patch-1',
       commitMessage: 'Update A',
       forkStatus,
+      author,
     })
 
     expect(commitAndPushProject).toHaveBeenCalledWith(
@@ -68,6 +74,7 @@ describe('committing through git', () => {
         pushRepo: 'contributor/font',
         pushBranch: 'kumiko/patch-1',
         message: 'Update A',
+        author,
       })
     )
   })
@@ -79,6 +86,7 @@ describe('committing through git', () => {
       branchName: 'kumiko/patch-1',
       commitMessage: 'Update A',
       forkStatus,
+      author,
     })
 
     expect(commitAndPushProject).toHaveBeenCalledWith(
@@ -96,6 +104,7 @@ describe('committing through git', () => {
       branchName: 'kumiko/patch-1',
       commitMessage: 'Update A',
       forkStatus,
+      author,
     })
 
     expect(result).toEqual({
@@ -113,6 +122,7 @@ describe('committing through git', () => {
       branchName: 'kumiko/patch-1',
       commitMessage: '',
       forkStatus,
+      author,
     })
 
     expect(commitAndPushProject).toHaveBeenCalledWith(
@@ -128,6 +138,7 @@ describe('committing through git', () => {
         branchName: 'kumiko/patch-1',
         commitMessage: 'x',
         forkStatus: { ...(forkStatus as object), targetRepo: null } as never,
+        author,
       })
     ).rejects.toThrow('fork')
     expect(commitAndPushProject).not.toHaveBeenCalled()
@@ -141,6 +152,7 @@ describe('committing through git', () => {
         branchName: '',
         commitMessage: 'x',
         forkStatus,
+        author,
       })
     ).rejects.toThrow('branch')
     expect(commitAndPushProject).not.toHaveBeenCalled()
@@ -155,6 +167,7 @@ describe('committing through git', () => {
       branchName: 'kumiko/patch-1',
       commitMessage: 'Update A',
       forkStatus,
+      author,
     })
 
     expect(result.compare).toBeNull()

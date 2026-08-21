@@ -206,7 +206,7 @@ const makeProjectFontDataFromMetadata = (
 const buildUfoFontInfoFromProject = (
   project: KumikoProjectRecord,
   fontInfoName: string
-) => ({
+): Record<string, unknown> => ({
   ...fontInfoToUfoFontInfo(
     project.fontInfo,
     fontInfoName,
@@ -225,6 +225,27 @@ const buildUfoFontInfoFromProject = (
     ? { capHeight: project.lineMetricsHorizontalLayout.capHeight.value }
     : {}),
 })
+
+// `fontinfoExtra` preserves fields Kumiko does not edit, but it must not mask
+// fields the user *does* edit. Keep the source's style name (Kumiko has no UI
+// for it) while letting the canonical project settings replace their matching
+// UFO fields.
+const buildMergedUfoFontInfo = (
+  project: KumikoProjectRecord,
+  source: KumikoProjectUfoSource,
+  fontInfoName: string
+) => {
+  const generated = buildUfoFontInfoFromProject(project, fontInfoName)
+  if (!source.fontinfoExtra) {
+    return generated
+  }
+  const { styleName, ...generatedWithoutStyleName } = generated
+  return {
+    ...source.fontinfoExtra,
+    ...generatedWithoutStyleName,
+    styleName: source.fontinfoExtra.styleName ?? styleName,
+  }
+}
 
 const makeUniqueUfoDir = (
   name: string,
@@ -864,9 +885,11 @@ const buildMetadata = (
     ufoId: source.ufoId,
     relativePath: source.relativePath,
     metainfo: source.metainfo ?? {},
-    fontinfo:
-      source.fontinfoExtra ??
-      buildUfoFontInfoFromProject(project, project.title || project.projectId),
+    fontinfo: buildMergedUfoFontInfo(
+      project,
+      source,
+      project.title || project.projectId
+    ),
     lib: buildUfoLibFromFontData(metadataFontData, source.libExtra),
     groups: ufoKerning.groups,
     kerning: ufoKerning.kerning,

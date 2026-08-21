@@ -1,4 +1,5 @@
 export interface GitHubViewer {
+  id: number | null
   login: string | null
   name: string | null
   profileUrl: string | null
@@ -7,6 +8,28 @@ export interface GitHubViewer {
   // authenticates, and only fails when git refuses the push.
   scopes?: string[]
   canPush?: boolean
+}
+
+// GitHub only links a pushed commit to an account when its author email is a
+// verified address. The ID-based noreply form remains valid even when users
+// hide their email address, unlike the legacy login-only form.
+export const gitCommitAuthorForGitHubViewer = (
+  viewer: Pick<GitHubViewer, 'id' | 'login' | 'name'> | null
+) => {
+  const login = viewer?.login?.trim()
+  const id = viewer?.id
+  if (
+    !login ||
+    typeof id !== 'number' ||
+    !Number.isSafeInteger(id) ||
+    id <= 0
+  ) {
+    return null
+  }
+  return {
+    name: viewer?.name?.trim() || login,
+    email: `${id}+${login}@users.noreply.github.com`,
+  }
 }
 
 export interface GitHubRepoSummary {

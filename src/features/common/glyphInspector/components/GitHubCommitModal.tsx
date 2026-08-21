@@ -349,218 +349,196 @@ export function GitHubCommitModal({
                     {!isEditableRepoReadonly && editableRepo ? (
                       <>
                         {canCommitToGitHub ? (
-                          <>
-                            <Field.Root>
-                              <Field.Label>
-                                {t('glyphInspector.commitMessage')}
-                              </Field.Label>
-                              <Input
-                                value={gitHubCommitMessage}
-                                onChange={(event) =>
-                                  onCommitMessageChange(event.target.value)
-                                }
-                                placeholder={suggestedCommitMessage}
-                                disabled={isPreparingGitHubCommit}
-                              />
-                            </Field.Root>
-                            <Box borderWidth={1} borderRadius="md" p={3}>
-                              <HStack justify="space-between" gap={3}>
-                                <Box>
-                                  <Text fontSize="sm" fontWeight="medium">
-                                    {t('glyphInspector.advancedControls')}
-                                  </Text>
-                                  <Text fontSize="xs" color="mutedForeground">
-                                    {t(
-                                      'glyphInspector.advancedControlsDescription'
-                                    )}
-                                  </Text>
-                                </Box>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  aria-expanded={showAdvancedBranchOptions}
-                                  onClick={() =>
-                                    setShowAdvancedBranchOptions(
-                                      (current) => !current
-                                    )
-                                  }
+                          <Field.Root>
+                            <Field.Label>
+                              {t('glyphInspector.commitMessage')}
+                            </Field.Label>
+                            <Input
+                              value={gitHubCommitMessage}
+                              onChange={(event) =>
+                                onCommitMessageChange(event.target.value)
+                              }
+                              placeholder={suggestedCommitMessage}
+                              disabled={isPreparingGitHubCommit}
+                            />
+                          </Field.Root>
+                        ) : null}
+                        <Box borderWidth={1} borderRadius="md" p={3}>
+                          <HStack justify="space-between" gap={3}>
+                            <Box>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {t('glyphInspector.advancedControls')}
+                              </Text>
+                              <Text fontSize="xs" color="mutedForeground">
+                                {t(
+                                  'glyphInspector.advancedControlsDescription'
+                                )}
+                              </Text>
+                            </Box>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              aria-expanded={showAdvancedBranchOptions}
+                              onClick={() =>
+                                setShowAdvancedBranchOptions(
+                                  (current) => !current
+                                )
+                              }
+                            >
+                              {showAdvancedBranchOptions
+                                ? t('glyphInspector.hideAdvancedControls')
+                                : t('glyphInspector.showAdvancedControls')}
+                            </Button>
+                          </HStack>
+                          {showAdvancedBranchOptions ? (
+                            <Stack gap={3} mt={3}>
+                              <Text fontSize="sm" color="mutedForeground">
+                                一般情況不需要調整。Kumiko
+                                會用這次修改的草稿位置來送出內容。
+                              </Text>
+                              {isSyncEnabled ? (
+                                <Box
+                                  borderWidth={1}
+                                  borderRadius="md"
+                                  p={3}
+                                  bg="muted"
                                 >
-                                  {showAdvancedBranchOptions
-                                    ? t('glyphInspector.hideAdvancedControls')
-                                    : t('glyphInspector.showAdvancedControls')}
-                                </Button>
-                              </HStack>
-                              {showAdvancedBranchOptions ? (
-                                <Stack gap={3} mt={3}>
-                                  <Text fontSize="sm" color="mutedForeground">
-                                    一般情況不需要調整。Kumiko
-                                    會用這次修改的草稿位置來送出內容。
+                                  <Text fontSize="sm" fontWeight="medium">
+                                    目前檢視版本
                                   </Text>
-                                  {isSyncEnabled ? (
-                                    <Box
-                                      borderWidth={1}
-                                      borderRadius="md"
-                                      p={3}
-                                      bg="muted"
-                                    >
-                                      <Text fontSize="sm" fontWeight="medium">
-                                        目前檢視版本
-                                      </Text>
-                                      <Text
-                                        fontSize="sm"
-                                        color="mutedForeground"
-                                      >
-                                        {activeGitTarget
-                                          ? `${activeGitTarget.owner}/${activeGitTarget.repo} · ${activeGitTarget.ref}`
-                                          : '尚未讀取版本資訊'}
-                                      </Text>
-                                      <Button
-                                        size="xs"
-                                        variant="outline"
-                                        mt={2}
-                                        onClick={onSwitchToMergeTarget}
-                                        disabled={
-                                          isSwitchingGitBranch ||
-                                          isViewingMergeTarget ||
-                                          !sourceRepo
-                                        }
-                                      >
-                                        切換到合併目標（
-                                        {sourceRepo?.defaultBranch ??
-                                          '預設版本'}
-                                        ）
-                                      </Button>
-                                    </Box>
-                                  ) : null}
-                                  {githubForkStatus?.branches.length ? (
-                                    <Field.Root>
-                                      <Field.Label>
-                                        {isSyncEnabled
-                                          ? '切換到你的 GitHub 副本中的版本'
-                                          : t('glyphInspector.branch')}
-                                      </Field.Label>
-                                      <HStack align="end">
-                                        <NativeSelect
-                                          disabled={isSwitchingGitBranch}
-                                          fieldProps={{
-                                            value: isSyncEnabled
-                                              ? githubForkStatus.branches.includes(
-                                                  activeBranchInEditableRepo
-                                                )
-                                                ? activeBranchInEditableRepo
-                                                : ''
-                                              : !isCreatingNewBranch &&
-                                                  githubForkStatus.branches.includes(
-                                                    gitHubBranchName.trim()
-                                                  )
-                                                ? gitHubBranchName.trim()
-                                                : '',
-                                            onChange: (event) =>
-                                              onBranchSelect(
-                                                event.target.value
-                                              ),
-                                          }}
-                                        >
-                                          <option value="">
-                                            {t('glyphInspector.selectBranch')}
-                                          </option>
-                                          {githubForkStatus.branches.map(
-                                            (branch) => (
-                                              <option
-                                                key={branch}
-                                                value={branch}
-                                              >
-                                                {branch}
-                                              </option>
-                                            )
-                                          )}
-                                        </NativeSelect>
-                                        <IconButton
-                                          aria-label={t(
-                                            'glyphInspector.createBranch'
-                                          )}
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={onStartNewBranch}
-                                          disabled={isSwitchingGitBranch}
-                                        >
-                                          <span>+</span>
-                                        </IconButton>
-                                      </HStack>
-                                    </Field.Root>
-                                  ) : null}
-                                  {isSyncEnabled && changeDrafts.length > 0 ? (
-                                    <Box
-                                      borderWidth={1}
-                                      borderRadius="md"
-                                      p={3}
-                                    >
-                                      <Text fontSize="sm" fontWeight="medium">
-                                        已送出的修改草稿
-                                      </Text>
-                                      <Stack gap={2} mt={2}>
-                                        {changeDrafts.map((draft) => {
-                                          const isActive =
-                                            activeGitTarget?.owner ===
-                                              draft.owner &&
-                                            activeGitTarget.repo ===
-                                              draft.repo &&
-                                            activeGitTarget.ref === draft.ref
-                                          return (
-                                            <HStack
-                                              key={`${draft.owner}/${draft.repo}:${draft.ref}`}
-                                              justify="space-between"
-                                              gap={3}
-                                            >
-                                              <Text fontSize="sm">
-                                                {draft.ref}
-                                              </Text>
-                                              {isActive ? (
-                                                <Badge colorPalette="blue">
-                                                  目前檢視
-                                                </Badge>
-                                              ) : (
-                                                <Button
-                                                  size="xs"
-                                                  variant="outline"
-                                                  onClick={() =>
-                                                    onBranchSelect(draft.ref)
-                                                  }
-                                                  disabled={
-                                                    isSwitchingGitBranch
-                                                  }
-                                                >
-                                                  切換查看
-                                                </Button>
-                                              )}
-                                            </HStack>
-                                          )
-                                        })}
-                                      </Stack>
-                                    </Box>
-                                  ) : null}
-                                  <Field.Root
-                                    display={
-                                      isCreatingNewBranch ? 'block' : 'none'
+                                  <Text fontSize="sm" color="mutedForeground">
+                                    {activeGitTarget
+                                      ? `${activeGitTarget.owner}/${activeGitTarget.repo} · ${activeGitTarget.ref}`
+                                      : '尚未讀取版本資訊'}
+                                  </Text>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    mt={2}
+                                    onClick={onSwitchToMergeTarget}
+                                    disabled={
+                                      isSwitchingGitBranch ||
+                                      isViewingMergeTarget ||
+                                      !sourceRepo
                                     }
                                   >
-                                    <Field.Label>
-                                      {t('glyphInspector.branchName')}
-                                    </Field.Label>
-                                    <Input
-                                      value={gitHubBranchName}
-                                      onChange={(event) =>
-                                        onBranchNameChange(event.target.value)
-                                      }
-                                      placeholder="kumiko/update-glyphs"
-                                      disabled={isPreparingGitHubCommit}
-                                    />
-                                  </Field.Root>
-                                </Stack>
+                                    切換到合併目標（
+                                    {sourceRepo?.defaultBranch ?? '預設版本'}）
+                                  </Button>
+                                </Box>
                               ) : null}
-                            </Box>
-                          </>
-                        ) : (
+                              {githubForkStatus?.branches.length ? (
+                                <Field.Root>
+                                  <Field.Label>
+                                    {isSyncEnabled
+                                      ? '切換到你的 GitHub 副本中的版本'
+                                      : t('glyphInspector.branch')}
+                                  </Field.Label>
+                                  <HStack align="end">
+                                    <NativeSelect
+                                      disabled={isSwitchingGitBranch}
+                                      fieldProps={{
+                                        value: isSyncEnabled
+                                          ? githubForkStatus.branches.includes(
+                                              activeBranchInEditableRepo
+                                            )
+                                            ? activeBranchInEditableRepo
+                                            : ''
+                                          : !isCreatingNewBranch &&
+                                              githubForkStatus.branches.includes(
+                                                gitHubBranchName.trim()
+                                              )
+                                            ? gitHubBranchName.trim()
+                                            : '',
+                                        onChange: (event) =>
+                                          onBranchSelect(event.target.value),
+                                      }}
+                                    >
+                                      <option value="">
+                                        {t('glyphInspector.selectBranch')}
+                                      </option>
+                                      {githubForkStatus.branches.map(
+                                        (branch) => (
+                                          <option key={branch} value={branch}>
+                                            {branch}
+                                          </option>
+                                        )
+                                      )}
+                                    </NativeSelect>
+                                    <IconButton
+                                      aria-label={t(
+                                        'glyphInspector.createBranch'
+                                      )}
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={onStartNewBranch}
+                                      disabled={isSwitchingGitBranch}
+                                    >
+                                      <span>+</span>
+                                    </IconButton>
+                                  </HStack>
+                                </Field.Root>
+                              ) : null}
+                              {isSyncEnabled && changeDrafts.length > 0 ? (
+                                <Box borderWidth={1} borderRadius="md" p={3}>
+                                  <Text fontSize="sm" fontWeight="medium">
+                                    已送出的修改草稿
+                                  </Text>
+                                  <Stack gap={2} mt={2}>
+                                    {changeDrafts.map((draft) => {
+                                      const isActive =
+                                        activeGitTarget?.owner ===
+                                          draft.owner &&
+                                        activeGitTarget.repo === draft.repo &&
+                                        activeGitTarget.ref === draft.ref
+                                      return (
+                                        <HStack
+                                          key={`${draft.owner}/${draft.repo}:${draft.ref}`}
+                                          justify="space-between"
+                                          gap={3}
+                                        >
+                                          <Text fontSize="sm">{draft.ref}</Text>
+                                          {isActive ? (
+                                            <Badge colorPalette="blue">
+                                              目前檢視
+                                            </Badge>
+                                          ) : (
+                                            <Button
+                                              size="xs"
+                                              variant="outline"
+                                              onClick={() =>
+                                                onBranchSelect(draft.ref)
+                                              }
+                                              disabled={isSwitchingGitBranch}
+                                            >
+                                              切換查看
+                                            </Button>
+                                          )}
+                                        </HStack>
+                                      )
+                                    })}
+                                  </Stack>
+                                </Box>
+                              ) : null}
+                              <Field.Root
+                                display={isCreatingNewBranch ? 'block' : 'none'}
+                              >
+                                <Field.Label>
+                                  {t('glyphInspector.branchName')}
+                                </Field.Label>
+                                <Input
+                                  value={gitHubBranchName}
+                                  onChange={(event) =>
+                                    onBranchNameChange(event.target.value)
+                                  }
+                                  placeholder="kumiko/update-glyphs"
+                                  disabled={isPreparingGitHubCommit}
+                                />
+                              </Field.Root>
+                            </Stack>
+                          ) : null}
+                        </Box>
+                        {!canCommitToGitHub ? (
                           <Box
                             borderWidth={1}
                             borderRadius="lg"
@@ -574,7 +552,7 @@ export function GitHubCommitModal({
                               {t('glyphInspector.emptyCommitMessageHint')}
                             </Text>
                           </Box>
-                        )}
+                        ) : null}
                       </>
                     ) : null}
                   </>

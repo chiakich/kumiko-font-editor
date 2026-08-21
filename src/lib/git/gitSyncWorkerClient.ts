@@ -5,6 +5,7 @@ import type {
   GitSyncTarget,
   switchGitProjectBranch,
 } from 'src/lib/git/gitSync'
+import type { GitCommitAuthor } from 'src/lib/git/worktree'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
@@ -132,6 +133,7 @@ export const commitAndPushProjectInWorker = (input: {
   baseRepo: string | null
   baseBranch: string | null
   message: string
+  author: GitCommitAuthor
 }) => request<GitCommitAndPushResult>('commit-and-push', { ...input })
 
 // Pulling parses every remote glif it touches. That used to need DOMParser,

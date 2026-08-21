@@ -3,6 +3,7 @@ import { useDisclosure } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
+  gitCommitAuthorForGitHubViewer,
   startGitHubOAuthLogin,
   type GitHubForkStatus,
 } from 'src/lib/github/githubAuth'
@@ -613,6 +614,18 @@ export const useGitHubCommitFlow = ({
       return
     }
 
+    const commitAuthor = gitCommitAuthorForGitHubViewer(githubViewer)
+    if (!commitAuthor) {
+      toaster.create({
+        title: t('glyphInspector.toast.loginRequiredTitle'),
+        description: t('glyphInspector.toast.loginRequiredDescription'),
+        type: 'warning',
+        duration: 3200,
+        closable: true,
+      })
+      return
+    }
+
     try {
       setIsCommittingToGitHub(true)
       await flushPendingDraft(
@@ -642,6 +655,7 @@ export const useGitHubCommitFlow = ({
         branchName: gitHubBranchName.trim(),
         commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
         forkStatus: githubForkStatus,
+        author: commitAuthor,
       })
       markDraftSaved()
       markLocalSaved()

@@ -19,6 +19,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     const { viewer, scopes } = await getGitHubViewerWithScopes(token)
     return json({
+      id: typeof viewer.id === 'number' ? viewer.id : null,
       login: viewer.login ?? null,
       avatarUrl: viewer.avatar_url ?? null,
       profileUrl: viewer.html_url ?? null,

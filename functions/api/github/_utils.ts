@@ -18,6 +18,7 @@ export interface RepoMetadataResponse {
 }
 
 export interface GitHubViewerResponse {
+  id?: number
   login: string
   avatar_url?: string
   html_url?: string

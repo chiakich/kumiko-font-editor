@@ -106,6 +106,7 @@ describe('markDraftSaved', () => {
 
     expect(useStore.getState().dirtyGlyphIds).toEqual([])
     expect(useStore.getState().persistenceQueue.projectQueued).toBe(true)
+    expect(useStore.getState().hasLocalChanges).toBe(true)
     expect(useStore.getState().isDirty).toBe(true)
   })
 

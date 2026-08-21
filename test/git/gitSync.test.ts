@@ -15,6 +15,7 @@ import {
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
+  saveKumikoProjectRecord,
 } from 'src/lib/project/kumikoProjectPersistence'
 import { createMemoryFileStore } from './memoryFileStore'
 import type { FileStore } from 'src/lib/git/fileStore'
@@ -361,6 +362,44 @@ describe('git sync report', () => {
     expect(report.conflicts).toHaveLength(0)
     // Local-only work still counts as up to date: there is nothing to pull.
     expect(report.isUpToDate).toBe(true)
+  })
+
+  it('detects a font-level edit without requiring a dirty glyph', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-local-font')
+    const { worktree, base } = await seedRepo('gs-local-font', store)
+    await git.writeRef({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      ref: 'refs/remotes/origin/main',
+      value: base,
+      force: true,
+    })
+
+    const project = await loadKumikoProjectRecord('gs-local-font')
+    await saveKumikoProjectRecord({
+      ...project!,
+      fontInfo: {
+        ...project!.fontInfo,
+        familyName: 'Renamed Kumiko',
+      },
+      syncDirty: 1,
+    })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: base,
+      mergeBaseSha: base,
+      localHeadSha: base,
+    })
+
+    const report = await buildGitSyncReport({
+      target: target('gs-local-font'),
+      store,
+    })
+
+    expect(report.localChanges.map((entry) => entry.path)).toContain(
+      'Kumiko.ufo/fontinfo.plist'
+    )
+    expect(report.conflicts).toHaveLength(0)
   })
 
   it('conflicts when the same path moved on both sides', async () => {

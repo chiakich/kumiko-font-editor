@@ -9,6 +9,7 @@ import {
   type GitSyncReport,
   type GitSyncTarget,
 } from 'src/lib/git/gitSync'
+import type { GitCommitAuthor } from 'src/lib/git/worktree'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
@@ -32,6 +33,7 @@ interface CommitAndPushRequest {
     baseRepo: string | null
     baseBranch: string | null
     message: string
+    author: GitCommitAuthor
   }
 }
 
@@ -126,8 +128,15 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
     }
 
     if (request.type === 'commit-and-push') {
-      const { projectId, pushRepo, pushBranch, baseRepo, baseBranch, message } =
-        request.payload
+      const {
+        projectId,
+        pushRepo,
+        pushBranch,
+        baseRepo,
+        baseBranch,
+        message,
+        author,
+      } = request.payload
       const result = await commitAndPushProject({
         projectId,
         pushRepo,
@@ -135,6 +144,7 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         baseRepo,
         baseBranch,
         message,
+        author,
       })
       // Bookkeeping stays next to the commit: it reverses the paths the commit
       // actually wrote, so it must not run against a different materialization.

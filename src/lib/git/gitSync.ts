@@ -18,6 +18,7 @@ import {
   stageWorktreePaths,
   syncWorktreeFromProject,
   checkoutWorktreeBranch,
+  type GitCommitAuthor,
   type GitWorktree,
 } from 'src/lib/git/worktree'
 import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
@@ -343,6 +344,7 @@ export const commitAndPushProject = async (input: {
   baseRepo?: string | null
   baseBranch?: string | null
   message: string
+  author: GitCommitAuthor
   store?: FileStore
 }): Promise<GitCommitAndPushResult> => {
   const worktree = await openGitWorktree({
@@ -407,7 +409,11 @@ export const commitAndPushProject = async (input: {
     }
   }
 
-  const commitSha = await commitWorktree({ worktree, message: input.message })
+  const commitSha = await commitWorktree({
+    worktree,
+    message: input.message,
+    author: input.author,
+  })
 
   await pushBranch({
     worktree,

@@ -85,8 +85,13 @@ export function useRightPanelModel() {
     projectId,
     enabled: hasGitHubSource,
   })
+  // Font settings (for example, family name) dirty the project rather than an
+  // individual glyph. `hasLocalChanges` covers that in-memory interval before
+  // IndexedDB has finished persisting its project-level sync flag.
   const hasRuntimeGitHubChanges =
-    localDirtyGlyphIds.length > 0 || localDeletedGlyphIds.length > 0
+    hasLocalChanges ||
+    localDirtyGlyphIds.length > 0 ||
+    localDeletedGlyphIds.length > 0
   const hasPersistedGitHubChanges = persistedSyncDirtyQuery.data ?? false
   const canCommitToGitHub = Boolean(
     projectId &&
