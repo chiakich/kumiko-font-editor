@@ -1,13 +1,8 @@
-import {
-  applyKumikoRemoteSnapshot,
-  buildKumikoProjectSyncReport,
-  resolveKumikoSyncTarget,
-} from 'src/lib/github/sync/kumikoUfoSync'
+import { resolveKumikoSyncTarget } from 'src/lib/github/sync/kumikoUfoSync'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
 } from 'src/lib/github/sync/types'
-import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
 import { loadKumikoProjectRecord } from 'src/lib/project/kumikoProjectPersistence'
 import type { EntitySyncStatus } from 'src/lib/git/entitySync'
 import type { GlyphSyncStatus } from 'src/lib/github/sync/types'
@@ -64,18 +59,14 @@ const asProjectSyncReport = (
 export const buildProjectSyncReport = async (input: {
   projectId: string
 }): Promise<ProjectSyncReport | null> => {
-  if (!loadGitSyncEnabled()) {
-    return buildKumikoProjectSyncReport(input)
-  }
-
   const project = await loadKumikoProjectRecord(input.projectId)
   const target = project ? resolveKumikoSyncTarget(project) : null
   if (!target) {
     return null
   }
 
-  // Loaded on demand so projects on the REST path never ship the git stack, and
-  // run in a worker because the report hashes the entire project.
+  // Run in a worker because fetching and walking a CJK-scale project must not
+  // block the editor.
   const { buildGitSyncReportInWorker } =
     await import('src/lib/git/gitSyncWorkerClient')
   const report = await buildGitSyncReportInWorker({
@@ -100,12 +91,7 @@ export const applyRemoteSnapshot = async (input: {
   report: ProjectSyncReport
   resolutions?: Record<string, SyncConflictResolution>
 }): Promise<ApplyRemoteResult> => {
-  if (!loadGitSyncEnabled()) {
-    return applyKumikoRemoteSnapshot(input)
-  }
-
-  // Loaded on demand so projects on the REST path never ship the git stack, and
-  // run in the worker: a pull parses every remote glyph it touches.
+  // A pull parses every remote glif it touches, so it stays in the worker.
   const { applyGitRemoteChangesInWorker } =
     await import('src/lib/git/gitSyncWorkerClient')
   return applyGitRemoteChangesInWorker({

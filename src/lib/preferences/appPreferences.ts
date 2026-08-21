@@ -9,9 +9,6 @@ const OVERVIEW_CUSTOM_FILTERS_STORAGE_KEY =
   'kumiko.app.overviewCustomFilters.v1'
 const GLYPH_COLOR_LABEL_DISPLAY_MODE_STORAGE_KEY =
   'kumiko.app.glyphColorLabelDisplayMode.v1'
-// Opt-in while the git transport has not been verified against a live
-// repository. Off means the REST sync path stays in charge.
-const GIT_SYNC_ENABLED_STORAGE_KEY = 'kumiko.app.gitSyncEnabled.v1'
 export type GlyphColorLabelDisplayMode = 'card' | 'dot'
 
 const DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE: GlyphColorLabelDisplayMode =
@@ -155,30 +152,3 @@ export const useGlyphColorLabelDisplayMode = (): GlyphColorLabelDisplayMode =>
     () => loadGlyphColorLabelDisplayMode(),
     () => DEFAULT_GLYPH_COLOR_LABEL_DISPLAY_MODE
   )
-
-export const loadGitSyncEnabled = (
-  storage: StorageLike | null = getLocalStorage()
-): boolean => {
-  if (!storage) {
-    return false
-  }
-  try {
-    return storage.getItem(GIT_SYNC_ENABLED_STORAGE_KEY) === 'true'
-  } catch {
-    return false
-  }
-}
-
-export const saveGitSyncEnabled = (
-  enabled: boolean,
-  storage: StorageLike | null = getLocalStorage()
-) => {
-  if (storage) {
-    try {
-      storage.setItem(GIT_SYNC_ENABLED_STORAGE_KEY, enabled ? 'true' : 'false')
-    } catch {
-      // Keep the in-memory setting responsive even when storage is unavailable.
-    }
-  }
-  return enabled
-}

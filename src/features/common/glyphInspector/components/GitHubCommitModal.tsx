@@ -363,20 +363,33 @@ export function GitHubCommitModal({
                                 disabled={isPreparingGitHubCommit}
                               />
                             </Field.Root>
-                            <Box>
-                              <Button
-                                size="xs"
-                                variant="ghost"
-                                onClick={() =>
-                                  setShowAdvancedBranchOptions(
-                                    (current) => !current
-                                  )
-                                }
-                              >
-                                {showAdvancedBranchOptions
-                                  ? '收合進階 GitHub 選項'
-                                  : '進階 GitHub 選項'}
-                              </Button>
+                            <Box borderWidth={1} borderRadius="md" p={3}>
+                              <HStack justify="space-between" gap={3}>
+                                <Box>
+                                  <Text fontSize="sm" fontWeight="medium">
+                                    {t('glyphInspector.advancedControls')}
+                                  </Text>
+                                  <Text fontSize="xs" color="mutedForeground">
+                                    {t(
+                                      'glyphInspector.advancedControlsDescription'
+                                    )}
+                                  </Text>
+                                </Box>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  aria-expanded={showAdvancedBranchOptions}
+                                  onClick={() =>
+                                    setShowAdvancedBranchOptions(
+                                      (current) => !current
+                                    )
+                                  }
+                                >
+                                  {showAdvancedBranchOptions
+                                    ? t('glyphInspector.hideAdvancedControls')
+                                    : t('glyphInspector.showAdvancedControls')}
+                                </Button>
+                              </HStack>
                               {showAdvancedBranchOptions ? (
                                 <Stack gap={3} mt={3}>
                                   <Text fontSize="sm" color="mutedForeground">

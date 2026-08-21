@@ -274,7 +274,7 @@ session 結束或斷線，狀態落回 IndexedDB；git 同步完全不知道即�
 
 OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消費者，提前常駐只會替每個 CJK 專案多背數萬個檔案與一份無人讀取的過期狀態。改到 Phase 2 與 isomorphic-git 一起落地。
 
-**Phase 2 — 接 isomorphic-git（機制已完成，尚未成為預設）**
+**Phase 2 — 接 isomorphic-git（已成為預設）**
 
 加 `/api/github/git/*` proxy；git 只負責 fetch / merge base / commit / push；衝突偵測換成 entity 三方比較，UI 沿用現有 per-glyph 解法。fork / compare / merge 這些 GitHub 專屬操作繼續走現有 REST endpoint——git 只取代資料平面。
 
@@ -299,13 +299,13 @@ OPFS 常駐工作樹**不在 Phase 1 做**：在 git 接上之前沒有任何消
 - **兩邊改成一樣不是衝突**，是收斂；任一 master 衝突則整個 glyph entity 升級為衝突。
 - **proxy 不轉發呼叫端 header**，token 由 server 端注入，回應只放行 content-type。
 
-三條路徑都已接上開關（`kumiko.app.gitSyncEnabled.v1`）：
+Git 現在是唯一的同步資料平面：
 
-| 動作          | 開關關閉（預設）                                           | 開關開啟                                                       |
-| ------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
-| 產生同步報告  | `buildKumikoProjectSyncReport`（REST tree API + 逐檔 SHA） | `buildGitSyncReport`（fetch + merge base + blob OID 三方比較） |
-| 套用遠端變更  | `applyKumikoRemoteSnapshot`（下載 archive zip）            | `applyGitRemoteChanges`（從 fetch 到的 commit 讀需要的路徑）   |
-| commit / push | `/api/github/commit`（blob/tree/commit API）               | `commitAndPushProject` + `markGitCommitSynced`                 |
+| 動作          | 預設流程                                                       |
+| ------------- | -------------------------------------------------------------- |
+| 產生同步報告  | `buildGitSyncReport`（fetch + merge base + blob OID 三方比較） |
+| 套用遠端變更  | `applyGitRemoteChanges`（從 fetch 到的 commit 讀需要的路徑）   |
+| commit / push | `commitAndPushProject` + `markGitCommitSynced`                 |
 
 兩條 pull 路徑共用同一份 canonical 寫回邏輯：`applyKumikoRemoteSnapshot` 的遠端樹可注入（`remoteUfos`），git 端從 commit 組出同樣的 `ParsedUfoFolder` 形狀，因此格式轉換沒有第二份實作。
 

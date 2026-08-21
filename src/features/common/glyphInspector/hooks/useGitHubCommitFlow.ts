@@ -11,7 +11,6 @@ import {
   fetchCachedGitHubCompareStatus,
   fetchCachedGitHubForkStatus,
   setForkStatusQueryData,
-  useCreateGitHubCommitMutation,
   useCreateGitHubForkMutation,
   useGitHubForkStatusQuery,
   useGitHubViewerQuery,
@@ -19,10 +18,6 @@ import {
   useLogoutGitHubMutation,
   useMergeGitHubUpstreamMutation,
 } from 'src/lib/github/githubQueries'
-import {
-  markGitHubCommitSynced,
-  prepareGitHubCommit,
-} from 'src/lib/github/githubPr'
 import { buildCurrentDraftFlushInput } from 'src/lib/project/currentDraftFlush'
 import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
 import { useStore, type FontData } from 'src/store'
@@ -41,7 +36,6 @@ import {
 } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
 import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
-import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
 import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
 import {
@@ -220,7 +214,6 @@ export const useGitHubCommitFlow = ({
   const loginMutation = useLoginGitHubMutation()
   const logoutMutation = useLogoutGitHubMutation()
   const createForkMutation = useCreateGitHubForkMutation()
-  const createCommitMutation = useCreateGitHubCommitMutation()
   const mergeUpstreamMutation = useMergeGitHubUpstreamMutation()
   const githubForkStatus = forkStatusOverride ?? forkStatusQuery.data ?? null
   const loadGitHubForkStatus = async (
@@ -338,7 +331,6 @@ export const useGitHubCommitFlow = ({
     branch: string
   }) => {
     if (
-      !loadGitSyncEnabled() ||
       !projectId ||
       !target.repo ||
       !target.branch.trim() ||
@@ -399,8 +391,7 @@ export const useGitHubCommitFlow = ({
         await loadGitHubForkStatus(gitHubBranchName.trim() || undefined, {
           // A fork-status response defaults to its default branch. In git mode
           // that is the merge base, not an implicit destination for a change.
-          syncDraftSelection:
-            !loadGitSyncEnabled() || Boolean(gitHubBranchName.trim()),
+          syncDraftSelection: Boolean(gitHubBranchName.trim()),
         })
       }
       toaster.create({
@@ -462,10 +453,7 @@ export const useGitHubCommitFlow = ({
       return
     }
 
-    const gitSyncEnabled = loadGitSyncEnabled()
-    const collaboration = gitSyncEnabled
-      ? await refreshGitCollaboration(projectId)
-      : null
+    const collaboration = await refreshGitCollaboration(projectId)
     const selectedBranch = gitHubBranchName.trim()
     const activeBranch = collaboration?.activeTarget?.ref ?? ''
     const forkStatus = githubViewer
@@ -475,7 +463,7 @@ export const useGitHubCommitFlow = ({
             // Do not let fork-status turn a new contribution into a commit to
             // the fork's default branch. An explicit draft or active submitted
             // draft is restored below instead.
-            syncDraftSelection: !gitSyncEnabled || Boolean(selectedBranch),
+            syncDraftSelection: Boolean(selectedBranch),
           }
         )
       : null
@@ -507,56 +495,33 @@ export const useGitHubCommitFlow = ({
         })
       )
 
-      if (gitSyncEnabled) {
-        const nextDraft: Partial<
-          Omit<ScopedGitHubCommitDraft, 'repoFullName'>
-        > = {
+      const nextDraft: Partial<Omit<ScopedGitHubCommitDraft, 'repoFullName'>> =
+        {
           // The git worker materializes the actual files exactly once when it
-          // commits. Preparing the legacy REST payload here used to serialize
-          // and hash the same glyphs a second time just to fill this field.
+          // commits. Preparing the legacy REST payload here would serialize
+          // and hash the same glyphs only to fill this text field.
           commitMessage: buildGlyphCommitMessage({
             fallbackTitle: projectTitle,
           }),
         }
-        if (!selectedBranch) {
-          const activeTarget = collaboration?.activeTarget
-          const activeDraft = Boolean(
-            activeTarget &&
-            forkStatus?.targetRepo &&
-            activeTarget.owner === forkStatus.targetRepo.owner &&
-            activeTarget.repo === forkStatus.targetRepo.repo &&
-            collaboration.changeDrafts.some(
-              (draft) =>
-                draft.owner === activeTarget.owner &&
-                draft.repo === activeTarget.repo &&
-                draft.ref === activeTarget.ref
-            )
+      if (!selectedBranch) {
+        const activeTarget = collaboration.activeTarget
+        const activeDraft = Boolean(
+          activeTarget &&
+          forkStatus?.targetRepo &&
+          activeTarget.owner === forkStatus.targetRepo.owner &&
+          activeTarget.repo === forkStatus.targetRepo.repo &&
+          collaboration.changeDrafts.some(
+            (draft) =>
+              draft.owner === activeTarget.owner &&
+              draft.repo === activeTarget.repo &&
+              draft.ref === activeTarget.ref
           )
-          nextDraft.branchName = activeDraft
-            ? activeTarget!.ref
-            : buildSuggestedGitHubBranchName(localDirtyGlyphIds)
-          nextDraft.isCreatingNewBranch = !activeDraft
-        }
-        updateGitHubCommitDraft(nextDraft)
-        return
-      }
-
-      const preparedCommit = await prepareGitHubCommit({
-        projectId,
-        projectTitle,
-      })
-      const nextDraft: Partial<Omit<ScopedGitHubCommitDraft, 'repoFullName'>> =
-        {
-          commitMessage: preparedCommit.request.commitMessage,
-        }
-      if (!gitHubBranchName.trim()) {
-        // A fork's default branch is a copy of the merge target, not a place
-        // for a contributor's edits. Start a named change draft instead; the
-        // branch picker remains available under advanced options when needed.
-        nextDraft.branchName =
-          preparedCommit.request.branchName ??
-          buildSuggestedGitHubBranchName(preparedCommit.changedGlyphNames)
-        nextDraft.isCreatingNewBranch = true
+        )
+        nextDraft.branchName = activeDraft
+          ? activeTarget!.ref
+          : buildSuggestedGitHubBranchName(localDirtyGlyphIds)
+        nextDraft.isCreatingNewBranch = !activeDraft
       }
       updateGitHubCommitDraft(nextDraft)
     } catch (error) {
@@ -583,16 +548,6 @@ export const useGitHubCommitFlow = ({
     try {
       const result = await createForkMutation.mutateAsync(githubRepoFullName)
       setForkStatusOverride(result)
-      if (
-        !loadGitSyncEnabled() &&
-        !gitHubBranchName.trim() &&
-        result.selectedBranch
-      ) {
-        updateGitHubCommitDraft({
-          branchName: result.selectedBranch,
-          isCreatingNewBranch: false,
-        })
-      }
       toaster.create({
         title: t('glyphInspector.toast.forkCreatedTitle'),
         description: result.targetRepo?.fullName ?? githubRepoFullName,
@@ -615,12 +570,7 @@ export const useGitHubCommitFlow = ({
   }
 
   const handleCreateGitHubCommit = async () => {
-    if (
-      !fontData ||
-      !projectId ||
-      !projectTitle ||
-      createCommitMutation.isPending
-    ) {
+    if (!fontData || !projectId || !projectTitle || isCommittingToGitHub) {
       return
     }
 
@@ -686,35 +636,13 @@ export const useGitHubCommitFlow = ({
         })
       )
 
-      const commitThroughRest = async () => {
-        const preparedCommit = await prepareGitHubCommit({
-          projectId,
-          projectTitle,
-        })
-        const restResult = await createCommitMutation.mutateAsync({
-          ...preparedCommit.request,
-          commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
-          branchName: gitHubBranchName.trim(),
-        })
-        await markGitHubCommitSynced(preparedCommit.exportStateUpdates, {
-          projectId,
-          headOwner: restResult.headOwner,
-          branchName: restResult.branchName,
-          commitSha: restResult.commitSha,
-          fontLevelBlobShas: preparedCommit.fontLevelBlobShas,
-        })
-        return restResult
-      }
-
-      const result = loadGitSyncEnabled()
-        ? await commitThroughGit({
-            projectId,
-            projectTitle,
-            branchName: gitHubBranchName.trim(),
-            commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
-            forkStatus: githubForkStatus,
-          })
-        : await commitThroughRest()
+      const result = await commitThroughGit({
+        projectId,
+        projectTitle,
+        branchName: gitHubBranchName.trim(),
+        commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
+        forkStatus: githubForkStatus,
+      })
       markDraftSaved()
       markLocalSaved()
       void queryClient.invalidateQueries({
@@ -738,9 +666,7 @@ export const useGitHubCommitFlow = ({
         branchName: result.branchName,
         isCreatingNewBranch: false,
       })
-      if (loadGitSyncEnabled()) {
-        await refreshGitCollaboration(projectId)
-      }
+      await refreshGitCollaboration(projectId)
       toaster.create({
         title: t('glyphInspector.toast.commitSentTitle'),
         description: t('glyphInspector.toast.commitSentDescription'),
@@ -828,8 +754,7 @@ export const useGitHubCommitFlow = ({
     isLoadingGitHubForkStatus: forkStatusQuery.isFetching,
     isCreatingGitHubFork: createForkMutation.isPending,
     isPreparingGitHubCommit,
-    isCreatingGitHubCommit:
-      isCommittingToGitHub || createCommitMutation.isPending,
+    isCreatingGitHubCommit: isCommittingToGitHub,
     // Committing before the report lands would skip the conflict gate.
     isCheckingSyncStatus: syncStatus.isLoading,
     isMergingGitHubUpstream: mergeUpstreamMutation.isPending,
@@ -845,20 +770,13 @@ export const useGitHubCommitFlow = ({
     activeGitTarget: gitCollaboration.activeTarget,
     changeDrafts: gitCollaboration.changeDrafts,
     onBranchSelect: (branch) => {
-      if (loadGitSyncEnabled()) {
-        if (githubForkStatus?.targetRepo) {
-          void handleSwitchGitBranch({
-            repo: githubForkStatus.targetRepo.fullName,
-            branch,
-          })
-        }
+      if (githubForkStatus?.targetRepo) {
+        void handleSwitchGitBranch({
+          repo: githubForkStatus.targetRepo.fullName,
+          branch,
+        })
         return
       }
-      updateGitHubCommitDraft({
-        branchName: branch,
-        isCreatingNewBranch: false,
-      })
-      void refreshGitHubCompareStatus(branch)
     },
     onSwitchToMergeTarget: () => {
       if (githubForkStatus?.sourceRepo) {
@@ -893,7 +811,7 @@ export const useGitHubCommitFlow = ({
     },
     onMergeUpstream: () => void handleMergeGitHubUpstream(),
     onCreateCommit: () => void handleCreateGitHubCommit(),
-    isSyncEnabled: gitHubModal.open && hasGitHubSource,
+    isSyncEnabled: hasGitHubSource,
     onBlockingSyncConflictsChange: setHasBlockingSyncConflicts,
     hasBlockingSyncConflicts,
   }
