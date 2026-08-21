@@ -57,14 +57,17 @@ describe('buildUfoLibFromFontData public.glyphOrder', () => {
       ...(glyphOrder ? { glyphOrder } : {}),
     }) as unknown as FontData
 
-  it('honors glyphOrder and appends glyphs missing from it', () => {
+  // public.glyphOrder is advisory and sources legitimately list only some of
+  // their glyphs. Completing the list rewrites thousands of lines of a file the
+  // user never touched, which is diff noise on every commit.
+  it('leaves a partial glyphOrder partial', () => {
     const lib = buildUfoLibFromFontData(
       makeFontDataWithOrder(
         [makeGlyph('A', null), makeGlyph('B', null), makeGlyph('C', null)],
         ['B', 'A']
       )
     )
-    expect(lib['public.glyphOrder']).toEqual(['B', 'A', 'C'])
+    expect(lib['public.glyphOrder']).toEqual(['B', 'A'])
   })
 
   it('drops ids in glyphOrder that have no glyph', () => {

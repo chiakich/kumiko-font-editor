@@ -5,8 +5,10 @@ import { Window } from 'happy-dom'
 import { describe, expect, it } from 'vitest'
 
 import {
+  glyphRecordToLayerContent,
   parseGlifText,
   parseXmlPlist,
+  pathToUfoContour,
   serializeGlifRecord,
   serializeXmlPlist,
 } from 'src/lib/fontFormats/ufoFormat'
@@ -23,23 +25,38 @@ const UFO_ROOT = join(
   'test/fixtures/ufo/OpenSourceFont-Light.ufo'
 )
 
+const asRecord = (text: string, fileName: string): UfoGlyphRecord => ({
+  ...parseGlifText(text, fileName),
+  projectId: 'fidelity',
+  ufoId: 'Font.ufo',
+  layerId: 'public.default',
+  dirty: false,
+  dirtyIndex: 0,
+  updatedAt: 1,
+})
+
 const rewrite = (
   text: string,
   fileName: string,
   style = detectUfoTextStyle({})
-): string =>
-  serializeGlifRecord(
-    {
-      ...parseGlifText(text, fileName),
-      projectId: 'fidelity',
-      ufoId: 'Font.ufo',
-      layerId: 'public.default',
-      dirty: false,
-      dirtyIndex: 0,
-      updatedAt: 1,
-    } satisfies UfoGlyphRecord,
+): string => serializeGlifRecord(asRecord(text, fileName), style)
+
+// What sync actually does: the record becomes canonical PathData and is written
+// back from there. Testing only parse → serialize missed that the export
+// rotated every contour that began with off-curve points, which rewrote 12,600
+// files in a real repository.
+const rewriteThroughCanonicalPaths = (
+  text: string,
+  fileName: string,
+  style = detectUfoTextStyle({})
+): string => {
+  const record = asRecord(text, fileName)
+  const content = glyphRecordToLayerContent(record, () => null)
+  return serializeGlifRecord(
+    { ...record, contours: content.paths.map(pathToUfoContour) },
     style
   )
+}
 
 // Sync compares blob OIDs, so re-writing an untouched file with different
 // whitespace reads as a change in every glyph. These are the two producer
@@ -119,6 +136,13 @@ describe('UFO text fidelity: Glyphs style', () => {
     expect(rewrite(GLYPHS_STYLE_GLIF, 'A_.glif', style)).toBe(GLYPHS_STYLE_GLIF)
   })
 
+  it('keeps the node order a contour was written with', () => {
+    // This contour starts with two off-curve points, as Glyphs writes them.
+    expect(
+      rewriteThroughCanonicalPaths(GLYPHS_STYLE_GLIF, 'A_.glif', style)
+    ).toBe(GLYPHS_STYLE_GLIF)
+  })
+
   it('keeps the empty outline element of a blank glyph', () => {
     expect(rewrite(GLYPHS_STYLE_BLANK, 'space.glif', style)).toBe(
       GLYPHS_STYLE_BLANK
@@ -148,6 +172,7 @@ describe('UFO text fidelity: fontTools style', () => {
     for (const name of names) {
       const raw = await readFixture(`glyphs/${name}`)
       expect(rewrite(raw, name, style), name).toBe(raw)
+      expect(rewriteThroughCanonicalPaths(raw, name, style), name).toBe(raw)
     }
   })
 

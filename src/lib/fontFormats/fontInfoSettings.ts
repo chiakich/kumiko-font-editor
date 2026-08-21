@@ -536,16 +536,13 @@ export const buildUfoLibFromFontData = (
       .map((glyph) => [glyph.id, glyph.production])
   )
 
-  // Honor the intended glyph order, dropping ids with no glyph and appending
-  // any glyph missing from glyphOrder so the list stays complete.
-  const orderedIds = (fontData.glyphOrder ?? []).filter(
-    (id) => id in fontData.glyphs
-  )
-  const seen = new Set(orderedIds)
-  const glyphOrder = [
-    ...orderedIds,
-    ...Object.keys(fontData.glyphs).filter((id) => !seen.has(id)),
-  ]
+  // public.glyphOrder is advisory, and a source is free to list only some of its
+  // glyphs — JYRounded lists 11k of 14.5k. Completing the list would rewrite
+  // thousands of lines of someone else's file, so only ids that no longer have a
+  // glyph are dropped. New glyphs reach the list through fontData.glyphOrder.
+  const glyphOrder = fontData.glyphOrder
+    ? fontData.glyphOrder.filter((id) => id in fontData.glyphs)
+    : Object.keys(fontData.glyphs)
 
   return {
     ...(baseLib ?? {}),

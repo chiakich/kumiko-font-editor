@@ -36,7 +36,11 @@ export const buildUfoFontLevelFiles = (
         creator: metadata.metainfo?.creator ?? DEFAULT_METAINFO_CREATOR,
         formatVersion:
           metadata.metainfo?.formatVersion ?? DEFAULT_UFO_FORMAT_VERSION,
-        formatVersionMinor: metadata.metainfo?.formatVersionMinor ?? 0,
+        // Optional in UFO 3 — writing a default the source never had shows up
+        // as a change in metainfo.plist on every single commit.
+        ...(metadata.metainfo?.formatVersionMinor === undefined
+          ? {}
+          : { formatVersionMinor: metadata.metainfo.formatVersionMinor }),
       }),
     },
     {

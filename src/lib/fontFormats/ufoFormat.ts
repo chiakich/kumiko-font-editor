@@ -15,7 +15,6 @@ import {
   getNodeSegmentType,
   getNodeType,
   isOffCurveNode,
-  isOnCurveNode,
 } from 'src/store/glyphGeometry'
 import {
   designspaceDefaultLocation,
@@ -507,27 +506,12 @@ const buildPathNodesFromContour = (contour: UfoGlyphContour): PathNode[] =>
 const isOpenContour = (contour: UfoGlyphContour) =>
   contour.points[0]?.type === 'move'
 
-const rotateContourToFirstOnCurve = (nodes: PathNode[]) => {
-  if (nodes.length === 0) {
-    return nodes
-  }
-
-  const firstOnCurveIndex = nodes.findIndex((node) => isOnCurveNode(node))
-
-  if (firstOnCurveIndex <= 0) {
-    return nodes
-  }
-
-  return [
-    ...nodes.slice(firstOnCurveIndex),
-    ...nodes.slice(0, firstOnCurveIndex),
-  ]
-}
-
+// Node order is written out as it stands. A closed contour has no canonical
+// starting point — UFO lets one begin with off-curve points, and both fontTools
+// and Glyphs write them that way — so rotating to the first on-curve point on
+// export rewrote every such contour and showed up as a change in 12,600 files.
 export const pathToUfoContour = (path: PathData): UfoGlyphContour => {
-  const orderedNodes = path.closed
-    ? rotateContourToFirstOnCurve(path.nodes)
-    : path.nodes
+  const orderedNodes = path.nodes
 
   return {
     points: orderedNodes.map((node, index) => {

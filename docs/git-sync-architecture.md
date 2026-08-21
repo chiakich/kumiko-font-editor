@@ -432,6 +432,18 @@ commit / push 也走同一個 worker（`commit-and-push`），連同 `markGitCom
 
 REST 路徑沒有這個問題：它送的是檔案清單並以 `base_tree` 疊加，本來就只會新增與修改。
 
+### 剩下的 diff 雜訊：輪廓起點與兩個 font-level 檔（2026-08-21）
+
+格式對齊之後，一次「加一個字」的 commit 仍然動到 12,608 個檔案。三個獨立成因：
+
+**輪廓起點旋轉（12,600 個 glif）。** 匯入時保留來源的節點順序，但**匯出時** `pathToUfoContour` 會把封閉輪廓旋轉到第一個 on-curve 點。UFO 允許封閉輪廓從 off-curve 開始（fontTools 與 Glyphs 都會這樣寫），封閉輪廓本來就沒有標準起點，所以那個旋轉只是把來源的寫法改掉。移除之後照原順序寫出。
+
+這裡有一個**驗證方法上的教訓**：先前的逐位元測試跑的是 `parseGlifText → serializeGlifRecord`，但真正的同步路徑是 `record → canonical PathData → pathToUfoContour → serializeGlifRecord`。旋轉發生在後者，所以 14,562/14,562 全過的測試完全沒碰到它。測試現在兩條路徑都跑；只跑 record 那條時，真實字型只有 **2,139/14,562** 能還原。
+
+**`metainfo.plist`。** 我們無條件寫出 `formatVersionMinor: 0`，而來源沒有這個 key（UFO 3 選填）。改成只在來源有的時候才寫。
+
+**`lib.plist` 的 `public.glyphOrder`（+3,600 行）。** 原本的規則是「補齊清單」——把不在 glyphOrder 裡的字形全部附加上去。但 `public.glyphOrder` 是建議性的，來源只列 11k 個字形（共 14.5k）是它自己的選擇。現在只移除已不存在的 id，不再補齊；使用者新增的字形會透過 `fontData.glyphOrder` 自然進入清單。
+
 ### 錯誤要看得見（2026-08-20）
 
 實測回報：commit 失敗時 UI 只顯示 `MultipleGitError: There are multiple errors ... refer to the "errors" property`，完全無法判斷原因。兩個成因：
