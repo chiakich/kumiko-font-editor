@@ -87,6 +87,11 @@ interface ScopedGitHubCommitDraft {
   isCreatingNewBranch: boolean
 }
 
+interface GitCollaborationState {
+  activeTarget: GitHubSyncTarget | null
+  changeDrafts: GitHubSyncTarget[]
+}
+
 const createEmptyCommitDraft = (
   repoFullName: string | null
 ): ScopedGitHubCommitDraft => ({
@@ -131,10 +136,11 @@ export const useGitHubCommitFlow = ({
   // to be tracked here or the button stays idle for the whole push.
   const [isCommittingToGitHub, setIsCommittingToGitHub] = useState(false)
   const [isSwitchingGitBranch, setIsSwitchingGitBranch] = useState(false)
-  const [gitCollaboration, setGitCollaboration] = useState<{
-    activeTarget: GitHubSyncTarget | null
-    changeDrafts: GitHubSyncTarget[]
-  }>({ activeTarget: null, changeDrafts: [] })
+  const [gitCollaboration, setGitCollaboration] =
+    useState<GitCollaborationState>({
+      activeTarget: null,
+      changeDrafts: [],
+    })
   const [hasBlockingSyncConflicts, setHasBlockingSyncConflicts] =
     useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
@@ -217,7 +223,10 @@ export const useGitHubCommitFlow = ({
   const createCommitMutation = useCreateGitHubCommitMutation()
   const mergeUpstreamMutation = useMergeGitHubUpstreamMutation()
   const githubForkStatus = forkStatusOverride ?? forkStatusQuery.data ?? null
-  const loadGitHubForkStatus = async (branchName?: string) => {
+  const loadGitHubForkStatus = async (
+    branchName?: string,
+    options: { syncDraftSelection?: boolean } = {}
+  ) => {
     if (!githubRepoFullName) {
       return null
     }
@@ -232,7 +241,7 @@ export const useGitHubCommitFlow = ({
         forkStatus,
         branchName
       )
-      if (resolvedBranch) {
+      if (resolvedBranch && options.syncDraftSelection !== false) {
         updateGitHubCommitDraft({
           branchName: resolvedBranch,
           isCreatingNewBranch: !isExistingGitHubBranch(
@@ -308,13 +317,17 @@ export const useGitHubCommitFlow = ({
     )
   }
 
-  const refreshGitCollaboration = async (nextProjectId: string) => {
+  const refreshGitCollaboration = async (
+    nextProjectId: string
+  ): Promise<GitCollaborationState> => {
     const project = await loadKumikoProjectRecord(nextProjectId)
-    setGitCollaboration({
+    const nextCollaboration = {
       activeTarget: project?.sourceData?.ufo?.lastSync ?? null,
       changeDrafts:
         project?.sourceData?.ufo?.gitCollaboration?.changeDrafts ?? [],
-    })
+    }
+    setGitCollaboration(nextCollaboration)
+    return nextCollaboration
   }
 
   const handleSwitchGitBranch = async (target: {
@@ -375,7 +388,12 @@ export const useGitHubCommitFlow = ({
     try {
       const viewer = await loginMutation.mutateAsync(startGitHubOAuthLogin)
       if (githubRepoFullName) {
-        await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
+        await loadGitHubForkStatus(gitHubBranchName.trim() || undefined, {
+          // A fork-status response defaults to its default branch. In git mode
+          // that is the merge base, not an implicit destination for a change.
+          syncDraftSelection:
+            !loadGitSyncEnabled() || Boolean(gitHubBranchName.trim()),
+        })
       }
       toaster.create({
         title: 'GitHub 已登入',
@@ -428,13 +446,23 @@ export const useGitHubCommitFlow = ({
       return
     }
 
-    if (githubViewer) {
-      await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
-    }
-
-    if (loadGitSyncEnabled()) {
-      await refreshGitCollaboration(projectId)
-    }
+    const gitSyncEnabled = loadGitSyncEnabled()
+    const collaboration = gitSyncEnabled
+      ? await refreshGitCollaboration(projectId)
+      : null
+    const selectedBranch = gitHubBranchName.trim()
+    const activeBranch = collaboration?.activeTarget?.ref ?? ''
+    const forkStatus = githubViewer
+      ? await loadGitHubForkStatus(
+          selectedBranch || activeBranch || undefined,
+          {
+            // Do not let fork-status turn a new contribution into a commit to
+            // the fork's default branch. An explicit draft or active submitted
+            // draft is restored below instead.
+            syncDraftSelection: !gitSyncEnabled || Boolean(selectedBranch),
+          }
+        )
+      : null
 
     if (!canCommitToGitHub || persistenceStatus === 'error') {
       return
@@ -463,7 +491,7 @@ export const useGitHubCommitFlow = ({
         })
       )
 
-      if (loadGitSyncEnabled()) {
+      if (gitSyncEnabled) {
         const nextDraft: Partial<
           Omit<ScopedGitHubCommitDraft, 'repoFullName'>
         > = {
@@ -474,10 +502,24 @@ export const useGitHubCommitFlow = ({
             fallbackTitle: projectTitle,
           }),
         }
-        if (!gitHubBranchName.trim()) {
-          nextDraft.branchName =
-            buildSuggestedGitHubBranchName(localDirtyGlyphIds)
-          nextDraft.isCreatingNewBranch = true
+        if (!selectedBranch) {
+          const activeTarget = collaboration?.activeTarget
+          const activeDraft = Boolean(
+            activeTarget &&
+            forkStatus?.targetRepo &&
+            activeTarget.owner === forkStatus.targetRepo.owner &&
+            activeTarget.repo === forkStatus.targetRepo.repo &&
+            collaboration.changeDrafts.some(
+              (draft) =>
+                draft.owner === activeTarget.owner &&
+                draft.repo === activeTarget.repo &&
+                draft.ref === activeTarget.ref
+            )
+          )
+          nextDraft.branchName = activeDraft
+            ? activeTarget!.ref
+            : buildSuggestedGitHubBranchName(localDirtyGlyphIds)
+          nextDraft.isCreatingNewBranch = !activeDraft
         }
         updateGitHubCommitDraft(nextDraft)
         return
@@ -522,7 +564,11 @@ export const useGitHubCommitFlow = ({
     try {
       const result = await createForkMutation.mutateAsync(githubRepoFullName)
       setForkStatusOverride(result)
-      if (!gitHubBranchName.trim() && result.selectedBranch) {
+      if (
+        !loadGitSyncEnabled() &&
+        !gitHubBranchName.trim() &&
+        result.selectedBranch
+      ) {
         updateGitHubCommitDraft({
           branchName: result.selectedBranch,
           isCreatingNewBranch: false,
