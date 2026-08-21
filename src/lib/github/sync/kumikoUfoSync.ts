@@ -25,9 +25,8 @@ import type {
 } from 'src/lib/github/sync/types'
 import {
   deleteKumikoGlyphRecordBatch,
-  listKumikoGlyphLayerPresenceForProject,
+  listKumikoGlyphExportScanForProject,
   listKumikoGlyphMetadataForProject,
-  listKumikoGlyphSpecialLayerMetadataForProject,
   listKumikoGlyphSyncMetadataForProject,
   listSyncDirtyKumikoGlyphIds,
   loadKumikoProjectRecord,
@@ -956,15 +955,13 @@ export const buildKumikoUfoExportManifest = async (
           includeBracketExtras: true,
         }))
 
-  const glyphs = orderGlyphExportMetadata(
-    project,
-    await listKumikoGlyphMetadataForProject(projectId)
-  )
+  const glyphScan = await listKumikoGlyphExportScanForProject(projectId)
+  const glyphs = orderGlyphExportMetadata(project, glyphScan.metadata)
   const glyphIds = glyphs.map((glyph) => glyph.glyphId)
   const glyphIdSet = new Set(glyphIds)
-  const specialLayers = (
-    await listKumikoGlyphSpecialLayerMetadataForProject(projectId)
-  ).filter((layer) => glyphIdSet.has(layer.glyphId))
+  const specialLayers = glyphScan.specialLayers.filter((layer) =>
+    glyphIdSet.has(layer.glyphId)
+  )
   const braceLayers = specialLayers.filter(
     (layer) => layer.type === 'brace' && layer.braceLocation
   )
@@ -976,7 +973,6 @@ export const buildKumikoUfoExportManifest = async (
   )
   const braceUfoSourceEntries = makeBraceUfoSourceEntries(braceLayers, usedDirs)
   const glyphsById = new Map(glyphs.map((glyph) => [glyph.glyphId, glyph]))
-  const layerPresence = await listKumikoGlyphLayerPresenceForProject(projectId)
   const ufoSourceEntries = [...baseUfoSourceEntries, ...braceUfoSourceEntries]
   const ufos = ufoSourceEntries.map((entry) => {
     const { source, designspaceSource } = entry
@@ -1008,7 +1004,7 @@ export const buildKumikoUfoExportManifest = async (
     )
     const backgroundGlyphIds = new Set(
       entryGlyphIds.filter((glyphId) => {
-        const presence = layerPresence.get(glyphId)
+        const presence = glyphScan.presence.get(glyphId)
         return presence
           ? Boolean(
               selectLayerForUfo(presence, canonicalLayerId)?.hasBackground

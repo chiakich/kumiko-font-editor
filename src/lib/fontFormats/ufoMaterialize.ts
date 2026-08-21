@@ -8,6 +8,7 @@ import { hashString } from 'src/lib/hash'
 import { listSyncDirtyKumikoGlyphIds } from 'src/lib/project/kumikoProjectPersistence'
 import {
   buildKumikoUfoExportManifest,
+  type KumikoUfoExportManifest,
   loadKumikoUfoExportExtraGlyphBatch,
   loadKumikoUfoExportGlyphBatch,
   type KumikoUfoExportStateUpdate,
@@ -37,6 +38,10 @@ export type MaterializeScope = 'all' | 'dirty'
 
 export interface MaterializeUfoTreeOptions {
   projectId: string
+  // A manifest the caller already built. Building one scans every glyph record
+  // in the project, so a caller that needs both the path listing and the file
+  // stream must build it once and hand it to both.
+  manifest?: KumikoUfoExportManifest
   // 'all' rebuilds the whole tree. 'dirty' emits only the glyphs marked sync
   // dirty, plus the font-level files when the project itself changed — the
   // difference between touching one file and touching thirty thousand.
@@ -48,10 +53,15 @@ export interface MaterializeUfoTreeOptions {
   onTotal?: (totalGlyphs: number) => void
 }
 
-// Every path the project would write, without loading any glyph geometry. Used
-// to spot files that must be deleted when only part of the tree is rebuilt.
-export const listUfoTreePaths = async (projectId: string) => {
-  const manifest = await buildKumikoUfoExportManifest(projectId)
+// Every path the project would write. Used to spot files that must be deleted
+// when only part of the tree is rebuilt. Pass a manifest whenever one is already
+// in hand: building it is the dominant cost here, not the path arithmetic.
+export const listUfoTreePaths = async (
+  projectId: string,
+  prebuiltManifest?: KumikoUfoExportManifest
+) => {
+  const manifest =
+    prebuiltManifest ?? (await buildKumikoUfoExportManifest(projectId))
   const paths: string[] = []
 
   if (manifest.designspace) {
@@ -100,7 +110,8 @@ export const listUfoTreePaths = async (projectId: string) => {
 export async function* materializeUfoTree(
   options: MaterializeUfoTreeOptions
 ): AsyncGenerator<MaterializedFile> {
-  const manifest = await buildKumikoUfoExportManifest(options.projectId)
+  const manifest =
+    options.manifest ?? (await buildKumikoUfoExportManifest(options.projectId))
   const scope = options.scope ?? 'all'
   // Only geometry loads are expensive; the dirty set comes from an index scan.
   const dirtyGlyphIds =

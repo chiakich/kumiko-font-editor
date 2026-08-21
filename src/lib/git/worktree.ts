@@ -8,6 +8,7 @@ import {
   materializeUfoTree,
 } from 'src/lib/fontFormats/ufoMaterialize'
 import { buildRemovalPolicy } from 'src/lib/git/projectAdapters'
+import { buildKumikoUfoExportManifest } from 'src/lib/github/sync/kumikoUfoSync'
 
 export const KUMIKO_GIT_ROOT = 'kumiko/projects'
 
@@ -85,10 +86,15 @@ export const syncWorktreeFromProject = async (input: {
   const scope =
     requested === 'auto' ? (tracked.size === 0 ? 'all' : 'dirty') : requested
 
+  // One manifest for both projections below: building it scans every glyph
+  // record, which for a CJK font costs far more than writing the files does.
+  const manifest = await buildKumikoUfoExportManifest(input.projectId)
+
   const writtenPaths: string[] = []
   for await (const file of materializeUfoTree({
     projectId: input.projectId,
     scope,
+    manifest,
   })) {
     await worktree.fs.promises.writeFile(
       `${worktree.dir}/${file.path}`,
@@ -100,7 +106,7 @@ export const syncWorktreeFromProject = async (input: {
   const expected =
     scope === 'all'
       ? new Set(writtenPaths)
-      : new Set(await listUfoTreePaths(input.projectId))
+      : new Set(await listUfoTreePaths(input.projectId, manifest))
   const canRemovePath =
     input.canRemovePath ?? (await buildRemovalPolicy(input.projectId))
   const removedPaths = [...tracked].filter(

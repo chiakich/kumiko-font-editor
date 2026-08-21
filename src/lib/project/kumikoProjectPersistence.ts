@@ -435,89 +435,81 @@ export const listKumikoGlyphSyncMetadataForProject = async (
   return records
 }
 
-export const listKumikoGlyphMetadataForProject = async (projectId: string) => {
-  const database = await openDatabase()
-  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
-  const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
-  const records: KumikoGlyphMetadataRecord[] = []
-  await new Promise<void>((resolve, reject) => {
-    const request = index.openCursor(projectId)
-    request.onsuccess = () => {
-      const cursor = request.result
-      if (!cursor) {
-        resolve()
-        return
-      }
-      const record = cursor.value as KumikoGlyphRecord
+const toGlyphMetadataRecord = (
+  record: KumikoGlyphRecord
+): KumikoGlyphMetadataRecord => ({
+  projectId: record.projectId,
+  glyphId: record.glyphId,
+  displayName: record.displayName,
+  unicodes: record.unicodes,
+  production: record.production,
+  export: record.export,
+  category: record.category,
+  subCategory: record.subCategory,
+  status: record.status,
+  color: record.color,
+  note: record.note,
+  leftMetricsKey: record.leftMetricsKey,
+  rightMetricsKey: record.rightMetricsKey,
+  widthMetricsKey: record.widthMetricsKey,
+  layerOrder: record.layerOrder,
+  componentGlyphIds: record.componentGlyphIds,
+  hasDrawableContent: record.hasDrawableContent,
+  customData: record.customData,
+  sourceData: record.sourceData,
+})
+
+const toGlyphSpecialLayerMetadata = (
+  record: KumikoGlyphRecord
+): KumikoGlyphSpecialLayerMetadata[] => {
+  const records: KumikoGlyphSpecialLayerMetadata[] = []
+  for (const layer of Object.values(record.layers)) {
+    if (layer.type === 'brace' && layer.braceLocation) {
       records.push({
         projectId: record.projectId,
         glyphId: record.glyphId,
-        displayName: record.displayName,
-        unicodes: record.unicodes,
-        production: record.production,
-        export: record.export,
-        category: record.category,
-        subCategory: record.subCategory,
-        status: record.status,
-        color: record.color,
-        note: record.note,
-        leftMetricsKey: record.leftMetricsKey,
-        rightMetricsKey: record.rightMetricsKey,
-        widthMetricsKey: record.widthMetricsKey,
-        layerOrder: record.layerOrder,
-        componentGlyphIds: record.componentGlyphIds,
-        hasDrawableContent: record.hasDrawableContent,
-        customData: record.customData,
-        sourceData: record.sourceData,
+        layerId: layer.id,
+        name: layer.name,
+        type: 'brace',
+        braceLocation: layer.braceLocation,
       })
-      cursor.continue()
+    } else if (layer.type === 'bracket' && layer.bracketAxisRules) {
+      records.push({
+        projectId: record.projectId,
+        glyphId: record.glyphId,
+        layerId: layer.id,
+        name: layer.name,
+        type: 'bracket',
+        bracketAxisRules: layer.bracketAxisRules,
+      })
     }
-    request.onerror = () => reject(request.error)
-  })
-  await transactionDone(transaction)
+  }
   return records
 }
 
-export const listKumikoGlyphLayerPresenceForProject = async (
-  projectId: string
-): Promise<Map<string, KumikoGlyphLayerPresence>> => {
-  const database = await openDatabase()
-  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
-  const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
-  const presence = new Map<string, KumikoGlyphLayerPresence>()
-  await new Promise<void>((resolve, reject) => {
-    const request = index.openCursor(projectId)
-    request.onsuccess = () => {
-      const cursor = request.result
-      if (!cursor) {
-        resolve()
-        return
-      }
-      const record = cursor.value as KumikoGlyphRecord
-      presence.set(record.glyphId, {
-        layerOrder: record.layerOrder,
-        layers: Object.fromEntries(
-          Object.entries(record.layers).map(([layerId, layer]) => [
-            layerId,
-            { hasBackground: Boolean(layer.background) },
-          ])
-        ),
-      })
-      cursor.continue()
-    }
-    request.onerror = () => reject(request.error)
-  })
-  await transactionDone(transaction)
-  return presence
-}
+const toGlyphLayerPresence = (
+  record: KumikoGlyphRecord
+): KumikoGlyphLayerPresence => ({
+  layerOrder: record.layerOrder,
+  layers: Object.fromEntries(
+    Object.entries(record.layers).map(([layerId, layer]) => [
+      layerId,
+      { hasBackground: Boolean(layer.background) },
+    ])
+  ),
+})
 
-export const listKumikoGlyphSpecialLayerMetadataForProject = async (
-  projectId: string
+// Walks every glyph record in a project once, handing each to the callers'
+// projections. Reading a record deserializes its whole geometry, so the number
+// of passes over this store — not the arithmetic done per record — is what a
+// CJK-scale project pays for.
+const scanKumikoGlyphRecords = async (
+  projectId: string,
+  visit: (record: KumikoGlyphRecord) => void
 ) => {
   const database = await openDatabase()
   const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
   const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
-  const records: KumikoGlyphSpecialLayerMetadata[] = []
   await new Promise<void>((resolve, reject) => {
     const request = index.openCursor(projectId)
     request.onsuccess = () => {
@@ -526,34 +518,41 @@ export const listKumikoGlyphSpecialLayerMetadataForProject = async (
         resolve()
         return
       }
-      const record = cursor.value as KumikoGlyphRecord
-      for (const layer of Object.values(record.layers)) {
-        if (layer.type === 'brace' && layer.braceLocation) {
-          records.push({
-            projectId: record.projectId,
-            glyphId: record.glyphId,
-            layerId: layer.id,
-            name: layer.name,
-            type: 'brace',
-            braceLocation: layer.braceLocation,
-          })
-        } else if (layer.type === 'bracket' && layer.bracketAxisRules) {
-          records.push({
-            projectId: record.projectId,
-            glyphId: record.glyphId,
-            layerId: layer.id,
-            name: layer.name,
-            type: 'bracket',
-            bracketAxisRules: layer.bracketAxisRules,
-          })
-        }
-      }
+      visit(cursor.value as KumikoGlyphRecord)
       cursor.continue()
     }
     request.onerror = () => reject(request.error)
   })
   await transactionDone(transaction)
+}
+
+export const listKumikoGlyphMetadataForProject = async (projectId: string) => {
+  const records: KumikoGlyphMetadataRecord[] = []
+  await scanKumikoGlyphRecords(projectId, (record) => {
+    records.push(toGlyphMetadataRecord(record))
+  })
   return records
+}
+
+// Everything the UFO export manifest needs, from a single pass. Asking for these
+// three projections separately meant three full reads of every glyph in the
+// project, which cost several times more than writing the files.
+export const listKumikoGlyphExportScanForProject = async (
+  projectId: string
+): Promise<{
+  metadata: KumikoGlyphMetadataRecord[]
+  specialLayers: KumikoGlyphSpecialLayerMetadata[]
+  presence: Map<string, KumikoGlyphLayerPresence>
+}> => {
+  const metadata: KumikoGlyphMetadataRecord[] = []
+  const specialLayers: KumikoGlyphSpecialLayerMetadata[] = []
+  const presence = new Map<string, KumikoGlyphLayerPresence>()
+  await scanKumikoGlyphRecords(projectId, (record) => {
+    metadata.push(toGlyphMetadataRecord(record))
+    specialLayers.push(...toGlyphSpecialLayerMetadata(record))
+    presence.set(record.glyphId, toGlyphLayerPresence(record))
+  })
+  return { metadata, specialLayers, presence }
 }
 
 export const findKumikoGlyphRecordsByUnicode = async (

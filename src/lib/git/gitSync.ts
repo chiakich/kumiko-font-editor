@@ -29,8 +29,10 @@ import {
 } from 'src/lib/fontFormats/ufoMaterialize'
 import {
   applyKumikoRemoteSnapshot,
+  buildKumikoUfoExportManifest,
   listProjectUfoSources,
   makeContents,
+  type KumikoUfoExportManifest,
 } from 'src/lib/github/sync/kumikoUfoSync'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import type { ParsedUfoFolder } from 'src/lib/fontFormats/ufoFormat'
@@ -72,6 +74,7 @@ export interface GitSyncReport extends EntitySyncReport {
 const collectLocalTree = async (input: {
   projectId: string
   scope?: 'all' | 'dirty'
+  manifest?: KumikoUfoExportManifest
 }) => {
   const files = new Map<
     string,
@@ -254,16 +257,20 @@ export const buildGitSyncReport = async (input: {
 
   // Dirty flags are Kumiko's local change index. Hash only the affected
   // entities; clean paths are known to still equal the merge base.
+  // Both projections below scan every glyph record to build a manifest, so the
+  // report builds one and shares it.
+  const manifest = await buildKumikoUfoExportManifest(input.target.projectId)
   const localTree = await collectLocalTree({
     projectId: input.target.projectId,
     scope: 'dirty',
+    manifest,
   })
 
   const [baseOids, remoteOids, localPaths] = await Promise.all([
     collectTreeOids(worktree, baseSha),
     collectTreeOids(worktree, fetched.remoteHeadSha),
     hasPotentialLocalChanges
-      ? listUfoTreePaths(input.target.projectId)
+      ? listUfoTreePaths(input.target.projectId, manifest)
       : Promise.resolve<string[] | null>(null),
   ])
   const localPathSet = localPaths ? new Set(localPaths) : null
