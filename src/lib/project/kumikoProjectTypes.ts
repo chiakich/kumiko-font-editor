@@ -248,6 +248,14 @@ export interface KumikoGlyphSpecialLayerMetadata {
   bracketAxisRules?: Record<string, { min?: number; max?: number }> | null
 }
 
+// Which layers a glyph has and which of them carry background content. The
+// export manifest needs this to know which background .glif files it will
+// actually write, and it must answer that without loading any outline.
+export interface KumikoGlyphLayerPresence {
+  layerOrder: string[]
+  layers: Record<string, { hasBackground: boolean }>
+}
+
 export interface KumikoUiStateRecord {
   projectId: string
   key: string

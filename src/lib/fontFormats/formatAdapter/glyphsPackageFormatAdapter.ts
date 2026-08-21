@@ -28,6 +28,7 @@ export const createGlyphsPackageFormatAdapter = (
   const rootPrefix = layout.root ? `${layout.root}/` : ''
   const glyphDirPrefix = `${joinPath(layout.root, 'glyphs')}/`
   const fileNames = layout.fileNames ?? {}
+  const knownFileNames = new Set(Object.values(fileNames))
 
   return {
     id: 'glyphspackage',
@@ -74,6 +75,20 @@ export const createGlyphsPackageFormatAdapter = (
         return { kind: 'font', part: 'order' }
       }
       return null
+    },
+
+    canRemovePath: (path) => {
+      const inGlyphDir = path.startsWith(glyphDirPrefix)
+      if (inGlyphDir) {
+        // Only a .glyph our own file-name map named: anything else under the
+        // directory is a glyph this project has never known about.
+        return knownFileNames.has(path.slice(glyphDirPrefix.length))
+      }
+      if (!path.startsWith(rootPrefix)) {
+        return false
+      }
+      const name = path.slice(rootPrefix.length)
+      return name === 'fontinfo.plist' || name === 'order.plist'
     },
 
     pathsOwnedBy: (entity: EntityId) => {

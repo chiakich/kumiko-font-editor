@@ -7,6 +7,7 @@ import {
   listUfoTreePaths,
   materializeUfoTree,
 } from 'src/lib/fontFormats/ufoMaterialize'
+import { buildRemovalPolicy } from 'src/lib/git/projectAdapters'
 
 export const KUMIKO_GIT_ROOT = 'kumiko/projects'
 
@@ -56,21 +57,27 @@ const listTrackedPaths = async (worktree: GitWorktree) => {
 }
 
 // Rewrites the worktree from canonical records. The worktree is a derived
-// cache, so anything the project no longer produces is removed rather than left
-// behind to be committed by accident.
+// cache, so a file the project used to produce and no longer does is removed
+// rather than left behind to be committed by accident.
 //
 // Scope 'auto' rebuilds everything the first time (an empty repository has
 // nothing to reuse) and afterwards writes only what changed. Deletions are
 // still detected in full, because the expected path list comes from project
 // metadata and never loads glyph geometry.
+//
+// "Not in the expected list" on its own never means deleted. The expected list
+// is built from this project's records, and a repository holds more than this
+// project knows about — another contributor's glyph, a README, build tooling.
+// Removal therefore needs positive evidence that the path was ours, which is
+// what canRemovePath supplies.
 export const syncWorktreeFromProject = async (input: {
   projectId: string
   worktree: GitWorktree
   scope?: 'auto' | 'all' | 'dirty'
-  // Files the project does not produce (README, licence, build tooling) are
-  // carried through untouched: they are tracked but must never be treated as
-  // "the project no longer produces this, so delete it".
-  isManaged?: (path: string) => boolean
+  // Whether the project may delete a path at all. Defaults to the project's own
+  // removal policy, so a caller cannot cause a silent deletion by forgetting to
+  // pass one.
+  canRemovePath?: (path: string) => boolean
 }): Promise<WorktreeSyncResult> => {
   const { worktree } = input
   const tracked = await listTrackedPaths(worktree)
@@ -94,9 +101,10 @@ export const syncWorktreeFromProject = async (input: {
     scope === 'all'
       ? new Set(writtenPaths)
       : new Set(await listUfoTreePaths(input.projectId))
-  const isManaged = input.isManaged ?? (() => true)
+  const canRemovePath =
+    input.canRemovePath ?? (await buildRemovalPolicy(input.projectId))
   const removedPaths = [...tracked].filter(
-    (path) => isManaged(path) && !expected.has(path)
+    (path) => !expected.has(path) && canRemovePath(path)
   )
   for (const path of removedPaths) {
     await worktree.fs.promises
@@ -198,6 +206,18 @@ export const checkoutWorktreeBranch = async (input: {
     checkout: true,
     ...(input.startAt ? { object: input.startAt } : {}),
   })
+}
+
+// Empties the index. Moving HEAD with noCheckout leaves the index describing
+// the branch we came from, and a commit takes its tree from the index — so
+// without this the next commit would carry the old branch's files onto the new
+// one. Clearing is enough because the index is rebuilt from canonical records
+// plus the base commit before anything is committed; the alternative, checking
+// the tree out, would write a whole CJK font to disk just to fix bookkeeping.
+export const resetWorktreeIndex = async (worktree: GitWorktree) => {
+  await worktree.fs.promises
+    .unlink(`${worktree.dir}/.git/index`)
+    .catch(() => undefined)
 }
 
 export const commitWorktree = async (input: {

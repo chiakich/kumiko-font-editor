@@ -25,6 +25,7 @@ import type {
 } from 'src/lib/github/sync/types'
 import {
   deleteKumikoGlyphRecordBatch,
+  listKumikoGlyphLayerPresenceForProject,
   listKumikoGlyphMetadataForProject,
   listKumikoGlyphSpecialLayerMetadataForProject,
   listKumikoGlyphSyncMetadataForProject,
@@ -134,6 +135,10 @@ export interface KumikoUfoExportManifestUfo {
   defaultLayer: UfoLayerRecord
   contents: Record<string, string>
   glyphIds: string[]
+  // The subset of glyphIds whose canonical layer for this UFO carries a
+  // background. Both projections read it so the path listing and the file
+  // stream can never disagree on which background .glif files exist.
+  backgroundGlyphIds: Set<string>
   canonicalLayerId: string
   extraGlyphs?: KumikoUfoExportExtraGlyph[]
   designspaceSource?: DesignspaceSourceOut
@@ -524,7 +529,12 @@ const readGlyphUfoSource = (glyph: Pick<KumikoGlyphRecord, 'sourceData'>) =>
 const readLayerUfoSource = (layer: KumikoGlyphLayerRecord | undefined) =>
   layer?.sourceData?.ufo ?? {}
 
-const selectLayerForUfo = (glyph: KumikoGlyphRecord, defaultLayerId: string) =>
+// Generic over the layer payload so the metadata-only scan can resolve the same
+// layer the export would pick, without loading geometry.
+const selectLayerForUfo = <T>(
+  glyph: { layers: Record<string, T>; layerOrder: string[] },
+  defaultLayerId: string
+): T | undefined =>
   glyph.layers[defaultLayerId] ??
   glyph.layerOrder.map((layerId) => glyph.layers[layerId]).find(Boolean) ??
   Object.values(glyph.layers)[0]
@@ -534,7 +544,10 @@ type KumikoUfoLayerContent = Pick<
   'paths' | 'componentRefs' | 'anchors' | 'guidelines' | 'metrics'
 >
 
-const makeContents = (
+// The single rule for glyphId → .glif file name. Anything that needs to name a
+// glyph file must go through here, or two call sites will derive different names
+// for the same glyph and the difference reads as a rename.
+export const makeContents = (
   project: KumikoProjectRecord,
   glyphs: Array<Pick<KumikoGlyphRecord, 'glyphId' | 'sourceData'>>,
   activeUfoId: string,
@@ -963,6 +976,7 @@ export const buildKumikoUfoExportManifest = async (
   )
   const braceUfoSourceEntries = makeBraceUfoSourceEntries(braceLayers, usedDirs)
   const glyphsById = new Map(glyphs.map((glyph) => [glyph.glyphId, glyph]))
+  const layerPresence = await listKumikoGlyphLayerPresenceForProject(projectId)
   const ufoSourceEntries = [...baseUfoSourceEntries, ...braceUfoSourceEntries]
   const ufos = ufoSourceEntries.map((entry) => {
     const { source, designspaceSource } = entry
@@ -992,12 +1006,23 @@ export const buildKumikoUfoExportManifest = async (
       source.ufoId,
       source
     )
+    const backgroundGlyphIds = new Set(
+      entryGlyphIds.filter((glyphId) => {
+        const presence = layerPresence.get(glyphId)
+        return presence
+          ? Boolean(
+              selectLayerForUfo(presence, canonicalLayerId)?.hasBackground
+            )
+          : false
+      })
+    )
     return {
       source,
       metadata,
       defaultLayer,
       contents,
       glyphIds: entryGlyphIds,
+      backgroundGlyphIds,
       canonicalLayerId,
       ...(extraGlyphs.length > 0 ? { extraGlyphs } : {}),
       designspaceSource,

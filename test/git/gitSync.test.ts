@@ -465,6 +465,46 @@ describe('git sync report', () => {
     expect(added?.status).toBe('remoteAdded')
     expect(added?.entity).toEqual({ kind: 'glyph', name: 'B_' })
   })
+
+  // The base commit holding a glyph this project never had is the normal state
+  // of a shared repo. Reading its absence from our projection as a deletion is
+  // what offered to delete a collaborator's work.
+  it("does not read another contributor's glyph as a local deletion", async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-foreign')
+    const worktree = await openGitWorktree({ projectId: 'gs-foreign', store })
+    const synced = await syncWorktreeFromProject({
+      projectId: 'gs-foreign',
+      worktree,
+    })
+    await stageWorktreePaths({ worktree, ...synced })
+    const foreign = 'Kumiko.ufo/glyphs/Z_.glif'
+    await worktree.fs.promises.writeFile(
+      `${worktree.dir}/${foreign}`,
+      '<glyph name="Z"/>'
+    )
+    await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: foreign })
+    const base = await commitWorktree({ worktree, message: 'base with Z' })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('gs-foreign', 'A')
+    )
+    await saveKumikoGlyphRecord({ ...glyph!, syncDirty: 1 })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: base,
+      mergeBaseSha: base,
+      localHeadSha: base,
+    })
+
+    const report = await buildGitSyncReport({
+      target: target('gs-foreign'),
+      store,
+    })
+
+    expect(report.entries.find((entry) => entry.path === foreign)?.status).toBe(
+      'unchanged'
+    )
+  })
 })
 
 describe('commit and push', () => {
@@ -555,6 +595,55 @@ describe('commit and push', () => {
         'Kumiko.ufo/glyphs/A.glif',
       ])
     )
+  })
+
+  // Same failure as the report side, but this one loses the file for real: the
+  // commit takes its tree from the index, so a glyph we never staged is simply
+  // gone from the pushed branch.
+  it('keeps a glyph only the upstream branch has', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-push-foreign')
+    const worktree = await openGitWorktree({
+      projectId: 'gs-push-foreign',
+      store,
+    })
+    const foreign = 'Kumiko.ufo/glyphs/Z_.glif'
+    for (const [path, text] of Object.entries({
+      'Kumiko.ufo/glyphs/A.glif': '<glyph name="A"/>',
+      [foreign]: '<glyph name="Z"/>',
+    })) {
+      await worktree.fs.promises.writeFile(`${worktree.dir}/${path}`, text)
+      await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: path })
+    }
+    const upstream = await git.commit({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      message: 'upstream',
+      author: { name: 'Other', email: 'other@example.test' },
+    })
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: upstream,
+      mergeBaseSha: null,
+      localHeadSha: null,
+    })
+
+    const result = await commitAndPushProject({
+      projectId: 'gs-push-foreign',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-foreign',
+      baseRepo: 'upstream/repo',
+      baseBranch: 'main',
+      message: "Add '珢'",
+      store,
+    })
+
+    const blob = await git.readBlob({
+      fs: worktree.fs,
+      dir: worktree.dir,
+      oid: result.commitSha,
+      filepath: foreign,
+    })
+    expect(new TextDecoder().decode(blob.blob)).toContain('name="Z"')
   })
 
   it('lands the commit on the named branch, not on main', async () => {
@@ -947,5 +1036,31 @@ describe('switching git collaboration branches', () => {
         },
       ],
     })
+  })
+
+  // HEAD moves with noCheckout, so nothing updates the index. Leaving it in
+  // place made the next commit build its tree from the branch we left.
+  it('leaves no index describing the branch we came from', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('gs-switch-index')
+    const { worktree, base } = await seedRepo('gs-switch-index', store)
+    await saveProject('gs-switch-index', 500, { commitSha: base })
+    expect(
+      await git.listFiles({ fs: worktree.fs, dir: worktree.dir })
+    ).not.toEqual([])
+
+    fetchRemoteBranch.mockResolvedValue({
+      remoteHeadSha: base,
+      mergeBaseSha: base,
+      localHeadSha: base,
+    })
+    await switchGitProjectBranch({
+      target: target('gs-switch-index'),
+      store,
+    })
+
+    expect(await git.listFiles({ fs: worktree.fs, dir: worktree.dir })).toEqual(
+      []
+    )
   })
 })

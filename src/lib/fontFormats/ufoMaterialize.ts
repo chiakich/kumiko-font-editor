@@ -71,14 +71,22 @@ export const listUfoTreePaths = async (projectId: string) => {
       if (!isDefaultLayer && !isBackgroundLayer) {
         continue
       }
-      for (const glyphId of ufo.glyphIds) {
+      // A background layer only holds the glyphs that actually have one, and
+      // bracket extras live in the default layer only. Listing more than the
+      // stream writes would name paths the project can never produce.
+      const layerGlyphIds = isDefaultLayer
+        ? ufo.glyphIds
+        : ufo.glyphIds.filter((glyphId) => ufo.backgroundGlyphIds.has(glyphId))
+      for (const glyphId of layerGlyphIds) {
         const fileName = ufo.contents[glyphId]
         if (fileName) {
           paths.push(joinPath(layerDir, fileName))
         }
       }
-      for (const extra of ufo.extraGlyphs ?? []) {
-        paths.push(joinPath(layerDir, extra.fileName))
+      if (isDefaultLayer) {
+        for (const extra of ufo.extraGlyphs ?? []) {
+          paths.push(joinPath(layerDir, extra.fileName))
+        }
       }
     }
   }
@@ -158,7 +166,13 @@ export async function* materializeUfoTree(
       }
 
       const writtenContents: Record<string, string> = {}
-      const layerGlyphIds = glyphIdsFor(ufo)
+      // Mirrors listUfoTreePaths: a background layer only carries the glyphs
+      // that have one, so it must not even load the rest.
+      const layerGlyphIds = isDefaultLayer
+        ? glyphIdsFor(ufo)
+        : glyphIdsFor(ufo).filter((glyphId) =>
+            ufo.backgroundGlyphIds.has(glyphId)
+          )
 
       for (
         let start = 0;
@@ -217,17 +231,26 @@ export async function* materializeUfoTree(
         }
       }
 
-      // The listing always covers every live glyph: a partial rebuild must not
-      // shrink it to whatever happened to be dirty.
+      // The listing always covers every glyph this layer holds: a partial
+      // rebuild must not shrink it to whatever happened to be dirty. Which
+      // glyphs those are still depends on the layer — a background layer lists
+      // only the glyphs that have a background, and bracket extras are written
+      // in the default layer alone.
       const fullContents = dirtyGlyphIds
         ? Object.fromEntries(
             ufo.glyphIds
+              .filter(
+                (glyphId) =>
+                  isDefaultLayer || ufo.backgroundGlyphIds.has(glyphId)
+              )
               .map((glyphId) => [glyphId, ufo.contents[glyphId]] as const)
               .filter((entry): entry is readonly [string, string] => !!entry[1])
               .concat(
-                (ufo.extraGlyphs ?? []).map(
-                  (extra) => [extra.glyphName, extra.fileName] as const
-                )
+                isDefaultLayer
+                  ? (ufo.extraGlyphs ?? []).map(
+                      (extra) => [extra.glyphName, extra.fileName] as const
+                    )
+                  : []
               )
           )
         : writtenContents

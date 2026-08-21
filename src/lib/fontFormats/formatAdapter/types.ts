@@ -50,8 +50,17 @@ export interface FormatAdapter {
   readonly id: SourceFormatId
 
   // Which entity owns this repo path, or null when the path is not part of the
-  // source tree (editor scratch files, unrelated repo content).
+  // source tree (editor scratch files, unrelated repo content). Deliberately
+  // answers for paths only the remote has, so a sync report can attribute them
+  // to an entity — which is why it must never be read as permission to delete.
   entityOwning(path: string): EntityId | null
+
+  // Whether the project may delete this path from the repository. True only for
+  // paths the project's own records account for: a file it currently writes, or
+  // one its last-synced bookkeeping named. A path that merely looks like ours —
+  // a .glif some other contributor added under a glyph directory — is content
+  // we do not know about, and dropping it silently loses their work.
+  canRemovePath(path: string): boolean
 
   // Every repo path this entity writes. More than one for formats that split an
   // entity across masters; the same path for several entities in single-file

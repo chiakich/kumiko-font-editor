@@ -12,6 +12,7 @@ import {
   normalizeKumikoGlyphRecord,
 } from 'src/lib/project/kumikoFontDataAdapter'
 import type {
+  KumikoGlyphLayerPresence,
   KumikoGlyphPrimaryKey,
   KumikoGlyphMetadataRecord,
   KumikoGlyphRecord,
@@ -475,6 +476,39 @@ export const listKumikoGlyphMetadataForProject = async (projectId: string) => {
   })
   await transactionDone(transaction)
   return records
+}
+
+export const listKumikoGlyphLayerPresenceForProject = async (
+  projectId: string
+): Promise<Map<string, KumikoGlyphLayerPresence>> => {
+  const database = await openDatabase()
+  const transaction = database.transaction(KUMIKO_GLYPHS_STORE, 'readonly')
+  const index = transaction.objectStore(KUMIKO_GLYPHS_STORE).index('byProject')
+  const presence = new Map<string, KumikoGlyphLayerPresence>()
+  await new Promise<void>((resolve, reject) => {
+    const request = index.openCursor(projectId)
+    request.onsuccess = () => {
+      const cursor = request.result
+      if (!cursor) {
+        resolve()
+        return
+      }
+      const record = cursor.value as KumikoGlyphRecord
+      presence.set(record.glyphId, {
+        layerOrder: record.layerOrder,
+        layers: Object.fromEntries(
+          Object.entries(record.layers).map(([layerId, layer]) => [
+            layerId,
+            { hasBackground: Boolean(layer.background) },
+          ])
+        ),
+      })
+      cursor.continue()
+    }
+    request.onerror = () => reject(request.error)
+  })
+  await transactionDone(transaction)
+  return presence
 }
 
 export const listKumikoGlyphSpecialLayerMetadataForProject = async (

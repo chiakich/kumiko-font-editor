@@ -15,13 +15,14 @@ import {
 import {
   commitWorktree,
   openGitWorktree,
+  resetWorktreeIndex,
   stageWorktreePaths,
   syncWorktreeFromProject,
   checkoutWorktreeBranch,
   type GitCommitAuthor,
   type GitWorktree,
 } from 'src/lib/git/worktree'
-import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
+import { buildProjectAdapters } from 'src/lib/git/projectAdapters'
 import {
   listUfoTreePaths,
   materializeUfoTree,
@@ -29,6 +30,7 @@ import {
 import {
   applyKumikoRemoteSnapshot,
   listProjectUfoSources,
+  makeContents,
 } from 'src/lib/github/sync/kumikoUfoSync'
 import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
 import type { ParsedUfoFolder } from 'src/lib/fontFormats/ufoFormat'
@@ -114,24 +116,6 @@ const collectTreeOids = async (worktree: GitWorktree, oid: string | null) => {
   return oids
 }
 
-const buildProjectAdapters = async (projectId: string) => {
-  const project = await loadKumikoProjectRecord(projectId)
-  if (!project) {
-    return []
-  }
-  const designspacePath = project.sourceData?.ufo?.designspacePath ?? null
-  return listProjectUfoSources(project).map((source) =>
-    createUfoFormatAdapter({
-      relativePath: source.relativePath,
-      glyphDir:
-        source.layers.find((layer) => layer.layerId === source.defaultLayerId)
-          ?.glyphDir ?? 'glyphs',
-      designspacePath,
-      contents: source.contents,
-    })
-  )
-}
-
 // The commit the project was imported from, when the fetch actually brought it
 // in. A force-pushed or pruned branch no longer contains it, and then there is
 // no honest base: reporting conflicts beats inventing a baseline.
@@ -156,22 +140,21 @@ const resolveImportedBaseSha = async (
   }
 }
 
-// True for the paths this project produces. Everything else in the repository —
-// README, licence, build tooling — belongs to the repo, not to the font, and
-// Kumiko must carry it through untouched.
-const buildManagedPathTest = async (projectId: string) => {
-  const adapters = await buildProjectAdapters(projectId)
-  return (path: string) =>
-    adapters.some((adapter) => adapter.entityOwning(path) !== null)
-}
-
-// A commit is built from the index, and the index of a fresh worktree holds
-// only what we staged. Without this the commit reads as "delete everything the
-// project does not manage" — it wiped a repository's README, licence and docs.
-const carryUnmanagedPaths = async (input: {
+// A commit is built from the index, and the index of a fresh worktree holds only
+// what we staged. Every base path we did not stage therefore has to be carried
+// through explicitly, or the commit reads as "delete everything this project did
+// not happen to materialize" — that wiped a repository's README, licence and
+// docs, and later deleted glyphs that only existed on the remote.
+//
+// The rule is deliberately about evidence rather than ownership: a base path is
+// dropped only when this sync decided to delete it. Anything else is carried,
+// whether or not the path looks like ours. Runs after staging so removedPaths is
+// known, and returns the base tree so the caller does not walk it twice.
+const carryBasePaths = async (input: {
   worktree: GitWorktree
   baseSha: string
-  isManaged: (path: string) => boolean
+  writtenPaths: ReadonlySet<string>
+  removedPaths: ReadonlySet<string>
 }) => {
   const { worktree } = input
   const baseOids = await collectTreeOids(worktree, input.baseSha)
@@ -182,7 +165,7 @@ const carryUnmanagedPaths = async (input: {
   )
 
   for (const [path, oid] of baseOids) {
-    if (input.isManaged(path) || tracked.has(path)) {
+    if (tracked.has(path) || input.removedPaths.has(path)) {
       continue
     }
     const blob = await git.readBlob({
@@ -194,16 +177,19 @@ const carryUnmanagedPaths = async (input: {
     await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: path })
   }
 
-  // Mirror deletions too: an unmanaged file the base no longer has must not be
-  // resurrected by our index.
+  // Mirror deletions too: a file the base no longer has, and that this sync did
+  // not write, is left over from an earlier branch and must not be resurrected
+  // by our index.
   for (const path of tracked) {
-    if (input.isManaged(path) || baseOids.has(path)) {
+    if (baseOids.has(path) || input.writtenPaths.has(path)) {
       continue
     }
     await git
       .remove({ fs: worktree.fs, dir: worktree.dir, filepath: path })
       .catch(() => undefined)
   }
+
+  return baseOids
 }
 
 // Builds a sync report by comparing the local materialization, the merge base
@@ -230,6 +216,8 @@ export const buildGitSyncReport = async (input: {
   const hasPotentialLocalChanges =
     dirtyGlyphIds.length > 0 || project?.syncDirty === 1
   const adapters = await buildProjectAdapters(input.target.projectId)
+  const canRemovePath = (path: string) =>
+    adapters.some((adapter) => adapter.canRemovePath(path))
   // Paths only the remote knows still need an owning entity, and which UFO owns
   // one depends on the project's real layout.
   const entityOwning = (path: string) => {
@@ -297,15 +285,15 @@ export const buildGitSyncReport = async (input: {
       entity,
       path,
       baseOid: baseOids.get(path) ?? null,
-      // A path absent from the dirty projection did not change locally. Its
-      // OID is therefore the base OID, unless the current project no longer
-      // produces it (a local deletion).
+      // A path absent from the dirty projection did not change locally, so its
+      // OID is the base OID. It reads as a local deletion only when the project
+      // can account for the path having been ours — otherwise this is content we
+      // never had (another contributor's glyph), and calling that a local
+      // deletion would offer to delete their work.
       localOid:
         localTree.get(path)?.oid ??
-        (localPathSet
-          ? localPathSet.has(path)
-            ? (baseOids.get(path) ?? null)
-            : null
+        (localPathSet && !localPathSet.has(path) && canRemovePath(path)
+          ? null
           : (baseOids.get(path) ?? null)),
       remoteOid: remoteOids.get(path) ?? null,
       mergePolicy: owned?.mergePolicy ?? 'atomic',
@@ -375,36 +363,41 @@ export const commitAndPushProject = async (input: {
     startAt,
   })
 
-  const isManaged = await buildManagedPathTest(input.projectId)
   const baseSha =
     startAt ??
     (await git
       .resolveRef({ fs: worktree.fs, dir: worktree.dir, ref: 'HEAD' })
       .catch(() => null))
-  if (baseSha && !isExistingDraft) {
-    await carryUnmanagedPaths({ worktree, baseSha, isManaged })
-  }
 
   const synced = await syncWorktreeFromProject({
     projectId: input.projectId,
     worktree,
-    isManaged,
   })
   await stageWorktreePaths({ worktree, ...synced })
 
-  // Fail closed rather than push a commit that drops repository files. The
-  // commit takes its tree from the index, so checking the index is exactly a
-  // check of what is about to be committed — and nothing has been pushed yet.
   if (baseSha) {
+    const removedPaths = new Set(synced.removedPaths)
+    const baseOids = await carryBasePaths({
+      worktree,
+      baseSha,
+      writtenPaths: new Set(synced.writtenPaths),
+      removedPaths,
+    })
+
+    // Fail closed rather than push a commit that drops files nobody asked to
+    // delete. The commit takes its tree from the index, so checking the index is
+    // exactly a check of what is about to be committed — and nothing has been
+    // pushed yet. After the carry above this should never fire; it stays as the
+    // assertion that no future change reintroduces a silent deletion.
     const staged = new Set(
       await git.listFiles({ fs: worktree.fs, dir: worktree.dir })
     )
-    const dropped = [...(await collectTreeOids(worktree, baseSha)).keys()]
-      .filter((path) => !isManaged(path) && !staged.has(path))
+    const dropped = [...baseOids.keys()]
+      .filter((path) => !staged.has(path) && !removedPaths.has(path))
       .slice(0, 5)
     if (dropped.length > 0) {
       throw new Error(
-        `這次 commit 會刪掉專案不管理的檔案（${dropped.join('、')}），已中止。`
+        `這次 commit 會刪掉沒有要求刪除的檔案（${dropped.join('、')}），已中止。`
       )
     }
   }
@@ -625,6 +618,10 @@ export const switchGitProjectBranch = async (input: {
     branch: input.target.branch,
     startAt: fetched.remoteHeadSha,
   })
+  // HEAD moved without a checkout, so the index still describes the branch we
+  // left. Clearing it makes the next sync a full rebuild against the new HEAD
+  // instead of a partial one against a tree that is no longer there.
+  await resetWorktreeIndex(worktree)
 
   const result = await applyKumikoRemoteSnapshot({
     projectId: input.target.projectId,
@@ -743,19 +740,26 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
       ufo: project.sourceData?.ufo
         ? {
             ...project.sourceData.ufo,
-            ufos: project.sourceData.ufo.ufos?.map((ufo) => ({
-              ...ufo,
-              contents: Object.fromEntries(
-                glyphs.map((glyph) => [
-                  glyph.glyphId,
-                  committedNames.get(ufo.ufoId)?.[glyph.glyphId] ??
-                    ufo.contents[glyph.glyphId] ??
-                    glyph.sourceData?.ufo?.fileName ??
-                    `${glyph.glyphId}.glif`,
-                ])
-              ),
-              glyphOrder: project.glyphOrder,
-            })),
+            ufos: project.sourceData.ufo.ufos?.map((ufo) => {
+              // Glyphs outside this commit still need a name, and it has to be
+              // the one the next materialization will pick. Deriving it any
+              // other way makes contents.plist disagree with the file that gets
+              // written, and the difference then reads as a rename — the old
+              // path deleted, an identical one added beside it.
+              const derived = makeContents(project, glyphs, ufo.ufoId, ufo)
+              return {
+                ...ufo,
+                contents: Object.fromEntries(
+                  glyphs.map((glyph) => [
+                    glyph.glyphId,
+                    committedNames.get(ufo.ufoId)?.[glyph.glyphId] ??
+                      derived[glyph.glyphId] ??
+                      `${glyph.glyphId}.glif`,
+                  ])
+                ),
+                glyphOrder: project.glyphOrder,
+              }
+            }),
             lastSync: syncedTarget,
             gitCollaboration: collaboration.base
               ? {

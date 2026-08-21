@@ -13,6 +13,7 @@ import {
 } from 'src/lib/git/worktree'
 import { saveProjectDraft } from 'src/lib/project/projectRepository'
 import {
+  deleteKumikoGlyphRecordBatch,
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
@@ -94,6 +95,18 @@ const saveProject = async (projectId: string, glyphNames: string[]) =>
     projectRoundTripFormat: 'ufo',
     projectGlyphsPackage: null,
   })
+
+// Deletes a glyph the way the editor does: the record goes, and the UFO's
+// contents map still names the file it had at the last sync. That map is the
+// evidence the file was ours, and therefore ours to delete.
+const deleteGlyph = async (projectId: string, glyphId: string) => {
+  await deleteKumikoGlyphRecordBatch([makeKumikoGlyphKey(projectId, glyphId)])
+  const project = await loadKumikoProjectRecord(projectId)
+  await saveKumikoProjectRecord({
+    ...project!,
+    glyphOrder: project!.glyphOrder.filter((id) => id !== glyphId),
+  })
+}
 
 describe('git worktree', () => {
   it('initializes a per-project repository', async () => {
@@ -177,23 +190,7 @@ describe('git worktree', () => {
     await stageWorktreePaths({ worktree, ...first })
     await commitWorktree({ worktree, message: 'add A and B' })
 
-    // Drop B from the project, then re-materialize.
-    const project = await loadKumikoProjectRecord('wt-prune')
-    await saveKumikoProjectRecord({
-      ...project!,
-      glyphOrder: ['A'],
-      sourceData: {
-        ...project!.sourceData,
-        ufo: {
-          ...project!.sourceData!.ufo,
-          ufos: project!.sourceData!.ufo!.ufos!.map((ufo) => ({
-            ...ufo,
-            contents: { A: 'A.glif' },
-            glyphOrder: ['A'],
-          })),
-        },
-      },
-    })
+    await deleteGlyph('wt-prune', 'B')
 
     const second = await syncWorktreeFromProject({
       projectId: 'wt-prune',
@@ -207,6 +204,39 @@ describe('git worktree', () => {
         'utf8'
       )
     ).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  // The bug this guards: a .glif another contributor added sits in our glyph
+  // directory and looks exactly like one of ours, but nothing in this project's
+  // records ever named it. Absence from the expected list is not a deletion.
+  it('keeps a glyph the repository has and the project has never had', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('wt-foreign', ['A'])
+    const worktree = await openGitWorktree({ projectId: 'wt-foreign', store })
+    const first = await syncWorktreeFromProject({
+      projectId: 'wt-foreign',
+      worktree,
+    })
+    await stageWorktreePaths({ worktree, ...first })
+    await commitWorktree({ worktree, message: 'add A' })
+
+    const foreign = 'Kumiko.ufo/glyphs/Z_.glif'
+    await worktree.fs.promises.writeFile(
+      `${worktree.dir}/${foreign}`,
+      '<glyph name="Z"/>'
+    )
+    await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: foreign })
+    await commitWorktree({ worktree, message: 'someone else added Z' })
+
+    const second = await syncWorktreeFromProject({
+      projectId: 'wt-foreign',
+      worktree,
+    })
+
+    expect(second.removedPaths).not.toContain(foreign)
+    expect(
+      await worktree.fs.promises.readFile(`${worktree.dir}/${foreign}`, 'utf8')
+    ).toContain('<glyph')
   })
 
   it('discards the repository so it can be rebuilt from scratch', async () => {
@@ -317,22 +347,7 @@ describe('partial worktree rebuilds', () => {
     await stageWorktreePaths({ worktree, ...first })
     await commitWorktree({ worktree, message: 'base' })
 
-    const project = await loadKumikoProjectRecord('wt-scope-delete')
-    await saveKumikoProjectRecord({
-      ...project!,
-      glyphOrder: ['A'],
-      sourceData: {
-        ...project!.sourceData,
-        ufo: {
-          ...project!.sourceData!.ufo,
-          ufos: project!.sourceData!.ufo!.ufos!.map((ufo) => ({
-            ...ufo,
-            contents: { A: 'A.glif' },
-            glyphOrder: ['A'],
-          })),
-        },
-      },
-    })
+    await deleteGlyph('wt-scope-delete', 'B')
 
     const second = await syncWorktreeFromProject({
       projectId: 'wt-scope-delete',
@@ -341,5 +356,42 @@ describe('partial worktree rebuilds', () => {
     })
 
     expect(second.removedPaths).toContain('Kumiko.ufo/glyphs/B.glif')
+  })
+
+  // A partial rebuild only writes the dirty glyphs, so every other repository
+  // file is missing from the written set. That must not be read as a deletion.
+  it('keeps a foreign glyph across a partial rebuild', async () => {
+    const store = createMemoryFileStore()
+    await saveProject('wt-scope-foreign', ['A', 'B'])
+    const worktree = await openGitWorktree({
+      projectId: 'wt-scope-foreign',
+      store,
+    })
+    const first = await syncWorktreeFromProject({
+      projectId: 'wt-scope-foreign',
+      worktree,
+    })
+    await stageWorktreePaths({ worktree, ...first })
+
+    const foreign = 'Kumiko.ufo/glyphs/Z_.glif'
+    await worktree.fs.promises.writeFile(
+      `${worktree.dir}/${foreign}`,
+      '<glyph name="Z"/>'
+    )
+    await git.add({ fs: worktree.fs, dir: worktree.dir, filepath: foreign })
+    await commitWorktree({ worktree, message: 'base plus a foreign glyph' })
+
+    const glyph = await loadKumikoGlyphRecord(
+      makeKumikoGlyphKey('wt-scope-foreign', 'A')
+    )
+    await saveKumikoGlyphRecord({ ...glyph!, syncDirty: 1 })
+
+    const second = await syncWorktreeFromProject({
+      projectId: 'wt-scope-foreign',
+      worktree,
+      scope: 'dirty',
+    })
+
+    expect(second.removedPaths).toEqual([])
   })
 })
