@@ -44,6 +44,17 @@ import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspect
 import { loadGitSyncEnabled } from 'src/lib/preferences/appPreferences'
 import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
+import {
+  listSyncDirtyKumikoGlyphIds,
+  loadKumikoProjectRecord,
+  loadKumikoUiValue,
+} from 'src/lib/project/kumikoProjectPersistence'
+import { loadProjectDraftMetadata } from 'src/lib/project/projectRepository'
+import {
+  sanitizeGlyphEditTimes,
+  UFO_GLYPH_EDIT_TIMES_KEY,
+} from 'src/lib/glyph/glyphEditTimes'
+import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
 
 interface UseGitHubCommitFlowInput {
   projectId: string | null
@@ -104,6 +115,10 @@ export const useGitHubCommitFlow = ({
   const persistenceStatus = useStore((state) => state.persistenceStatus)
   const persistenceQueue = useStore((state) => state.persistenceQueue)
   const markLocalSaved = useStore((state) => state.markLocalSaved)
+  const loadProjectState = useStore((state) => state.loadProjectState)
+  const hydratePersistedLocalChanges = useStore(
+    (state) => state.hydratePersistedLocalChanges
+  )
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)
   const activeMasterId = useStore((state) => state.activeMasterId)
   const editLocation = useStore((state) => state.editLocation)
@@ -115,6 +130,11 @@ export const useGitHubCommitFlow = ({
   // The git transport does not go through a mutation, so its pending state has
   // to be tracked here or the button stays idle for the whole push.
   const [isCommittingToGitHub, setIsCommittingToGitHub] = useState(false)
+  const [isSwitchingGitBranch, setIsSwitchingGitBranch] = useState(false)
+  const [gitCollaboration, setGitCollaboration] = useState<{
+    activeTarget: GitHubSyncTarget | null
+    changeDrafts: GitHubSyncTarget[]
+  }>({ activeTarget: null, changeDrafts: [] })
   const [hasBlockingSyncConflicts, setHasBlockingSyncConflicts] =
     useState(false)
   const [forkStatusOverrideState, setForkStatusOverrideState] =
@@ -265,6 +285,92 @@ export const useGitHubCommitFlow = ({
     )
   }
 
+  const reloadProjectFromPersistence = async (nextProjectId: string) => {
+    const loadedProject = await loadProjectDraftMetadata(nextProjectId)
+    if (!loadedProject) {
+      return
+    }
+    loadProjectState(
+      loadedProject.id,
+      loadedProject.title,
+      loadedProject.fontData!,
+      loadedProject.projectMetadata,
+      loadedProject.projectSourceFormat ?? null,
+      loadedProject.projectRoundTripFormat ?? null,
+      loadedProject.projectUiState
+    )
+    hydratePersistedLocalChanges(
+      await listSyncDirtyKumikoGlyphIds(nextProjectId),
+      [],
+      sanitizeGlyphEditTimes(
+        await loadKumikoUiValue(nextProjectId, UFO_GLYPH_EDIT_TIMES_KEY)
+      )
+    )
+  }
+
+  const refreshGitCollaboration = async (nextProjectId: string) => {
+    const project = await loadKumikoProjectRecord(nextProjectId)
+    setGitCollaboration({
+      activeTarget: project?.sourceData?.ufo?.lastSync ?? null,
+      changeDrafts:
+        project?.sourceData?.ufo?.gitCollaboration?.changeDrafts ?? [],
+    })
+  }
+
+  const handleSwitchGitBranch = async (target: {
+    repo: string
+    branch: string
+  }) => {
+    if (
+      !loadGitSyncEnabled() ||
+      !projectId ||
+      !target.repo ||
+      !target.branch.trim() ||
+      isSwitchingGitBranch
+    ) {
+      return
+    }
+    try {
+      setIsSwitchingGitBranch(true)
+      const { switchGitProjectBranchInWorker } =
+        await import('src/lib/git/gitSyncWorkerClient')
+      await switchGitProjectBranchInWorker({
+        projectId,
+        repo: target.repo,
+        branch: target.branch.trim(),
+      })
+      await reloadProjectFromPersistence(projectId)
+      await refreshGitCollaboration(projectId)
+      updateGitHubCommitDraft({
+        branchName: target.branch.trim(),
+        isCreatingNewBranch: false,
+      })
+      if (target.repo === githubForkStatus?.targetRepo?.fullName) {
+        await refreshGitHubCompareStatus(target.branch)
+      }
+      void queryClient.invalidateQueries({
+        queryKey: githubSyncReportQueryKey(projectId),
+      })
+      toaster.create({
+        title: '已切換目前檢視版本',
+        description: `目前正在檢視 ${target.branch} 的內容。`,
+        type: 'success',
+        duration: 3200,
+        closable: true,
+      })
+    } catch (error) {
+      toaster.create({
+        title: '無法切換版本',
+        description: getErrorMessage(error, '目前無法切換 GitHub 版本。'),
+        type: 'error',
+        duration: 4200,
+        closable: true,
+      })
+    } finally {
+      setIsSwitchingGitBranch(false)
+    }
+  }
+
   const handleLoginGitHub = async () => {
     try {
       const viewer = await loginMutation.mutateAsync(startGitHubOAuthLogin)
@@ -322,9 +428,13 @@ export const useGitHubCommitFlow = ({
       return
     }
 
-    const forkStatus = githubViewer
-      ? await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
-      : null
+    if (githubViewer) {
+      await loadGitHubForkStatus(gitHubBranchName.trim() || undefined)
+    }
+
+    if (loadGitSyncEnabled()) {
+      await refreshGitCollaboration(projectId)
+    }
 
     if (!canCommitToGitHub || persistenceStatus === 'error') {
       return
@@ -352,6 +462,27 @@ export const useGitHubCommitFlow = ({
           setPersistenceStatus,
         })
       )
+
+      if (loadGitSyncEnabled()) {
+        const nextDraft: Partial<
+          Omit<ScopedGitHubCommitDraft, 'repoFullName'>
+        > = {
+          // The git worker materializes the actual files exactly once when it
+          // commits. Preparing the legacy REST payload here used to serialize
+          // and hash the same glyphs a second time just to fill this field.
+          commitMessage: buildGlyphCommitMessage({
+            fallbackTitle: projectTitle,
+          }),
+        }
+        if (!gitHubBranchName.trim()) {
+          nextDraft.branchName =
+            buildSuggestedGitHubBranchName(localDirtyGlyphIds)
+          nextDraft.isCreatingNewBranch = true
+        }
+        updateGitHubCommitDraft(nextDraft)
+        return
+      }
+
       const preparedCommit = await prepareGitHubCommit({
         projectId,
         projectTitle,
@@ -361,15 +492,13 @@ export const useGitHubCommitFlow = ({
           commitMessage: preparedCommit.request.commitMessage,
         }
       if (!gitHubBranchName.trim()) {
-        if (forkStatus?.selectedBranch) {
-          nextDraft.branchName = forkStatus.selectedBranch
-          nextDraft.isCreatingNewBranch = false
-        } else {
-          nextDraft.branchName =
-            preparedCommit.request.branchName ??
-            buildSuggestedGitHubBranchName(preparedCommit.changedGlyphNames)
-          nextDraft.isCreatingNewBranch = true
-        }
+        // A fork's default branch is a copy of the merge target, not a place
+        // for a contributor's edits. Start a named change draft instead; the
+        // branch picker remains available under advanced options when needed.
+        nextDraft.branchName =
+          preparedCommit.request.branchName ??
+          buildSuggestedGitHubBranchName(preparedCommit.changedGlyphNames)
+        nextDraft.isCreatingNewBranch = true
       }
       updateGitHubCommitDraft(nextDraft)
     } catch (error) {
@@ -431,8 +560,8 @@ export const useGitHubCommitFlow = ({
 
     if (!gitHubBranchName.trim()) {
       toaster.create({
-        title: '請先指定 branch',
-        description: '你可以選現有 branch，或輸入一個新的 branch 名稱。',
+        title: '無法準備修改草稿',
+        description: '請重新開啟送出修改視窗後再試一次。',
         type: 'warning',
         duration: 2800,
         closable: true,
@@ -542,9 +671,12 @@ export const useGitHubCommitFlow = ({
         branchName: result.branchName,
         isCreatingNewBranch: false,
       })
+      if (loadGitSyncEnabled()) {
+        await refreshGitCollaboration(projectId)
+      }
       toaster.create({
-        title: 'GitHub commit 已推送',
-        description: `已更新 ${result.headOwner}:${result.branchName}`,
+        title: '修改已送出',
+        description: '你的修改已送到 GitHub，現在可以等待合併或查看修改提案。',
         type: 'success',
         duration: 3600,
         closable: true,
@@ -628,6 +760,7 @@ export const useGitHubCommitFlow = ({
     // Committing before the report lands would skip the conflict gate.
     isCheckingSyncStatus: syncStatus.isLoading,
     isMergingGitHubUpstream: mergeUpstreamMutation.isPending,
+    isSwitchingGitBranch,
     canCommitToGitHub,
     gitHubCommitMessage,
     suggestedCommitMessage,
@@ -636,12 +769,31 @@ export const useGitHubCommitFlow = ({
     onLoginGitHub: () => void handleLoginGitHub(),
     onLogoutGitHub: () => void handleLogoutGitHub(),
     onCreateFork: () => void handleCreateFork(),
+    activeGitTarget: gitCollaboration.activeTarget,
+    changeDrafts: gitCollaboration.changeDrafts,
     onBranchSelect: (branch) => {
+      if (loadGitSyncEnabled()) {
+        if (githubForkStatus?.targetRepo) {
+          void handleSwitchGitBranch({
+            repo: githubForkStatus.targetRepo.fullName,
+            branch,
+          })
+        }
+        return
+      }
       updateGitHubCommitDraft({
         branchName: branch,
         isCreatingNewBranch: false,
       })
       void refreshGitHubCompareStatus(branch)
+    },
+    onSwitchToMergeTarget: () => {
+      if (githubForkStatus?.sourceRepo) {
+        void handleSwitchGitBranch({
+          repo: githubForkStatus.sourceRepo.fullName,
+          branch: githubForkStatus.sourceRepo.defaultBranch,
+        })
+      }
     },
     onCommitMessageChange: (commitMessage) =>
       updateGitHubCommitDraft({ commitMessage }),

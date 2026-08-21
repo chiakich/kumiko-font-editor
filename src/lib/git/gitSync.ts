@@ -21,7 +21,10 @@ import {
   type GitWorktree,
 } from 'src/lib/git/worktree'
 import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
-import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
+import {
+  listUfoTreePaths,
+  materializeUfoTree,
+} from 'src/lib/fontFormats/ufoMaterialize'
 import {
   applyKumikoRemoteSnapshot,
   listProjectUfoSources,
@@ -42,6 +45,11 @@ import {
   updateKumikoGlyphSyncDirtyState,
 } from 'src/lib/project/kumikoProjectPersistence'
 import type { FileStore } from 'src/lib/git/fileStore'
+import {
+  baseTargetForProject,
+  sameGitTarget,
+  withUpdatedChangeDraft,
+} from 'src/lib/git/collaboration'
 
 export interface GitSyncTarget {
   projectId: string
@@ -55,16 +63,18 @@ export interface GitSyncReport extends EntitySyncReport {
   localHeadSha: string | null
 }
 
-// Hashes the local tree instead of holding it. The materializer is the only
-// projection from canonical records, so these OIDs are exactly what a commit
-// would produce — and a CJK-scale project stays a map of hashes, not of file
-// bodies.
-const collectLocalTree = async (projectId: string) => {
+// Hashes materialized local entities instead of holding their bodies. Callers
+// normally pass the dirty scope, so a CJK project stays proportional to the
+// user's changes rather than its total glyph count.
+const collectLocalTree = async (input: {
+  projectId: string
+  scope?: 'all' | 'dirty'
+}) => {
   const files = new Map<
     string,
     { oid: string; entity: EntitySyncInput['entity'] }
   >()
-  for await (const file of materializeUfoTree({ projectId })) {
+  for await (const file of materializeUfoTree(input)) {
     const { oid } = await git.hashBlob({ object: file.text })
     files.set(file.path, { oid, entity: file.entity })
   }
@@ -212,7 +222,12 @@ export const buildGitSyncReport = async (input: {
     branch: input.target.branch,
   })
 
-  const localTree = await collectLocalTree(input.target.projectId)
+  const project = await loadKumikoProjectRecord(input.target.projectId)
+  const dirtyGlyphIds = await listSyncDirtyKumikoGlyphIds(
+    input.target.projectId
+  )
+  const hasPotentialLocalChanges =
+    dirtyGlyphIds.length > 0 || project?.syncDirty === 1
   const adapters = await buildProjectAdapters(input.target.projectId)
   // Paths only the remote knows still need an owning entity, and which UFO owns
   // one depends on the project's real layout.
@@ -236,10 +251,33 @@ export const buildGitSyncReport = async (input: {
       ? await resolveImportedBaseSha(worktree, input.target.projectId)
       : null)
 
-  const [baseOids, remoteOids] = await Promise.all([
+  // This is the common path after a successful send: HEAD already equals the
+  // fetched copy and IndexedDB has no dirty entity. Do not reserialize or hash
+  // an entire CJK font merely to rediscover that fact.
+  if (!hasPotentialLocalChanges && baseSha === fetched.remoteHeadSha) {
+    return {
+      ...summarizeEntitySync([]),
+      remoteHeadSha: fetched.remoteHeadSha,
+      mergeBaseSha: baseSha,
+      localHeadSha: fetched.localHeadSha,
+    }
+  }
+
+  // Dirty flags are Kumiko's local change index. Hash only the affected
+  // entities; clean paths are known to still equal the merge base.
+  const localTree = await collectLocalTree({
+    projectId: input.target.projectId,
+    scope: 'dirty',
+  })
+
+  const [baseOids, remoteOids, localPaths] = await Promise.all([
     collectTreeOids(worktree, baseSha),
     collectTreeOids(worktree, fetched.remoteHeadSha),
+    hasPotentialLocalChanges
+      ? listUfoTreePaths(input.target.projectId)
+      : Promise.resolve<string[] | null>(null),
   ])
+  const localPathSet = localPaths ? new Set(localPaths) : null
 
   const paths = new Set<string>([
     ...localTree.keys(),
@@ -258,7 +296,16 @@ export const buildGitSyncReport = async (input: {
       entity,
       path,
       baseOid: baseOids.get(path) ?? null,
-      localOid: localTree.get(path)?.oid ?? null,
+      // A path absent from the dirty projection did not change locally. Its
+      // OID is therefore the base OID, unless the current project no longer
+      // produces it (a local deletion).
+      localOid:
+        localTree.get(path)?.oid ??
+        (localPathSet
+          ? localPathSet.has(path)
+            ? (baseOids.get(path) ?? null)
+            : null
+          : (baseOids.get(path) ?? null)),
       remoteOid: remoteOids.get(path) ?? null,
       mergePolicy: owned?.mergePolicy ?? 'atomic',
     })
@@ -303,8 +350,15 @@ export const commitAndPushProject = async (input: {
     store: input.store,
   })
 
+  const existingBranches = await git
+    .listBranches({ fs: worktree.fs, dir: worktree.dir })
+    .catch(() => [] as string[])
+  const isExistingDraft = existingBranches.includes(input.pushBranch)
   let startAt: string | null = null
-  if (input.baseRepo && input.baseBranch) {
+  // The first send needs an upstream tree to create a reviewable change draft.
+  // Once the draft exists, its local branch and index already carry that tree;
+  // fetching and walking upstream again only delays a small follow-up change.
+  if (!isExistingDraft && input.baseRepo && input.baseBranch) {
     const fetched = await fetchRemoteBranch({
       worktree,
       repo: input.baseRepo,
@@ -325,7 +379,7 @@ export const commitAndPushProject = async (input: {
     (await git
       .resolveRef({ fs: worktree.fs, dir: worktree.dir, ref: 'HEAD' })
       .catch(() => null))
-  if (baseSha) {
+  if (baseSha && !isExistingDraft) {
     await carryUnmanagedPaths({ worktree, baseSha, isManaged })
   }
 
@@ -461,6 +515,155 @@ export const applyGitRemoteChanges = async (input: {
   })
 }
 
+// A branch switch changes the project the user is looking at, rather than just
+// changing where the next commit will be sent. IndexedDB holds one canonical
+// project, so this intentionally hydrates every managed entity from the target
+// commit after refusing to overwrite any unsent local work.
+export const switchGitProjectBranch = async (input: {
+  target: GitSyncTarget
+  store?: FileStore
+}) => {
+  const project = await loadKumikoProjectRecord(input.target.projectId)
+  if (!project) {
+    throw new Error('找不到專案資料，無法切換版本')
+  }
+  const dirtyGlyphIds = await listSyncDirtyKumikoGlyphIds(
+    input.target.projectId
+  )
+  if (dirtyGlyphIds.length > 0 || project.syncDirty === 1) {
+    throw new Error('請先送出、暫存或放棄本機修改，再切換版本')
+  }
+
+  const worktree = await openGitWorktree({
+    projectId: input.target.projectId,
+    store: input.store,
+  })
+  const fetched = await fetchRemoteBranch({
+    worktree,
+    repo: input.target.repo,
+    branch: input.target.branch,
+  })
+  const adapters = await buildProjectAdapters(input.target.projectId)
+  const entityOwning = (path: string) => {
+    for (const adapter of adapters) {
+      const entity = adapter.entityOwning(path)
+      if (entity) {
+        return entity
+      }
+    }
+    return null
+  }
+  const [remoteOids, currentPaths] = await Promise.all([
+    collectTreeOids(worktree, fetched.remoteHeadSha),
+    listUfoTreePaths(input.target.projectId),
+  ])
+  const currentPathSet = new Set(currentPaths)
+  const entries: ProjectSyncReport['entries'] = []
+  for (const path of new Set([...currentPathSet, ...remoteOids.keys()])) {
+    const entity = entityOwning(path)
+    if (!entity) {
+      continue
+    }
+    const onTarget = remoteOids.has(path)
+    entries.push({
+      kind: entity.kind,
+      glyphName: entity.kind === 'glyph' ? entity.name : null,
+      fileName: path.slice(path.lastIndexOf('/') + 1),
+      path,
+      // Force a full canonical hydration even when a file happens to be byte
+      // identical across branches: its owning entity may have changed in a
+      // sibling master or in the font-level metadata.
+      status: onTarget
+        ? currentPathSet.has(path)
+          ? 'remoteModified'
+          : 'remoteAdded'
+        : 'remoteDeleted',
+      baselineSha: null,
+      remoteSha: onTarget ? fetched.remoteHeadSha : null,
+    })
+  }
+  const report: ProjectSyncReport = {
+    target: {
+      owner: input.target.repo.split('/')[0] ?? '',
+      repo: input.target.repo.split('/')[1] ?? '',
+      ref: input.target.branch,
+    },
+    remoteHeadSha: fetched.remoteHeadSha,
+    remoteTreeTruncated: false,
+    entries,
+    conflicts: [],
+    remoteChanges: entries,
+    localChanges: [],
+    isUpToDate: false,
+  }
+  const remoteUfos = await readRemoteUfoFolders({
+    worktree,
+    remoteHeadSha: fetched.remoteHeadSha,
+    projectId: input.target.projectId,
+    paths: [...remoteOids.keys()],
+  })
+
+  // The OPFS tree is derived and is materialized again before the next commit.
+  // Point HEAD at the selected branch without checking out files: the canonical
+  // snapshot below is the source of truth, and noCheckout also avoids walking a
+  // whole CJK font just to switch views.
+  await git.writeRef({
+    fs: worktree.fs,
+    dir: worktree.dir,
+    ref: `refs/heads/${input.target.branch}`,
+    value: fetched.remoteHeadSha,
+    force: true,
+  })
+  await checkoutWorktreeBranch({
+    worktree,
+    branch: input.target.branch,
+    startAt: fetched.remoteHeadSha,
+  })
+
+  const result = await applyKumikoRemoteSnapshot({
+    projectId: input.target.projectId,
+    report,
+    remoteUfos,
+  })
+  const switchedProject = await loadKumikoProjectRecord(input.target.projectId)
+  if (switchedProject?.sourceData?.ufo) {
+    const base = baseTargetForProject(switchedProject)
+    const targetRef = {
+      owner: report.target.owner,
+      repo: report.target.repo,
+      ref: report.target.ref,
+      commitSha: fetched.remoteHeadSha,
+      syncedAt: Date.now(),
+    }
+    const collaboration =
+      base && !sameGitTarget(base, targetRef)
+        ? withUpdatedChangeDraft({ project: switchedProject, draft: targetRef })
+        : {
+            base,
+            changeDrafts:
+              switchedProject.sourceData.ufo.gitCollaboration?.changeDrafts ??
+              [],
+          }
+    await saveKumikoProjectRecord({
+      ...switchedProject,
+      sourceData: {
+        ...switchedProject.sourceData,
+        ufo: {
+          ...switchedProject.sourceData.ufo,
+          gitCollaboration: collaboration.base
+            ? {
+                base: collaboration.base,
+                changeDrafts: collaboration.changeDrafts,
+              }
+            : null,
+        },
+      },
+      updatedAt: Date.now(),
+    })
+  }
+  return result
+}
+
 export interface GitCommitSyncedInput {
   projectId: string
   pushedRepo: string
@@ -490,6 +693,17 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
 
   const glyphs = await listKumikoGlyphSyncMetadataForProject(input.projectId)
   const timestamp = Date.now()
+  const syncedTarget = {
+    owner: input.pushedRepo.split('/')[0] ?? '',
+    repo: input.pushedRepo.split('/')[1] ?? '',
+    ref: input.pushedBranch,
+    commitSha: input.commitSha,
+    syncedAt: timestamp,
+  }
+  const collaboration = withUpdatedChangeDraft({
+    project,
+    draft: syncedTarget,
+  })
   const liveGlyphIds = new Set(glyphs.map((glyph) => glyph.glyphId))
 
   // Recover glyphName → file name per UFO from the committed paths. The adapter
@@ -536,13 +750,13 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
               ),
               glyphOrder: project.glyphOrder,
             })),
-            lastSync: {
-              owner: input.pushedRepo.split('/')[0] ?? '',
-              repo: input.pushedRepo.split('/')[1] ?? '',
-              ref: input.pushedBranch,
-              commitSha: input.commitSha,
-              syncedAt: timestamp,
-            },
+            lastSync: syncedTarget,
+            gitCollaboration: collaboration.base
+              ? {
+                  base: collaboration.base,
+                  changeDrafts: collaboration.changeDrafts,
+                }
+              : project.sourceData.ufo.gitCollaboration,
           }
         : project.sourceData?.ufo,
     },

@@ -3,6 +3,7 @@ import type {
   GitCommitAndPushResult,
   GitSyncReport,
   GitSyncTarget,
+  switchGitProjectBranch,
 } from 'src/lib/git/gitSync'
 import type {
   ProjectSyncReport,
@@ -10,6 +11,7 @@ import type {
 } from 'src/lib/github/sync/types'
 
 type ApplyRemoteResult = Awaited<ReturnType<typeof applyGitRemoteChanges>>
+type SwitchBranchResult = Awaited<ReturnType<typeof switchGitProjectBranch>>
 
 interface ReportResponse {
   type: 'git-sync-report-success'
@@ -26,6 +28,11 @@ interface ApplyResponse {
   payload: { requestId: string; result: ApplyRemoteResult }
 }
 
+interface SwitchBranchResponse {
+  type: 'git-switch-branch-success'
+  payload: { requestId: string; result: SwitchBranchResult }
+}
+
 interface ErrorResponse {
   type: 'git-sync-error'
   payload: { requestId: string; message: string }
@@ -35,6 +42,7 @@ type WorkerResponse =
   | ReportResponse
   | CommitResponse
   | ApplyResponse
+  | SwitchBranchResponse
   | ErrorResponse
 
 interface PendingRequest {
@@ -69,7 +77,8 @@ const getWorker = () => {
         }
         if (
           event.data.type === 'git-commit-success' ||
-          event.data.type === 'git-apply-success'
+          event.data.type === 'git-apply-success' ||
+          event.data.type === 'git-switch-branch-success'
         ) {
           pending.resolve(event.data.payload.result as never)
           return
@@ -107,10 +116,10 @@ const request = <T>(type: string, payload: Record<string, unknown>) =>
     }
   })
 
-// The report materializes and hashes the whole project: on a CJK-scale font
-// that is tens of thousands of files, which freezes the tab if it runs on the
-// main thread. OPFS and IndexedDB are both available to a worker, and the worker
-// also gets the createSyncAccessHandle fast path.
+// The report hashes only dirty entities on its normal path, but fetching and
+// walking the remote tree can still be substantial for a CJK-scale font. Keep
+// that work off the UI thread; OPFS and IndexedDB are both worker-safe and the
+// worker gets the createSyncAccessHandle fast path.
 export const buildGitSyncReportInWorker = (target: GitSyncTarget) =>
   request<GitSyncReport>('build-git-sync-report', { target })
 
@@ -134,3 +143,6 @@ export const applyGitRemoteChangesInWorker = (input: {
   resolutions?: Record<string, SyncConflictResolution>
   remoteHeadSha: string
 }) => request<ApplyRemoteResult>('apply-remote', { ...input })
+
+export const switchGitProjectBranchInWorker = (target: GitSyncTarget) =>
+  request<SwitchBranchResult>('switch-git-branch', { target })

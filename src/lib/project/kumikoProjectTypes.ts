@@ -64,6 +64,15 @@ export interface KumikoProjectSourceData {
       textStyle?: UfoTextStyle | null
     }>
     lastSync?: GitHubSyncTarget | null
+    // Git state has three separate meanings: the branch the project was
+    // imported from (base), the branch currently materialized in IndexedDB,
+    // and one or more submitted change drafts. `lastSync` remains the active
+    // materialized branch for backwards compatibility; this records the two
+    // collaboration roles that must survive switching away from a draft.
+    gitCollaboration?: {
+      base: GitHubSyncTarget
+      changeDrafts: GitHubSyncTarget[]
+    } | null
   }
   binary?: {
     format: 'ttf' | 'otf' | 'woff' | 'woff2'

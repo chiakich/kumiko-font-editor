@@ -93,8 +93,6 @@ export function GitHubSyncSectionContainer({
   )
 }
 
-const shortSha = (sha: string) => sha.slice(0, 7)
-
 // A diverged CJK font can conflict in every glyph. Rendering one row per
 // conflict then costs tens of thousands of nodes and freezes the tab, so the
 // list is capped and the rest is handled by the bulk actions.
@@ -178,13 +176,15 @@ export function GitHubSyncSection({
   }
 
   if (report.isUpToDate) {
+    const hasLocalChanges = report.localChanges.length > 0
     return (
       <Box borderWidth={1} borderRadius="lg" p={3} borderColor="green.200">
         <Text fontSize="sm" color="green.600">
-          {t('glyphInspector.syncUpToDate', {
-            ref: report.target.ref,
-            sha: shortSha(report.remoteHeadSha),
-          })}
+          {hasLocalChanges
+            ? t('glyphInspector.syncLocalChanges', {
+                count: report.localChanges.length,
+              })
+            : t('glyphInspector.syncUpToDate')}
         </Text>
       </Box>
     )
