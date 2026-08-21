@@ -173,20 +173,26 @@ describe('UFO import → export → reimport round-trip', () => {
     expect(firstGlif).toBeDefined()
     const fileName = firstGlif!.relativePath.split('/').pop() ?? 'A.glif'
     const glyphName = parseGlifText(firstGlif!.text, fileName).glyphName
-    const probeGlif = `<?xml version="1.0" encoding="UTF-8"?>
+    const probeGlif = `<?xml version='1.0' encoding='UTF-8'?>
 <glyph name="${glyphName}" format="2">
   <advance width="500"/>
+  <guideline x="0" y="500" angle="0" name="xheight"/>
   <anchor x="250" y="0" name="bottom"/>
   <anchor x="250" y="700" name="top" identifier="keepMe"/>
-  <guideline x="0" y="500" angle="0" name="xheight"/>
   <outline>
     <contour>
       <point x="10" y="20" type="line"/>
       <point x="110" y="20" type="line"/>
       <point x="110" y="120" type="line"/>
     </contour>
+    <contour identifier="keepContour">
+      <point x="200" y="20" type="line"/>
+      <point x="300" y="20" type="line"/>
+      <point x="300" y="120" type="line"/>
+    </contour>
   </outline>
-</glyph>`
+</glyph>
+`
     const withProbe = entries.filter(
       (entry) => entry.relativePath !== firstGlif!.relativePath
     )
@@ -206,6 +212,11 @@ describe('UFO import → export → reimport round-trip', () => {
     )
     expect(written).toBeDefined()
 
+    // The probe is already in the form the serializer emits, so anything the
+    // canonical layer adds, drops or renames shows up here — for every element
+    // in the glyph, not just the ones this test names below.
+    expect(written!.text).toBe(probeGlif)
+
     const anchorLines = written!.text
       .split('\n')
       .filter((line) => line.includes('<anchor'))
@@ -215,6 +226,13 @@ describe('UFO import → export → reimport round-trip', () => {
     expect(
       written!.text.split('\n').find((line) => line.includes('<guideline'))
     ).not.toContain('identifier')
+
+    const contourLines = written!.text
+      .split('\n')
+      .filter((line) => line.includes('<contour'))
+    expect(contourLines).toHaveLength(2)
+    expect(contourLines[0].trim()).toBe('<contour>')
+    expect(contourLines[1]).toContain('identifier="keepContour"')
   })
 
   it('keeps kerning and feature sources in the exported UFO', async () => {

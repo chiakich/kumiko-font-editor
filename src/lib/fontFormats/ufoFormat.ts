@@ -365,6 +365,7 @@ export const parseGlifText = (
     outlineElement,
     'contour'
   ).map((contour) => ({
+    identifier: contour.attrs.identifier ?? null,
     points: inferOffcurveType(
       childrenNamed(contour, 'point').map((point) => ({
         x: parseNumeric(point.attrs.x) ?? 0,
@@ -514,6 +515,7 @@ export const pathToUfoContour = (path: PathData): UfoGlyphContour => {
   const orderedNodes = path.nodes
 
   return {
+    identifier: path.identifier,
     points: orderedNodes.map((node, index) => {
       if (isOffCurveNode(node)) {
         return {
@@ -665,6 +667,9 @@ export const glyphRecordToLayerContent = (
   return {
     paths: record.contours.map((contour, index) => ({
       id: `p${index}`,
+      // Kept apart from the internal id, like every other element's: an absent
+      // identifier must stay absent when the glyph is written back.
+      identifier: contour.identifier,
       closed: !isOpenContour(contour),
       nodes: buildPathNodesFromContour(contour),
     })),
@@ -1958,7 +1963,11 @@ export const serializeGlifRecord = (
 
   const contourXml = record.contours
     .map(
-      (contour) => `    <contour>
+      (contour) => `    <contour${
+        contour.identifier
+          ? ` identifier="${escapeXml(contour.identifier)}"`
+          : ''
+      }>
 ${contour.points
   .map((point) => {
     const attrs = [

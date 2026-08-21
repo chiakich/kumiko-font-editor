@@ -62,6 +62,7 @@ export interface UfoGlyphPoint {
 
 export interface UfoGlyphContour {
   points: UfoGlyphPoint[]
+  identifier?: string | null
 }
 
 export interface UfoGlyphComponent {
