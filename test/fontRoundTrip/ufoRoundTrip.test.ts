@@ -120,7 +120,7 @@ describe('UFO import → export → reimport round-trip', () => {
   // difference between what was read and what gets written turns that into a
   // diff on every glyph in the font. This fixture carries no anchors, so it is
   // not a substitute for the identifier test below.
-  it('rewrites an untouched project byte for byte', async () => {
+  it('rewrites an untouched project byte for byte, glyphs and font level alike', async () => {
     const entries = await readUfoEntries()
     const imported = await importWorkspace(entries, UFO_NAME)
     await saveProjectDraft({
@@ -147,16 +147,29 @@ describe('UFO import → export → reimport round-trip', () => {
       written.set(file.path, file.text)
     }
 
-    const sourceGlifs = entries.filter((entry) =>
-      entry.relativePath.endsWith('.glif')
-    )
-    expect(sourceGlifs.length).toBeGreaterThan(0)
-    for (const entry of sourceGlifs) {
-      expect(
-        written.get(entry.relativePath),
-        `rewrote ${entry.relativePath}`
-      ).toBe(entry.text)
+    // Two files are expected to differ, and saying so here is the point: the
+    // list is the contract. Anything else that starts differing is a bug.
+    //
+    // - lib.plist gains Kumiko's own com.kumiko.fontEditor.* keys. That is what
+    //   a UFO lib is for, and the reverse-DNS prefix is the spec's mechanism.
+    // - features.fea is regenerated from the feature model instead of written
+    //   back as the author wrote it. The rules survive, the authorship does not.
+    const KNOWN_DIFFERENT = ['lib.plist', 'features.fea']
+
+    expect(entries.length).toBeGreaterThan(0)
+    const unexpected: string[] = []
+    for (const entry of entries) {
+      if (KNOWN_DIFFERENT.some((name) => entry.relativePath.endsWith(name))) {
+        continue
+      }
+      if (written.get(entry.relativePath) !== entry.text) {
+        unexpected.push(entry.relativePath)
+      }
     }
+    expect(unexpected).toEqual([])
+    expect(
+      entries.filter((entry) => entry.relativePath.endsWith('.glif')).length
+    ).toBeGreaterThan(0)
   })
 
   // Every element a glif can carry, in the form the serializer emits, through the
