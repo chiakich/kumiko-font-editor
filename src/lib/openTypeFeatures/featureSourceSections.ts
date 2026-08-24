@@ -34,12 +34,17 @@ interface RawFeatureTextSourceOptions {
   origin?: RawFeatureTextSourceOrigin
   path?: string
   title?: string
+  // The source text exactly as it arrived. Snippets are trimmed and rejoined
+  // with blank lines, which reproduces the text but not always byte for byte —
+  // and writing a file back a byte different is a diff in every glyph's repo.
+  verbatimText?: string
 }
 
 export const createRawFeatureTextSourceSection = ({
   origin = 'manual-input',
   path,
   title,
+  verbatimText,
 }: RawFeatureTextSourceOptions = {}): FeatureSourceSection => ({
   id: RAW_FEATURE_TEXT_SOURCE_ID,
   title: title ?? RAW_SOURCE_ORIGIN_TITLE[origin],
@@ -54,6 +59,7 @@ export const createRawFeatureTextSourceSection = ({
   preservationPolicy: 'editable-rebuild',
   meta: {
     canParseIntoRecords: true,
+    ...(verbatimText !== undefined ? { verbatimText } : {}),
   },
 })
 
@@ -104,7 +110,23 @@ export const setRawFeatureTextSource = (
       }
     }
   )
-  return setRawFeatureSnippetsSource(state, snippets, options)
+  return setRawFeatureSnippetsSource(state, snippets, {
+    ...options,
+    verbatimText: rawFeatureText,
+  })
+}
+
+// The raw source text as it was last set, when one was recorded. Absent on
+// states written before it was kept, and on snippet-level edits, which change
+// the model without any one text describing it.
+export const readRawFeatureVerbatimText = (
+  state: Pick<OpenTypeFeaturesState, 'sourceSections'>
+): string | undefined => {
+  const section = (state.sourceSections ?? []).find(
+    (candidate) => candidate.id === RAW_FEATURE_TEXT_SOURCE_ID
+  )
+  const verbatimText = section?.meta?.verbatimText
+  return typeof verbatimText === 'string' ? verbatimText : undefined
 }
 
 interface CompiledTableSourceSectionOptions {
