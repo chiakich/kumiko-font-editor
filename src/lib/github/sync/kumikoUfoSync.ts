@@ -754,15 +754,19 @@ const toUfoGlyphRecord = (input: {
     contours: content.paths.map((path) => pathToUfoContour(path)),
     components: content.componentRefs.map((component) => {
       const matrix = getKumikoComponentRefMatrix(component)
+      // Only the parts of the transform that differ from the format's defaults.
+      // Writing xScale="1" on an unscaled component put an attribute in every
+      // composed glyph that the source never had — and in a CJK font almost
+      // every glyph is composed.
       return {
         base: component.glyphId,
         identifier: component.identifier ?? null,
-        xScale: matrix.a,
-        yScale: matrix.d,
+        ...(matrix.a !== 1 ? { xScale: matrix.a } : {}),
         ...(matrix.b !== 0 ? { xyScale: matrix.b } : {}),
         ...(matrix.c !== 0 ? { yxScale: matrix.c } : {}),
-        xOffset: matrix.e,
-        yOffset: matrix.f,
+        ...(matrix.d !== 1 ? { yScale: matrix.d } : {}),
+        ...(matrix.e !== 0 ? { xOffset: matrix.e } : {}),
+        ...(matrix.f !== 0 ? { yOffset: matrix.f } : {}),
       }
     }),
     note: isPrimaryDefaultGlyph

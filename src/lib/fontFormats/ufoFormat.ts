@@ -665,6 +665,12 @@ export const glyphRecordToLayerContent = (
     rsb: Math.round(bounds ? width - bounds.xMax : width - lsb),
   }
   return {
+    // The vertical advance CJK sources carry. Nothing else read it out of the
+    // record, so importing a vertical font dropped it and writing the glyph back
+    // lost the attribute.
+    ...(record.advance.height !== null && record.advance.height !== undefined
+      ? { verticalMetrics: { height: record.advance.height } }
+      : {}),
     paths: record.contours.map((contour, index) => ({
       id: `p${index}`,
       // Kept apart from the internal id, like every other element's: an absent
@@ -1995,9 +2001,6 @@ ${contour.points
     .map((component) =>
       tag('    ', 'component', [
         `base="${escapeXml(component.base)}"`,
-        ...(component.identifier
-          ? [`identifier="${escapeXml(component.identifier)}"`]
-          : []),
         ...(component.xScale !== undefined
           ? [`xScale="${component.xScale}"`]
           : []),
@@ -2015,6 +2018,9 @@ ${contour.points
           : []),
         ...(component.yOffset !== undefined
           ? [`yOffset="${component.yOffset}"`]
+          : []),
+        ...(component.identifier
+          ? [`identifier="${escapeXml(component.identifier)}"`]
           : []),
       ])
     )

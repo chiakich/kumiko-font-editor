@@ -159,13 +159,19 @@ describe('UFO import → export → reimport round-trip', () => {
     }
   })
 
-  // A UFO anchor, guideline or component may have no identifier at all, and it
-  // must come back out without one. Kumiko gives every element an internal id,
-  // and exporting that id as the identifier rewrote every glyph in the font the
-  // first time anything was committed — a whole-font diff from renaming the
-  // family. Neither the glif-level fidelity suite nor the canonical round-trip
-  // covered it: both compared parsed structures, never the attribute's absence.
-  it('does not invent identifiers for elements the source left without one', async () => {
+  // Every element a glif can carry, in the form the serializer emits, through the
+  // real import → materialize path. Whatever the canonical layer adds, drops or
+  // reorders for any of them shows up as a byte difference here.
+  //
+  // Nothing else covered this seam. The glif fidelity suite stops at
+  // UfoGlyphRecord and never enters the canonical layer; the round-trip above
+  // compares parsed structures, where an extra attribute is invisible; and the
+  // fixture UFO has no anchors, guidelines, components or images at all. Four
+  // separate whole-font rewrites hid here: internal ids exported as anchor,
+  // guideline and component identifiers, contour identifiers silently dropped,
+  // the CJK vertical advance lost on import, and xScale="1" written onto every
+  // composed glyph.
+  it('rewrites every glif element byte for byte through the canonical layer', async () => {
     const entries = await readUfoEntries()
     const firstGlif = entries.find((entry) =>
       entry.relativePath.endsWith('.glif')
@@ -173,24 +179,39 @@ describe('UFO import → export → reimport round-trip', () => {
     expect(firstGlif).toBeDefined()
     const fileName = firstGlif!.relativePath.split('/').pop() ?? 'A.glif'
     const glyphName = parseGlifText(firstGlif!.text, fileName).glyphName
-    const probeGlif = `<?xml version='1.0' encoding='UTF-8'?>
+    const probeGlif = `<?xml version="1.0" encoding="UTF-8"?>
 <glyph name="${glyphName}" format="2">
-  <advance width="500"/>
+  <advance width="500" height="880"/>
+  <unicode hex="0041"/>
+  <unicode hex="F0041"/>
+  <note>
+hand written
+</note>
+  <image fileName="probe.png" xScale="0.5" yScale="0.5" xOffset="10" yOffset="20" color="1,0,0,1"/>
   <guideline x="0" y="500" angle="0" name="xheight"/>
+  <guideline x="10" y="0" angle="90" name="stem" color="0,1,0,1" identifier="keepGuide"/>
   <anchor x="250" y="0" name="bottom"/>
-  <anchor x="250" y="700" name="top" identifier="keepMe"/>
+  <anchor x="250" y="700" name="top" color="0,0,1,1" identifier="keepMe"/>
   <outline>
     <contour>
       <point x="10" y="20" type="line"/>
-      <point x="110" y="20" type="line"/>
-      <point x="110" y="120" type="line"/>
+      <point x="110" y="20" type="line" smooth="yes"/>
+      <point x="110" y="120" type="line" name="ptname"/>
     </contour>
     <contour identifier="keepContour">
       <point x="200" y="20" type="line"/>
       <point x="300" y="20" type="line"/>
-      <point x="300" y="120" type="line"/>
+      <point x="300" y="120" type="line" identifier="keepPoint"/>
     </contour>
+    <component base="${glyphName}" xOffset="10" yOffset="20"/>
+    <component base="${glyphName}" xScale="0.5" yScale="0.5" identifier="keepComponent"/>
   </outline>
+  <lib>
+    <dict>
+      <key>com.schriftgestaltung.Glyphs.lastChange</key>
+      <string>2022-12-09 11:01:52 +0000</string>
+    </dict>
+  </lib>
 </glyph>
 `
     const withProbe = entries.filter(
@@ -199,40 +220,33 @@ describe('UFO import → export → reimport round-trip', () => {
     withProbe.push({ relativePath: firstGlif!.relativePath, text: probeGlif })
 
     const imported = await importWorkspace(withProbe, UFO_NAME)
-    const blob = await exportCanonicalFontDataAsUfoZip({
+    await saveProjectDraft({
+      id: 'canonical-ufo-elements',
+      title: 'OpenSourceFont',
+      lastModified: 2,
+      createdAt: 1,
+      updatedAt: 2,
+      sourceName: UFO_NAME,
+      sourceType: 'local',
+      githubSource: null,
       fontData: imported.fontData,
-      projectId: 'canonical-ufo-identifiers',
-      projectTitle: 'OpenSourceFont',
+      projectMetadata: null,
       projectSourceData: imported.projectSourceData,
       projectSourceFormat: imported.projectSourceFormat,
+      projectRoundTripFormat: null,
+      projectGlyphsPackage: null,
     })
-    const exported = zipToEntries(new Uint8Array(await blob.arrayBuffer()))
-    const written = exported.find((entry) =>
-      entry.relativePath.endsWith(`/glyphs/${fileName}`)
-    )
-    expect(written).toBeDefined()
 
-    // The probe is already in the form the serializer emits, so anything the
-    // canonical layer adds, drops or renames shows up here — for every element
-    // in the glyph, not just the ones this test names below.
-    expect(written!.text).toBe(probeGlif)
+    let written: string | null = null
+    for await (const file of materializeUfoTree({
+      projectId: 'canonical-ufo-elements',
+    })) {
+      if (file.path === firstGlif!.relativePath) {
+        written = file.text
+      }
+    }
 
-    const anchorLines = written!.text
-      .split('\n')
-      .filter((line) => line.includes('<anchor'))
-    expect(anchorLines).toHaveLength(2)
-    expect(anchorLines[0]).not.toContain('identifier')
-    expect(anchorLines[1]).toContain('identifier="keepMe"')
-    expect(
-      written!.text.split('\n').find((line) => line.includes('<guideline'))
-    ).not.toContain('identifier')
-
-    const contourLines = written!.text
-      .split('\n')
-      .filter((line) => line.includes('<contour'))
-    expect(contourLines).toHaveLength(2)
-    expect(contourLines[0].trim()).toBe('<contour>')
-    expect(contourLines[1]).toContain('identifier="keepContour"')
+    expect(written).toBe(probeGlif)
   })
 
   it('keeps kerning and feature sources in the exported UFO', async () => {
