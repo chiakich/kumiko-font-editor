@@ -44,6 +44,7 @@ import {
   useGitHubSyncStatus,
 } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
+import { useGitSyncPrewarm } from 'src/features/common/glyphInspector/hooks/useGitSyncPrewarm'
 import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
 import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
@@ -226,6 +227,13 @@ export const useGitHubCommitFlow = ({
   const queryClient = useQueryClient()
   const viewerQuery = useGitHubViewerQuery(hasGitHubSource)
   const githubViewer = viewerQuery.data ?? null
+  // Warm the git stack (chunk, worker, packfile clone, fork status) in the
+  // background so the first send-panel open does not pay for all of it.
+  useGitSyncPrewarm({
+    projectId,
+    repoFullName: githubRepoFullName,
+    enabled: hasGitHubSource && Boolean(githubViewer),
+  })
   const forkStatusQuery = useGitHubForkStatusQuery({
     repo: githubRepoFullName,
     branch: null,
