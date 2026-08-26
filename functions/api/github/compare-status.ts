@@ -2,6 +2,7 @@ import type { PagesFunction } from '../../pages'
 import {
   getCompareStatus,
   getCanonicalSourceRepo,
+  isGitHubNotFound,
   json,
   parseRepoInput,
   readGitHubAccessToken,
@@ -49,6 +50,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       parsedRepo.owner,
       parsedRepo.repo
     )
+    // A draft branch that has not been pushed yet has nothing to compare, and
+    // GitHub reports that as a 404. Answering 502 made the caller treat a
+    // perfectly normal pre-first-send state as a server failure.
     const compare = await getCompareStatus({
       token,
       sourceOwner: sourceRepo.owner,
@@ -56,6 +60,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       baseBranch: sourceRepo.defaultBranch,
       headOwner,
       headBranch,
+    }).catch((error: unknown) => {
+      if (isGitHubNotFound(error)) {
+        return null
+      }
+      throw error
     })
 
     return json({

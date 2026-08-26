@@ -825,6 +825,12 @@ export const useGitHubCommitFlow = ({
     changeReceipt,
     voidedLineKeys,
     submitErrorMessage,
+    forkStatusErrorMessage: forkStatusQuery.error
+      ? getErrorMessage(
+          forkStatusQuery.error,
+          t('glyphInspector.toast.forkStatusFailedDescription')
+        )
+      : null,
     lastSubmitResult,
     baseSha: syncReport?.remoteHeadSha ?? null,
     onToggleVoidLine: (key) =>

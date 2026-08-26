@@ -2,11 +2,13 @@ import {
   Box,
   Button,
   HStack,
+  IconButton,
   Popover,
   Portal,
   Stack,
   Text,
 } from '@chakra-ui/react'
+import { Tooltip } from '@/components/ui/tooltip'
 import { GitBranch } from 'iconoir-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -74,8 +76,12 @@ export function ProjectVersionMenu({
         {
           key: 'merge-target',
           ref: `${sourceRepo.fullName} · ${sourceRepo.defaultBranch}`,
-          detail: t('gitFlow.version.mergeTargetDetail'),
-          isReadOnly: true,
+          // Write access is the repo's own answer: on your own project the
+          // development version is editable, not read-only.
+          detail: sourceRepo.canPush
+            ? t('gitFlow.version.mergeTargetWritableDetail')
+            : t('gitFlow.version.mergeTargetDetail'),
+          isReadOnly: !sourceRepo.canPush,
           isActive: isViewingMergeTarget,
           onSwitch: onSwitchToMergeTarget,
         },
@@ -120,42 +126,29 @@ export function ProjectVersionMenu({
       }}
       positioning={{ placement: 'bottom-start' }}
     >
-      <Popover.Trigger asChild>
-        <Button
-          size="sm"
-          variant="outline"
-          gap={2}
-          maxWidth="260px"
-          loading={isSwitching}
-          aria-label={t('gitFlow.version.openMenu')}
-        >
-          <GitBranch
-            width={14}
-            height={14}
-            strokeWidth={1.9}
-            aria-hidden="true"
-          />
-          <Text fontFamily="mono" fontSize="xs" fontWeight={600} lineClamp={1}>
-            {chipLabel}
-          </Text>
-          <Text
-            fontFamily="mono"
-            px={1}
-            borderRadius="sm"
-            bg={activeRow?.isReadOnly ? 'muted' : 'primary'}
-            color={
-              activeRow?.isReadOnly ? 'mutedForeground' : 'primaryForeground'
-            }
-            fontSize="9px"
-            fontWeight={600}
-            letterSpacing="0.04em"
+      <Tooltip content={t('gitFlow.version.tooltip', { ref: chipLabel })}>
+        <Popover.Trigger asChild>
+          <IconButton
+            aria-label={t('gitFlow.version.openMenu')}
+            size="sm"
+            minW={9}
+            h={9}
+            px={0}
+            borderRadius="full"
+            variant="ghost"
+            color="foreground"
+            loading={isSwitching}
+            _hover={{ bg: 'foreground', color: 'background' }}
           >
-            {activeRow?.isReadOnly
-              ? t('gitFlow.version.readOnly')
-              : t('gitFlow.version.draft')}
-          </Text>
-        </Button>
-      </Popover.Trigger>
+            <GitBranch
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </Popover.Trigger>
+      </Tooltip>
       <Portal>
         <Popover.Positioner>
           <Popover.Content width="372px" p={1}>

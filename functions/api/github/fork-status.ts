@@ -3,6 +3,7 @@ import {
   getCompareStatus,
   getCanonicalSourceRepo,
   findViewerForkRepo,
+  isGitHubNotFound,
   json,
   listRepoBranches,
   parseRepoInput,
@@ -65,7 +66,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         forkInfo.targetRepo.defaultBranch ||
         sourceRepo.defaultBranch
 
-      if (branchForCompare) {
+      // A draft branch the client suggested may not exist on the remote yet, and
+      // GitHub answers 404 for comparing against it. Compare is supplementary
+      // information, so it is skipped when the branch is unknown and tolerated
+      // when the request fails: sinking the whole response used to leave the
+      // panel with no fork status at all.
+      if (branchForCompare && branches.includes(branchForCompare)) {
         compare = await getCompareStatus({
           token,
           sourceOwner: sourceRepo.owner,
@@ -73,6 +79,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           baseBranch: sourceRepo.defaultBranch,
           headOwner: forkInfo.targetRepo.owner,
           headBranch: branchForCompare,
+        }).catch((error: unknown) => {
+          if (isGitHubNotFound(error)) {
+            return null
+          }
+          throw error
         })
       }
     }

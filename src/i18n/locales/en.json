@@ -559,6 +559,7 @@
     "title": "Send changes",
     "behind": "The merge target has {{count}} new change(s). Update before you send.",
     "updateFromTarget": "Update from target",
+    "forkStatusFailed": "Could not read the GitHub status for this project",
     "receipt": {
       "title": "Itemised",
       "masthead": "KUMIKO CHANGE RECEIPT",
@@ -683,11 +684,13 @@
     },
     "version": {
       "openMenu": "Switch the version you are editing",
+      "tooltip": "Version: {{ref}}",
       "myDrafts": "MY DRAFTS",
       "projectVersions": "PROJECT VERSIONS",
       "draftDetail": "Your draft — editable",
       "activeDetail": "The version currently loaded",
       "mergeTargetDetail": "The project's development version — no write access",
+      "mergeTargetWritableDetail": "The project's development version — you can write to it",
       "draft": "draft",
       "readOnly": "read-only",
       "editable": "editable",

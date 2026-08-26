@@ -62,6 +62,9 @@ export interface GitHubCommitModalProps {
   changeReceipt: ChangeReceiptModel
   voidedLineKeys: string[]
   submitErrorMessage: string | null
+  // Without this, a failed lookup renders as the first-contribution ladder and
+  // tells the user they have no copy of a repo they may well own.
+  forkStatusErrorMessage: string | null
   lastSubmitResult: GitHubSubmitResult | null
   baseSha: string | null
   onToggleVoidLine: (key: string) => void
@@ -103,6 +106,7 @@ export function GitHubCommitModal({
   changeReceipt,
   voidedLineKeys,
   submitErrorMessage,
+  forkStatusErrorMessage,
   lastSubmitResult,
   baseSha,
   onToggleVoidLine,
@@ -139,13 +143,18 @@ export function GitHubCommitModal({
   const draftName = gitHubBranchName.trim() || t('gitFlow.route.newDraft')
 
   // Which mode: the pre-fork ladder exists only until a writable copy does.
+  const hasForkStatusError = Boolean(
+    githubViewer && !githubForkStatus && forkStatusErrorMessage
+  )
   const firstRunStage: FirstContributionStage | null = !githubViewer
     ? 'signIn'
     : isCreatingGitHubFork
       ? 'creatingFork'
-      : !editableRepo
-        ? 'noFork'
-        : null
+      : hasForkStatusError
+        ? null
+        : !editableRepo
+          ? 'noFork'
+          : null
 
   const workbenchState: WorkbenchState = submitErrorMessage
     ? 'failed'
@@ -356,6 +365,35 @@ export function GitHubCommitModal({
                       {t('glyphInspector.loadingForkBranch')}
                     </Text>
                   </HStack>
+                ) : hasForkStatusError ? (
+                  <Stack
+                    gap={2.5}
+                    p={3.5}
+                    borderWidth={1}
+                    borderColor="orange.300"
+                    borderRadius="md"
+                    bg="orange.50"
+                  >
+                    <Text textStyle="label" color="orange.700">
+                      {t('gitFlow.forkStatusFailed')}
+                    </Text>
+                    <Text
+                      fontFamily="mono"
+                      fontSize="11px"
+                      lineHeight="relaxed"
+                      color="orange.700"
+                    >
+                      {forkStatusErrorMessage}
+                    </Text>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      alignSelf="flex-start"
+                      onClick={onLoginGitHub}
+                    >
+                      {t('glyphInspector.reauthorizeGitHub')}
+                    </Button>
+                  </Stack>
                 ) : firstRunStage ? (
                   <FirstContributionPanel
                     stage={firstRunStage}

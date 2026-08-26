@@ -172,222 +172,220 @@ export function ProjectControlActions({
 
   return (
     <>
-      <HStack gap={2} justify="space-between" align="center" width="100%">
+      <HStack
+        gap={1}
+        justify="flex-end"
+        alignSelf="flex-end"
+        px={2}
+        py={1}
+        bg="muted"
+        borderRadius="full"
+      >
         {hasGitHubSource && versionMenu ? (
           <ProjectVersionMenu {...versionMenu} />
         ) : null}
-        <HStack
-          gap={1}
-          justify="flex-end"
-          ml="auto"
-          px={2}
-          py={1}
-          bg="muted"
-          borderRadius="full"
-        >
-          {hasGitHubSource ? (
-            <Tooltip content={t('projectControl.gitHubCommit')}>
-              <IconButton
-                aria-label={t('projectControl.openGitHubCommit')}
-                size="sm"
-                minW={9}
-                h={9}
-                px={0}
-                borderRadius="full"
-                variant="ghost"
-                color="foreground"
-                position="relative"
-                _hover={{ bg: 'foreground', color: 'background' }}
-                onClick={onOpenGitHubModal}
-              >
-                <Github
+        {hasGitHubSource ? (
+          <Tooltip content={t('projectControl.gitHubCommit')}>
+            <IconButton
+              aria-label={t('projectControl.openGitHubCommit')}
+              size="sm"
+              minW={9}
+              h={9}
+              px={0}
+              borderRadius="full"
+              variant="ghost"
+              color="foreground"
+              position="relative"
+              _hover={{ bg: 'foreground', color: 'background' }}
+              onClick={onOpenGitHubModal}
+            >
+              <Github
+                width={18}
+                height={18}
+                strokeWidth={1.9}
+                aria-hidden="true"
+                opacity={gitBadge?.kind === 'muted' ? 0.42 : 1}
+              />
+              {gitBadge ? (
+                <Box
+                  className="corner-round"
+                  position="absolute"
+                  top="-1px"
+                  right="-2px"
+                  minWidth="17px"
+                  height="17px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  px={1}
+                  borderWidth="2px"
+                  borderColor="muted"
+                  borderRadius="full"
+                  bg={gitBadge.bg}
+                  color={gitBadge.fg}
+                  aria-hidden="true"
+                >
+                  {gitBadge.kind === 'spinner' ? (
+                    <Spinner size="xs" borderWidth="1.5px" />
+                  ) : (
+                    <Text fontFamily="mono" fontSize="9px" fontWeight={600}>
+                      {gitBadge.label}
+                    </Text>
+                  )}
+                </Box>
+              ) : null}
+            </IconButton>
+          </Tooltip>
+        ) : null}
+        <Tooltip content={t('qualityCheck.title')}>
+          <IconButton
+            aria-label={t('qualityCheck.open')}
+            size="sm"
+            minW={9}
+            h={9}
+            px={0}
+            borderRadius="full"
+            variant="ghost"
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
+            onClick={onOpenQualityCheckModal}
+          >
+            <PageSearch
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </Tooltip>
+        <Tooltip content={t('settings.title')}>
+          <IconButton
+            aria-label={t('projectControl.openSettings')}
+            size="sm"
+            minW={9}
+            h={9}
+            px={0}
+            borderRadius="full"
+            variant="ghost"
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
+            onClick={appSettingsModal.onOpen}
+          >
+            <Settings
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </Tooltip>
+        <Tooltip content={t('projectControl.fontSettings')}>
+          <IconButton
+            aria-label={t('projectControl.openFontSettings')}
+            size="sm"
+            minW={9}
+            h={9}
+            px={0}
+            borderRadius="full"
+            variant="ghost"
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
+            onClick={onOpenFontSettingsModal}
+          >
+            <FontQuestion
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </Tooltip>
+        {hasLocalSaveError ? (
+          <Tooltip
+            content={t('projectControl.localSaveFailedRetryTooltip', {
+              message: localSaveErrorMessage,
+            })}
+          >
+            <IconButton
+              aria-label={t('projectControl.retryLocalSave')}
+              size="sm"
+              minW={9}
+              h={9}
+              px={0}
+              borderRadius="full"
+              variant="ghost"
+              color="destructive"
+              _hover={{ bg: 'destructive', color: 'card' }}
+              onClick={() => void handleRetryLocalSave()}
+              loading={isRetryingLocalSave}
+            >
+              <WarningTriangle
+                width={18}
+                height={18}
+                strokeWidth={1.9}
+                aria-hidden="true"
+              />
+            </IconButton>
+          </Tooltip>
+        ) : null}
+        {localSaveStatus ? (
+          <Tooltip content={localSaveActionLabel}>
+            <IconButton
+              aria-label={localSaveActionLabel}
+              size="sm"
+              minW={9}
+              h={9}
+              px={0}
+              borderRadius="full"
+              variant="ghost"
+              color={
+                localSaveStatus === 'saved' ? 'success' : 'mutedForeground'
+              }
+              _hover={{ bg: 'foreground', color: 'background' }}
+              onClick={() => void handleSaveToLocalNow()}
+              disabled={localSaveStatus !== 'queued'}
+              loading={localSaveStatus === 'saving' || isSavingToLocalNow}
+            >
+              {localSaveStatus === 'saved' ? (
+                <CheckCircle
                   width={18}
                   height={18}
                   strokeWidth={1.9}
                   aria-hidden="true"
-                  opacity={gitBadge?.kind === 'muted' ? 0.42 : 1}
                 />
-                {gitBadge ? (
-                  <Box
-                    className="corner-round"
-                    position="absolute"
-                    top="-1px"
-                    right="-2px"
-                    minWidth="17px"
-                    height="17px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    px={1}
-                    borderWidth="2px"
-                    borderColor="muted"
-                    borderRadius="full"
-                    bg={gitBadge.bg}
-                    color={gitBadge.fg}
-                    aria-hidden="true"
-                  >
-                    {gitBadge.kind === 'spinner' ? (
-                      <Spinner size="xs" borderWidth="1.5px" />
-                    ) : (
-                      <Text fontFamily="mono" fontSize="9px" fontWeight={600}>
-                        {gitBadge.label}
-                      </Text>
-                    )}
-                  </Box>
-                ) : null}
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          <Tooltip content={t('qualityCheck.title')}>
-            <IconButton
-              aria-label={t('qualityCheck.open')}
-              size="sm"
-              minW={9}
-              h={9}
-              px={0}
-              borderRadius="full"
-              variant="ghost"
-              color="foreground"
-              _hover={{ bg: 'foreground', color: 'background' }}
-              onClick={onOpenQualityCheckModal}
-            >
-              <PageSearch
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            </IconButton>
-          </Tooltip>
-          <Tooltip content={t('settings.title')}>
-            <IconButton
-              aria-label={t('projectControl.openSettings')}
-              size="sm"
-              minW={9}
-              h={9}
-              px={0}
-              borderRadius="full"
-              variant="ghost"
-              color="foreground"
-              _hover={{ bg: 'foreground', color: 'background' }}
-              onClick={appSettingsModal.onOpen}
-            >
-              <Settings
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            </IconButton>
-          </Tooltip>
-          <Tooltip content={t('projectControl.fontSettings')}>
-            <IconButton
-              aria-label={t('projectControl.openFontSettings')}
-              size="sm"
-              minW={9}
-              h={9}
-              px={0}
-              borderRadius="full"
-              variant="ghost"
-              color="foreground"
-              _hover={{ bg: 'foreground', color: 'background' }}
-              onClick={onOpenFontSettingsModal}
-            >
-              <FontQuestion
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            </IconButton>
-          </Tooltip>
-          {hasLocalSaveError ? (
-            <Tooltip
-              content={t('projectControl.localSaveFailedRetryTooltip', {
-                message: localSaveErrorMessage,
-              })}
-            >
-              <IconButton
-                aria-label={t('projectControl.retryLocalSave')}
-                size="sm"
-                minW={9}
-                h={9}
-                px={0}
-                borderRadius="full"
-                variant="ghost"
-                color="destructive"
-                _hover={{ bg: 'destructive', color: 'card' }}
-                onClick={() => void handleRetryLocalSave()}
-                loading={isRetryingLocalSave}
-              >
-                <WarningTriangle
+              ) : (
+                <ClockRotateRight
                   width={18}
                   height={18}
                   strokeWidth={1.9}
                   aria-hidden="true"
                 />
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          {localSaveStatus ? (
-            <Tooltip content={localSaveActionLabel}>
-              <IconButton
-                aria-label={localSaveActionLabel}
-                size="sm"
-                minW={9}
-                h={9}
-                px={0}
-                borderRadius="full"
-                variant="ghost"
-                color={
-                  localSaveStatus === 'saved' ? 'success' : 'mutedForeground'
-                }
-                _hover={{ bg: 'foreground', color: 'background' }}
-                onClick={() => void handleSaveToLocalNow()}
-                disabled={localSaveStatus !== 'queued'}
-                loading={localSaveStatus === 'saving' || isSavingToLocalNow}
-              >
-                {localSaveStatus === 'saved' ? (
-                  <CheckCircle
-                    width={18}
-                    height={18}
-                    strokeWidth={1.9}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <ClockRotateRight
-                    width={18}
-                    height={18}
-                    strokeWidth={1.9}
-                    aria-hidden="true"
-                  />
-                )}
-              </IconButton>
-            </Tooltip>
-          ) : null}
-          <Tooltip content={t('projectControl.export')}>
-            <IconButton
-              aria-label={t('projectControl.export')}
-              size="sm"
-              minW={9}
-              h={9}
-              px={0}
-              borderRadius="full"
-              variant="ghost"
-              color="foreground"
-              _hover={{ bg: 'foreground', color: 'background' }}
-              onClick={onOpenExportModal}
-              disabled={isSavingToLocal}
-            >
-              <Download
-                width={18}
-                height={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
+              )}
             </IconButton>
           </Tooltip>
-        </HStack>
+        ) : null}
+        <Tooltip content={t('projectControl.export')}>
+          <IconButton
+            aria-label={t('projectControl.export')}
+            size="sm"
+            minW={9}
+            h={9}
+            px={0}
+            borderRadius="full"
+            variant="ghost"
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
+            onClick={onOpenExportModal}
+            disabled={isSavingToLocal}
+          >
+            <Download
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </Tooltip>
       </HStack>
       <AppSettingsModal
         isOpen={appSettingsModal.open}

@@ -73,6 +73,12 @@ interface GitHubSessionPayload {
 const GITHUB_SESSION_COOKIE = 'kumiko_github_session'
 const GITHUB_STATE_COOKIE = 'kumiko_github_oauth_state'
 
+// A GitHub 404 for a branch or a comparison is an answer, not a failure.
+export const isGitHubNotFound = (error: unknown) =>
+  typeof error === 'object' &&
+  error !== null &&
+  (error as { status?: number }).status === 404
+
 export const json = (body: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(body), {
     ...init,
@@ -304,8 +310,11 @@ export const githubApiJson = async <T>(
   }
 
   if (!response.ok) {
-    throw new Error(
-      payload?.message || `GitHub API 失敗（HTTP ${response.status}）`
+    throw Object.assign(
+      new Error(
+        payload?.message || `GitHub API 失敗（HTTP ${response.status}）`
+      ),
+      { status: response.status }
     )
   }
 
