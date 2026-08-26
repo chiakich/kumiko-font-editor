@@ -592,6 +592,19 @@
         "deleted": "刪除",
         "conflict": "需決定",
         "voided": "已劃掉"
+      },
+      "fontFile": {
+        "metainfo": "UFO 格式資訊",
+        "fontinfo": "字型資訊",
+        "lib": "字型附加資料",
+        "features": "OpenType 特性",
+        "groups": "字距群組",
+        "kerning": "字距",
+        "contents": "字形清單",
+        "layercontents": "圖層清單",
+        "layerinfo": "圖層資訊",
+        "order": "字形排序",
+        "designspace": "可變字型設計空間"
       }
     },
     "status": {

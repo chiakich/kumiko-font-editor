@@ -592,6 +592,19 @@
         "deleted": "deleted",
         "conflict": "needs a call",
         "voided": "struck out"
+      },
+      "fontFile": {
+        "metainfo": "UFO format info",
+        "fontinfo": "Font info",
+        "lib": "Font library data",
+        "features": "OpenType features",
+        "groups": "Kerning groups",
+        "kerning": "Kerning",
+        "contents": "Glyph list",
+        "layercontents": "Layer list",
+        "layerinfo": "Layer info",
+        "order": "Glyph order",
+        "designspace": "Designspace"
       }
     },
     "status": {
