@@ -34,6 +34,7 @@ interface CommitAndPushRequest {
     baseBranch: string | null
     message: string
     author: GitCommitAuthor
+    excludePaths?: readonly string[]
   }
 }
 
@@ -136,6 +137,7 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         baseBranch,
         message,
         author,
+        excludePaths,
       } = request.payload
       const result = await commitAndPushProject({
         projectId,
@@ -145,6 +147,7 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         baseBranch,
         message,
         author,
+        excludePaths,
       })
       // Bookkeeping stays next to the commit: it reverses the paths the commit
       // actually wrote, so it must not run against a different materialization.
@@ -154,6 +157,7 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         pushedBranch: result.pushedBranch,
         commitSha: result.commitSha,
         writtenPaths: result.writtenPaths,
+        excludedPaths: result.excludedPaths,
       })
       post({ type: 'git-commit-success', payload: { requestId, result } })
       return

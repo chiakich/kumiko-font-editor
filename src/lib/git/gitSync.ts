@@ -321,6 +321,9 @@ export interface GitCommitAndPushResult {
   pushedBranch: string
   // Exactly what the commit wrote, so bookkeeping never has to guess file names.
   writtenPaths: string[]
+  // Paths the caller struck out: materialized in the worktree but deliberately
+  // left unstaged, so the commit keeps the base version and they stay dirty.
+  excludedPaths: string[]
 }
 
 // Materializes, commits and pushes. Contributors push to their own fork, so the
@@ -340,6 +343,10 @@ export const commitAndPushProject = async (input: {
   baseBranch?: string | null
   message: string
   author: GitCommitAuthor
+  // Struck-out paths: left out of the index so this commit does not carry them.
+  // Anything omitted keeps whatever the base commit has, and stays a local
+  // change for a later send.
+  excludePaths?: readonly string[]
   store?: FileStore
 }): Promise<GitCommitAndPushResult> => {
   const worktree = await openGitWorktree({
@@ -380,10 +387,23 @@ export const commitAndPushProject = async (input: {
     projectId: input.projectId,
     worktree,
   })
-  await stageWorktreePaths({ worktree, ...synced })
+  const excluded = new Set(input.excludePaths ?? [])
+  const stagedWrittenPaths = synced.writtenPaths.filter(
+    (path) => !excluded.has(path)
+  )
+  const stagedRemovedPaths = synced.removedPaths.filter(
+    (path) => !excluded.has(path)
+  )
+  // Excluded paths are left unstaged on purpose: the index still holds the
+  // checked-out base version of them, which is exactly what "not sent" means.
+  await stageWorktreePaths({
+    worktree,
+    writtenPaths: stagedWrittenPaths,
+    removedPaths: stagedRemovedPaths,
+  })
 
   if (baseSha) {
-    const removedPaths = new Set(synced.removedPaths)
+    const removedPaths = new Set(stagedRemovedPaths)
     const baseOids = await carryBasePaths({
       worktree,
       baseSha,
@@ -425,7 +445,8 @@ export const commitAndPushProject = async (input: {
     commitSha,
     pushedRepo: input.pushRepo,
     pushedBranch: input.pushBranch,
-    writtenPaths: synced.writtenPaths,
+    writtenPaths: stagedWrittenPaths,
+    excludedPaths: [...excluded],
   }
 }
 
@@ -681,6 +702,8 @@ export interface GitCommitSyncedInput {
   commitSha: string
   // The paths the commit actually wrote, from commitAndPushProject.
   writtenPaths?: readonly string[]
+  // Paths struck out of this commit: they stay dirty for a later send.
+  excludedPaths?: readonly string[]
 }
 
 // Canonical bookkeeping after a git commit. No blob baselines are written: with
@@ -692,14 +715,28 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
     return
   }
 
-  // The whole tree is materialized on every commit, so everything dirty is now
-  // committed — no per-glyph selection needed.
   const dirtyGlyphIds = await listSyncDirtyKumikoGlyphIds(input.projectId)
-  const keys = dirtyGlyphIds.map((glyphId) =>
+  const adapters = await buildProjectAdapters(input.projectId)
+  // A struck-out path was materialized but never staged, so its glyph is still
+  // ahead of the branch: clearing its dirty flag would lose the change from
+  // every later report.
+  const excludedGlyphIds = new Set(
+    (input.excludedPaths ?? []).flatMap((path) => {
+      const entity = adapters
+        .map((adapter) => adapter.entityOwning(path))
+        .find((owned) => owned?.kind === 'glyph')
+      return entity?.name ? [entity.name] : []
+    })
+  )
+  const committedGlyphIds = dirtyGlyphIds.filter(
+    (glyphId) => !excludedGlyphIds.has(glyphId)
+  )
+  const keys = committedGlyphIds.map((glyphId) =>
     makeKumikoGlyphKey(input.projectId, glyphId)
   )
   await updateKumikoGlyphSyncDirtyState(keys, 0)
   await updateKumikoGlyphExportDirtyState(keys, 0)
+  const hasPendingChanges = dirtyGlyphIds.length > committedGlyphIds.length
 
   const glyphs = await listKumikoGlyphSyncMetadataForProject(input.projectId)
   const timestamp = Date.now()
@@ -718,7 +755,6 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
 
   // Recover glyphName → file name per UFO from the committed paths. The adapter
   // owns the path-to-entity mapping, so no naming rule is duplicated here.
-  const adapters = await buildProjectAdapters(input.projectId)
   const committedNames = new Map<string, Record<string, string>>()
   for (const path of input.writtenPaths ?? []) {
     for (const [index, adapter] of adapters.entries()) {
@@ -740,8 +776,8 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
 
   await saveKumikoProjectRecord({
     ...project,
-    syncDirty: 0,
-    exportDirty: 0,
+    syncDirty: hasPendingChanges ? 1 : 0,
+    exportDirty: hasPendingChanges ? 1 : 0,
     sourceData: {
       ...project.sourceData,
       ufo: project.sourceData?.ufo
