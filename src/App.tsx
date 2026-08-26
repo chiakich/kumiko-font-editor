@@ -17,6 +17,11 @@ const FontOverviewScreen = lazy(() =>
 const EditorLayout = lazy(() =>
   preloadEditorLayout().then((module) => ({ default: module.EditorLayout }))
 )
+const FeatureWorkspaceScreen = lazy(() =>
+  import('src/features/featureWorkspace/FeatureWorkspaceScreen').then(
+    (module) => ({ default: module.FeatureWorkspaceScreen })
+  )
+)
 
 function App() {
   const fontData = useStore((state) => state.fontData)
@@ -30,6 +35,14 @@ function App() {
     return (
       <Suspense fallback={null}>
         <Home />
+      </Suspense>
+    )
+  }
+
+  if (workspaceView === 'features') {
+    return (
+      <Suspense fallback={null}>
+        <FeatureWorkspaceScreen />
       </Suspense>
     )
   }

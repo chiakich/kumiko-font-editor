@@ -1022,7 +1022,9 @@
     "shapingCompileFailed": "預覽字型編譯失敗",
     "shapingBefore": "關閉特性",
     "shapingAfter": "套用特性",
-    "shapingGlyphCount": "{{count}} 個字形"
+    "shapingGlyphCount": "{{count}} 個字形",
+    "openTypeWorkspace": "OpenType 特性工作區",
+    "openOpenTypeWorkspace": "開啟 OpenType 特性工作區"
   },
   "settings": {
     "appearance": "外觀主題",
@@ -1035,5 +1037,9 @@
     "language": "語言",
     "languageName": "繁體中文",
     "title": "設定"
+  },
+  "featureWorkspace": {
+    "title": "OpenType 特性",
+    "backToOverview": "回到總覽"
   }
 }

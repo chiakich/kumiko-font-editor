@@ -356,7 +356,7 @@ export interface ViewportState {
   pan: { x: number; y: number }
 }
 
-export type WorkspaceView = 'overview' | 'editor'
+export type WorkspaceView = 'overview' | 'editor' | 'features'
 export type OverviewGroupByState = 'none' | 'script' | 'block'
 export type PersistenceStatus = 'idle' | 'queued' | 'saving' | 'saved' | 'error'
 

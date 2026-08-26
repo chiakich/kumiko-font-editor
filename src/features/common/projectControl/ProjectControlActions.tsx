@@ -16,6 +16,7 @@ import {
   Github,
   PageSearch,
   Settings,
+  TextSquare,
   WarningTriangle,
 } from 'iconoir-react'
 import { AppSettingsModal } from 'src/features/common/projectControl/AppSettingsModal'
@@ -61,6 +62,7 @@ export function ProjectControlActions({
   const appSettingsModal = useDisclosure()
   const { t } = useTranslation()
   const persistenceStatus = useStore((state) => state.persistenceStatus)
+  const setWorkspaceView = useStore((state) => state.setWorkspaceView)
   const persistenceError = useStore((state) => state.persistenceError)
   const retryLocalSave = useFlushCurrentDraft({ allowErrorRetry: true })
   const saveToLocalNow = useFlushCurrentDraft()
@@ -272,6 +274,27 @@ export function ProjectControlActions({
             onClick={appSettingsModal.onOpen}
           >
             <Settings
+              width={18}
+              height={18}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
+          </IconButton>
+        </Tooltip>
+        <Tooltip content={t('projectControl.openTypeWorkspace')}>
+          <IconButton
+            aria-label={t('projectControl.openOpenTypeWorkspace')}
+            size="sm"
+            minW={9}
+            h={9}
+            px={0}
+            borderRadius="full"
+            variant="ghost"
+            color="foreground"
+            _hover={{ bg: 'foreground', color: 'background' }}
+            onClick={() => setWorkspaceView('features')}
+          >
+            <TextSquare
               width={18}
               height={18}
               strokeWidth={1.9}

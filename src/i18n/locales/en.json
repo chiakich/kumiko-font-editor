@@ -1022,7 +1022,9 @@
     "shapingCompileFailed": "Preview font failed to compile",
     "shapingBefore": "Features off",
     "shapingAfter": "Features on",
-    "shapingGlyphCount": "{{count}} glyphs"
+    "shapingGlyphCount": "{{count}} glyphs",
+    "openTypeWorkspace": "OpenType feature workspace",
+    "openOpenTypeWorkspace": "Open the OpenType feature workspace"
   },
   "settings": {
     "appearance": "Appearance",
@@ -1035,5 +1037,9 @@
     "language": "Language",
     "languageName": "English",
     "title": "Settings"
+  },
+  "featureWorkspace": {
+    "title": "OpenType features",
+    "backToOverview": "Back to overview"
   }
 }
