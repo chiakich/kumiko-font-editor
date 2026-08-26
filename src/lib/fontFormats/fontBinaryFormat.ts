@@ -671,7 +671,26 @@ const collectExportShapes = (
 
 const IDENTITY_MATRIX: ComponentMatrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }
 
-export const exportGlyphListAsBinary = (input: {
+// The PostScript name (name ID 6 and the CFF Name INDEX) must be printable
+// ASCII without spaces or PostScript delimiters. opentype.js derives it from
+// the family name verbatim, so a CJK family name would put raw UTF-8 into the
+// CFF Name INDEX — which fontTools then refuses to read back ("'ascii' codec
+// can't decode byte …"). Other name records keep the original name; only the
+// PostScript identity is sanitized.
+export const toPostScriptFontName = (familyName: string, styleName: string) => {
+  const clean = (value: string) =>
+    value.replace(/[^\x21-\x7e]/g, '').replace(/[[\](){}<>/%]/g, '')
+  const family = clean(familyName).replace(/\s/g, '')
+  const style = clean(styleName).replace(/\s/g, '')
+  const name = family
+    ? `${family}${style ? `-${style}` : ''}`
+    : style
+      ? `KumikoExport-${style}`
+      : ''
+  return (name || 'KumikoExport').slice(0, 63)
+}
+
+interface ExportGlyphListInput {
   fontData: Pick<
     FontData,
     | 'fontInfo'
@@ -680,7 +699,6 @@ export const exportGlyphListAsBinary = (input: {
     | 'openTypeFeatures'
   >
   glyphs: GlyphData[]
-  format: BinaryFontExportFormat
   familyName?: string
   styleName?: string
   // OS/2 classification for exported instances (e.g. a SemiBold static instance
@@ -691,7 +709,13 @@ export const exportGlyphListAsBinary = (input: {
   // Explicit OS/2.fsSelection bits for style linking; when omitted opentype.js
   // derives them from weightClass/italicAngle.
   fsSelection?: number
-}) => {
+}
+
+// The pre-feature sfnt exactly as the binary export builds it, exposed so the
+// compile-runtime regression tests can feed fontTools the real thing.
+export const buildExportSfntBuffer = (
+  input: Omit<ExportGlyphListInput, 'format'>
+): ArrayBuffer => {
   const glyphsById = new Map(input.glyphs.map((glyph) => [glyph.id, glyph]))
   const glyphs = input.glyphs.map((glyph) => {
     const path = new opentype.Path()
@@ -725,10 +749,13 @@ export const exportGlyphListAsBinary = (input: {
     })
   })
 
+  const familyName =
+    input.familyName || input.fontData.fontInfo?.familyName || 'KumikoExport'
+  const styleName = input.styleName || 'Regular'
   const font = new opentype.Font({
-    familyName:
-      input.familyName || input.fontData.fontInfo?.familyName || 'KumikoExport',
-    styleName: input.styleName || 'Regular',
+    familyName,
+    styleName,
+    postScriptName: toPostScriptFontName(familyName, styleName),
     unitsPerEm: input.fontData.unitsPerEm ?? 1000,
     ascender:
       input.fontData.lineMetricsHorizontalLayout?.ascender?.value ?? 800,
@@ -748,7 +775,13 @@ export const exportGlyphListAsBinary = (input: {
       ? { fsSelection: input.fsSelection as unknown as string }
       : {}),
   })
-  const sfntBuffer = font.toArrayBuffer()
+  return font.toArrayBuffer()
+}
+
+export const exportGlyphListAsBinary = (
+  input: ExportGlyphListInput & { format: BinaryFontExportFormat }
+) => {
+  const sfntBuffer = buildExportSfntBuffer(input)
   const getOutputBuffer = async () => {
     const compiledBuffer = await compileManagedFontFeatures(
       sfntBuffer,
