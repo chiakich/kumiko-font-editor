@@ -114,11 +114,28 @@ Behaviors panel（glyph 中心）與 feature workspace（feature 中心）是同
    - 注意：`src/lib/project/persistence.ts` 目前 DB 升級是砍掉重建；本輪
      schema 變更皆為 additive + 載入時遷移，尚未需要 DB migration 策略，
      但正式化前仍應確定。
-2. **HarfBuzz 預覽接上 UI**——零件齊全、最快見效，且後續每步編輯 UI 都有即時
-   回饋可驗證。
-3. **Feature workspace**——獨立入口 + 三欄布局 + CodeMirror。
-4. **視覺 rule 編輯器**——接上既有 helper，由簡入繁。
-5. **Behaviors panel 整合**——互相跳轉，不合併。
+2. **HarfBuzz 預覽接上 UI**——**已完成（2026-08）**。`ShapingPreviewBar`
+   掛在 OpenType tab／workspace 底部：文字輸入 + feature toggle chips +
+   關閉/套用對照。管線：canonical → `exportFontAsBinary('ttf')`（feaLib
+   worker 編譯）→ `shapeTextWithHarfBuzz`（`includeGlyphShapes` 直接從編譯
+   後的字型取 glyph 名稱與外框）→ `ShapedRunSvg` 渲染。編譯結果以
+   state identity 快取（`shapingPreviewFont.ts`），打字不重編譯。
+   順帶修掉一個真 bug：CJK family name 會被 opentype.js 原樣寫進 CFF Name
+   INDEX / PostScript name，fontTools 讀回直接炸（`'ascii' codec can't
+decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts`）。
+3. **Feature workspace**——**已完成（2026-08）**。`WorkspaceView` 增加
+   `'features'`，`FeatureWorkspaceScreen` 為一級畫面（入口在
+   ProjectControlActions），直接寫入 store（`updateFontSettings` → dirty →
+   auto draft save），不再是 modal-local draft。`.fea` 編輯改用 CodeMirror 6
+   （`FeaCodeEditor` + 自寫 `feaLanguage` StreamLanguage 高亮），預覽編譯
+   失敗經 `parseCompilerErrorLocations` 以行號 inline 標紅在 generated FEA
+   視圖。
+4. **視覺 rule 編輯器**——**已完成第一階段（2026-08）**。per-feature 雙模式
+   （視覺規則 / FEA 程式碼），`FeatureRuleEditor` 接上 `ruleEditorState` 與
+   `valueRecordState`：single/ligature substitution 與 pair positioning 可
+   直接編輯（selector 支援 `@ClassName`），其餘 rule kind 唯讀降級提示。
+   contextual 等複雜 kind 仍待後續。
+5. **Behaviors panel 整合**——互相跳轉，不合併。（未動工）
 
 ## 已知順手債
 
