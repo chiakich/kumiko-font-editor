@@ -82,13 +82,32 @@ export function ProjectVersionMenu({
       ]
     : []
 
-  const rows = [...draftRows, ...projectRows]
+  // The loaded version is not always a draft or the merge target — a project
+  // imported from another branch is neither — and it still has to be named.
+  const listedRows = [...draftRows, ...projectRows]
+  const unlistedActiveRow: VersionRow[] =
+    !listedRows.some((row) => row.isActive) && activeTarget
+      ? [
+          {
+            key: 'active',
+            ref: activeTarget.ref,
+            detail: t('gitFlow.version.activeDetail'),
+            isReadOnly: false,
+            isActive: true,
+            onSwitch: () => undefined,
+          },
+        ]
+      : []
+  const rows = [...unlistedActiveRow, ...listedRows]
   const activeRow = rows.find((row) => row.isActive) ?? null
   const pendingRow = rows.find((row) => row.key === pendingKey) ?? null
   const chipLabel = activeRow?.ref ?? t('gitFlow.version.unknown')
 
   const sections = [
-    { label: t('gitFlow.version.myDrafts'), rows: draftRows },
+    {
+      label: t('gitFlow.version.myDrafts'),
+      rows: [...unlistedActiveRow, ...draftRows],
+    },
     { label: t('gitFlow.version.projectVersions'), rows: projectRows },
   ].filter((section) => section.rows.length > 0)
 

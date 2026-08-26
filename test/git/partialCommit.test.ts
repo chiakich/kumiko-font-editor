@@ -252,6 +252,49 @@ describe('striking a line out of a send', () => {
     expect(project?.syncDirty).toBe(1)
   })
 
+  // A font-level file carries no glyph id, so counting glyphs alone used to
+  // report the project as clean while a struck-out font change was still unsent.
+  it('keeps the project dirty when only a font-level file was struck out', async () => {
+    const store = createMemoryFileStore()
+    await saveProject(500, 500)
+    await commitAndPushProject({
+      projectId: 'partial',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-font',
+      message: 'Base',
+      store,
+    })
+
+    await markGitCommitSynced({
+      projectId: 'partial',
+      pushedRepo: 'contributor/repo',
+      pushedBranch: 'kumiko/patch-font',
+      commitSha: 'c'.repeat(40),
+      writtenPaths: [pathA, pathB],
+      excludedPaths: ['Kumiko.ufo/fontinfo.plist'],
+    })
+
+    const project = await loadKumikoProjectRecord('partial')
+    expect(project?.syncDirty).toBe(1)
+    expect(project?.exportDirty).toBe(1)
+  })
+
+  // Otherwise a stale path from the UI would keep the project dirty forever.
+  it('reports only paths this send actually held back', async () => {
+    const store = createMemoryFileStore()
+    await saveProject(500, 500)
+    const result = await commitAndPushProject({
+      projectId: 'partial',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-stale',
+      message: 'Base',
+      excludePaths: ['Kumiko.ufo/glyphs/GONE.glif'],
+      store,
+    })
+
+    expect(result.excludedPaths).toEqual([])
+  })
+
   it('clears everything when nothing was struck out', async () => {
     const store = createMemoryFileStore()
     await saveProject(500, 500)

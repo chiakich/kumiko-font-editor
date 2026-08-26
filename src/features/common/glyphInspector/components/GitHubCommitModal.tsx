@@ -173,7 +173,7 @@ export function GitHubCommitModal({
         : null
 
   const commitSha = shortSha(lastSubmitResult?.commitSha ?? null)
-  const receiptHash = commitSha ?? shortSha(baseSha) ?? '0000000'
+  const receiptHash = commitSha ?? shortSha(baseSha)
   const hashLabel = commitSha
     ? `COMMIT ${commitSha.toUpperCase()}`
     : baseSha
@@ -370,6 +370,33 @@ export function GitHubCommitModal({
                   />
                 ) : (
                   <Stack gap={3.5}>
+                    {githubViewer?.canPush === false ? (
+                      // A read-only token authenticates fine and only fails at
+                      // push time, so the panel has to say why sending is off.
+                      <Stack
+                        gap={2.5}
+                        p={3.5}
+                        borderWidth={1}
+                        borderColor="orange.300"
+                        borderRadius="md"
+                        bg="orange.50"
+                      >
+                        <Text textStyle="supporting" color="orange.700">
+                          {t('glyphInspector.missingPushScope', {
+                            scopes: githubViewer?.scopes?.join(', ') || '—',
+                          })}
+                        </Text>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          alignSelf="flex-start"
+                          onClick={onLoginGitHub}
+                        >
+                          {t('glyphInspector.reauthorizeGitHub')}
+                        </Button>
+                      </Stack>
+                    ) : null}
+
                     {compare && compare.behindBy > 0 ? (
                       <HStack
                         justify="space-between"

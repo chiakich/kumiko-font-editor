@@ -146,7 +146,21 @@ export const useGitHubCommitFlow = ({
   )
   const [lastSubmitResult, setLastSubmitResult] =
     useState<GitHubSubmitResult | null>(null)
-  const [voidedLineKeys, setVoidedLineKeys] = useState<string[]>([])
+  // Scoped like the commit draft: receipt keys fall back to bare glyph ids, so
+  // an unscoped set would strike out a same-named glyph in another project.
+  const [voidedLines, setVoidedLines] = useState<{
+    repoFullName: string | null
+    keys: string[]
+  }>({ repoFullName: null, keys: [] })
+  // Memoized so the empty fallback keeps a stable identity: it feeds the
+  // suggested-message memo below.
+  const voidedLineKeys = useMemo(
+    () =>
+      voidedLines.repoFullName === githubRepoFullName ? voidedLines.keys : [],
+    [githubRepoFullName, voidedLines]
+  )
+  const setVoidedLineKeys = (keys: string[]) =>
+    setVoidedLines({ repoFullName: githubRepoFullName, keys })
   const [gitCollaboration, setGitCollaboration] =
     useState<GitCollaborationState>({
       activeTarget: null,
@@ -459,6 +473,7 @@ export const useGitHubCommitFlow = ({
     gitHubModal.onOpen()
     setSubmitErrorMessage(null)
     setLastSubmitResult(null)
+    setVoidedLineKeys([])
 
     if (!fontData || !projectId || !projectTitle) {
       return
@@ -813,10 +828,10 @@ export const useGitHubCommitFlow = ({
     lastSubmitResult,
     baseSha: syncReport?.remoteHeadSha ?? null,
     onToggleVoidLine: (key) =>
-      setVoidedLineKeys((current) =>
-        current.includes(key)
-          ? current.filter((entry) => entry !== key)
-          : [...current, key]
+      setVoidedLineKeys(
+        voidedLineKeys.includes(key)
+          ? voidedLineKeys.filter((entry) => entry !== key)
+          : [...voidedLineKeys, key]
       ),
     onLoginGitHub: () => void handleLoginGitHub(),
     onLogoutGitHub: () => void handleLogoutGitHub(),

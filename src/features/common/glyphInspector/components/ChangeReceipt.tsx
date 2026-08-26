@@ -23,7 +23,9 @@ interface ChangeReceiptProps {
   onFilterChange: (filter: ReceiptFilter) => void
   routeLabel: string
   draftLabel: string
-  hash: string
+  // Null until a real base or commit sha exists: the barcode encodes an object
+  // id, so there is nothing honest to draw without one.
+  hash: string | null
   hashLabel: string
   verdict: string
   stamp: ReceiptStamp | null
@@ -172,7 +174,7 @@ export function ChangeReceipt({
     (line) => voidedKeys.has(line.key)
   ).length
   const sendCount = receipt.totalCount - voidedCount
-  const bars = barcodeForHash(hash)
+  const bars = hash ? barcodeForHash(hash) : []
   const isEmpty = receipt.totalCount === 0
 
   const totals = [
@@ -358,7 +360,9 @@ export function ChangeReceipt({
                 letterSpacing="0.08em"
                 opacity={0.62}
               >
-                {t('gitFlow.receipt.noItems')}
+                {isEmpty
+                  ? t('gitFlow.receipt.noItems')
+                  : t('gitFlow.receipt.noFilterMatch')}
               </Text>
             ) : null}
 
@@ -413,21 +417,23 @@ export function ChangeReceipt({
               {verdict}
             </Text>
 
-            <HStack
-              justify="center"
-              gap={0}
-              align="stretch"
-              height="32px"
-              mt={4}
-            >
-              {bars.map((bar, index) => (
-                <Box
-                  key={index}
-                  width={`${bar.width}px`}
-                  bg={bar.ink ? 'currentColor' : 'transparent'}
-                />
-              ))}
-            </HStack>
+            {bars.length > 0 ? (
+              <HStack
+                justify="center"
+                gap={0}
+                align="stretch"
+                height="32px"
+                mt={4}
+              >
+                {bars.map((bar, index) => (
+                  <Box
+                    key={index}
+                    width={`${bar.width}px`}
+                    bg={bar.ink ? 'currentColor' : 'transparent'}
+                  />
+                ))}
+              </HStack>
+            ) : null}
             <Text
               mt={1.5}
               textAlign="center"

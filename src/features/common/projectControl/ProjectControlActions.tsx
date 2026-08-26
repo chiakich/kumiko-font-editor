@@ -173,7 +173,9 @@ export function ProjectControlActions({
   return (
     <>
       <HStack gap={2} justify="space-between" align="center" width="100%">
-        {versionMenu ? <ProjectVersionMenu {...versionMenu} /> : null}
+        {hasGitHubSource && versionMenu ? (
+          <ProjectVersionMenu {...versionMenu} />
+        ) : null}
         <HStack
           gap={1}
           justify="flex-end"

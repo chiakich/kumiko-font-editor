@@ -406,6 +406,15 @@ export const commitAndPushProject = async (input: {
       }
     }
   }
+  // Only paths this materialization actually produced count as held back; a
+  // caller may name a path that is not part of this send at all.
+  const materializedPaths = new Set([
+    ...synced.writtenPaths,
+    ...synced.removedPaths,
+  ])
+  const heldBackPaths = [...excluded].filter((path) =>
+    materializedPaths.has(path)
+  )
   const stagedWrittenPaths = synced.writtenPaths.filter(
     (path) => !excluded.has(path)
   )
@@ -464,7 +473,7 @@ export const commitAndPushProject = async (input: {
     pushedRepo: input.pushRepo,
     pushedBranch: input.pushBranch,
     writtenPaths: stagedWrittenPaths,
-    excludedPaths: [...excluded],
+    excludedPaths: heldBackPaths,
   }
 }
 
@@ -754,7 +763,11 @@ export const markGitCommitSynced = async (input: GitCommitSyncedInput) => {
   )
   await updateKumikoGlyphSyncDirtyState(keys, 0)
   await updateKumikoGlyphExportDirtyState(keys, 0)
-  const hasPendingChanges = dirtyGlyphIds.length > committedGlyphIds.length
+  // Any held-back path leaves the project ahead of the branch, glyph or not:
+  // font-level files (fontinfo, features, kerning) carry no glyph id, so
+  // counting glyphs alone would report a project as clean while a struck-out
+  // font change is still unsent.
+  const hasPendingChanges = (input.excludedPaths ?? []).length > 0
 
   const glyphs = await listKumikoGlyphSyncMetadataForProject(input.projectId)
   const timestamp = Date.now()
