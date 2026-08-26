@@ -1,5 +1,15 @@
 import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
-import { Badge, HStack, SimpleGrid, Stack, Text, Field } from '@chakra-ui/react'
+import { FeatureRuleEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
+import {
+  Badge,
+  Button,
+  HStack,
+  SimpleGrid,
+  Stack,
+  Text,
+  Field,
+} from '@chakra-ui/react'
+import { useState } from 'react'
 import {
   Metric,
   SourceSectionsDocument,
@@ -18,6 +28,7 @@ export function FeatureDocument({
   feature,
   generatedFea,
   state,
+  onStateChange,
 }: {
   feature: FeatureRecord
   generatedFea: {
@@ -25,8 +36,12 @@ export function FeatureDocument({
     text: string
   }
   state: OpenTypeFeaturesState
+  onStateChange?: (next: OpenTypeFeaturesState) => void
 }) {
   const { t } = useTranslation()
+  // Two views of the same feature: rule cards for the kinds the visual editor
+  // understands, the generated FEA block for everything.
+  const [mode, setMode] = useState<'visual' | 'code'>('visual')
   const lookupIds = Array.from(
     new Set(feature.entries.flatMap((entry) => entry.lookupIds))
   )
@@ -49,17 +64,41 @@ export function FeatureDocument({
           value={countFeatureRules(feature, state)}
         />
       </SimpleGrid>
-      <Field.Root>
-        <Field.Label textStyle="label">
-          {t('projectControl.featureBlock')}
-        </Field.Label>
-        <FeaCodeEditor
-          value={featureFea || t('projectControl.noFeatureBlock')}
-          readOnly
-          minHeight="360px"
-          aria-label={t('projectControl.featureBlock')}
+      <HStack gap={1}>
+        <Button
+          size="2xs"
+          variant={mode === 'visual' ? 'solid' : 'outline'}
+          onClick={() => setMode('visual')}
+        >
+          {t('projectControl.featureModeVisual')}
+        </Button>
+        <Button
+          size="2xs"
+          variant={mode === 'code' ? 'solid' : 'outline'}
+          onClick={() => setMode('code')}
+        >
+          {t('projectControl.featureModeCode')}
+        </Button>
+      </HStack>
+      {mode === 'visual' && onStateChange ? (
+        <FeatureRuleEditor
+          state={state}
+          lookupIds={lookupIds}
+          onStateChange={onStateChange}
         />
-      </Field.Root>
+      ) : (
+        <Field.Root>
+          <Field.Label textStyle="label">
+            {t('projectControl.featureBlock')}
+          </Field.Label>
+          <FeaCodeEditor
+            value={featureFea || t('projectControl.noFeatureBlock')}
+            readOnly
+            minHeight="360px"
+            aria-label={t('projectControl.featureBlock')}
+          />
+        </Field.Root>
+      )}
       <SourceSectionsDocument
         emptyText={t('projectControl.noSourceSections')}
         sourceSectionRecords={sourceSectionRecords}

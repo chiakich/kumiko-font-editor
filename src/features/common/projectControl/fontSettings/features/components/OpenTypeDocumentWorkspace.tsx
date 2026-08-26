@@ -34,6 +34,8 @@ interface OpenTypeDocumentWorkspaceProps {
   // Compiler failures from the live preview compile, in generated-FEA lines.
   compileErrorLocations: CompilerErrorLocation[]
   diagnostics: FeatureDiagnostic[]
+  // Feature-state replacement, for the visual rule editor.
+  onStateChange?: (next: OpenTypeFeaturesState) => void
   generatedFea: {
     sourceMap: GeneratedFeaSourceMap
     text: string
@@ -52,6 +54,7 @@ interface OpenTypeDocumentWorkspaceProps {
 export function OpenTypeDocumentWorkspace({
   compileErrorLocations,
   diagnostics,
+  onStateChange,
   generatedFea,
   rawFeatureText,
   selection,
@@ -76,6 +79,7 @@ export function OpenTypeDocumentWorkspace({
       <SelectionView
         compileErrorLocations={compileErrorLocations}
         diagnostics={diagnostics}
+        onStateChange={onStateChange}
         generatedFea={generatedFea}
         rawFeatureText={rawFeatureText}
         selectedFeature={selectedFeature}
@@ -95,6 +99,7 @@ export function OpenTypeDocumentWorkspace({
 function SelectionView({
   compileErrorLocations,
   diagnostics,
+  onStateChange,
   generatedFea,
   rawFeatureText,
   selectedFeature,
@@ -141,6 +146,7 @@ function SelectionView({
         feature={selectedFeature}
         generatedFea={generatedFea}
         state={state}
+        onStateChange={onStateChange}
       />
     ) : (
       <Text fontSize="sm" color="mutedForeground">

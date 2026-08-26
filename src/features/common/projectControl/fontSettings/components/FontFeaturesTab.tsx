@@ -118,6 +118,7 @@ export function FontFeaturesTab({
             <OpenTypeDocumentWorkspace
               compileErrorLocations={compileErrorLocations}
               diagnostics={diagnostics}
+              onStateChange={onOpenTypeFeaturesChange}
               generatedFea={generatedFea}
               rawFeatureText={getRawFeatureText(openTypeFeatures) ?? ''}
               selection={activeSelection}

@@ -1024,7 +1024,19 @@
     "shapingAfter": "Features on",
     "shapingGlyphCount": "{{count}} glyphs",
     "openTypeWorkspace": "OpenType feature workspace",
-    "openOpenTypeWorkspace": "Open the OpenType feature workspace"
+    "openOpenTypeWorkspace": "Open the OpenType feature workspace",
+    "featureModeVisual": "Visual rules",
+    "featureModeCode": "FEA code",
+    "ruleTarget": "Target",
+    "ruleReplacement": "Replace with",
+    "ruleComponents": "Component glyphs",
+    "ruleLeft": "Left",
+    "ruleRight": "Right",
+    "ruleCount": "{{count}} rules",
+    "ruleKindNotEditable": "{{kind}} rules can only be viewed as FEA code for now",
+    "lookupReadOnly": "Read-only",
+    "noRules": "This lookup has no rules.",
+    "noLookupsForFeature": "This feature has no lookups yet. Switch to FEA code to see its output."
   },
   "settings": {
     "appearance": "Appearance",

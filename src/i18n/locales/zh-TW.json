@@ -1024,7 +1024,19 @@
     "shapingAfter": "套用特性",
     "shapingGlyphCount": "{{count}} 個字形",
     "openTypeWorkspace": "OpenType 特性工作區",
-    "openOpenTypeWorkspace": "開啟 OpenType 特性工作區"
+    "openOpenTypeWorkspace": "開啟 OpenType 特性工作區",
+    "featureModeVisual": "視覺規則",
+    "featureModeCode": "FEA 程式碼",
+    "ruleTarget": "目標",
+    "ruleReplacement": "替換為",
+    "ruleComponents": "組成字形",
+    "ruleLeft": "左側",
+    "ruleRight": "右側",
+    "ruleCount": "{{count}} 條規則",
+    "ruleKindNotEditable": "{{kind}} 規則目前只能以 FEA 程式碼檢視",
+    "lookupReadOnly": "唯讀",
+    "noRules": "這個 lookup 沒有規則。",
+    "noLookupsForFeature": "這個特性還沒有 lookup。切到 FEA 程式碼檢視它的產出。"
   },
   "settings": {
     "appearance": "外觀主題",
