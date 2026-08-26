@@ -135,6 +135,7 @@ export const commitAndPushProjectInWorker = (input: {
   message: string
   author: GitCommitAuthor
   excludePaths?: readonly string[]
+  excludeGlyphIds?: readonly string[]
 }) => request<GitCommitAndPushResult>('commit-and-push', { ...input })
 
 // Pulling parses every remote glif it touches. That used to need DOMParser,

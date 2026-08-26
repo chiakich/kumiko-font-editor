@@ -37,6 +37,7 @@ import type {
 import {
   buildChangeReceipt,
   collectSentGlyphChanges,
+  resolveReceiptExclusions,
 } from 'src/features/common/glyphInspector/utils/changeReceipt'
 import {
   githubSyncReportQueryKey,
@@ -667,9 +668,10 @@ export const useGitHubCommitFlow = ({
         commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
         forkStatus: githubForkStatus,
         author: commitAuthor,
-        // Struck-out lines are addressed by git path, so they can be handed to
-        // the commit as-is.
-        excludePaths: voidedLineKeys,
+        ...resolveReceiptExclusions({
+          receipt: changeReceipt,
+          voidedKeys: voidedLineKeys,
+        }),
       })
       markDraftSaved()
       markLocalSaved()
@@ -806,8 +808,6 @@ export const useGitHubCommitFlow = ({
     gitHubBranchName,
     changeDrafts: gitCollaboration.changeDrafts,
     changeReceipt,
-    // Lines are addressed by git path, which only the sync report knows.
-    canVoidLines: Boolean(syncReport),
     voidedLineKeys,
     submitErrorMessage,
     lastSubmitResult,

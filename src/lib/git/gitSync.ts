@@ -347,6 +347,10 @@ export const commitAndPushProject = async (input: {
   // Anything omitted keeps whatever the base commit has, and stays a local
   // change for a later send.
   excludePaths?: readonly string[]
+  // The same exclusion by glyph, for callers that know which glyph the user
+  // struck out but not which file it lands in — the adapter owns that mapping,
+  // so the UI never has to reproduce it or wait for a sync report to learn it.
+  excludeGlyphIds?: readonly string[]
   store?: FileStore
 }): Promise<GitCommitAndPushResult> => {
   const worktree = await openGitWorktree({
@@ -388,6 +392,20 @@ export const commitAndPushProject = async (input: {
     worktree,
   })
   const excluded = new Set(input.excludePaths ?? [])
+  const excludedGlyphIds = new Set(input.excludeGlyphIds ?? [])
+  if (excludedGlyphIds.size > 0) {
+    const adapters = await buildProjectAdapters(input.projectId)
+    const ownedGlyph = (path: string) =>
+      adapters
+        .map((adapter) => adapter.entityOwning(path))
+        .find((entity) => entity?.kind === 'glyph')
+    for (const path of [...synced.writtenPaths, ...synced.removedPaths]) {
+      const entity = ownedGlyph(path)
+      if (entity?.name && excludedGlyphIds.has(entity.name)) {
+        excluded.add(path)
+      }
+    }
+  }
   const stagedWrittenPaths = synced.writtenPaths.filter(
     (path) => !excluded.has(path)
   )

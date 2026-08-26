@@ -18,8 +18,10 @@ export const commitThroughGit = async (input: {
   commitMessage: string
   forkStatus: GitHubForkStatus | null
   author: GitCommitAuthor
-  // Paths struck out on the receipt: materialized but kept out of this commit.
+  // Struck out on the receipt: materialized but kept out of this commit. Paths
+  // come from a loaded sync report; glyph ids work without one.
   excludePaths?: readonly string[]
+  excludeGlyphIds?: readonly string[]
 }): Promise<GitCommitSubmissionResult> => {
   const targetRepo = input.forkStatus?.targetRepo
   if (!targetRepo) {
@@ -48,6 +50,7 @@ export const commitThroughGit = async (input: {
     message: input.commitMessage || `Update ${input.projectTitle}`,
     author: input.author,
     excludePaths: input.excludePaths,
+    excludeGlyphIds: input.excludeGlyphIds,
   })
 
   // The PR affordances read compare status, which stays a REST concern.

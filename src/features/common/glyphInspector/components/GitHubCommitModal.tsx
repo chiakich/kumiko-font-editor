@@ -60,8 +60,6 @@ export interface GitHubCommitModalProps {
   gitHubBranchName: string
   changeDrafts: GitHubSyncTarget[]
   changeReceipt: ChangeReceiptModel
-  // Voiding addresses lines by git path, which only the sync report knows.
-  canVoidLines: boolean
   voidedLineKeys: string[]
   submitErrorMessage: string | null
   lastSubmitResult: GitHubSubmitResult | null
@@ -103,7 +101,6 @@ export function GitHubCommitModal({
   gitHubBranchName,
   changeDrafts,
   changeReceipt,
-  canVoidLines,
   voidedLineKeys,
   submitErrorMessage,
   lastSubmitResult,
@@ -329,9 +326,10 @@ export function GitHubCommitModal({
                   receipt={changeReceipt}
                   voidedKeys={voidedKeys}
                   onToggleVoid={
-                    canVoidLines && workbenchState !== 'submitted'
-                      ? onToggleVoidLine
-                      : undefined
+                    // A shipped receipt is a record, not a form.
+                    workbenchState === 'submitted'
+                      ? undefined
+                      : onToggleVoidLine
                   }
                   filter={receiptFilter}
                   onFilterChange={setReceiptFilter}

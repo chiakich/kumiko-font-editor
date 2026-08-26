@@ -189,6 +189,37 @@ describe('striking a line out of a send', () => {
     )
   })
 
+  it('excludes by glyph id when the caller has no path for it', async () => {
+    const store = createMemoryFileStore()
+    await saveProject(500, 500)
+    await commitAndPushProject({
+      projectId: 'partial',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-id',
+      message: 'Base',
+      store,
+    })
+
+    await setWidth('A', 700)
+    await setWidth('B', 800)
+    const second = await commitAndPushProject({
+      projectId: 'partial',
+      pushRepo: 'contributor/repo',
+      pushBranch: 'kumiko/patch-id',
+      message: 'Send only B',
+      excludeGlyphIds: ['A'],
+      store,
+    })
+
+    expect(second.excludedPaths).toEqual([pathA])
+    expect(await widthInCommit(store, second.commitSha, pathA)).toContain(
+      'width="500"'
+    )
+    expect(await widthInCommit(store, second.commitSha, pathB)).toContain(
+      'width="800"'
+    )
+  })
+
   it('keeps an excluded glyph dirty so a later send still carries it', async () => {
     const store = createMemoryFileStore()
     await saveProject(500, 500)

@@ -35,6 +35,7 @@ interface CommitAndPushRequest {
     message: string
     author: GitCommitAuthor
     excludePaths?: readonly string[]
+    excludeGlyphIds?: readonly string[]
   }
 }
 
@@ -138,6 +139,7 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         message,
         author,
         excludePaths,
+        excludeGlyphIds,
       } = request.payload
       const result = await commitAndPushProject({
         projectId,
@@ -148,6 +150,7 @@ self.onmessage = async (event: MessageEvent<GitSyncRequest>) => {
         message,
         author,
         excludePaths,
+        excludeGlyphIds,
       })
       // Bookkeeping stays next to the commit: it reverses the paths the commit
       // actually wrote, so it must not run against a different materialization.

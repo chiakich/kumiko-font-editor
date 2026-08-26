@@ -3,6 +3,7 @@ import {
   barcodeForHash,
   buildChangeReceipt,
   collectSentGlyphChanges,
+  resolveReceiptExclusions,
 } from 'src/features/common/glyphInspector/utils/changeReceipt'
 import type { GlyphSyncEntry, ProjectSyncReport } from 'src/lib/github/sync'
 import type { FontData } from 'src/store'
@@ -57,6 +58,8 @@ describe('change receipt', () => {
     expect(receipt.glyphLines).toEqual([
       {
         key: 'F.ufo/glyphs/A.glif',
+        path: 'F.ufo/glyphs/A.glif',
+        glyphId: 'A',
         kind: 'glyph',
         char: '安',
         label: 'A',
@@ -195,5 +198,65 @@ describe('what the commit message may claim', () => {
     })
 
     expect(sent).toEqual({ added: [], updated: [], deleted: [] })
+  })
+})
+
+describe('striking lines out', () => {
+  it('addresses report-backed lines by path', () => {
+    const receipt = buildChangeReceipt({
+      report: report([
+        entry({ path: 'F.ufo/glyphs/A.glif', status: 'localModified' }),
+        entry({
+          path: 'F.ufo/fontinfo.plist',
+          status: 'localModified',
+          kind: 'font',
+          glyphName: null,
+          fileName: 'fontinfo.plist',
+        }),
+      ]),
+      fontData,
+      dirtyGlyphIds: [],
+      deletedGlyphIds: [],
+    })
+
+    expect(
+      resolveReceiptExclusions({
+        receipt,
+        voidedKeys: ['F.ufo/glyphs/A.glif', 'F.ufo/fontinfo.plist'],
+      })
+    ).toEqual({
+      excludePaths: ['F.ufo/glyphs/A.glif', 'F.ufo/fontinfo.plist'],
+      excludeGlyphIds: [],
+    })
+  })
+
+  // Without a report there are no paths yet, so the glyph id carries the
+  // exclusion and the commit resolves it through the format adapter.
+  it('falls back to glyph ids with no report loaded', () => {
+    const receipt = buildChangeReceipt({
+      report: null,
+      fontData,
+      dirtyGlyphIds: ['A', 'B'],
+      deletedGlyphIds: [],
+    })
+
+    expect(resolveReceiptExclusions({ receipt, voidedKeys: ['B'] })).toEqual({
+      excludePaths: [],
+      excludeGlyphIds: ['B'],
+    })
+  })
+
+  it('ignores keys that are not on the receipt', () => {
+    const receipt = buildChangeReceipt({
+      report: null,
+      fontData,
+      dirtyGlyphIds: ['A'],
+      deletedGlyphIds: [],
+    })
+
+    expect(resolveReceiptExclusions({ receipt, voidedKeys: ['ZZ'] })).toEqual({
+      excludePaths: [],
+      excludeGlyphIds: [],
+    })
   })
 })

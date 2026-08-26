@@ -7,6 +7,10 @@ export interface ChangeReceiptLine {
   // Git path when the sync report knows it, otherwise the glyph id — either way
   // the stable key the void set is addressed by.
   key: string
+  // How the commit can exclude this line. A path needs the report; a glyph id
+  // does not, so striking lines out works before the report lands.
+  path: string | null
+  glyphId: string | null
   kind: 'glyph' | 'font'
   char: string | null
   label: string
@@ -72,6 +76,8 @@ export const buildChangeReceipt = (input: {
       seen.add(entry.path)
       const line: ChangeReceiptLine = {
         key: entry.path,
+        path: entry.path,
+        glyphId: entry.kind === 'glyph' ? entry.glyphName : null,
         kind: entry.kind,
         char:
           entry.kind === 'glyph' && entry.glyphName
@@ -91,6 +97,8 @@ export const buildChangeReceipt = (input: {
       const glyph = glyphs[glyphId]
       glyphLines.push({
         key: glyphId,
+        path: null,
+        glyphId,
         kind: 'glyph',
         char: charForGlyph(glyph),
         label: glyph?.name ?? glyphId,
@@ -101,6 +109,8 @@ export const buildChangeReceipt = (input: {
       const glyph = glyphs[glyphId]
       glyphLines.push({
         key: glyphId,
+        path: null,
+        glyphId,
         kind: 'glyph',
         char: charForGlyph(glyph),
         label: glyph?.name ?? glyphId,
@@ -185,5 +195,31 @@ export const collectSentGlyphChanges = (input: {
     deleted: localChanges
       .filter((entry) => entry.status === 'localDeleted')
       .map((entry) => glyphOf(entry.glyphName!)),
+  }
+}
+
+export interface ReceiptExclusions {
+  excludePaths: string[]
+  excludeGlyphIds: string[]
+}
+
+// Struck-out lines, split by how the commit can address them. A line with a
+// path uses it; one without falls back to its glyph, which the adapter resolves
+// to a path at commit time — so striking out works with no sync report loaded.
+export const resolveReceiptExclusions = (input: {
+  receipt: ChangeReceipt
+  voidedKeys: readonly string[]
+}): ReceiptExclusions => {
+  const voided = new Set(input.voidedKeys)
+  const lines = [
+    ...input.receipt.glyphLines,
+    ...input.receipt.fontLines,
+  ].filter((line) => voided.has(line.key))
+
+  return {
+    excludePaths: lines.flatMap((line) => (line.path ? [line.path] : [])),
+    excludeGlyphIds: lines.flatMap((line) =>
+      !line.path && line.glyphId ? [line.glyphId] : []
+    ),
   }
 }
