@@ -521,15 +521,11 @@ export const useGitHubCommitFlow = ({
         })
       )
 
+      // The message field stays as the user left it: prefilling it here would
+      // both discard a typed message and hide the receipt-derived suggestion,
+      // which only ever shows as the placeholder of an empty field.
       const nextDraft: Partial<Omit<ScopedGitHubCommitDraft, 'repoFullName'>> =
-        {
-          // The git worker materializes the actual files exactly once when it
-          // commits. Preparing the legacy REST payload here would serialize
-          // and hash the same glyphs only to fill this text field.
-          commitMessage: buildGlyphCommitMessage({
-            fallbackTitle: projectTitle,
-          }),
-        }
+        {}
       if (!selectedBranch) {
         const activeTarget = collaboration.activeTarget
         const activeDraft = Boolean(
