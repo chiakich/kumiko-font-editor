@@ -1,12 +1,5 @@
-import {
-  Badge,
-  HStack,
-  SimpleGrid,
-  Stack,
-  Text,
-  Textarea,
-  Field,
-} from '@chakra-ui/react'
+import { Badge, HStack, SimpleGrid, Stack, Text, Field } from '@chakra-ui/react'
+import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
 import {
   Metric,
   SourceSectionsDocument,
@@ -33,12 +26,11 @@ export function RawFeatureTextEditor({
       <Field.Label textStyle="label">
         {t('projectControl.rawFeatureText')}
       </Field.Label>
-      <Textarea
-        minH="560px"
-        fontFamily="mono"
+      <FeaCodeEditor
         value={rawFeatureText}
-        onChange={(event) => onRawFeatureTextChange(event.target.value)}
-        placeholder={t('projectControl.rawFeatureTextPlaceholder')}
+        onChange={onRawFeatureTextChange}
+        minHeight="560px"
+        aria-label={t('projectControl.rawFeatureText')}
       />
       <Field.HelperText fontSize="xs">
         {t('projectControl.rawFeatureTextHelp')}

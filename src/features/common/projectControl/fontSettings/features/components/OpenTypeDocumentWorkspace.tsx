@@ -21,6 +21,7 @@ import type { OpenTypeWorkbenchSelection } from 'src/features/common/projectCont
 import { UnsupportedLookupList } from 'src/features/common/projectControl/fontSettings/features/components/UnsupportedLookupList'
 import type {
   AutoFeatureSuggestion,
+  CompilerErrorLocation,
   ExportPolicy,
   FeatureDiagnostic,
   FeatureRecord,
@@ -30,6 +31,8 @@ import type {
 import { useTranslation } from 'react-i18next'
 
 interface OpenTypeDocumentWorkspaceProps {
+  // Compiler failures from the live preview compile, in generated-FEA lines.
+  compileErrorLocations: CompilerErrorLocation[]
   diagnostics: FeatureDiagnostic[]
   generatedFea: {
     sourceMap: GeneratedFeaSourceMap
@@ -47,6 +50,7 @@ interface OpenTypeDocumentWorkspaceProps {
 }
 
 export function OpenTypeDocumentWorkspace({
+  compileErrorLocations,
   diagnostics,
   generatedFea,
   rawFeatureText,
@@ -70,6 +74,7 @@ export function OpenTypeDocumentWorkspace({
         title={getSelectionTitle(selection, selectedFeature, t)}
       />
       <SelectionView
+        compileErrorLocations={compileErrorLocations}
         diagnostics={diagnostics}
         generatedFea={generatedFea}
         rawFeatureText={rawFeatureText}
@@ -88,6 +93,7 @@ export function OpenTypeDocumentWorkspace({
 }
 
 function SelectionView({
+  compileErrorLocations,
   diagnostics,
   generatedFea,
   rawFeatureText,
@@ -151,6 +157,7 @@ function SelectionView({
     {
       'generated-fea': (
         <GeneratedFeaPreview
+          compileErrorLocations={compileErrorLocations}
           feaText={generatedFea.text}
           sourceMap={generatedFea.sourceMap}
         />

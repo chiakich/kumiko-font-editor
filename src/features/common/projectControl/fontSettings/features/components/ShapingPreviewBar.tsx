@@ -9,17 +9,15 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
 import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
-import {
+import type {
   useShapingPreview,
-  type ShapingPreviewRun,
+  ShapingPreviewRun,
 } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 
 interface ShapingPreviewBarProps {
-  fontData: FontData | null
-  openTypeFeatures: OpenTypeFeaturesState | undefined
+  // Owned by the tab so compile diagnostics can also reach the code views.
+  preview: ReturnType<typeof useShapingPreview>
 }
 
 const RUN_SIZE = 44
@@ -59,12 +57,8 @@ function PreviewRunRow({
 
 // The live shaping strip: type text, flip features, watch the compiled font
 // shape it through HarfBuzz — before/after so the features' work is visible.
-export function ShapingPreviewBar({
-  fontData,
-  openTypeFeatures,
-}: ShapingPreviewBarProps) {
+export function ShapingPreviewBar({ preview }: ShapingPreviewBarProps) {
   const { t } = useTranslation()
-  const preview = useShapingPreview({ fontData, openTypeFeatures })
   const hasText = preview.text.trim().length > 0
 
   return (

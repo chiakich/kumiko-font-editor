@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  parseCompilerErrorLocations,
   shapeTextWithHarfBuzz,
   type OpenTypeFeaturesState,
   type ShapeTextResult,
@@ -16,7 +17,12 @@ export type ShapingPreviewFontStatus =
   | { state: 'idle' }
   | { state: 'compiling' }
   | { state: 'ready' }
-  | { state: 'error'; message: string }
+  | {
+      state: 'error'
+      message: string
+      // Line-anchored compiler errors, in generated-FEA coordinates.
+      errorLocations: ReturnType<typeof parseCompilerErrorLocations>
+    }
 
 export interface ShapingPreviewRun {
   glyphs: ShapeTextResult['glyphs']
@@ -80,11 +86,21 @@ export const useShapingPreview = (input: {
           if (requestRef.current !== requestId) {
             return
           }
+          const rawOutput =
+            error && typeof error === 'object' && 'rawCompilerOutput' in error
+              ? String(
+                  (error as { rawCompilerOutput?: unknown })
+                    .rawCompilerOutput ?? ''
+                )
+              : ''
           setBuffer(null)
           setFontStatus({
             state: 'error',
             message:
               error instanceof Error ? error.message : String(error ?? ''),
+            errorLocations: rawOutput
+              ? parseCompilerErrorLocations(rawOutput)
+              : [],
           })
         })
     }, COMPILE_DEBOUNCE_MS)

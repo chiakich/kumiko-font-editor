@@ -35,6 +35,7 @@ export {
   mapCompilerErrorsToDiagnostics,
   mapFeaLineToDiagnosticTarget,
   parseCompilerErrorLocations,
+  type CompilerErrorLocation,
 } from 'src/lib/openTypeFeatures/compilerErrorMapping'
 export {
   canInstalledDependenciesCompileGeneratedFeaOffline,
