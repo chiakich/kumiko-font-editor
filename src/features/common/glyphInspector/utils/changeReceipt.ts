@@ -190,8 +190,13 @@ export const buildChangeReceipt = (input: {
         status,
       }
     }
+    // A glyph edited and then deleted sits in both lists; deletion is what the
+    // send will carry, so that is the one line it gets.
+    const deleted = new Set(input.deletedGlyphIds)
     for (const glyphId of input.dirtyGlyphIds) {
-      glyphLines.push(localLine(glyphId, 'modified'))
+      if (!deleted.has(glyphId)) {
+        glyphLines.push(localLine(glyphId, 'modified'))
+      }
     }
     for (const glyphId of input.deletedGlyphIds) {
       glyphLines.push(localLine(glyphId, 'deleted'))
