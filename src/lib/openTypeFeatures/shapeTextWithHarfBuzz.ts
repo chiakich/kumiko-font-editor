@@ -23,7 +23,10 @@ const normalizeFeatureString = (features: string[] | undefined) =>
     .filter(Boolean)
     .join(',')
 
-const toShapedGlyphs = (glyphs: HarfBuzzBufferGlyph[]): ShapedGlyph[] =>
+const toShapedGlyphs = (
+  glyphs: HarfBuzzBufferGlyph[],
+  readShape?: (glyphId: number) => { glyphName: string; svgPath: string }
+): ShapedGlyph[] =>
   glyphs.map((glyph) => ({
     cluster: glyph.cluster,
     glyphId: glyph.codepoint,
@@ -31,6 +34,7 @@ const toShapedGlyphs = (glyphs: HarfBuzzBufferGlyph[]): ShapedGlyph[] =>
     xOffset: glyph.x_offset ?? 0,
     yAdvance: glyph.y_advance ?? 0,
     yOffset: glyph.y_offset ?? 0,
+    ...(readShape ? readShape(glyph.codepoint) : {}),
   }))
 
 export const shapeTextWithHarfBuzz = async (
@@ -72,9 +76,33 @@ export const shapeTextWithHarfBuzz = async (
             buffer.guessSegmentProperties()
             hb.shape(font, buffer, normalizeFeatureString(options.features))
 
+            // Cached per glyph id: a run repeats glyphs, outline extraction
+            // does not come free.
+            const shapeCache = new Map<
+              number,
+              { glyphName: string; svgPath: string }
+            >()
+            const readShape = options.includeGlyphShapes
+              ? (glyphId: number) => {
+                  let shape = shapeCache.get(glyphId)
+                  if (!shape) {
+                    shape = {
+                      glyphName: font.glyphName(glyphId),
+                      svgPath: font.glyphToPath(glyphId),
+                    }
+                    shapeCache.set(glyphId, shape)
+                  }
+                  return shape
+                }
+              : undefined
+
             return {
-              glyphs: toShapedGlyphs(buffer.getGlyphInfosAndPositions()),
+              glyphs: toShapedGlyphs(
+                buffer.getGlyphInfosAndPositions(),
+                readShape
+              ),
               ok: true,
+              unitsPerEm: face.upem,
               runtimeStatus: createHarfBuzzRuntimeStatus(),
             }
           } finally {

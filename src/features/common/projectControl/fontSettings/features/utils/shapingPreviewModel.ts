@@ -1,0 +1,93 @@
+import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+
+// Features HarfBuzz applies without being asked (the required/default set for
+// horizontal text). Everything else starts life off, which is exactly the
+// on/off state the toggle chips show.
+const DEFAULT_ON_FEATURES = new Set([
+  'abvm',
+  'blwm',
+  'calt',
+  'ccmp',
+  'clig',
+  'curs',
+  'dist',
+  'kern',
+  'liga',
+  'locl',
+  'mark',
+  'mkmk',
+  'rclt',
+  'rlig',
+  'rvrn',
+])
+
+export const isFeatureOnByDefault = (tag: string) =>
+  DEFAULT_ON_FEATURES.has(tag)
+
+export interface PreviewFeatureToggle {
+  tag: string
+  // Whether HarfBuzz would apply it with no explicit request.
+  defaultOn: boolean
+}
+
+// Every feature the state knows about, whether it lives in the IR or only in a
+// raw snippet, deduplicated and in source order.
+export const listPreviewFeatureToggles = (
+  state: OpenTypeFeaturesState | undefined
+): PreviewFeatureToggle[] => {
+  if (!state) {
+    return []
+  }
+  const tags: string[] = []
+  const seen = new Set<string>()
+  const push = (tag: string | undefined) => {
+    if (tag && /^[a-z0-9]{4}$/i.test(tag) && !seen.has(tag)) {
+      seen.add(tag)
+      tags.push(tag)
+    }
+  }
+  for (const feature of state.features) {
+    push(feature.tag)
+  }
+  // Raw-authoritative snippets carry feature blocks the IR does not model;
+  // their tags still deserve a chip.
+  const activeSnippets =
+    state.rawFeatureSnippets?.filter((snippet) => !snippet.disabled) ?? []
+  for (const snippet of activeSnippets) {
+    if (snippet.kind === 'feature') {
+      push(snippet.tag)
+    }
+  }
+  // Prefix snippets can still hold hand-written feature blocks.
+  const rawText = activeSnippets.map((snippet) => snippet.text).join('\n')
+  if (rawText) {
+    for (const match of rawText.matchAll(
+      /^\s*feature\s+([A-Za-z0-9]{4})\b/gm
+    )) {
+      push(match[1])
+    }
+  }
+  return tags
+    .map((tag) => ({ tag, defaultOn: isFeatureOnByDefault(tag) }))
+    .sort((left, right) => left.tag.localeCompare(right.tag))
+}
+
+// The feature string HarfBuzz shapes with: only deviations from its defaults
+// need saying, and both directions need saying explicitly.
+export const buildShapingFeatureList = (
+  toggles: readonly PreviewFeatureToggle[],
+  overrides: Readonly<Record<string, boolean>>
+): string[] =>
+  toggles.flatMap((toggle) => {
+    const enabled = overrides[toggle.tag] ?? toggle.defaultOn
+    if (enabled === toggle.defaultOn) {
+      return []
+    }
+    return [enabled ? `+${toggle.tag}` : `-${toggle.tag}`]
+  })
+
+// The "before" run: every listed feature forced off, so the comparison shows
+// exactly what this font's features do.
+export const buildDisabledFeatureList = (
+  toggles: readonly PreviewFeatureToggle[]
+): string[] => toggles.map((toggle) => `-${toggle.tag}`)

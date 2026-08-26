@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { OpenTypeDocumentWorkspace } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentWorkspace'
 import { OpenTypeOutline } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeOutline'
 import { OpenTypeStatusBar } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeStatusBar'
+import { ShapingPreviewBar } from 'src/features/common/projectControl/fontSettings/features/components/ShapingPreviewBar'
 import {
   DEFAULT_OPEN_TYPE_SELECTION,
   type OpenTypeWorkbenchSelection,
@@ -125,6 +126,10 @@ export function FontFeaturesTab({
           </Box>
         </GridItem>
       </Grid>
+      <ShapingPreviewBar
+        fontData={fontData}
+        openTypeFeatures={openTypeFeatures}
+      />
     </Stack>
   )
 }

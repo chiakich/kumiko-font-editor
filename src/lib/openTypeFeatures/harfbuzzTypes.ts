@@ -18,6 +18,9 @@ export interface ShapeTextOptions {
   features?: string[]
   language?: string
   script?: string
+  // Also read each glyph's name and outline out of the font, for callers that
+  // draw the shaped run instead of just measuring it.
+  includeGlyphShapes?: boolean
 }
 
 export interface ShapedGlyph {
@@ -27,11 +30,17 @@ export interface ShapedGlyph {
   yAdvance: number
   xOffset: number
   yOffset: number
+  // Present when shaping ran with includeGlyphShapes.
+  glyphName?: string
+  // SVG path in font units, y-up; empty for blank glyphs.
+  svgPath?: string
 }
 
 export interface ShapeTextSuccess {
   ok: true
   glyphs: ShapedGlyph[]
+  // Units per em of the shaped face; lets a renderer scale font units.
+  unitsPerEm?: number
   runtimeStatus: HarfBuzzRuntimeStatus
 }
 

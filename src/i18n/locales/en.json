@@ -1015,7 +1015,14 @@
     "masterAdded": "Master added",
     "masterAddedDetail": "{{matched}} glyphs updated, {{created}} new glyphs created.",
     "workflow": "Workflow",
-    "workflowSection": "Workflow"
+    "workflowSection": "Workflow",
+    "shapingPreviewTitle": "Shaping preview",
+    "shapingPreviewPlaceholder": "Type text to preview…",
+    "shapingCompiling": "Compiling preview font…",
+    "shapingCompileFailed": "Preview font failed to compile",
+    "shapingBefore": "Features off",
+    "shapingAfter": "Features on",
+    "shapingGlyphCount": "{{count}} glyphs"
   },
   "settings": {
     "appearance": "Appearance",

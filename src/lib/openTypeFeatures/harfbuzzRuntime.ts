@@ -9,10 +9,15 @@ interface HarfBuzzBlob {
 
 interface HarfBuzzFace {
   destroy(): void
+  upem: number
 }
 
 interface HarfBuzzFont {
   destroy(): void
+  // Post-table glyph name, or "gidN" when the font has none.
+  glyphName(glyphId: number): string
+  // Outline as an SVG path in font units, y-up.
+  glyphToPath(glyphId: number): string
 }
 
 export interface HarfBuzzBufferGlyph {

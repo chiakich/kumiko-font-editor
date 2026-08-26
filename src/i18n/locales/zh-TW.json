@@ -1015,7 +1015,14 @@
     "masterAdded": "已加入 master",
     "masterAddedDetail": "更新 {{matched}} 個字形,新建 {{created}} 個字形。",
     "workflow": "Workflow",
-    "workflowSection": "工作流程"
+    "workflowSection": "工作流程",
+    "shapingPreviewTitle": "整形預覽",
+    "shapingPreviewPlaceholder": "輸入要預覽的文字…",
+    "shapingCompiling": "正在編譯預覽字型…",
+    "shapingCompileFailed": "預覽字型編譯失敗",
+    "shapingBefore": "關閉特性",
+    "shapingAfter": "套用特性",
+    "shapingGlyphCount": "{{count}} 個字形"
   },
   "settings": {
     "appearance": "外觀主題",
