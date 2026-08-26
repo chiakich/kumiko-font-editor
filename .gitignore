@@ -34,3 +34,5 @@ test_glyphs
 .cache
 .vscode
 .claude
+# Design canvases (scratch design work, includes a large generated artifact)
+.design
