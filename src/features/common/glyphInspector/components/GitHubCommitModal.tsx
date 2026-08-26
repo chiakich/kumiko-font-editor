@@ -1,28 +1,43 @@
 import {
   Avatar,
-  Badge,
   Box,
   Button,
+  Dialog,
   HStack,
-  IconButton,
-  Input,
-  SimpleGrid,
+  Portal,
   Spinner,
   Stack,
   Text,
-  Field,
-  Dialog,
-  Portal,
 } from '@chakra-ui/react'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
-import { NativeSelect } from '@/components/ui/native-select'
 import { useState } from 'react'
-import type { GitHubForkStatus, GitHubViewer } from 'src/lib/github/githubAuth'
-import { GitHubRepoCard } from 'src/features/common/glyphInspector/components/GitHubRepoCard'
-import { GitHubSyncSectionContainer } from 'src/features/common/glyphInspector/components/GitHubSyncSection'
-import type { QualitySummary } from 'src/lib/qualityCheck/qualityLint'
 import { useTranslation } from 'react-i18next'
+import type { GitHubForkStatus, GitHubViewer } from 'src/lib/github/githubAuth'
 import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
+import type { QualitySummary } from 'src/lib/qualityCheck/qualityLint'
+import { GitHubSyncSectionContainer } from 'src/features/common/glyphInspector/components/GitHubSyncSection'
+import {
+  ChangeReceipt,
+  type ReceiptFilter,
+  type ReceiptStamp,
+} from 'src/features/common/glyphInspector/components/ChangeReceipt'
+import {
+  FirstContributionAction,
+  FirstContributionPanel,
+  type FirstContributionStage,
+} from 'src/features/common/glyphInspector/components/gitFlow/FirstContributionPanel'
+import {
+  SubmitWorkbench,
+  type WorkbenchProposal,
+  type WorkbenchState,
+} from 'src/features/common/glyphInspector/components/gitFlow/SubmitWorkbench'
+import type { ChangeReceipt as ChangeReceiptModel } from 'src/features/common/glyphInspector/utils/changeReceipt'
+
+export interface GitHubSubmitResult {
+  branch: string
+  commitSha: string
+  compareUrl: string | null
+}
 
 export interface GitHubCommitModalProps {
   isOpen: boolean
@@ -38,24 +53,26 @@ export interface GitHubCommitModalProps {
   // The sync report gates the commit, so committing has to wait for it.
   isCheckingSyncStatus: boolean
   isMergingGitHubUpstream: boolean
-  isSwitchingGitBranch: boolean
   canCommitToGitHub: boolean
   gitHubCommitMessage: string
   // What the commit will say when the field is left empty.
   suggestedCommitMessage: string
   gitHubBranchName: string
-  isCreatingNewBranch: boolean
-  activeGitTarget: GitHubSyncTarget | null
   changeDrafts: GitHubSyncTarget[]
+  changeReceipt: ChangeReceiptModel
+  // Voiding addresses lines by git path, which only the sync report knows.
+  canVoidLines: boolean
+  voidedLineKeys: string[]
+  submitErrorMessage: string | null
+  lastSubmitResult: GitHubSubmitResult | null
+  baseSha: string | null
+  onToggleVoidLine: (key: string) => void
   onLoginGitHub: () => void
   onLogoutGitHub: () => void
   onCreateFork: () => void
-  onBranchSelect: (branch: string) => void
-  onSwitchToMergeTarget: () => void
   onCommitMessageChange: (value: string) => void
-  onBranchNameChange: (value: string) => void
+  onSelectDraft: (ref: string) => void
   onStartNewBranch: () => void
-  onOpenCompare: () => void
   onMergeUpstream: () => void
   onCreateCommit: () => void
   isSyncEnabled: boolean
@@ -64,6 +81,8 @@ export interface GitHubCommitModalProps {
   qualitySummary?: QualitySummary
   onOpenQualityCheck?: () => void
 }
+
+const shortSha = (sha: string | null) => (sha ? sha.slice(0, 7) : null)
 
 export function GitHubCommitModal({
   isOpen,
@@ -78,23 +97,24 @@ export function GitHubCommitModal({
   isCreatingGitHubCommit,
   isCheckingSyncStatus,
   isMergingGitHubUpstream,
-  isSwitchingGitBranch,
   canCommitToGitHub,
   gitHubCommitMessage,
   suggestedCommitMessage,
   gitHubBranchName,
-  isCreatingNewBranch,
-  activeGitTarget,
   changeDrafts,
+  changeReceipt,
+  canVoidLines,
+  voidedLineKeys,
+  submitErrorMessage,
+  lastSubmitResult,
+  baseSha,
+  onToggleVoidLine,
   onLoginGitHub,
   onLogoutGitHub,
   onCreateFork,
-  onBranchSelect,
-  onSwitchToMergeTarget,
   onCommitMessageChange,
-  onBranchNameChange,
+  onSelectDraft,
   onStartNewBranch,
-  onOpenCompare,
   onMergeUpstream,
   onCreateCommit,
   isSyncEnabled,
@@ -104,69 +124,134 @@ export function GitHubCommitModal({
   onOpenQualityCheck,
 }: GitHubCommitModalProps) {
   const { t } = useTranslation()
-  const [showAdvancedBranchOptions, setShowAdvancedBranchOptions] =
-    useState(false)
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false)
+  const [receiptFilter, setReceiptFilter] = useState<ReceiptFilter>('all')
 
   const sourceRepo = githubForkStatus?.sourceRepo ?? null
   const editableRepo = githubForkStatus?.targetRepo ?? null
-  const isEditableRepoReadonly = Boolean(editableRepo && !editableRepo.canPush)
-  const hasPersonalFork = Boolean(githubForkStatus?.forked)
-  const canCreatePersonalFork = Boolean(
-    githubViewer &&
-    githubForkStatus &&
-    !githubForkStatus.canDirectCommit &&
-    !githubForkStatus.targetRepo
-  )
-  const compare = githubForkStatus?.compare
-  const isViewingMergeTarget = Boolean(
-    activeGitTarget &&
-    sourceRepo &&
-    activeGitTarget.owner === sourceRepo.owner &&
-    activeGitTarget.repo === sourceRepo.repo &&
-    activeGitTarget.ref === sourceRepo.defaultBranch
-  )
-  const activeBranchInEditableRepo =
-    activeGitTarget &&
-    editableRepo &&
-    activeGitTarget.owner === editableRepo.owner &&
-    activeGitTarget.repo === editableRepo.repo
-      ? activeGitTarget.ref
-      : ''
-  const proposalStatusText = isViewingMergeTarget
-    ? '目前正在檢視合併目標；已送出的修改草稿保留在下方，可隨時切換查看。'
-    : compare
-      ? compare.aheadBy === 0 && compare.behindBy === 0
-        ? '目前沒有等待合併的修改。'
-        : compare.aheadBy > 0 && compare.behindBy === 0
-          ? `已送出 ${compare.aheadBy} 個修改，等待合併。`
-          : compare.aheadBy === 0 && compare.behindBy > 0
-            ? `合併目標有 ${compare.behindBy} 個新修改，建議先更新。`
-            : `已送出 ${compare.aheadBy} 個修改；合併目標也有 ${compare.behindBy} 個新修改。`
-      : null
-  const proposalActionLabel =
-    !isViewingMergeTarget && compare
-      ? compare.behindBy > 0
-        ? '更新這次修改'
-        : compare.aheadBy > 0
-          ? '查看修改提案'
-          : null
-      : null
-  const activityText = isSwitchingGitBranch
-    ? '正在切換目前檢視版本…'
-    : isCreatingGitHubCommit
-      ? '正在送出修改到 GitHub…'
-      : isPreparingGitHubCommit
-        ? '正在整理這次修改…'
-        : isCheckingSyncStatus
-          ? '正在檢查合併目標的更新…'
-          : null
+  const compare = githubForkStatus?.compare ?? null
+  const voidedKeys = new Set(voidedLineKeys)
+  const voidedCount = [
+    ...changeReceipt.glyphLines,
+    ...changeReceipt.fontLines,
+  ].filter((line) => voidedKeys.has(line.key)).length
+  const sendCount = changeReceipt.totalCount - voidedCount
+  const mergeTargetLabel = sourceRepo
+    ? `${sourceRepo.fullName} · ${sourceRepo.defaultBranch}`
+    : t('gitFlow.route.unknownTarget')
+  const draftName = gitHubBranchName.trim() || t('gitFlow.route.newDraft')
+
+  // Which mode: the pre-fork ladder exists only until a writable copy does.
+  const firstRunStage: FirstContributionStage | null = !githubViewer
+    ? 'signIn'
+    : isCreatingGitHubFork
+      ? 'creatingFork'
+      : !editableRepo
+        ? 'noFork'
+        : null
+
+  const workbenchState: WorkbenchState = submitErrorMessage
+    ? 'failed'
+    : lastSubmitResult
+      ? 'submitted'
+      : hasBlockingSyncConflicts || changeReceipt.conflictCount > 0
+        ? 'conflict'
+        : changeReceipt.totalCount === 0
+          ? 'empty'
+          : 'ready'
+
+  const stamp: ReceiptStamp | null =
+    workbenchState === 'submitted' && lastSubmitResult
+      ? {
+          label: t('gitFlow.receipt.stampSent'),
+          detail: shortSha(lastSubmitResult.commitSha) ?? '',
+          tone: 'success',
+        }
+      : workbenchState === 'failed'
+        ? {
+            label: t('gitFlow.receipt.stampFailed'),
+            detail: t('gitFlow.receipt.stampFailedDetail'),
+            tone: 'error',
+          }
+        : null
+
+  const commitSha = shortSha(lastSubmitResult?.commitSha ?? null)
+  const receiptHash = commitSha ?? shortSha(baseSha) ?? '0000000'
+  const hashLabel = commitSha
+    ? `COMMIT ${commitSha.toUpperCase()}`
+    : baseSha
+      ? `BASE ${shortSha(baseSha)?.toUpperCase()}`
+      : t('gitFlow.receipt.noHash')
+  const verdict =
+    workbenchState === 'submitted'
+      ? t('gitFlow.receipt.verdictSent')
+      : workbenchState === 'failed'
+        ? t('gitFlow.receipt.verdictFailed')
+        : changeReceipt.totalCount === 0
+          ? t('gitFlow.receipt.verdictEmpty')
+          : workbenchState === 'conflict'
+            ? t('gitFlow.receipt.verdictConflict')
+            : t('gitFlow.receipt.verdictPending')
+
+  const proposal: WorkbenchProposal | null =
+    workbenchState === 'submitted' && lastSubmitResult
+      ? {
+          title: t('gitFlow.proposal.submittedTitle'),
+          body: t('gitFlow.proposal.submittedBody'),
+          url: lastSubmitResult.compareUrl,
+        }
+      : workbenchState === 'empty' && compare && compare.aheadBy > 0
+        ? {
+            title: t('gitFlow.proposal.previousTitle'),
+            body: t('gitFlow.proposal.previousBody', {
+              count: compare.aheadBy,
+            }),
+            url: compare.compareUrl ?? null,
+          }
+        : null
+
+  const hasBlockingQuality = Boolean(qualitySummary?.hasBlockingIssues)
+  const isSubmitBlocked =
+    workbenchState === 'empty' ||
+    // Everything on the receipt struck out is the same as nothing to send.
+    sendCount === 0 ||
+    workbenchState === 'conflict' ||
+    hasBlockingQuality ||
+    !canCommitToGitHub ||
+    !editableRepo ||
+    githubViewer?.canPush === false ||
+    isPreparingGitHubCommit ||
+    isCheckingSyncStatus
+  const primaryLabel = hasBlockingQuality
+    ? t('gitFlow.footer.fixQualityFirst')
+    : workbenchState === 'empty' ||
+        (sendCount === 0 && workbenchState !== 'submitted')
+      ? t('gitFlow.footer.nothingToSend')
+      : workbenchState === 'conflict'
+        ? t('gitFlow.footer.resolveFirst')
+        : workbenchState === 'failed'
+          ? t('gitFlow.footer.retry')
+          : workbenchState === 'submitted'
+            ? t('gitFlow.proposal.viewProposal')
+            : isCheckingSyncStatus
+              ? t('glyphInspector.checkingRemote')
+              : t('gitFlow.footer.send', { count: sendCount })
+
+  const footerMeta =
+    workbenchState === 'submitted' && lastSubmitResult
+      ? `${editableRepo?.fullName ?? ''} · ${lastSubmitResult.branch}`
+      : workbenchState === 'failed'
+        ? t('gitFlow.footer.pushAborted')
+        : isAdvancedOpen && baseSha
+          ? `base ${shortSha(baseSha)} · ${sendCount} files`
+          : t('gitFlow.footer.savedLocally')
 
   return (
     <Dialog.Root
       open={isOpen}
-      size="xl"
-      onOpenChange={(e) => {
-        if (!e.open) {
+      size="cover"
+      onOpenChange={(event) => {
+        if (!event.open) {
           onClose()
         }
       }}
@@ -174,484 +259,232 @@ export function GitHubCommitModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content>
-            <Dialog.Header>{t('glyphInspector.githubCommit')}</Dialog.Header>
-            <DialogCloseButton />
-            <Dialog.Body>
-              <Stack gap={4}>
-                <Box borderWidth={1} borderRadius="lg" p={4}>
-                  <HStack justify="space-between" align="center" gap={4}>
-                    {githubViewer ? (
-                      <HStack gap={3}>
-                        <Avatar.Root size="sm">
-                          <Avatar.Fallback
-                            name={
-                              githubViewer.name ??
-                              githubViewer.login ??
-                              undefined
-                            }
-                          />
-                          <Avatar.Image
-                            src={githubViewer.avatarUrl ?? undefined}
-                          />
-                        </Avatar.Root>
-                        <Box>
-                          <Text fontWeight="medium">
-                            {githubViewer.name || githubViewer.login}
-                          </Text>
-                          <Text fontSize="sm" color="mutedForeground">
-                            @{githubViewer.login}
-                          </Text>
-                        </Box>
-                      </HStack>
-                    ) : (
-                      <Box>
-                        <Text fontWeight="medium">
-                          {t('glyphInspector.notSignedInToGitHub')}
-                        </Text>
-                        <Text fontSize="sm" color="mutedForeground">
-                          {t('glyphInspector.gitHubLoginRequiredDescription')}
-                        </Text>
-                      </Box>
-                    )}
-
-                    {githubViewer ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={onLogoutGitHub}
-                        loading={isLoggingOutGitHub}
-                      >
-                        {t('glyphInspector.signOut')}
-                      </Button>
-                    ) : (
-                      <Button size="sm" onClick={onLoginGitHub}>
-                        {t('glyphInspector.signInToGitHub')}
-                      </Button>
-                    )}
-                  </HStack>
-                </Box>
-
-                {githubViewer && githubViewer.canPush === false ? (
-                  // A read-only token authenticates fine and only fails at push
-                  // time, with git's own "Permission to X denied to Y".
-                  <Box
-                    borderWidth={1}
-                    borderRadius="lg"
-                    p={3}
-                    borderColor="orange.300"
+          <Dialog.Content
+            maxWidth="1100px"
+            height="min(840px, 92vh)"
+            display="flex"
+            flexDirection="column"
+            overflow="hidden"
+          >
+            <Dialog.Header
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              gap={4}
+            >
+              <HStack gap={2.5} minWidth={0}>
+                <Text textStyle="heading">{t('gitFlow.title')}</Text>
+                <Text
+                  fontFamily="mono"
+                  px={1.5}
+                  py={0.5}
+                  borderRadius="sm"
+                  bg="muted"
+                  fontSize="11px"
+                  fontWeight={600}
+                  color="mutedForeground"
+                  lineClamp={1}
+                >
+                  {editableRepo?.fullName ?? sourceRepo?.fullName ?? ''}
+                </Text>
+              </HStack>
+              {githubViewer ? (
+                <HStack gap={2.5} flexShrink={0}>
+                  <Avatar.Root size="xs">
+                    <Avatar.Fallback name={githubViewer.login ?? undefined} />
+                    <Avatar.Image src={githubViewer.avatarUrl ?? undefined} />
+                  </Avatar.Root>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    onClick={onLogoutGitHub}
+                    loading={isLoggingOutGitHub}
                   >
-                    <Text fontSize="sm" color="orange.600" mb={2}>
-                      {t('glyphInspector.missingPushScope', {
-                        scopes: githubViewer.scopes?.join(', ') || '—',
-                      })}
-                    </Text>
-                    <Button size="xs" onClick={onLoginGitHub}>
-                      {t('glyphInspector.reauthorizeGitHub')}
-                    </Button>
-                  </Box>
-                ) : null}
+                    {t('glyphInspector.signOut')}
+                  </Button>
+                </HStack>
+              ) : null}
+            </Dialog.Header>
+            <DialogCloseButton />
 
-                {activityText ? (
+            <Dialog.Body
+              display="flex"
+              gap={0}
+              p={0}
+              flexGrow={1}
+              minHeight={0}
+            >
+              <Stack
+                width="372px"
+                flexShrink={0}
+                gap={2.5}
+                px={3.5}
+                py={4}
+                borderRightWidth={1}
+                borderColor="controlBorder"
+                bg="muted"
+                minHeight={0}
+              >
+                <ChangeReceipt
+                  receipt={changeReceipt}
+                  voidedKeys={voidedKeys}
+                  onToggleVoid={
+                    canVoidLines && workbenchState !== 'submitted'
+                      ? onToggleVoidLine
+                      : undefined
+                  }
+                  filter={receiptFilter}
+                  onFilterChange={setReceiptFilter}
+                  routeLabel={
+                    editableRepo
+                      ? `${editableRepo.fullName} → ${mergeTargetLabel}`
+                      : mergeTargetLabel
+                  }
+                  draftLabel={t('gitFlow.receipt.draftLabel', {
+                    draft: draftName,
+                  })}
+                  hash={receiptHash}
+                  hashLabel={hashLabel}
+                  verdict={verdict}
+                  stamp={stamp}
+                />
+              </Stack>
+
+              <Box flexGrow={1} minHeight={0} overflowY="auto" px={4.5} py={4}>
+                {isLoadingGitHubForkStatus && !githubForkStatus ? (
                   <HStack gap={2} color="mutedForeground">
                     <Spinner size="xs" />
-                    <Text fontSize="sm">{activityText}</Text>
+                    <Text textStyle="body">
+                      {t('glyphInspector.loadingForkBranch')}
+                    </Text>
                   </HStack>
-                ) : null}
-
-                <GitHubSyncSectionContainer
-                  enabled={isSyncEnabled}
-                  projectId={projectId}
-                  onBlockingSyncConflictsChange={onBlockingSyncConflictsChange}
-                />
-
-                {qualitySummary ? (
-                  <QualitySummaryCard
-                    summary={qualitySummary}
-                    onOpenQualityCheck={onOpenQualityCheck}
+                ) : firstRunStage ? (
+                  <FirstContributionPanel
+                    stage={firstRunStage}
+                    sourceRepoName={sourceRepo?.fullName ?? ''}
+                    forkName={
+                      editableRepo?.fullName ??
+                      (githubViewer && sourceRepo
+                        ? `${githubViewer.login}/${sourceRepo.repo}`
+                        : null)
+                    }
+                    viewerLogin={githubViewer?.login ?? null}
                   />
-                ) : null}
-
-                {githubViewer ? (
-                  <>
-                    {isLoadingGitHubForkStatus ? (
-                      <Text fontSize="sm" color="mutedForeground">
-                        {t('glyphInspector.loadingForkBranch')}
-                      </Text>
-                    ) : (
-                      // Source and editing repo read as a pair: same row, so
-                      // the difference between them is visible at a glance.
-                      <SimpleGrid
-                        columns={{ base: 1, md: 2 }}
-                        gap={3}
-                        alignItems="stretch"
-                      >
-                        <GitHubRepoCard
-                          title={t('glyphInspector.mergeTarget')}
-                          repo={sourceRepo}
-                          branchLabel={t(
-                            'glyphInspector.developmentVersionLabel'
-                          )}
-                          helperText="你的修改會申請合併到這個專案的開發版。"
-                          statusText={proposalStatusText}
-                          statusActionLabel={proposalActionLabel}
-                          isStatusActionDisabled={
-                            !compare ||
-                            (compare.aheadBy <= 0 && compare.behindBy <= 0)
-                          }
-                          isStatusActionLoading={isMergingGitHubUpstream}
-                          onStatusAction={
-                            compare?.behindBy
-                              ? onMergeUpstream
-                              : compare?.aheadBy
-                                ? onOpenCompare
-                                : undefined
-                          }
-                        />
-                        <GitHubRepoCard
-                          title={
-                            hasPersonalFork
-                              ? t('glyphInspector.personalGitHubCopy')
-                              : t('glyphInspector.submissionLocation')
-                          }
-                          repo={editableRepo}
-                          showDefaultBranch={false}
-                          badgeLabel={
-                            editableRepo
-                              ? isEditableRepoReadonly
-                                ? '唯讀'
-                                : '可寫入'
-                              : null
-                          }
-                          badgeColorScheme={
-                            isEditableRepoReadonly ? 'orange' : 'green'
-                          }
-                          helperText={
-                            hasPersonalFork
-                              ? '這是 GitHub 上屬於你的副本；修改會先送到這裡，原始專案不會被直接修改。'
-                              : editableRepo
-                                ? '你可以直接送出修改到這個專案。'
-                                : '先建立屬於你的 GitHub 副本，修改才能安全地送出並申請合併。'
-                          }
-                          actionLabel={
-                            canCreatePersonalFork
-                              ? t('glyphInspector.createPersonalGitHubCopy')
-                              : null
-                          }
-                          isActionLoading={isCreatingGitHubFork}
-                          onAction={
-                            canCreatePersonalFork ? onCreateFork : undefined
-                          }
-                        />
-                      </SimpleGrid>
-                    )}
-
-                    {!isEditableRepoReadonly && editableRepo ? (
-                      <>
-                        {canCommitToGitHub ? (
-                          <Field.Root>
-                            <Field.Label>
-                              {t('glyphInspector.commitMessage')}
-                            </Field.Label>
-                            <Input
-                              value={gitHubCommitMessage}
-                              onChange={(event) =>
-                                onCommitMessageChange(event.target.value)
-                              }
-                              placeholder={suggestedCommitMessage}
-                              disabled={isPreparingGitHubCommit}
-                            />
-                          </Field.Root>
-                        ) : null}
-                        <Box borderWidth={1} borderRadius="md" p={3}>
-                          <HStack justify="space-between" gap={3}>
-                            <Box>
-                              <Text fontSize="sm" fontWeight="medium">
-                                {t('glyphInspector.advancedControls')}
-                              </Text>
-                              <Text fontSize="xs" color="mutedForeground">
-                                {t(
-                                  'glyphInspector.advancedControlsDescription'
-                                )}
-                              </Text>
-                            </Box>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              aria-expanded={showAdvancedBranchOptions}
-                              onClick={() =>
-                                setShowAdvancedBranchOptions(
-                                  (current) => !current
-                                )
-                              }
-                            >
-                              {showAdvancedBranchOptions
-                                ? t('glyphInspector.hideAdvancedControls')
-                                : t('glyphInspector.showAdvancedControls')}
-                            </Button>
-                          </HStack>
-                          {showAdvancedBranchOptions ? (
-                            <Stack gap={3} mt={3}>
-                              <Text fontSize="sm" color="mutedForeground">
-                                一般情況不需要調整。Kumiko
-                                會用這次修改的草稿位置來送出內容。
-                              </Text>
-                              {isSyncEnabled ? (
-                                <Box
-                                  borderWidth={1}
-                                  borderRadius="md"
-                                  p={3}
-                                  bg="muted"
-                                >
-                                  <Text fontSize="sm" fontWeight="medium">
-                                    目前檢視版本
-                                  </Text>
-                                  <Text fontSize="sm" color="mutedForeground">
-                                    {activeGitTarget
-                                      ? `${activeGitTarget.owner}/${activeGitTarget.repo} · ${activeGitTarget.ref}`
-                                      : '尚未讀取版本資訊'}
-                                  </Text>
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    mt={2}
-                                    onClick={onSwitchToMergeTarget}
-                                    disabled={
-                                      isSwitchingGitBranch ||
-                                      isViewingMergeTarget ||
-                                      !sourceRepo
-                                    }
-                                  >
-                                    切換到合併目標（
-                                    {sourceRepo?.defaultBranch ?? '預設版本'}）
-                                  </Button>
-                                </Box>
-                              ) : null}
-                              {githubForkStatus?.branches.length ? (
-                                <Field.Root>
-                                  <Field.Label>
-                                    {isSyncEnabled
-                                      ? '切換到你的 GitHub 副本中的版本'
-                                      : t('glyphInspector.branch')}
-                                  </Field.Label>
-                                  <HStack align="end">
-                                    <NativeSelect
-                                      disabled={isSwitchingGitBranch}
-                                      fieldProps={{
-                                        value: isSyncEnabled
-                                          ? githubForkStatus.branches.includes(
-                                              activeBranchInEditableRepo
-                                            )
-                                            ? activeBranchInEditableRepo
-                                            : ''
-                                          : !isCreatingNewBranch &&
-                                              githubForkStatus.branches.includes(
-                                                gitHubBranchName.trim()
-                                              )
-                                            ? gitHubBranchName.trim()
-                                            : '',
-                                        onChange: (event) =>
-                                          onBranchSelect(event.target.value),
-                                      }}
-                                    >
-                                      <option value="">
-                                        {t('glyphInspector.selectBranch')}
-                                      </option>
-                                      {githubForkStatus.branches.map(
-                                        (branch) => (
-                                          <option key={branch} value={branch}>
-                                            {branch}
-                                          </option>
-                                        )
-                                      )}
-                                    </NativeSelect>
-                                    <IconButton
-                                      aria-label={t(
-                                        'glyphInspector.createBranch'
-                                      )}
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={onStartNewBranch}
-                                      disabled={isSwitchingGitBranch}
-                                    >
-                                      <span>+</span>
-                                    </IconButton>
-                                  </HStack>
-                                </Field.Root>
-                              ) : null}
-                              {isSyncEnabled && changeDrafts.length > 0 ? (
-                                <Box borderWidth={1} borderRadius="md" p={3}>
-                                  <Text fontSize="sm" fontWeight="medium">
-                                    已送出的修改草稿
-                                  </Text>
-                                  <Stack gap={2} mt={2}>
-                                    {changeDrafts.map((draft) => {
-                                      const isActive =
-                                        activeGitTarget?.owner ===
-                                          draft.owner &&
-                                        activeGitTarget.repo === draft.repo &&
-                                        activeGitTarget.ref === draft.ref
-                                      return (
-                                        <HStack
-                                          key={`${draft.owner}/${draft.repo}:${draft.ref}`}
-                                          justify="space-between"
-                                          gap={3}
-                                        >
-                                          <Text fontSize="sm">{draft.ref}</Text>
-                                          {isActive ? (
-                                            <Badge colorPalette="blue">
-                                              目前檢視
-                                            </Badge>
-                                          ) : (
-                                            <Button
-                                              size="xs"
-                                              variant="outline"
-                                              onClick={() =>
-                                                onBranchSelect(draft.ref)
-                                              }
-                                              disabled={isSwitchingGitBranch}
-                                            >
-                                              切換查看
-                                            </Button>
-                                          )}
-                                        </HStack>
-                                      )
-                                    })}
-                                  </Stack>
-                                </Box>
-                              ) : null}
-                              <Field.Root
-                                display={isCreatingNewBranch ? 'block' : 'none'}
-                              >
-                                <Field.Label>
-                                  {t('glyphInspector.branchName')}
-                                </Field.Label>
-                                <Input
-                                  value={gitHubBranchName}
-                                  onChange={(event) =>
-                                    onBranchNameChange(event.target.value)
-                                  }
-                                  placeholder="kumiko/update-glyphs"
-                                  disabled={isPreparingGitHubCommit}
-                                />
-                              </Field.Root>
-                            </Stack>
-                          ) : null}
-                        </Box>
-                        {!canCommitToGitHub ? (
-                          <Box
-                            borderWidth={1}
-                            borderRadius="lg"
-                            p={4}
-                            bg="muted"
-                          >
-                            <Text fontWeight="medium" mb={1}>
-                              {t('glyphInspector.noGitHubChanges')}
-                            </Text>
-                            <Text fontSize="sm" color="mutedForeground">
-                              {t('glyphInspector.emptyCommitMessageHint')}
-                            </Text>
-                          </Box>
-                        ) : null}
-                      </>
-                    ) : null}
-                  </>
                 ) : (
-                  <Box borderWidth={1} borderRadius="lg" p={4} bg="muted">
-                    <Text fontWeight="medium" mb={1}>
-                      {t('glyphInspector.signInFirst')}
-                    </Text>
-                    <Text fontSize="sm" color="mutedForeground">
-                      {t('glyphInspector.repoForkHint')}
-                    </Text>
-                  </Box>
+                  <Stack gap={3.5}>
+                    {compare && compare.behindBy > 0 ? (
+                      <HStack
+                        justify="space-between"
+                        gap={3}
+                        px={3.5}
+                        py={2.5}
+                        borderRadius="md"
+                        bg="blue.50"
+                      >
+                        <Text textStyle="supporting" color="blue.700">
+                          {t('gitFlow.behind', { count: compare.behindBy })}
+                        </Text>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={onMergeUpstream}
+                          loading={isMergingGitHubUpstream}
+                          flexShrink={0}
+                        >
+                          {t('gitFlow.updateFromTarget')}
+                        </Button>
+                      </HStack>
+                    ) : null}
+
+                    <SubmitWorkbench
+                      state={workbenchState}
+                      sendCount={sendCount}
+                      conflictCount={changeReceipt.conflictCount}
+                      forkRepoName={editableRepo?.fullName ?? null}
+                      mergeTargetLabel={mergeTargetLabel}
+                      draftName={draftName}
+                      drafts={changeDrafts}
+                      activeDraftRef={gitHubBranchName.trim()}
+                      commitMessage={gitHubCommitMessage}
+                      suggestedCommitMessage={suggestedCommitMessage}
+                      isPreparing={isPreparingGitHubCommit}
+                      errorMessage={submitErrorMessage}
+                      proposal={proposal}
+                      qualitySummary={qualitySummary}
+                      isAdvancedOpen={isAdvancedOpen}
+                      canPushDirect={Boolean(githubForkStatus?.canDirectCommit)}
+                      conflictSlot={
+                        <GitHubSyncSectionContainer
+                          enabled={isSyncEnabled}
+                          projectId={projectId}
+                          onBlockingSyncConflictsChange={
+                            onBlockingSyncConflictsChange
+                          }
+                        />
+                      }
+                      onAdvancedToggle={() =>
+                        setIsAdvancedOpen((current) => !current)
+                      }
+                      onCommitMessageChange={onCommitMessageChange}
+                      onSelectDraft={onSelectDraft}
+                      onCreateDraft={onStartNewBranch}
+                      onOpenQualityCheck={onOpenQualityCheck}
+                      onReauthorize={onLoginGitHub}
+                    />
+                  </Stack>
                 )}
-              </Stack>
+              </Box>
             </Dialog.Body>
-            <Dialog.Footer gap={3}>
-              <Button variant="ghost" onClick={onClose}>
-                {t('glyphInspector.cancel')}
-              </Button>
-              <Button
-                colorPalette="green"
-                onClick={onCreateCommit}
-                loading={isCreatingGitHubCommit}
-                disabled={
-                  !githubViewer ||
-                  isEditableRepoReadonly ||
-                  !editableRepo ||
-                  !canCommitToGitHub ||
-                  githubViewer.canPush === false ||
-                  isPreparingGitHubCommit ||
-                  isCheckingSyncStatus ||
-                  hasBlockingSyncConflicts ||
-                  Boolean(qualitySummary?.hasBlockingIssues)
-                }
-                loadingText={t('glyphInspector.pushingCommit')}
-              >
-                {qualitySummary?.hasBlockingIssues
-                  ? '修正品質問題後提交'
-                  : isCheckingSyncStatus
-                    ? t('glyphInspector.checkingRemote')
-                    : t('glyphInspector.createCommit')}
-              </Button>
+
+            <Dialog.Footer
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              gap={3}
+            >
+              <Text fontFamily="mono" fontSize="11px" color="mutedForeground">
+                {firstRunStage ? '' : footerMeta}
+              </Text>
+              <HStack gap={2}>
+                <Button variant="ghost" onClick={onClose}>
+                  {t('glyphInspector.cancel')}
+                </Button>
+                {firstRunStage ? (
+                  <FirstContributionAction
+                    stage={firstRunStage}
+                    isBusy={isCreatingGitHubFork}
+                    onSignIn={onLoginGitHub}
+                    onCreateFork={onCreateFork}
+                  />
+                ) : (
+                  <Button
+                    onClick={
+                      workbenchState === 'submitted'
+                        ? () => {
+                            if (lastSubmitResult?.compareUrl) {
+                              window.open(
+                                lastSubmitResult.compareUrl,
+                                '_blank',
+                                'noopener,noreferrer'
+                              )
+                            }
+                          }
+                        : onCreateCommit
+                    }
+                    loading={isCreatingGitHubCommit}
+                    loadingText={t('glyphInspector.pushingCommit')}
+                    disabled={
+                      workbenchState === 'submitted' ? false : isSubmitBlocked
+                    }
+                  >
+                    {primaryLabel}
+                  </Button>
+                )}
+              </HStack>
             </Dialog.Footer>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>
     </Dialog.Root>
-  )
-}
-
-function QualitySummaryCard({
-  summary,
-  onOpenQualityCheck,
-}: {
-  summary: QualitySummary
-  onOpenQualityCheck?: () => void
-}) {
-  const { t } = useTranslation()
-  const statusText = summary.hasBlockingIssues
-    ? t('qualityCheck.commit.blockingStatus', {
-        blocking: summary.blockingCount,
-        warning: summary.warningCount,
-      })
-    : summary.warningCount > 0
-      ? t('qualityCheck.commit.warningStatus', {
-          warning: summary.warningCount,
-        })
-      : t('qualityCheck.commit.cleanStatus')
-
-  return (
-    <Box borderWidth={1} borderRadius="lg" p={4} bg="muted">
-      <HStack justify="space-between" align="center" gap={4}>
-        <Box>
-          <HStack gap={2} mb={1}>
-            <Text fontWeight="medium">{t('qualityCheck.commit.title')}</Text>
-            <Badge colorPalette={summary.hasBlockingIssues ? 'red' : 'green'}>
-              {summary.hasBlockingIssues
-                ? t('qualityCheck.summary.blocking')
-                : t('qualityCheck.commit.pass')}
-            </Badge>
-          </HStack>
-          <Text fontSize="sm" color="mutedForeground">
-            {t('qualityCheck.commit.checkedSummary', {
-              status: statusText,
-              count: summary.glyphCount,
-            })}
-            {summary.deletedCount !== null
-              ? t('qualityCheck.commit.deletedSuffix', {
-                  count: summary.deletedCount,
-                })
-              : ''}
-          </Text>
-        </Box>
-        {onOpenQualityCheck ? (
-          <Button size="sm" variant="outline" onClick={onOpenQualityCheck}>
-            {t('qualityCheck.openShort')}
-          </Button>
-        ) : null}
-      </HStack>
-    </Box>
   )
 }

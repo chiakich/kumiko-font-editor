@@ -555,6 +555,147 @@
       "applyRemoteFailedDescription": "Remote updates could not be applied."
     }
   },
+  "gitFlow": {
+    "title": "Send changes",
+    "behind": "The merge target has {{count}} new change(s). Update before you send.",
+    "updateFromTarget": "Update from target",
+    "receipt": {
+      "title": "Itemised",
+      "masthead": "KUMIKO CHANGE RECEIPT",
+      "columnItem": "ITEM",
+      "columnStatus": "STATUS",
+      "glyphGroup": "Glyphs ({{count}})",
+      "fontGroup": "Font settings ({{count}})",
+      "noItems": "—— NO ITEMS ——",
+      "draftLabel": "Draft {{draft}}",
+      "filterAll": "All",
+      "filterConflict": "Conflicts",
+      "totalItems": "Items",
+      "totalVoided": "Struck out",
+      "totalConflicts": "Conflicts",
+      "totalSending": "Sending now",
+      "itemCount": "{{count}} item(s)",
+      "noHash": "NO BASE YET",
+      "verdictPending": "*** NOT SENT ***",
+      "verdictConflict": "*** CONFLICTS PENDING ***",
+      "verdictEmpty": "*** NO CHANGES ***",
+      "verdictSent": "*** SENT ***",
+      "verdictFailed": "*** SEND FAILED ***",
+      "stampSent": "SENT",
+      "stampFailed": "FAILED",
+      "stampFailedDetail": "NOTHING CHANGED",
+      "status": {
+        "modified": "changed",
+        "added": "new",
+        "deleted": "deleted",
+        "conflict": "needs a call",
+        "voided": "struck out"
+      }
+    },
+    "status": {
+      "readyHeadline": "{{count}} change(s) ready to send",
+      "readyHint": "Sending creates a change proposal. A maintainer reviews it before anything lands in the project.",
+      "conflictHeadline": "{{count}} glyph(s) need you to pick a side",
+      "conflictHint": "Someone else changed the same glyphs. Compare them on the receipt, or pick one side for all of them.",
+      "emptyHeadline": "Nothing waiting to be sent",
+      "emptyHint": "Everything you changed has been sent. Keep editing and new items show up on the receipt.",
+      "failedHeadline": "The last send did not go through",
+      "failedHint": "Your changes are intact. Deal with the reason above and send again.",
+      "submittedHeadline": "{{count}} change(s) sent, waiting for review",
+      "submittedHint": "The changes sit in your own copy. The original project is untouched until a maintainer accepts them."
+    },
+    "failure": {
+      "title": "Send failed — nothing was changed",
+      "body": "GitHub refused the push. All {{count}} item(s) are still here and the receipt is unchanged.",
+      "reauthorize": "Reauthorize GitHub",
+      "copy": "Copy error"
+    },
+    "message": {
+      "label": "What did you change?"
+    },
+    "checks": {
+      "qualityDetail": "{{blocking}} blocking · {{warning}} warning(s)",
+      "nothingToCheck": "Nothing to check"
+    },
+    "route": {
+      "label": "WHERE THIS GOES",
+      "sentence": "Save these {{count}} item(s) as draft {{draft}}, then ask {{target}} to merge them.",
+      "explainer": "The draft lives in your own copy {{fork}}. The original project is never written to directly.",
+      "unknownTarget": "the project",
+      "newDraft": "a new draft"
+    },
+    "proposal": {
+      "inReview": "in review",
+      "viewOnGitHub": "View on GitHub",
+      "viewProposal": "View proposal",
+      "submittedTitle": "Change proposal",
+      "submittedBody": "Maintainers comment on GitHub. Keep editing and your next send joins this same proposal instead of opening another one.",
+      "previousTitle": "Last send",
+      "previousBody": "{{count}} change(s) are waiting for review. Anything you change next joins that proposal.",
+      "messageIs": "The description currently reads",
+      "addMessage": "Add a description"
+    },
+    "advanced": {
+      "title": "Advanced",
+      "summary": "{{count}} draft(s)",
+      "draftsLabel": "YOUR DRAFTS",
+      "noDrafts": "No drafts sent yet.",
+      "sendsHere": "Sends here",
+      "sendHereInstead": "Send here instead",
+      "newDraft": "Start a new draft",
+      "directPush": "Skip the draft and push straight to {{target}}",
+      "directPushAvailable": "You have write access, so this is possible.",
+      "directPushDenied": "You have no write access to this project, so drafts are the only way in.",
+      "switchVersionPointer": "Editing a different version is not done here — that reloads the whole project. Use the version menu in the project bar."
+    },
+    "footer": {
+      "send": "Send {{count}} change(s)",
+      "retry": "Try again",
+      "resolveFirst": "Resolve the conflicts first",
+      "nothingToSend": "Nothing to send",
+      "fixQualityFirst": "Fix the quality issues first",
+      "savedLocally": "Saved on this device",
+      "pushAborted": "Push aborted · saved on this device"
+    },
+    "firstRun": {
+      "signInTitle": "Sending changes needs a GitHub connection",
+      "signInBody": "{{repo}} lives on GitHub. Kumiko sends through your account and only ever writes to your own copy.",
+      "noForkTitle": "This is your first contribution to {{repo}}",
+      "noForkBody": "You have no write access to this project — that is normal. Kumiko creates a copy under your GitHub account first, then hands you back to the send panel.",
+      "creatingTitle": "Creating {{repo}}",
+      "creatingBody": "Only the first time needs this step. The receipt stays exactly as it is.",
+      "rungSignIn": "Connect your GitHub account",
+      "rungSignInPending": "Opens a GitHub authorization page asking only for what sending needs.",
+      "rungSignInDone": "Connected as @{{login}}",
+      "rungFork": "Create a copy under your account",
+      "rungForkDetail": "{{repo}} — Kumiko creates it for you; no need to set it up first.",
+      "rungHandover": "Back to the send panel, then send",
+      "rungHandoverDetail": "Once the copy exists the ordinary send panel takes over with the same receipt, and you confirm once more before anything is sent.",
+      "yourCopyFallback": "your copy",
+      "tagDone": "done",
+      "tagNeedsYou": "needs you",
+      "tagAutomatic": "automatic",
+      "tagNext": "next",
+      "signInAction": "Connect GitHub",
+      "createForkAction": "Create the copy and continue",
+      "creatingAction": "Creating the copy…"
+    },
+    "version": {
+      "openMenu": "Switch the version you are editing",
+      "myDrafts": "MY DRAFTS",
+      "projectVersions": "PROJECT VERSIONS",
+      "draftDetail": "Your draft — editable",
+      "mergeTargetDetail": "The project's development version — no write access",
+      "draft": "draft",
+      "readOnly": "read-only",
+      "editable": "editable",
+      "editing": "editing",
+      "unknown": "No version loaded",
+      "noVersions": "No other version to switch to yet.",
+      "confirmReload": "Switching to {{ref}} reloads the whole project. Your current changes are already saved in the draft and will not be lost.",
+      "confirmSwitch": "Reload and switch"
+    }
+  },
   "home": {
     "cancel": "Cancel",
     "createNewProject": "Create new project",

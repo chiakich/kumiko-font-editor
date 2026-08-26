@@ -555,6 +555,147 @@
       "applyRemoteFailedDescription": "目前無法套用遠端更新。"
     }
   },
+  "gitFlow": {
+    "title": "送出修改",
+    "behind": "合併目標有 {{count}} 個新修改，建議先更新再送出。",
+    "updateFromTarget": "更新",
+    "receipt": {
+      "title": "明細",
+      "masthead": "KUMIKO 修改明細",
+      "columnItem": "品項",
+      "columnStatus": "狀態",
+      "glyphGroup": "字符 ({{count}})",
+      "fontGroup": "字體設定 ({{count}})",
+      "noItems": "—— 無項目 ——",
+      "draftLabel": "草稿 {{draft}}",
+      "filterAll": "全部",
+      "filterConflict": "衝突",
+      "totalItems": "項目",
+      "totalVoided": "劃掉不送",
+      "totalConflicts": "衝突",
+      "totalSending": "本次送出",
+      "itemCount": "{{count}} 項",
+      "noHash": "尚無基準版本",
+      "verdictPending": "*** 尚未送出 ***",
+      "verdictConflict": "*** 待處理衝突 ***",
+      "verdictEmpty": "*** 無修改 ***",
+      "verdictSent": "*** 已送出 ***",
+      "verdictFailed": "*** 送出失敗 ***",
+      "stampSent": "已送出",
+      "stampFailed": "送出失敗",
+      "stampFailedDetail": "未改動任何內容",
+      "status": {
+        "modified": "修改",
+        "added": "新增",
+        "deleted": "刪除",
+        "conflict": "需決定",
+        "voided": "已劃掉"
+      }
+    },
+    "status": {
+      "readyHeadline": "{{count}} 項修改可以送出",
+      "readyHint": "送出後會變成一份修改提案，維護者看過才會併入專案。",
+      "conflictHeadline": "{{count}} 個字符需要你決定留哪一邊",
+      "conflictHint": "你和別人改了同一批字。在明細上比對，或整批選一邊，處理完就能送出。",
+      "emptyHeadline": "沒有未送出的修改",
+      "emptyHint": "你改過的東西都送出去了。繼續在編輯器裡改字，明細上就會出現新項目。",
+      "failedHeadline": "上一次送出沒有成功",
+      "failedHint": "修改都保住了。處理上面的原因後再送一次即可。",
+      "submittedHeadline": "{{count}} 項修改已送出，等維護者審閱",
+      "submittedHint": "修改在你自己的副本裡，原始專案還沒被改動。維護者接受後才會併入。"
+    },
+    "failure": {
+      "title": "送出失敗，沒有任何東西被改動",
+      "body": "GitHub 拒絕了這次推送。你的 {{count}} 項修改都還在，明細沒有變動。",
+      "reauthorize": "重新授權 GitHub",
+      "copy": "複製錯誤訊息"
+    },
+    "message": {
+      "label": "這次改了什麼？"
+    },
+    "checks": {
+      "qualityDetail": "{{blocking}} 個阻擋 · {{warning}} 個提醒",
+      "nothingToCheck": "沒有待檢查的修改"
+    },
+    "route": {
+      "label": "這批修改會去哪裡",
+      "sentence": "把這 {{count}} 項存成草稿 {{draft}}，再向 {{target}} 申請合併。",
+      "explainer": "草稿存在你自己的副本 {{fork}}，原始專案不會被直接改動。",
+      "unknownTarget": "這個專案",
+      "newDraft": "新草稿"
+    },
+    "proposal": {
+      "inReview": "審閱中",
+      "viewOnGitHub": "在 GitHub 檢視",
+      "viewProposal": "檢視提案",
+      "submittedTitle": "修改提案",
+      "submittedBody": "維護者會在 GitHub 上留言。之後你繼續改，再按送出就會加進同一份提案，不會另開一份。",
+      "previousTitle": "上一次送出",
+      "previousBody": "{{count}} 項修改還在等審閱。你接下來改的東西會加進那份提案。",
+      "messageIs": "說明目前寫的是",
+      "addMessage": "補上說明"
+    },
+    "advanced": {
+      "title": "進階",
+      "summary": "{{count}} 份草稿",
+      "draftsLabel": "你的草稿",
+      "noDrafts": "還沒有送出過草稿。",
+      "sendsHere": "送到這裡",
+      "sendHereInstead": "改送這裡",
+      "newDraft": "開一份新草稿",
+      "directPush": "跳過草稿，直接推送到 {{target}}",
+      "directPushAvailable": "你有寫入權限，可以直接推送。",
+      "directPushDenied": "你在這個專案沒有寫入權限，只能用草稿申請合併。",
+      "switchVersionPointer": "要改成編輯別的版本不在這裡 —— 那會重新載入整個專案，請用專案列上的版本選單。"
+    },
+    "footer": {
+      "send": "送出 {{count}} 項修改",
+      "retry": "再試一次",
+      "resolveFirst": "先處理衝突",
+      "nothingToSend": "沒有可送出的修改",
+      "fixQualityFirst": "修正品質問題後送出",
+      "savedLocally": "本機已存檔",
+      "pushAborted": "推送中止 · 本機已存檔"
+    },
+    "firstRun": {
+      "signInTitle": "送出修改需要先連結 GitHub",
+      "signInBody": "{{repo}} 放在 GitHub 上。Kumiko 用你的帳號送出，只會動到你自己的副本。",
+      "noForkTitle": "這是你第一次向 {{repo}} 貢獻",
+      "noForkBody": "你在這個專案沒有寫入權限 —— 這很正常。Kumiko 會先在你的 GitHub 建立一份副本，然後回到送出面板讓你確認。不用先自己開好。",
+      "creatingTitle": "正在建立 {{repo}}",
+      "creatingBody": "只有第一次需要這一步。建好後會回到送出面板，明細不變。",
+      "rungSignIn": "連結 GitHub 帳號",
+      "rungSignInPending": "會開一個 GitHub 授權頁，只要求送出修改所需的權限。",
+      "rungSignInDone": "已連結 @{{login}}",
+      "rungFork": "在你的 GitHub 建立副本",
+      "rungForkDetail": "{{repo}} —— Kumiko 自動建立，你不用先開好。",
+      "rungHandover": "回到送出面板，確認後送出",
+      "rungHandoverDetail": "副本建好就接回一般的送出面板，明細一模一樣，你再確認一次才真的送出。",
+      "yourCopyFallback": "你的副本",
+      "tagDone": "完成",
+      "tagNeedsYou": "需要你",
+      "tagAutomatic": "Kumiko 自動",
+      "tagNext": "接下來",
+      "signInAction": "連結 GitHub",
+      "createForkAction": "建立副本並繼續",
+      "creatingAction": "正在建立副本…"
+    },
+    "version": {
+      "openMenu": "切換正在編輯的版本",
+      "myDrafts": "我的草稿",
+      "projectVersions": "專案版本",
+      "draftDetail": "你的草稿 —— 可編輯",
+      "mergeTargetDetail": "專案的開發版 —— 你沒有寫入權限",
+      "draft": "草稿",
+      "readOnly": "唯讀",
+      "editable": "可編輯",
+      "editing": "正在編輯",
+      "unknown": "尚未讀取版本",
+      "noVersions": "目前沒有其他版本可以切換。",
+      "confirmReload": "切換到 {{ref}} 會重新載入整個專案。你目前的修改已經存在草稿裡，不會不見。",
+      "confirmSwitch": "重新載入並切換"
+    }
+  },
   "home": {
     "cancel": "取消",
     "createNewProject": "建立新專案",

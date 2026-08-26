@@ -30,7 +30,14 @@ import {
   isMissingGitHubTokenError,
   resolveGitHubBranchSelection,
 } from 'src/features/common/glyphInspector/utils/githubCommitFlowUtils'
-import type { GitHubCommitModalProps } from 'src/features/common/glyphInspector/components/GitHubCommitModal'
+import type {
+  GitHubCommitModalProps,
+  GitHubSubmitResult,
+} from 'src/features/common/glyphInspector/components/GitHubCommitModal'
+import {
+  buildChangeReceipt,
+  collectSentGlyphChanges,
+} from 'src/features/common/glyphInspector/utils/changeReceipt'
 import {
   githubSyncReportQueryKey,
   useGitHubSyncStatus,
@@ -131,6 +138,14 @@ export const useGitHubCommitFlow = ({
   // to be tracked here or the button stays idle for the whole push.
   const [isCommittingToGitHub, setIsCommittingToGitHub] = useState(false)
   const [isSwitchingGitBranch, setIsSwitchingGitBranch] = useState(false)
+  // A failed push has to stay on screen: a toast that flies away is the wrong
+  // place for "nothing was changed, here is git's reason".
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(
+    null
+  )
+  const [lastSubmitResult, setLastSubmitResult] =
+    useState<GitHubSubmitResult | null>(null)
+  const [voidedLineKeys, setVoidedLineKeys] = useState<string[]>([])
   const [gitCollaboration, setGitCollaboration] =
     useState<GitCollaborationState>({
       activeTarget: null,
@@ -157,29 +172,21 @@ export const useGitHubCommitFlow = ({
     enabled: gitHubModal.open && hasGitHubSource,
   })
   const syncReport = syncStatus.report
-  const suggestedCommitMessage = useMemo(() => {
-    const glyphOf = (glyphName: string) => ({
-      glyphName,
-      unicodes: fontData?.glyphs[glyphName]?.unicodes,
-    })
-    const localChanges = (syncReport?.localChanges ?? []).filter(
-      (entry) => entry.kind === 'glyph' && entry.glyphName
-    )
-    return buildGlyphCommitMessage({
-      added: localChanges
-        .filter((entry) => entry.status !== 'localDeleted' && !entry.remoteSha)
-        .map((entry) => glyphOf(entry.glyphName!)),
-      updated: localChanges
-        .filter((entry) => entry.status !== 'localDeleted' && entry.remoteSha)
-        .map((entry) => glyphOf(entry.glyphName!)),
-      deleted: localChanges
-        .filter((entry) => entry.status === 'localDeleted')
-        .map((entry) => glyphOf(entry.glyphName!)),
-      fallbackTitle: projectTitle,
-    })
-  }, [fontData, projectTitle, syncReport])
+  // Struck-out lines are excluded, so the suggestion describes the send rather
+  // than the whole local diff.
+  const suggestedCommitMessage = useMemo(
+    () =>
+      buildGlyphCommitMessage({
+        ...collectSentGlyphChanges({
+          report: syncReport,
+          fontData,
+          voidedPaths: voidedLineKeys,
+        }),
+        fallbackTitle: projectTitle,
+      }),
+    [fontData, projectTitle, syncReport, voidedLineKeys]
+  )
   const gitHubBranchName = activeCommitDraft.branchName
-  const isCreatingNewGitHubBranch = activeCommitDraft.isCreatingNewBranch
   const updateGitHubCommitDraft = (
     update: Partial<Omit<ScopedGitHubCommitDraft, 'repoFullName'>>
   ) => {
@@ -449,6 +456,8 @@ export const useGitHubCommitFlow = ({
 
   const handleOpenGitHubModal = async () => {
     gitHubModal.onOpen()
+    setSubmitErrorMessage(null)
+    setLastSubmitResult(null)
 
     if (!fontData || !projectId || !projectTitle) {
       return
@@ -628,6 +637,8 @@ export const useGitHubCommitFlow = ({
 
     try {
       setIsCommittingToGitHub(true)
+      setSubmitErrorMessage(null)
+      setLastSubmitResult(null)
       await flushPendingDraft(
         buildCurrentDraftFlushInput({
           activeMasterId,
@@ -656,6 +667,9 @@ export const useGitHubCommitFlow = ({
         commitMessage: gitHubCommitMessage.trim() || suggestedCommitMessage,
         forkStatus: githubForkStatus,
         author: commitAuthor,
+        // Struck-out lines are addressed by git path, so they can be handed to
+        // the commit as-is.
+        excludePaths: voidedLineKeys,
       })
       markDraftSaved()
       markLocalSaved()
@@ -681,6 +695,12 @@ export const useGitHubCommitFlow = ({
         isCreatingNewBranch: false,
       })
       await refreshGitCollaboration(projectId)
+      setLastSubmitResult({
+        branch: result.branchName,
+        commitSha: result.commitSha,
+        compareUrl: result.compare?.compareUrl ?? null,
+      })
+      setVoidedLineKeys([])
       toaster.create({
         title: t('glyphInspector.toast.commitSentTitle'),
         description: t('glyphInspector.toast.commitSentDescription'),
@@ -693,6 +713,7 @@ export const useGitHubCommitFlow = ({
         error,
         t('glyphInspector.toast.commitFailedDescription')
       )
+      setSubmitErrorMessage(message)
 
       if (isMissingGitHubTokenError(message)) {
         toaster.create({
@@ -755,6 +776,13 @@ export const useGitHubCommitFlow = ({
     }
   }
 
+  const changeReceipt = buildChangeReceipt({
+    report: syncReport,
+    fontData,
+    dirtyGlyphIds: localDirtyGlyphIds,
+    deletedGlyphIds: localDeletedGlyphIds,
+  })
+
   const modalProps: GitHubCommitModalProps = {
     isOpen: gitHubModal.open,
     onClose: () => {
@@ -772,24 +800,62 @@ export const useGitHubCommitFlow = ({
     // Committing before the report lands would skip the conflict gate.
     isCheckingSyncStatus: syncStatus.isLoading,
     isMergingGitHubUpstream: mergeUpstreamMutation.isPending,
-    isSwitchingGitBranch,
     canCommitToGitHub,
     gitHubCommitMessage,
     suggestedCommitMessage,
     gitHubBranchName,
-    isCreatingNewBranch: isCreatingNewGitHubBranch,
+    changeDrafts: gitCollaboration.changeDrafts,
+    changeReceipt,
+    // Lines are addressed by git path, which only the sync report knows.
+    canVoidLines: Boolean(syncReport),
+    voidedLineKeys,
+    submitErrorMessage,
+    lastSubmitResult,
+    baseSha: syncReport?.remoteHeadSha ?? null,
+    onToggleVoidLine: (key) =>
+      setVoidedLineKeys((current) =>
+        current.includes(key)
+          ? current.filter((entry) => entry !== key)
+          : [...current, key]
+      ),
     onLoginGitHub: () => void handleLoginGitHub(),
     onLogoutGitHub: () => void handleLogoutGitHub(),
     onCreateFork: () => void handleCreateFork(),
-    activeGitTarget: gitCollaboration.activeTarget,
+    onCommitMessageChange: (commitMessage) =>
+      updateGitHubCommitDraft({ commitMessage }),
+    // Picking a draft chooses where this change is sent — it does not reload the
+    // project. Switching what you edit lives in the project version menu.
+    onSelectDraft: (ref) =>
+      updateGitHubCommitDraft({
+        branchName: ref,
+        isCreatingNewBranch: false,
+      }),
+    onStartNewBranch: () => {
+      updateGitHubCommitDraft({
+        branchName: buildSuggestedGitHubBranchName(localDirtyGlyphIds),
+        isCreatingNewBranch: true,
+      })
+    },
+    onMergeUpstream: () => void handleMergeGitHubUpstream(),
+    onCreateCommit: () => void handleCreateGitHubCommit(),
+    isSyncEnabled: hasGitHubSource,
+    onBlockingSyncConflictsChange: setHasBlockingSyncConflicts,
+    hasBlockingSyncConflicts,
+  }
+
+  // Switching which version is open reloads the whole project, so it belongs to
+  // the project chrome, not to the act of sending a change.
+  const versionMenuProps = {
+    activeTarget: gitCollaboration.activeTarget,
     changeDrafts: gitCollaboration.changeDrafts,
-    onBranchSelect: (branch) => {
+    forkStatus: githubForkStatus,
+    isSwitching: isSwitchingGitBranch,
+    onSwitchToDraft: (ref: string) => {
       if (githubForkStatus?.targetRepo) {
         void handleSwitchGitBranch({
           repo: githubForkStatus.targetRepo.fullName,
-          branch,
+          branch: ref,
         })
-        return
       }
     },
     onSwitchToMergeTarget: () => {
@@ -800,38 +866,15 @@ export const useGitHubCommitFlow = ({
         })
       }
     },
-    onCommitMessageChange: (commitMessage) =>
-      updateGitHubCommitDraft({ commitMessage }),
-    onBranchNameChange: (value) => {
-      updateGitHubCommitDraft({
-        branchName: value,
-        isCreatingNewBranch: true,
-      })
-    },
-    onStartNewBranch: () => {
-      updateGitHubCommitDraft({
-        branchName: `kumiko/patch-${Date.now()}`,
-        isCreatingNewBranch: true,
-      })
-    },
-    onOpenCompare: () => {
-      if (githubForkStatus?.compare?.compareUrl) {
-        window.open(
-          githubForkStatus.compare.compareUrl,
-          '_blank',
-          'noopener,noreferrer'
-        )
-      }
-    },
-    onMergeUpstream: () => void handleMergeGitHubUpstream(),
-    onCreateCommit: () => void handleCreateGitHubCommit(),
-    isSyncEnabled: hasGitHubSource,
-    onBlockingSyncConflictsChange: setHasBlockingSyncConflicts,
-    hasBlockingSyncConflicts,
   }
 
   return {
     openGitHubModal: handleOpenGitHubModal,
     modalProps,
+    versionMenuProps,
+    pendingChangeCount: changeReceipt.totalCount,
+    conflictCount: changeReceipt.conflictCount,
+    hasSubmitError: Boolean(submitErrorMessage),
+    isSubmitting: isCommittingToGitHub,
   }
 }

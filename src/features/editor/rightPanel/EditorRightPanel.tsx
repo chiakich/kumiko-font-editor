@@ -49,6 +49,14 @@ export function EditorRightPanel() {
       <Stack gap={5}>
         <ProjectControlActions
           hasGitHubSource={panel.hasGitHubSource}
+          gitStatus={{
+            pendingChangeCount: panel.gitHubCommitFlow.pendingChangeCount,
+            conflictCount: panel.gitHubCommitFlow.conflictCount,
+            hasSubmitError: panel.gitHubCommitFlow.hasSubmitError,
+            isSubmitting: panel.gitHubCommitFlow.isSubmitting,
+            isSignedIn: Boolean(panel.gitHubCommitFlow.modalProps.githubViewer),
+          }}
+          versionMenu={panel.gitHubCommitFlow.versionMenuProps}
           isSavingToLocal={fontExport.isExporting}
           onOpenExportModal={exportModal.onOpen}
           onOpenFontSettingsModal={fontSettingsModal.onOpen}
