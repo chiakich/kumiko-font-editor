@@ -195,7 +195,7 @@ export const useGitHubCommitFlow = ({
         ...collectSentGlyphChanges({
           report: syncReport,
           fontData,
-          voidedPaths: voidedLineKeys,
+          voidedKeys: voidedLineKeys,
         }),
         fallbackTitle: projectTitle,
       }),
