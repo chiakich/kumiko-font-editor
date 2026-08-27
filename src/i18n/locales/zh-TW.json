@@ -1056,7 +1056,11 @@
     "addRuleSingleSub": "＋ 替換規則",
     "addRuleLigature": "＋ 連字規則",
     "addRulePair": "＋ 字對規則",
-    "ruleDelete": "刪除規則"
+    "ruleDelete": "刪除規則",
+    "glyphPickerCreateVariantFrom": "從 {{glyph}} 建立新變體:",
+    "glyphPickerVariantSuffix": "變體後綴",
+    "glyphPickerCreateVariant": "建立變體",
+    "glyphPickerVariantExists": "此名稱已存在"
   },
   "settings": {
     "appearance": "外觀主題",

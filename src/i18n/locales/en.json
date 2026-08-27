@@ -1056,7 +1056,11 @@
     "addRuleSingleSub": "+ Substitution rule",
     "addRuleLigature": "+ Ligature rule",
     "addRulePair": "+ Pair rule",
-    "ruleDelete": "Delete rule"
+    "ruleDelete": "Delete rule",
+    "glyphPickerCreateVariantFrom": "Create a variant of {{glyph}}:",
+    "glyphPickerVariantSuffix": "Variant suffix",
+    "glyphPickerCreateVariant": "Create variant",
+    "glyphPickerVariantExists": "This name already exists"
   },
   "settings": {
     "appearance": "Appearance",

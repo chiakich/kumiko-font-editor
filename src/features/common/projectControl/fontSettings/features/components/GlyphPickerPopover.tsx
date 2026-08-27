@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { FontData, GlyphData } from 'src/store'
+import { useStore, type FontData, type GlyphData } from 'src/store'
 import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
 
 interface GlyphPickerProps {
@@ -88,7 +88,41 @@ export function GlyphPickerPopover({
   onPick,
 }: GlyphPickerProps) {
   const { t } = useTranslation()
+  const createGlyphVariant = useStore((store) => store.createGlyphVariant)
   const [query, setQuery] = useState(initialQuery)
+  const [variantSuffix, setVariantSuffix] = useState('')
+
+  // The glyph the query names outright — the base a new variant copies from.
+  const variantSource = useMemo(() => {
+    const trimmed = query.trim()
+    if (!trimmed) {
+      return null
+    }
+    if (fontData.glyphs[trimmed]) {
+      return fontData.glyphs[trimmed]
+    }
+    const codePoints = [...trimmed]
+    if (codePoints.length !== 1) {
+      return null
+    }
+    const hex = codePoints[0]
+      .codePointAt(0)!
+      .toString(16)
+      .toUpperCase()
+      .padStart(4, '0')
+    return (
+      Object.values(fontData.glyphs).find(
+        (glyph) => glyph.unicodes?.[0]?.toUpperCase() === hex
+      ) ?? null
+    )
+  }, [fontData, query])
+  const suffixText = variantSuffix.trim().replace(/^\./, '')
+  const variantName = variantSource ? `${variantSource.id}.${suffixText}` : ''
+  const canCreateVariant = Boolean(
+    variantSource &&
+    /^[A-Za-z0-9_.]+$/.test(suffixText) &&
+    !fontData.glyphs[variantName]
+  )
 
   const { variants, matches } = useMemo(() => {
     const glyphs = Object.values(fontData.glyphs)
@@ -129,6 +163,14 @@ export function GlyphPickerPopover({
   const pick = (glyphId: string) => {
     onPick(glyphId)
     onClose()
+  }
+
+  const createVariant = () => {
+    if (!canCreateVariant || !variantSource) {
+      return
+    }
+    createGlyphVariant(variantSource.id, variantName)
+    pick(variantName)
   }
 
   return (
@@ -210,6 +252,45 @@ export function GlyphPickerPopover({
                   </HStack>
                 )}
               </Stack>
+              {variantSource ? (
+                <HStack gap={2} wrap="wrap">
+                  <Text fontSize="xs" color="mutedForeground">
+                    {t('projectControl.glyphPickerCreateVariantFrom', {
+                      glyph: variantSource.id,
+                    })}
+                  </Text>
+                  <Text fontSize="xs" fontFamily="mono">
+                    {variantSource.id}.
+                  </Text>
+                  <Input
+                    size="2xs"
+                    width="96px"
+                    fontFamily="mono"
+                    value={variantSuffix}
+                    placeholder="vert"
+                    aria-label={t('projectControl.glyphPickerVariantSuffix')}
+                    onChange={(event) => setVariantSuffix(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        createVariant()
+                      }
+                    }}
+                  />
+                  <Button
+                    size="2xs"
+                    variant="outline"
+                    disabled={!canCreateVariant}
+                    onClick={createVariant}
+                  >
+                    {t('projectControl.glyphPickerCreateVariant')}
+                  </Button>
+                  {suffixText && fontData.glyphs[variantName] ? (
+                    <Text fontSize="xs" color="orange.500">
+                      {t('projectControl.glyphPickerVariantExists')}
+                    </Text>
+                  ) : null}
+                </HStack>
+              ) : null}
             </Dialog.Body>
             <Dialog.Footer>
               <Button size="sm" variant="ghost" onClick={onClose}>

@@ -537,6 +537,7 @@ export interface GlobalState {
     counterpartGlyphId: string
     value: number
   }) => void
+  createGlyphVariant: (sourceGlyphId: string, newGlyphId: string) => void
   upsertKerningPair: (
     left: GlyphSelector,
     right: GlyphSelector,
