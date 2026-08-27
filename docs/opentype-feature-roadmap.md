@@ -211,9 +211,29 @@ decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts
   （session 內離開再回不歸零）。
 - 合成 kern 列的開關改為 disabled（誠實呈現「無法關閉,除非刪字對」）。
 
-仍未動的資料層缺口（同前）: legacy kern 表匯入、rvrn/FeatureVariations、
-per-master kerning 插值模型、device tables；UI 元件層測試需先決定是否引入
-@testing-library。
+### 深水區清償(2026-08-28)
+
+- **legacy `kern` 表匯入**(`legacyKernImport.ts`):opentype.js 解析的
+  format 0 字對在匯入時轉成 kerningPairs(僅在無 GPOS kern feature 時,
+  避免加倍),匯出經 kern 合成回到 GPOS。Pyodide 回歸:
+  `test/fontImport/legacyKernImport.test.ts`。
+- **FeatureVariations 唯讀摘要**(`featureVariationsParser.ts`):解析
+  GSUB/GPOS FeatureVariations + fvar 軸,`state.featureVariations` 存
+  「軸區間 → 換用特性(lookup 數)」摘要,特性總覽以唯讀卡呈現;保留政策
+  警告不變。重建仍不支援(feaLib conditionset 留待後續)。
+- **per-master kerning**:`FontData.kerningPairsByMaster`(以 source id 為
+  鍵;非預設 master 匯入時必有條目,無條目 = 使用 canonical
+  `kerningPairs`)。涵蓋:designspace 匯入(各 UFO 自己的 kerning.plist)、
+  同步序列化(修掉「每個 UFO 都被寫入預設 master kerning」的資料遺失
+  bug)、遠端 pull 回寫、variable build per-master 編譯(varLib 產生插值
+  kerning delta)、編輯器 canvas/Kerning 面板/工作區 kern 檯全部跟隨
+  active master。合併後才編譯的路徑仍只有 canonical kerning(無 delta)。
+  尚缺:在 app 內新增 master 時自動補 byMaster 條目;靜態 instance 匯出
+  的 kerning 不插值。
+- **UI 元件測試**已引入 @testing-library(happy-dom 環境,`test/ui/`,
+  harness `renderWithProviders` 固定 zh-TW 並 mock paper.js):覆蓋
+  class 管理、規則新增/刪除、kern 新增字對 + per-master 路由、詞表、
+  picker 建立變體與其失敗守衛。只測關鍵流程,不追覆蓋率。
 
 ## 已知順手債
 
