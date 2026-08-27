@@ -1017,7 +1017,7 @@
     "workflow": "Workflow",
     "workflowSection": "工作流程",
     "shapingPreviewTitle": "整形預覽",
-    "shapingPreviewPlaceholder": "輸入要預覽的文字…",
+    "shapingPreviewPlaceholder": "輸入文字，/字形名稱 可放入打不出來的字形…",
     "shapingCompiling": "正在編譯預覽字型…",
     "shapingCompileFailed": "預覽字型編譯失敗",
     "shapingBefore": "關閉特性",
@@ -1038,7 +1038,8 @@
     "noRules": "這個 lookup 沒有規則。",
     "noLookupsForFeature": "這個特性還沒有 lookup。切到 FEA 程式碼檢視它的產出。",
     "shapingHorizontal": "橫排",
-    "shapingVertical": "直排"
+    "shapingVertical": "直排",
+    "shapingUnknownGlyphs": "字型裡沒有這些字形：{{names}}"
   },
   "settings": {
     "appearance": "外觀主題",

@@ -1017,7 +1017,7 @@
     "workflow": "Workflow",
     "workflowSection": "Workflow",
     "shapingPreviewTitle": "Shaping preview",
-    "shapingPreviewPlaceholder": "Type text to preview…",
+    "shapingPreviewPlaceholder": "Type text; /glyphName places unreachable glyphs…",
     "shapingCompiling": "Compiling preview font…",
     "shapingCompileFailed": "Preview font failed to compile",
     "shapingBefore": "Features off",
@@ -1038,7 +1038,8 @@
     "noRules": "This lookup has no rules.",
     "noLookupsForFeature": "This feature has no lookups yet. Switch to FEA code to see its output.",
     "shapingHorizontal": "Horizontal",
-    "shapingVertical": "Vertical"
+    "shapingVertical": "Vertical",
+    "shapingUnknownGlyphs": "No such glyphs in this font: {{names}}"
   },
   "settings": {
     "appearance": "Appearance",

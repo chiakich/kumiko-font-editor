@@ -130,6 +130,14 @@ export function ShapingPreviewBar({ preview }: ShapingPreviewBarProps) {
         </HStack>
       ) : null}
 
+      {preview.unknownGlyphTokens.length > 0 ? (
+        <Text fontSize="xs" color="orange.500" fontFamily="mono">
+          {t('projectControl.shapingUnknownGlyphs', {
+            names: preview.unknownGlyphTokens.join(', '),
+          })}
+        </Text>
+      ) : null}
+
       {preview.fontStatus.state === 'error' ? (
         <Text fontSize="xs" color="red.600" fontFamily="mono">
           {t('projectControl.shapingCompileFailed')}:{' '}

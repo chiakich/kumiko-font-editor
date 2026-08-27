@@ -1,4 +1,5 @@
 import { createHarfBuzzRuntimeStatus } from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
+import { getGlyphCatalog } from 'src/lib/openTypeFeatures/harfbuzzGlyphCatalog'
 import type { HarfBuzzBufferGlyph } from 'src/lib/openTypeFeatures/harfbuzzRuntime'
 import type {
   HarfBuzzRuntimeStatus,
@@ -61,6 +62,9 @@ export const shapeTextWithHarfBuzz = async (
     const { loadHarfBuzzRuntime } =
       await import('src/lib/openTypeFeatures/harfbuzzRuntime')
     const hb = await loadHarfBuzzRuntime()
+    const catalog = options.glyphTokens?.size
+      ? await getGlyphCatalog(fontBuffer)
+      : null
     const blob = hb.createBlob(fontBuffer)
     try {
       const face = hb.createFace(blob, 0)
@@ -96,11 +100,42 @@ export const shapeTextWithHarfBuzz = async (
                 }
               : undefined
 
+            const shapedGlyphs = toShapedGlyphs(
+              buffer.getGlyphInfosAndPositions(),
+              readShape
+            )
+
+            // Swap each token placeholder for its named glyph. Metrics come
+            // from the catalog; the vertical origin shift hb computed for the
+            // placeholder is kept, since the fallback is font-wide anyway.
+            const withTokens = options.glyphTokens?.size
+              ? shapedGlyphs.map((glyph) => {
+                  const tokenName = options.glyphTokens?.get(glyph.cluster)
+                  if (!tokenName) {
+                    return glyph
+                  }
+                  const info = catalog?.get(tokenName)
+                  if (!info) {
+                    return { ...glyph, unknownGlyphToken: tokenName }
+                  }
+                  const isVertical =
+                    options.direction === 'ttb' || options.direction === 'btt'
+                  return {
+                    ...glyph,
+                    glyphId: info.glyphId,
+                    glyphName: tokenName,
+                    svgPath: options.includeGlyphShapes
+                      ? font.glyphToPath(info.glyphId)
+                      : glyph.svgPath,
+                    ...(isVertical
+                      ? { xOffset: -info.advanceWidth / 2 }
+                      : { xAdvance: info.advanceWidth, xOffset: 0 }),
+                  }
+                })
+              : shapedGlyphs
+
             return {
-              glyphs: toShapedGlyphs(
-                buffer.getGlyphInfosAndPositions(),
-                readShape
-              ),
+              glyphs: withTokens,
               ok: true,
               unitsPerEm: face.upem,
               runtimeStatus: createHarfBuzzRuntimeStatus(),

@@ -13,6 +13,10 @@ import {
   listPreviewFeatureToggles,
   type PreviewDirection,
 } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
+import {
+  buildPlaceholderText,
+  parsePreviewSegments,
+} from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
 
 export type ShapingPreviewFontStatus =
   | { state: 'idle' }
@@ -119,6 +123,11 @@ export const useShapingPreview = (input: {
   )
 
   const featureKey = `${direction}|${disabledList.join(',')}|${featureList.join(',')}`
+  // `/glyphName` tokens: shaped as placeholders, swapped for the named glyph.
+  const placeholder = useMemo(
+    () => buildPlaceholderText(parsePreviewSegments(text)),
+    [text]
+  )
 
   // Shape both runs. Shaping is cheap next to compiling, so no debounce here —
   // the preview follows the text field keystroke by keystroke.
@@ -128,10 +137,11 @@ export const useShapingPreview = (input: {
     }
     let cancelled = false
     const shapeRun = (features: string[]) =>
-      shapeTextWithHarfBuzz(buffer, text, {
+      shapeTextWithHarfBuzz(buffer, placeholder.text, {
         direction,
         features,
         includeGlyphShapes: true,
+        glyphTokens: placeholder.tokensByCluster,
       })
     void Promise.all([shapeRun(disabledList), shapeRun(featureList)]).then(
       ([beforeResult, afterResult]) => {
@@ -167,7 +177,15 @@ export const useShapingPreview = (input: {
     return () => {
       cancelled = true
     }
-  }, [buffer, text, featureKey, featureList, disabledList, direction])
+  }, [
+    buffer,
+    text,
+    featureKey,
+    featureList,
+    disabledList,
+    direction,
+    placeholder,
+  ])
 
   // A result only counts while its inputs are still the current ones.
   const current =
@@ -176,6 +194,16 @@ export const useShapingPreview = (input: {
   const after =
     current && current.featureKey === featureKey ? current.after : null
   const shapeError = current?.error ?? null
+  // Names asked for with /token syntax that the compiled font does not have.
+  const unknownGlyphTokens = useMemo(() => {
+    const names = new Set<string>()
+    for (const glyph of after?.glyphs ?? []) {
+      if (glyph.unknownGlyphToken) {
+        names.add(glyph.unknownGlyphToken)
+      }
+    }
+    return [...names]
+  }, [after])
 
   const toggleFeature = (tag: string) => {
     const toggle = toggles.find((entry) => entry.tag === tag)
@@ -210,5 +238,6 @@ export const useShapingPreview = (input: {
     before,
     after,
     shapeError,
+    unknownGlyphTokens,
   }
 }

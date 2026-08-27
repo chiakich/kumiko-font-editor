@@ -10,6 +10,8 @@ interface HarfBuzzBlob {
 interface HarfBuzzFace {
   destroy(): void
   upem: number
+  // Raw bytes of one OpenType table, or undefined when the face lacks it.
+  reference_table(table: string): Uint8Array | undefined
 }
 
 interface HarfBuzzFont {
