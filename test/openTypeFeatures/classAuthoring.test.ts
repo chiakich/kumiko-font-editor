@@ -7,6 +7,7 @@ import {
   updateGlyphClass,
 } from 'src/features/common/projectControl/fontSettings/features/utils/classAuthoring'
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
 import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
 
 const stateWithClassReference = (): OpenTypeFeaturesState => {
@@ -38,9 +39,10 @@ const stateWithClassReference = (): OpenTypeFeaturesState => {
 
 describe('classAuthoring', () => {
   it('sanitizes class names to the FEA grammar', () => {
-    expect(sanitizeGlyphClassName('@kana')).toBe('kana')
-    expect(sanitizeGlyphClassName('平假名')).toBe('___')
-    expect(sanitizeGlyphClassName('2x')).toBe('_2x')
+    expect(sanitizeGlyphClassName('@kana')).toBe('@kana')
+    expect(sanitizeGlyphClassName('kana')).toBe('@kana')
+    expect(sanitizeGlyphClassName('平假名')).toBe('@___')
+    expect(sanitizeGlyphClassName('2x')).toBe('@_2x')
     expect(sanitizeGlyphClassName('  ')).toBe('')
   })
 
@@ -57,6 +59,32 @@ describe('classAuthoring', () => {
       glyphs: ['a', 'b', 'a', ''],
     })
     expect(updated.glyphClasses[0].glyphs).toEqual(['a', 'b'])
+  })
+
+  it('serializes created classes with the @ prefix', () => {
+    const created = createGlyphClass(
+      createEmptyOpenTypeFeaturesState(),
+      'kana'
+    )!
+    const withMembers = updateGlyphClass(created.state, created.classId, {
+      glyphs: ['a', 'b'],
+    })
+    expect(generateFea(withMembers).text).toContain('@kana = [a b];')
+  })
+
+  it('heals a legacy class name that lacks the @ prefix', () => {
+    const state = {
+      ...createEmptyOpenTypeFeaturesState(),
+      glyphClasses: [
+        {
+          id: 'class_legacy',
+          name: 'legacy',
+          glyphs: ['a'],
+          origin: 'manual' as const,
+        },
+      ],
+    }
+    expect(generateFea(state).text).toContain('@legacy = [a];')
   })
 
   it('refuses to delete a referenced class and counts references', () => {

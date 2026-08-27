@@ -16,7 +16,9 @@ export const selectorToText = (
   const glyphClass = state.glyphClasses.find(
     (candidate) => candidate.id === selector.classId
   )
-  return `@${glyphClass?.name ?? selector.classId}`
+  // Class names are stored with their '@' prefix, but older data may lack it.
+  const name = glyphClass?.name ?? selector.classId
+  return name.startsWith('@') ? name : `@${name}`
 }
 
 export const textToSelector = (
@@ -28,9 +30,9 @@ export const textToSelector = (
     return null
   }
   if (trimmed.startsWith('@')) {
-    const name = trimmed.slice(1)
+    const bare = trimmed.slice(1)
     const glyphClass = state.glyphClasses.find(
-      (candidate) => candidate.name === name
+      (candidate) => candidate.name.replace(/^@/, '') === bare
     )
     return glyphClass ? { kind: 'class', classId: glyphClass.id } : null
   }

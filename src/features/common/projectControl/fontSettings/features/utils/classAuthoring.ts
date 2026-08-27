@@ -2,7 +2,8 @@ import { getRuleClassReferences } from 'src/lib/openTypeFeatures/ruleReferences'
 import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
 
 // FEA class-name grammar: letters, digits, underscore and dots; must not
-// start with a digit.
+// start with a digit. The IR stores class names WITH their '@' prefix
+// (matching serializeFea, which emits the name verbatim).
 export const sanitizeGlyphClassName = (name: string) => {
   const cleaned = name
     .replace(/^@/, '')
@@ -11,7 +12,7 @@ export const sanitizeGlyphClassName = (name: string) => {
   if (!cleaned) {
     return ''
   }
-  return /^[A-Za-z_.]/.test(cleaned) ? cleaned : `_${cleaned}`
+  return `@${/^[A-Za-z_.]/.test(cleaned) ? cleaned : `_${cleaned}`}`
 }
 
 export const countGlyphClassRuleReferences = (
@@ -36,7 +37,7 @@ export function createGlyphClass(
   if (existing) {
     return { state, classId: existing.id }
   }
-  let classId = `class_${name}`
+  let classId = `class_${name.replace(/^@/, '')}`
   const existingIds = new Set(state.glyphClasses.map((entry) => entry.id))
   let suffix = 1
   while (existingIds.has(classId)) {

@@ -50,6 +50,7 @@ function GlyphClassCard({
     (glyphId) => !fontData.glyphs[glyphId]
   )
   const membersText = glyphClass.glyphs.join(' ')
+  const bareName = glyphClass.name.replace(/^@/, '')
 
   return (
     <Stack
@@ -68,17 +69,17 @@ function GlyphClassCard({
           size="xs"
           maxW="220px"
           fontFamily="mono"
-          key={glyphClass.name}
-          defaultValue={glyphClass.name}
+          key={bareName}
+          defaultValue={bareName}
           aria-label={t('featureWorkspace.className')}
           onBlur={(event) => {
             const next = event.target.value.trim()
-            if (next && next !== glyphClass.name) {
+            if (next && next !== bareName) {
               onStateChange(
                 updateGlyphClass(state, glyphClass.id, { name: next })
               )
             } else {
-              event.target.value = glyphClass.name
+              event.target.value = bareName
             }
           }}
         />
