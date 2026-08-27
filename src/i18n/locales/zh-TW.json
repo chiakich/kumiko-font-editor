@@ -1039,7 +1039,13 @@
     "noLookupsForFeature": "這個特性還沒有 lookup。切到 FEA 程式碼檢視它的產出。",
     "shapingHorizontal": "橫排",
     "shapingVertical": "直排",
-    "shapingUnknownGlyphs": "字型裡沒有這些字形：{{names}}"
+    "shapingUnknownGlyphs": "字型裡沒有這些字形：{{names}}",
+    "glyphPickerTitle": "選擇字形",
+    "glyphPickerPlaceholder": "搜尋名稱、字元或 unicode…",
+    "glyphPickerVariants": "同基底的變體",
+    "glyphPickerMatches": "符合（{{count}}）",
+    "glyphPickerEmpty": "沒有符合的字形。",
+    "glyphPickerOpen": "開啟字形挑選器"
   },
   "settings": {
     "appearance": "外觀主題",
@@ -1055,6 +1061,26 @@
   },
   "featureWorkspace": {
     "title": "OpenType 特性",
-    "backToOverview": "回到總覽"
+    "backToOverview": "回到總覽",
+    "homeEmpty": "在上方輸入文字，看特性怎麼改變它",
+    "homeEmptyHint": "/字形名稱 可放入打不出來的字形，例如 /comma.vert",
+    "clickGlyphHint": "點字形看它經過的規則",
+    "traceTitle": "這個字形經過的規則",
+    "tracing": "正在追蹤規則…",
+    "traceEmpty": "沒有任何規則改動這個字形。",
+    "editRule": "編輯規則 →",
+    "openGlyph": "在編輯器開啟 →",
+    "missingVertTitle": "這些字形還沒有 .vert 直排變體",
+    "railTitle": "特性",
+    "openIndex": "特性總覽",
+    "openHome": "整形預覽",
+    "indexHint": "每個特性用它自己的規則選樣。點列可進入編輯。",
+    "indexEmpty": "這個字型還沒有任何 OpenType 特性。",
+    "ruleCount": "{{count}} 條規則",
+    "specimenNoChange": "樣本無變化",
+    "specimenUnavailable": "無法選樣（僅原文規則）",
+    "backToIndex": "特性總覽",
+    "featureEnabled": "已啟用",
+    "featureDisabled": "已停用"
   }
 }

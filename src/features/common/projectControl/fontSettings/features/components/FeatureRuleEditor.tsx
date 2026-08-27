@@ -1,5 +1,15 @@
-import { Badge, Box, HStack, Input, Stack, Text } from '@chakra-ui/react'
+import {
+  Badge,
+  Box,
+  HStack,
+  IconButton,
+  Input,
+  Stack,
+  Text,
+} from '@chakra-ui/react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
 import type {
   GlyphSelector,
   LigatureSubstitutionRule,
@@ -10,6 +20,7 @@ import type {
   SingleSubstitutionRule,
   ValueRecord,
 } from 'src/lib/openTypeFeatures'
+import type { FontData } from 'src/store'
 import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
 import {
   getValueRecordFieldText,
@@ -20,6 +31,8 @@ import {
 interface FeatureRuleEditorProps {
   state: OpenTypeFeaturesState
   lookupIds: readonly string[]
+  // Present where glyph fields should offer the picker.
+  fontData?: FontData | null
   onStateChange: (next: OpenTypeFeaturesState) => void
 }
 
@@ -57,36 +70,91 @@ const textToSelector = (
   return { kind: 'glyph', glyph: trimmed }
 }
 
+// A text field plus the glyph picker: unencoded glyphs cannot be typed, so
+// every glyph field offers choosing over spelling. Typing stays possible for
+// people who know the names.
+function GlyphFieldFrame({
+  text,
+  disabled,
+  fontData,
+  'aria-label': ariaLabel,
+  onCommitText,
+  onPickGlyph,
+}: {
+  text: string
+  disabled?: boolean
+  fontData: FontData | null
+  'aria-label': string
+  onCommitText: (value: string, input: HTMLInputElement) => void
+  onPickGlyph: (glyphId: string) => void
+}) {
+  const { t } = useTranslation()
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
+  return (
+    <HStack gap={0.5}>
+      <Input
+        size="xs"
+        fontFamily="mono"
+        defaultValue={text}
+        key={text}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        onBlur={(event) => onCommitText(event.target.value, event.target)}
+      />
+      {fontData && !disabled ? (
+        <IconButton
+          size="2xs"
+          variant="ghost"
+          aria-label={t('projectControl.glyphPickerOpen')}
+          onClick={() => setIsPickerOpen(true)}
+        >
+          ⌕
+        </IconButton>
+      ) : null}
+      {fontData && isPickerOpen ? (
+        <GlyphPickerPopover
+          fontData={fontData}
+          isOpen={isPickerOpen}
+          initialQuery={text.startsWith('@') ? '' : text}
+          onClose={() => setIsPickerOpen(false)}
+          onPick={onPickGlyph}
+        />
+      ) : null}
+    </HStack>
+  )
+}
+
 function SelectorInput({
   value,
   state,
   disabled,
+  fontData,
   onCommit,
   'aria-label': ariaLabel,
 }: {
   value: GlyphSelector
   state: OpenTypeFeaturesState
   disabled?: boolean
+  fontData: FontData | null
   onCommit: (selector: GlyphSelector) => void
   'aria-label': string
 }) {
   return (
-    <Input
-      size="xs"
-      fontFamily="mono"
-      defaultValue={selectorToText(value, state)}
-      key={selectorToText(value, state)}
+    <GlyphFieldFrame
+      text={selectorToText(value, state)}
       disabled={disabled}
+      fontData={fontData}
       aria-label={ariaLabel}
-      onBlur={(event) => {
-        const selector = textToSelector(event.target.value, state)
+      onCommitText={(next, input) => {
+        const selector = textToSelector(next, state)
         if (selector) {
           onCommit(selector)
         } else {
           // Nothing valid to commit; show the stored value again.
-          event.target.value = selectorToText(value, state)
+          input.value = selectorToText(value, state)
         }
       }}
+      onPickGlyph={(glyphId) => onCommit({ kind: 'glyph', glyph: glyphId })}
     />
   )
 }
@@ -94,30 +162,31 @@ function SelectorInput({
 function GlyphNameInput({
   value,
   disabled,
+  fontData,
   onCommit,
   'aria-label': ariaLabel,
 }: {
   value: string
   disabled?: boolean
+  fontData: FontData | null
   onCommit: (glyph: string) => void
   'aria-label': string
 }) {
   return (
-    <Input
-      size="xs"
-      fontFamily="mono"
-      defaultValue={value}
-      key={value}
+    <GlyphFieldFrame
+      text={value}
       disabled={disabled}
+      fontData={fontData}
       aria-label={ariaLabel}
-      onBlur={(event) => {
-        const trimmed = event.target.value.trim()
+      onCommitText={(next, input) => {
+        const trimmed = next.trim()
         if (trimmed) {
           onCommit(trimmed)
         } else {
-          event.target.value = value
+          input.value = value
         }
       }}
+      onPickGlyph={(glyphId) => onCommit(glyphId)}
     />
   )
 }
@@ -168,11 +237,13 @@ function SingleSubstitutionCard({
   rule,
   state,
   disabled,
+  fontData,
   onRuleChange,
 }: {
   rule: SingleSubstitutionRule
   state: OpenTypeFeaturesState
   disabled?: boolean
+  fontData: FontData | null
   onRuleChange: (next: Rule) => void
 }) {
   const { t } = useTranslation()
@@ -185,6 +256,7 @@ function SingleSubstitutionCard({
         value={rule.target}
         state={state}
         disabled={disabled}
+        fontData={fontData}
         aria-label={t('projectControl.ruleTarget')}
         onCommit={(target) => onRuleChange({ ...rule, target })}
       />
@@ -194,6 +266,7 @@ function SingleSubstitutionCard({
       <GlyphNameInput
         value={rule.replacement}
         disabled={disabled}
+        fontData={fontData}
         aria-label={t('projectControl.ruleReplacement')}
         onCommit={(replacement) => onRuleChange({ ...rule, replacement })}
       />
@@ -204,10 +277,12 @@ function SingleSubstitutionCard({
 function LigatureSubstitutionCard({
   rule,
   disabled,
+  fontData,
   onRuleChange,
 }: {
   rule: LigatureSubstitutionRule
   disabled?: boolean
+  fontData: FontData | null
   onRuleChange: (next: Rule) => void
 }) {
   const { t } = useTranslation()
@@ -219,6 +294,7 @@ function LigatureSubstitutionCard({
       <GlyphNameInput
         value={rule.components.join(' ')}
         disabled={disabled}
+        fontData={fontData}
         aria-label={t('projectControl.ruleComponents')}
         onCommit={(text) =>
           onRuleChange({
@@ -233,6 +309,7 @@ function LigatureSubstitutionCard({
       <GlyphNameInput
         value={rule.replacement}
         disabled={disabled}
+        fontData={fontData}
         aria-label={t('projectControl.ruleReplacement')}
         onCommit={(replacement) => onRuleChange({ ...rule, replacement })}
       />
@@ -244,11 +321,13 @@ function PairPositioningCard({
   rule,
   state,
   disabled,
+  fontData,
   onRuleChange,
 }: {
   rule: PairPositioningRule
   state: OpenTypeFeaturesState
   disabled?: boolean
+  fontData: FontData | null
   onRuleChange: (next: Rule) => void
 }) {
   const { t } = useTranslation()
@@ -262,6 +341,7 @@ function PairPositioningCard({
           value={rule.left}
           state={state}
           disabled={disabled}
+          fontData={fontData}
           aria-label={t('projectControl.ruleLeft')}
           onCommit={(left) => onRuleChange({ ...rule, left })}
         />
@@ -269,6 +349,7 @@ function PairPositioningCard({
           value={rule.right}
           state={state}
           disabled={disabled}
+          fontData={fontData}
           aria-label={t('projectControl.ruleRight')}
           onCommit={(right) => onRuleChange({ ...rule, right })}
         />
@@ -286,11 +367,13 @@ function RuleCard({
   rule,
   state,
   disabled,
+  fontData,
   onRuleChange,
 }: {
   rule: Rule
   state: OpenTypeFeaturesState
   disabled?: boolean
+  fontData: FontData | null
   onRuleChange: (next: Rule) => void
 }) {
   const { t } = useTranslation()
@@ -300,6 +383,7 @@ function RuleCard({
         rule={rule}
         state={state}
         disabled={disabled}
+        fontData={fontData}
         onRuleChange={onRuleChange}
       />
     )
@@ -309,6 +393,7 @@ function RuleCard({
       <LigatureSubstitutionCard
         rule={rule}
         disabled={disabled}
+        fontData={fontData}
         onRuleChange={onRuleChange}
       />
     )
@@ -319,6 +404,7 @@ function RuleCard({
         rule={rule}
         state={state}
         disabled={disabled}
+        fontData={fontData}
         onRuleChange={onRuleChange}
       />
     )
@@ -333,10 +419,12 @@ function RuleCard({
 function LookupCard({
   lookup,
   state,
+  fontData,
   onStateChange,
 }: {
   lookup: LookupRecord
   state: OpenTypeFeaturesState
+  fontData: FontData | null
   onStateChange: (next: OpenTypeFeaturesState) => void
 }) {
   const { t } = useTranslation()
@@ -372,6 +460,7 @@ function LookupCard({
               rule={rule}
               state={state}
               disabled={disabled}
+              fontData={fontData}
               onRuleChange={(next) =>
                 onStateChange(updateLookupRule(state, lookup.id, next))
               }
@@ -389,6 +478,7 @@ function LookupCard({
 export function FeatureRuleEditor({
   state,
   lookupIds,
+  fontData = null,
   onStateChange,
 }: FeatureRuleEditorProps) {
   const { t } = useTranslation()
@@ -411,6 +501,7 @@ export function FeatureRuleEditor({
           key={lookup.id}
           lookup={lookup}
           state={state}
+          fontData={fontData}
           onStateChange={onStateChange}
         />
       ))}

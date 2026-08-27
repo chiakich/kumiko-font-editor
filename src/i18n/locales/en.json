@@ -1039,7 +1039,13 @@
     "noLookupsForFeature": "This feature has no lookups yet. Switch to FEA code to see its output.",
     "shapingHorizontal": "Horizontal",
     "shapingVertical": "Vertical",
-    "shapingUnknownGlyphs": "No such glyphs in this font: {{names}}"
+    "shapingUnknownGlyphs": "No such glyphs in this font: {{names}}",
+    "glyphPickerTitle": "Pick a glyph",
+    "glyphPickerPlaceholder": "Search by name, character or unicode…",
+    "glyphPickerVariants": "Variants of this base",
+    "glyphPickerMatches": "Matches ({{count}})",
+    "glyphPickerEmpty": "No matching glyphs.",
+    "glyphPickerOpen": "Open the glyph picker"
   },
   "settings": {
     "appearance": "Appearance",
@@ -1055,6 +1061,26 @@
   },
   "featureWorkspace": {
     "title": "OpenType features",
-    "backToOverview": "Back to overview"
+    "backToOverview": "Back to overview",
+    "homeEmpty": "Type text above to watch the features work on it",
+    "homeEmptyHint": "/glyphName places unreachable glyphs, e.g. /comma.vert",
+    "clickGlyphHint": "click a glyph for its rule chain",
+    "traceTitle": "Rules this glyph went through",
+    "tracing": "Tracing rules…",
+    "traceEmpty": "No rule touched this glyph.",
+    "editRule": "Edit rule →",
+    "openGlyph": "Open in editor →",
+    "missingVertTitle": "These glyphs have no .vert form yet",
+    "railTitle": "Features",
+    "openIndex": "Feature index",
+    "openHome": "Shaping preview",
+    "indexHint": "Each feature samples itself from its own rules. Click a row to edit.",
+    "indexEmpty": "This font has no OpenType features yet.",
+    "ruleCount": "{{count}} rules",
+    "specimenNoChange": "sample unchanged",
+    "specimenUnavailable": "no sample (raw-only rules)",
+    "backToIndex": "Feature index",
+    "featureEnabled": "Enabled",
+    "featureDisabled": "Disabled"
   }
 }

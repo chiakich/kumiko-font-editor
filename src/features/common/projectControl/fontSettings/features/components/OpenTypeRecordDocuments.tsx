@@ -23,11 +23,13 @@ import {
   type OpenTypeTableTag,
 } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
+import type { FontData } from 'src/store'
 
 export function FeatureDocument({
   feature,
   generatedFea,
   state,
+  fontData,
   onStateChange,
 }: {
   feature: FeatureRecord
@@ -36,6 +38,8 @@ export function FeatureDocument({
     text: string
   }
   state: OpenTypeFeaturesState
+  // Present where the visual editor should offer a glyph picker.
+  fontData?: FontData | null
   onStateChange?: (next: OpenTypeFeaturesState) => void
 }) {
   const { t } = useTranslation()
@@ -84,6 +88,7 @@ export function FeatureDocument({
         <FeatureRuleEditor
           state={state}
           lookupIds={lookupIds}
+          fontData={fontData ?? null}
           onStateChange={onStateChange}
         />
       ) : (

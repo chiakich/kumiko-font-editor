@@ -239,5 +239,16 @@ export const useShapingPreview = (input: {
     after,
     shapeError,
     unknownGlyphTokens,
+    // Everything a trace run needs to reproduce the after-run exactly.
+    traceInputs:
+      buffer && wantsPreview
+        ? {
+            buffer,
+            text: placeholder.text,
+            glyphTokens: placeholder.tokensByCluster,
+            features: featureList,
+            direction,
+          }
+        : null,
   }
 }
