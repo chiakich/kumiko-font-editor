@@ -1048,7 +1048,11 @@
     "glyphPickerOpen": "Open the glyph picker",
     "featureModeTable": "Rule table",
     "ruleTableFilter": "Filter rules, glyphs or @class…",
-    "ruleTableCount": "{{count}} rules"
+    "ruleTableCount": "{{count}} rules",
+    "featureModeGrid": "Proof grid",
+    "substitutionGridEmpty": "This feature has no one-to-one substitutions.",
+    "substitutionGridCount": "{{count}} mappings",
+    "substitutionGridMissing": "missing"
   },
   "settings": {
     "appearance": "Appearance",

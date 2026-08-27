@@ -1048,7 +1048,11 @@
     "glyphPickerOpen": "開啟字形挑選器",
     "featureModeTable": "規則表",
     "ruleTableFilter": "過濾規則、字形或 @class…",
-    "ruleTableCount": "{{count}} 條規則"
+    "ruleTableCount": "{{count}} 條規則",
+    "featureModeGrid": "對照網格",
+    "substitutionGridEmpty": "這個特性沒有一對一替換規則。",
+    "substitutionGridCount": "{{count}} 組對照",
+    "substitutionGridMissing": "缺字形"
   },
   "settings": {
     "appearance": "外觀主題",

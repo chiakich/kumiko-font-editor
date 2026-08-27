@@ -1,6 +1,7 @@
 import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
 import { FeatureRuleEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
 import { RuleTableView } from 'src/features/common/projectControl/fontSettings/features/components/RuleTableView'
+import { SubstitutionGridView } from 'src/features/common/projectControl/fontSettings/features/components/SubstitutionGridView'
 import {
   Badge,
   Button,
@@ -48,12 +49,30 @@ export function FeatureDocument({
     new Set(feature.entries.flatMap((entry) => entry.lookupIds))
   )
   const ruleCount = countFeatureRules(feature, state)
-  // Three views of the same feature: rule cards for the kinds the visual
-  // editor understands, a flat virtualized table that survives CJK-scale rule
-  // counts (and is the default there), and the generated FEA block.
-  const [mode, setMode] = useState<'visual' | 'table' | 'code'>(() =>
-    ruleCount > 100 ? 'table' : 'visual'
+  // One-to-one substitution features read best as a before/after proof sheet.
+  const lookupByIdForKinds = new Map(
+    state.lookups.map((lookup) => [lookup.id, lookup])
   )
+  const featureRuleKinds = feature.entries
+    .flatMap((entry) => entry.lookupIds)
+    .flatMap((lookupId) =>
+      (lookupByIdForKinds.get(lookupId)?.rules ?? []).map((rule) => rule.kind)
+    )
+  const singleSubCount = featureRuleKinds.filter(
+    (kind) => kind === 'singleSubstitution'
+  ).length
+  const hasGrid = singleSubCount > 0
+  // Four views of the same feature: rule cards, the substitution proof sheet,
+  // a flat virtualized table that survives CJK-scale rule counts, and the
+  // generated FEA block. The default follows the feature's dominant shape.
+  const [mode, setMode] = useState<'visual' | 'grid' | 'table' | 'code'>(() => {
+    if (ruleCount > 100) {
+      return singleSubCount * 2 > ruleCount ? 'grid' : 'table'
+    }
+    return singleSubCount > 0 && singleSubCount === ruleCount
+      ? 'grid'
+      : 'visual'
+  })
   const sourceSectionRecords = findOpenTypeSourceSectionsForRecord(state, {
     kind: 'feature',
     id: feature.id,
@@ -81,6 +100,15 @@ export function FeatureDocument({
         >
           {t('projectControl.featureModeVisual')}
         </Button>
+        {hasGrid && fontData ? (
+          <Button
+            size="2xs"
+            variant={mode === 'grid' ? 'solid' : 'outline'}
+            onClick={() => setMode('grid')}
+          >
+            {t('projectControl.featureModeGrid')}
+          </Button>
+        ) : null}
         {ruleCount > 0 ? (
           <Button
             size="2xs"
@@ -104,6 +132,12 @@ export function FeatureDocument({
           lookupIds={lookupIds}
           fontData={fontData ?? null}
           onStateChange={onStateChange}
+        />
+      ) : mode === 'grid' && fontData ? (
+        <SubstitutionGridView
+          state={state}
+          lookupIds={lookupIds}
+          fontData={fontData}
         />
       ) : mode === 'table' && onStateChange ? (
         <RuleTableView
