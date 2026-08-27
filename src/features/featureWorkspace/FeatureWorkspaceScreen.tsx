@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { ArrowLeft } from 'iconoir-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   buildAutoFeatureSuggestions,
@@ -25,6 +25,7 @@ import {
   type AutoFeatureSuggestion,
   type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
+import { prewarmOpenTypeFeatureCompiler } from 'src/lib/openTypeFeatures'
 import { useStore } from 'src/store'
 import { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
@@ -45,6 +46,10 @@ type WorkspaceView =
 // editors sit one step behind it. Edits write straight into the project
 // (dirty + auto draft save).
 export function FeatureWorkspaceScreen() {
+  // Loading Pyodide dominates the first preview compile; start it on entry.
+  useEffect(() => {
+    prewarmOpenTypeFeatureCompiler()
+  }, [])
   const { t } = useTranslation()
   const fontData = useStore((state) => state.fontData)
   const projectTitle = useStore((state) => state.projectTitle)

@@ -1,4 +1,6 @@
-import { exportFontAsBinary } from 'src/lib/fontFormats/fontBinaryFormat'
+import { buildSfntInWorker } from 'src/lib/fontFormats/buildSfntInWorker'
+import { getBinaryExportGlyphList } from 'src/lib/fontFormats/fontBinaryFormat'
+import { compileManagedFontFeatures } from 'src/lib/openTypeFeatures/compileManagedFontFeatures'
 import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
 import type { FontData } from 'src/store'
 
@@ -8,6 +10,31 @@ const cache = new WeakMap<FontData, WeakMap<object, Promise<ArrayBuffer>>>()
 
 // Stand-in cache key for a font with no feature state at all.
 const NO_FEATURES_KEY = {}
+
+const buildPreviewFontBuffer = async (
+  fontData: FontData,
+  openTypeFeatures: OpenTypeFeaturesState | undefined
+): Promise<ArrayBuffer> => {
+  const glyphs = getBinaryExportGlyphList(fontData)
+  // The outline serialization runs in a worker; the feature compile runs on
+  // the shared persistent compiler worker. The main thread only coordinates.
+  const sfntBuffer = await buildSfntInWorker({
+    fontData: {
+      fontInfo: fontData.fontInfo,
+      unitsPerEm: fontData.unitsPerEm,
+      lineMetricsHorizontalLayout: fontData.lineMetricsHorizontalLayout,
+      openTypeFeatures,
+      kerningGroups: fontData.kerningGroups,
+      kerningPairs: fontData.kerningPairs,
+    },
+    glyphs,
+  })
+  return compileManagedFontFeatures(sfntBuffer, openTypeFeatures, {
+    kerningGroups: fontData.kerningGroups,
+    kerningPairs: fontData.kerningPairs,
+    availableGlyphIds: new Set(glyphs.map((glyph) => glyph.id)),
+  })
+}
 
 // Compiles the current canonical font (outlines + feature state) into a binary
 // the shaping preview can hand to HarfBuzz. The result is cached per state
@@ -24,15 +51,7 @@ export const getShapingPreviewFontBuffer = (
   const featuresKey = openTypeFeatures ?? NO_FEATURES_KEY
   let pending = byFeatures.get(featuresKey)
   if (!pending) {
-    // The preview must reflect the feature state being edited, which can be
-    // ahead of what fontData still carries.
-    const exportSource =
-      fontData.openTypeFeatures === openTypeFeatures
-        ? fontData
-        : { ...fontData, openTypeFeatures }
-    pending = exportFontAsBinary(exportSource, 'ttf').then((blob) =>
-      blob.arrayBuffer()
-    )
+    pending = buildPreviewFontBuffer(fontData, openTypeFeatures)
     byFeatures.set(featuresKey, pending)
     // A failed compile must not be sticky, or the preview can never recover.
     pending.catch(() => byFeatures?.delete(featuresKey))

@@ -4,7 +4,10 @@ import {
   createCompilerRuntimeStatus,
   makeCompilerErrorResponse,
 } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
-import { compileWithFontToolsRuntime } from 'src/lib/openTypeFeatures/fontToolsPyodideRuntime'
+import {
+  compileWithFontToolsRuntime,
+  getFontToolsRuntime,
+} from 'src/lib/openTypeFeatures/fontToolsPyodideRuntime'
 import type {
   CompileRequestMessage,
   CompileSuccessMessage,
@@ -26,19 +29,29 @@ const toRuntimeCompileError = (error: unknown): RuntimeCompileError => {
   return error as RuntimeCompileError
 }
 
-self.onmessage = async (event: MessageEvent<CompileRequestMessage>) => {
+self.onmessage = async (
+  event: MessageEvent<CompileRequestMessage | { type: string }>
+) => {
+  if (event.data?.type === 'prewarm-compiler-runtime') {
+    // Fire-and-forget: load Pyodide + fontTools before the first compile asks.
+    void getFontToolsRuntime().catch(() => {})
+    return
+  }
   if (event.data?.type !== 'compile-font-features') {
     return
   }
+  const { requestId } = event.data as CompileRequestMessage
 
   try {
+    const payload = (event.data as CompileRequestMessage).payload
     const result = await compileWithFontToolsRuntime(
-      event.data.payload.inputFontBuffer,
-      event.data.payload.generatedFea,
-      event.data.payload.options
+      payload.inputFontBuffer,
+      payload.generatedFea,
+      payload.options
     )
     const response: CompileSuccessMessage = {
       type: 'compile-success',
+      requestId,
       payload: result,
     }
 
@@ -51,15 +64,16 @@ self.onmessage = async (event: MessageEvent<CompileRequestMessage>) => {
         ? compileError.message
         : 'OpenType feature compiler failed'
 
-    self.postMessage(
-      makeCompilerErrorResponse({
+    self.postMessage({
+      ...makeCompilerErrorResponse({
         backend: runtimeStatus.backend,
         message,
         rawCompilerOutput: compileError.rawCompilerOutput,
         runtimeStatus,
-        sourceMap: event.data.payload.sourceMap,
-      })
-    )
+        sourceMap: (event.data as CompileRequestMessage).payload.sourceMap,
+      }),
+      requestId,
+    })
   }
 }
 

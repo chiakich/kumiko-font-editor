@@ -20,7 +20,10 @@ export { buildFeaDocument } from 'src/lib/openTypeFeatures/buildFeaDocument'
 export { buildAutoFeatureSuggestions } from 'src/lib/openTypeFeatures/buildAutoFeatureSuggestions'
 export { buildKerningSuggestions } from 'src/lib/openTypeFeatures/buildKerningSuggestions'
 export { buildMarkSuggestions } from 'src/lib/openTypeFeatures/buildMarkSuggestions'
-export { compileFontWithFeatures } from 'src/lib/openTypeFeatures/compileFontWithFeatures'
+export {
+  compileFontWithFeatures,
+  prewarmOpenTypeFeatureCompiler,
+} from 'src/lib/openTypeFeatures/compileFontWithFeatures'
 export { compileManagedFontFeatures } from 'src/lib/openTypeFeatures/compileManagedFontFeatures'
 export {
   AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS,
