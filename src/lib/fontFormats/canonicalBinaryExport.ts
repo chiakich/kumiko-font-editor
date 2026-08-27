@@ -1,4 +1,5 @@
 import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
+import { interpolateKerningPairsAtLocation } from 'src/lib/kerning/interpolateKerning'
 import {
   exportGlyphListAsBinary,
   type BinaryFontExportFormat,
@@ -160,7 +161,15 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
   }
 
   return exportGlyphListAsBinary({
-    fontData,
+    fontData: {
+      ...fontData,
+      // Static instances kern with values interpolated at their location, not
+      // the default master's canonical pairs.
+      kerningPairs: interpolateKerningPairsAtLocation(
+        fontData,
+        instance.location
+      ),
+    },
     glyphs: baked.glyphs,
     format: input.format,
     familyName: instance.familyName,
