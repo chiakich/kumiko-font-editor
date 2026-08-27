@@ -1088,6 +1088,7 @@
     "editRule": "編輯規則 →",
     "openGlyph": "在編輯器開啟 →",
     "missingVertTitle": "這些字形還沒有 .vert 直排變體",
+    "kernVerticalHint": "專案字距只合成橫排 kern 特性，直排（vkrn）尚未支援，這裡的直排預覽不會套用字距。",
     "railTitle": "特性",
     "openIndex": "特性總覽",
     "openHome": "整形預覽",

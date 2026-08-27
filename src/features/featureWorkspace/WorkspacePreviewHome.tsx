@@ -40,6 +40,13 @@ export function WorkspacePreviewHome({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const isVertical = preview.direction === 'ttb'
   const hasText = preview.text.trim().length > 0
+  // Any master's pairs count: the honest message is about the project, not
+  // only the active master.
+  const hasProjectKerning =
+    (fontData.kerningPairs?.length ?? 0) > 0 ||
+    Object.values(fontData.kerningPairsByMaster ?? {}).some(
+      (pairs) => pairs.length > 0
+    )
   const afterGlyphs = useMemo(
     () => preview.after?.glyphs ?? [],
     [preview.after]
@@ -188,6 +195,11 @@ export function WorkspacePreviewHome({
             {t('projectControl.shapingUnknownGlyphs', {
               names: preview.unknownGlyphTokens.join(', '),
             })}
+          </Text>
+        ) : null}
+        {isVertical && hasText && hasProjectKerning ? (
+          <Text fontSize="xs" color="mutedForeground">
+            {t('featureWorkspace.kernVerticalHint')}
           </Text>
         ) : null}
       </Stack>

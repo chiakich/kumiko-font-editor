@@ -88,4 +88,14 @@ describe('harfbuzz default set', () => {
     expect(isFeatureOnByDefault('kern')).toBe(true)
     expect(isFeatureOnByDefault('ss07')).toBe(false)
   })
+
+  it('turns horizontal-only features off and vertical features on for ttb', () => {
+    expect(isFeatureOnByDefault('kern', 'ttb')).toBe(false)
+    expect(isFeatureOnByDefault('liga', 'ttb')).toBe(false)
+    expect(isFeatureOnByDefault('vert', 'ttb')).toBe(true)
+    expect(isFeatureOnByDefault('vkrn', 'ttb')).toBe(true)
+    // Direction-independent defaults stay on.
+    expect(isFeatureOnByDefault('ccmp', 'ttb')).toBe(true)
+    expect(isFeatureOnByDefault('mark', 'ttb')).toBe(true)
+  })
 })

@@ -29,12 +29,26 @@ const DEFAULT_ON_FEATURES = new Set([
 // Features HarfBuzz turns on only for vertical text.
 const VERTICAL_ON_FEATURES = new Set(['vert', 'vrt2', 'vkrn'])
 
+// HarfBuzz applies these only when shaping horizontally (hb-ot-shape's
+// horizontal_features list); in vertical text they stay off, so the chips
+// must not claim kern/liga apply to a ttb run.
+const HORIZONTAL_ONLY_FEATURES = new Set([
+  'calt',
+  'clig',
+  'curs',
+  'dist',
+  'kern',
+  'liga',
+  'rclt',
+])
+
 export const isFeatureOnByDefault = (
   tag: string,
   direction: PreviewDirection = 'ltr'
 ) =>
   direction === 'ttb'
-    ? DEFAULT_ON_FEATURES.has(tag) || VERTICAL_ON_FEATURES.has(tag)
+    ? (DEFAULT_ON_FEATURES.has(tag) && !HORIZONTAL_ONLY_FEATURES.has(tag)) ||
+      VERTICAL_ON_FEATURES.has(tag)
     : DEFAULT_ON_FEATURES.has(tag)
 
 export interface PreviewFeatureToggle {

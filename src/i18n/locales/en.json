@@ -1088,6 +1088,7 @@
     "editRule": "Edit rule →",
     "openGlyph": "Open in editor →",
     "missingVertTitle": "These glyphs have no .vert form yet",
+    "kernVerticalHint": "Project kerning is synthesized as the horizontal kern feature only; vertical kerning (vkrn) is not supported yet, so this vertical preview applies no kerning.",
     "railTitle": "Features",
     "openIndex": "Feature index",
     "openHome": "Shaping preview",
