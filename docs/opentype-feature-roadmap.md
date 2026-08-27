@@ -168,7 +168,52 @@ decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts
 - **ss 選單名稱**：detail 直接編輯 stylisticSet featureParams 首個名稱
   （`featureParamsEdit.ts`），generateFea 照常輸出 featureNames。
 
-5. **Behaviors panel 整合**——互相跳轉，不合併。（未動工）
+5. **Behaviors panel 整合**——**已完成（2026-08，缺口清償輪）**。互相跳轉:
+   Behaviors / Kerning 面板各有「在特性工作區開啟」（走 store 的
+   `featureWorkspaceRequest` 一次性深連結），kern 工作檯的「在編輯器中調整」
+   反向開啟字對並自動切到 Kerning tab（`editorRightPanelTabRequest`）。
+
+### 缺口清償輪（2026-08 下旬，「把缺口一個個補齊」）
+
+效能與規模:
+
+- **常駐 compiler worker**：`compileFontWithFeatures` 不再每次 compile 開新
+  worker（Pyodide 重載是最大單筆成本），改為單例 + requestId 對應；worker
+  級錯誤 fail 所有 in-flight 並重建。工作區進場即 `prewarmOpenTypeFeatureCompiler()`。
+- **sfnt 序列化移出 main thread**：預覽字型的 opentype.js 序列化改走
+  `previewSfntWorker`（`buildSfntInWorker`），main thread 只負責協調。
+- **CJK 規模回歸**：`largeFontCompileRuntime.test.ts`——4000 字形 +1500 kern
+  字對 +800 條替換規則全管線（sfnt ~70ms、feaLib ~300ms，成本線性）。
+
+編輯能力（貢獻者不再需要寫 FEA）:
+
+- **新增特性 / 新增規則 / 刪除規則**：`featureAuthoring.ts`（createFeature、
+  addRuleToFeature——複用同型別可編輯 lookup 或自建、deleteLookupRule）；
+  未填完的空白規則由 `buildFeaDocument.isRuleIncomplete` 擋在編譯之外。
+- **字符類別管理**（`GlyphClassesView` + `classAuthoring.ts`）：建立/改名/
+  成員編輯（picker 或空格分隔文字）、規則引用計數、被引用者禁刪。
+  **慣例確立：class name 一律含 `@` 前綴**（serializeFea 原樣輸出；
+  buildFeaDocument 對舊資料自動補 `@` 治癒）。
+- **picker 建立新變體**：查詢命中字形時可就地 `base.suffix` 建立變體
+  （store `createGlyphVariant`，複製輪廓、無編碼）並直接選入欄位。
+- **kern 工作檯補齊**：新增字對列（字形或 `@群組`）、詞表（每行一組，點入
+  預覽）、「在編輯器中調整」。
+- **contextual / mark 唯讀視覺卡**：backtrack→input'→lookahead 徽章鏈與
+  mark 錨點摘要；編輯仍走 FEA 程式碼模式。
+- **cv 選單名稱**：`featureParamsEdit` 增 characterVariant featUiLabelNames
+  編輯（cvParameters 已由 generateFea 輸出）。
+
+縫合與體驗:
+
+- **手動 `.fea` 掛載**：特性總覽「掛載 .fea 檔案」append 進 raw snippet 源
+  並重新 classify。
+- **工作區狀態持久化**：view/預覽文字/方向/語言存 store snapshot
+  （session 內離開再回不歸零）。
+- 合成 kern 列的開關改為 disabled（誠實呈現「無法關閉,除非刪字對」）。
+
+仍未動的資料層缺口（同前）: legacy kern 表匯入、rvrn/FeatureVariations、
+per-master kerning 插值模型、device tables；UI 元件層測試需先決定是否引入
+@testing-library。
 
 ## 已知順手債
 
