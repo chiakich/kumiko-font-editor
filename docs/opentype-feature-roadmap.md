@@ -123,7 +123,18 @@ Behaviors panel（glyph 中心）與 feature workspace（feature 中心）是同
    順帶修掉一個真 bug：CJK family name 會被 opentype.js 原樣寫進 CFF Name
    INDEX / PostScript name，fontTools 讀回直接炸（`'ascii' codec can't
 decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts`）。
-3. **Feature workspace**——**已完成（2026-08）**。`WorkspaceView` 增加
+3. **Feature workspace**——**已完成並依 UI 討論重構為「預覽為中心」（2026-08）**。
+   首頁是大型整形預覽（橫排/直排一級切換）：點任一輸出字形，右側 trace
+   面板顯示它經過的規則鏈（`traceShaping.ts` 走 harfbuzzjs `shapeWithTrace`
+   的 per-lookup buffer diff，訊息自帶 feature tag；`traceRuleLookup.ts` 映回
+   IR rule 供「編輯規則」跳轉，另可跳字形編輯器）。預覽輸入支援
+   `/glyphName` 逃逸語法（`shapingPreviewTokens.ts`，U+FFFC 佔位、整形後換
+   成指定字形——token 字形刻意不參與替換）。「特性總覽」是 specimen
+   sheet：每個 feature 用自己的規則選樣 before→after（`useFeatureSpecimens`），
+   附啟用開關（`featureEnablement.ts` 同步 IR isActive 與 snippet disabled）
+   與 auto-suggestion 入口。規則的字形欄位一律配字形挑選器
+   （`GlyphPickerPopover`，同基底變體優先），大規模 feature（>100 條）預設
+   虛擬化規則表（`RuleTableView`，kern 值可就地編輯）。原文接續：`WorkspaceView` 增加
    `'features'`，`FeatureWorkspaceScreen` 為一級畫面（入口在
    ProjectControlActions），直接寫入 store（`updateFontSettings` → dirty →
    auto draft save），不再是 modal-local draft。`.fea` 編輯改用 CodeMirror 6
