@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import type { KeyboardEvent } from 'react'
 import { SteppedNumberInput } from 'src/features/common/transform/components/SteppedNumberInput'
 import {
+  getMasterKerningPairs,
   buildKerningGroupMaps,
   describeKerningSelector,
   resolveKerningPair,
@@ -49,6 +50,7 @@ export function KerningPairInspector({ fontData }: KerningPairInspectorProps) {
   )
   const upsertKerningPair = useStore((state) => state.upsertKerningPair)
   const deleteKerningPair = useStore((state) => state.deleteKerningPair)
+  const activeMasterId = useStore((state) => state.activeMasterId)
 
   const [step, setStep] = useState(5)
   const [draftValue, setDraftValue] = useState<string | null>(null)
@@ -64,21 +66,29 @@ export function KerningPairInspector({ fontData }: KerningPairInspectorProps) {
     () => buildKerningGroupMaps(fontData.kerningGroups),
     [fontData.kerningGroups]
   )
+  // Inspect and edit the active master's pair values (per-master kerning).
+  const masterKerning = useMemo(
+    () => ({
+      kerningGroups: fontData.kerningGroups,
+      kerningPairs: getMasterKerningPairs(fontData, activeMasterId),
+    }),
+    [fontData, activeMasterId]
+  )
   const resolved = useMemo(
     () =>
       leftGlyphId && rightGlyphId
-        ? resolveKerningPair(fontData, leftGlyphId, rightGlyphId)
+        ? resolveKerningPair(masterKerning, leftGlyphId, rightGlyphId)
         : null,
-    [fontData, leftGlyphId, rightGlyphId]
+    [masterKerning, leftGlyphId, rightGlyphId]
   )
   const classFallback = useMemo(
     () =>
       leftGlyphId && rightGlyphId && resolved?.priority === 'glyph-glyph'
-        ? resolveKerningPair(fontData, leftGlyphId, rightGlyphId, {
+        ? resolveKerningPair(masterKerning, leftGlyphId, rightGlyphId, {
             ignoreGlyphPair: true,
           })
         : null,
-    [fontData, leftGlyphId, rightGlyphId, resolved?.priority]
+    [masterKerning, leftGlyphId, rightGlyphId, resolved?.priority]
   )
 
   if (editorGlyphIds.length < 2 || !leftGlyphId || !rightGlyphId || !resolved) {

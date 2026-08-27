@@ -98,6 +98,7 @@ export interface KumikoProjectRecord {
   openTypeFeatures?: OpenTypeFeaturesState
   kerningGroups?: KerningGroup[]
   kerningPairs?: KerningPair[]
+  kerningPairsByMaster?: Record<string, KerningPair[]>
   statusDefinitions?: DevelopmentStatusDefinition[]
   settings?: FontProjectSettings
   lineMetricsHorizontalLayout?: FontData['lineMetricsHorizontalLayout']

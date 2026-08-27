@@ -212,6 +212,11 @@ export interface FontData {
   glyphOrder?: string[]
   kerningGroups?: KerningGroup[]
   kerningPairs?: KerningPair[]
+  // Pair values for non-default masters, keyed by the master's source id.
+  // Convention: every non-default master gets an entry (possibly empty) at
+  // import; a master id absent here kerns with the canonical `kerningPairs`
+  // (the default master's set). Groups stay font-wide.
+  kerningPairsByMaster?: Record<string, KerningPair[]>
   fontInfo?: FontInfo
   axes?: FontAxes
   sources?: Record<string, FontSource>
@@ -301,6 +306,9 @@ export interface FontSource {
   id: string
   name: string
   location: Record<string, number>
+  // The UFO package this source came from (multi-UFO designspace projects);
+  // sync uses it to write each UFO's own kerning.plist.
+  ufoId?: string
   italicAngle?: number
   lineMetricsHorizontalLayout?: Record<string, { value: number; zone?: number }>
   lineMetricsVerticalLayout?: Record<string, { value: number; zone?: number }>

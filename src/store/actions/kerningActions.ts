@@ -5,7 +5,7 @@ import {
   findKerningPairIndex,
   normalizeKerningSelector,
 } from 'src/lib/kerning/resolveKerning'
-import type { GlobalState, KerningGroup } from 'src/store/types'
+import type { GlobalState, KerningGroup, KerningPair } from 'src/store/types'
 import { markProjectDirty } from 'src/store/dirtyState'
 
 type ImmerSet = Parameters<
@@ -23,6 +23,21 @@ export interface KerningGroupDraft {
   glyphs: string[]
 }
 
+// Pair edits land on the active master's set: non-default masters keep their
+// own pairs in kerningPairsByMaster, everything else edits the canonical set.
+const resolveKerningPairsDraft = (state: {
+  fontData: GlobalState['fontData']
+  activeMasterId: GlobalState['activeMasterId']
+}): KerningPair[] => {
+  const fontData = state.fontData!
+  const masterId = state.activeMasterId
+  if (masterId && fontData.kerningPairsByMaster?.[masterId]) {
+    return fontData.kerningPairsByMaster[masterId]
+  }
+  fontData.kerningPairs ??= []
+  return fontData.kerningPairs
+}
+
 export const buildKerningActions = (set: ImmerSet) => ({
   upsertKerningPair: (
     left: GlyphSelector,
@@ -34,7 +49,7 @@ export const buildKerningActions = (set: ImmerSet) => ({
       if (!Number.isFinite(value)) return
 
       const maps = buildKerningGroupMaps(state.fontData.kerningGroups)
-      const pairs = state.fontData.kerningPairs ?? []
+      const pairs = resolveKerningPairsDraft(state)
       const index = findKerningPairIndex(pairs, left, right, maps)
 
       if (index >= 0) {
@@ -47,24 +62,19 @@ export const buildKerningActions = (set: ImmerSet) => ({
           value,
         })
       }
-      state.fontData.kerningPairs = pairs
       markProjectDirty(state)
     }),
 
   deleteKerningPair: (left: GlyphSelector, right: GlyphSelector) =>
     set((state) => {
-      if (!state.fontData?.kerningPairs) return
+      if (!state.fontData) return
 
       const maps = buildKerningGroupMaps(state.fontData.kerningGroups)
-      const index = findKerningPairIndex(
-        state.fontData.kerningPairs,
-        left,
-        right,
-        maps
-      )
+      const pairs = resolveKerningPairsDraft(state)
+      const index = findKerningPairIndex(pairs, left, right, maps)
       if (index < 0) return
 
-      state.fontData.kerningPairs.splice(index, 1)
+      pairs.splice(index, 1)
       markProjectDirty(state)
     }),
 
@@ -90,7 +100,11 @@ export const buildKerningActions = (set: ImmerSet) => ({
             existing.name,
             existing.name.startsWith('@') ? existing.name : `@${existing.name}`,
           ])
-          for (const pair of state.fontData.kerningPairs ?? []) {
+          const allPairSets = [
+            state.fontData.kerningPairs ?? [],
+            ...Object.values(state.fontData.kerningPairsByMaster ?? {}),
+          ]
+          for (const pair of allPairSets.flat()) {
             for (const side of ['left', 'right'] as const) {
               const selector = pair[side]
               if (
@@ -132,9 +146,18 @@ export const buildKerningActions = (set: ImmerSet) => ({
         (item) => item.id !== groupId
       )
       // Pairs pointing at a deleted group would silently stop matching.
-      state.fontData.kerningPairs = (state.fontData.kerningPairs ?? []).filter(
-        (pair) => !referencesGroup(pair.left) && !referencesGroup(pair.right)
+      const withoutGroup = (pairs: KerningPair[]) =>
+        pairs.filter(
+          (pair) => !referencesGroup(pair.left) && !referencesGroup(pair.right)
+        )
+      state.fontData.kerningPairs = withoutGroup(
+        state.fontData.kerningPairs ?? []
       )
+      for (const [masterId, pairs] of Object.entries(
+        state.fontData.kerningPairsByMaster ?? {}
+      )) {
+        state.fontData.kerningPairsByMaster![masterId] = withoutGroup(pairs)
+      }
       markProjectDirty(state)
     }),
 })

@@ -233,6 +233,8 @@ export const buildPositionedGlyphs = ({
   let cursorX = 0
   let previousGlyphId: string | null = null
   let previousAdvanceEndX = 0
+  // Kerning follows the edit location's master, like the outlines do.
+  const kerningMasterId = findSourceIdAtLocation(fontData, editLocation)
   return glyphRuns
     .map((run) => {
       const glyph = fontData.glyphs[run.glyphId]
@@ -249,7 +251,8 @@ export const buildPositionedGlyphs = ({
       const kerningWithPrevious = getTextKerningValue(
         fontData,
         previousGlyphId,
-        glyph.id
+        glyph.id,
+        kerningMasterId
       )
       cursorX += kerningWithPrevious
 

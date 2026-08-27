@@ -21,6 +21,7 @@ import { SteppedNumberInput } from 'src/features/common/transform/components/Ste
 import {
   buildKerningGroupMaps,
   describeKerningSelector,
+  getMasterKerningPairs,
   type KerningGroupMaps,
 } from 'src/lib/kerning/resolveKerning'
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
@@ -38,13 +39,14 @@ export function KerningPairList({ fontData }: KerningPairListProps) {
   const upsertKerningPair = useStore((state) => state.upsertKerningPair)
   const deleteKerningPair = useStore((state) => state.deleteKerningPair)
   const setEditorTextState = useStore((state) => state.setEditorTextState)
+  const activeMasterId = useStore((state) => state.activeMasterId)
 
   const [query, setQuery] = useState('')
   const [isAdding, setIsAdding] = useState(false)
 
   const pairs = useMemo(
-    () => fontData.kerningPairs ?? [],
-    [fontData.kerningPairs]
+    () => getMasterKerningPairs(fontData, activeMasterId),
+    [fontData, activeMasterId]
   )
   const maps = useMemo(
     () => buildKerningGroupMaps(fontData.kerningGroups),

@@ -53,7 +53,10 @@ import {
 } from 'src/lib/fontFormats/fontInfoSettings'
 import { selectUfoFeatureText } from 'src/lib/openTypeFeatures'
 import { userNameToFileName } from 'src/lib/fontFormats/ufoFileNames'
-import { serializeUfoKerning } from 'src/lib/fontFormats/ufoKerning'
+import {
+  parseUfoKerning,
+  serializeUfoKerning,
+} from 'src/lib/fontFormats/ufoKerning'
 import {
   buildBoundsResolver,
   buildWorkspaceFileMapFromEntries,
@@ -202,6 +205,7 @@ const makeProjectFontDataFromMetadata = (
   openTypeFeatures: project.openTypeFeatures,
   kerningGroups: project.kerningGroups,
   kerningPairs: project.kerningPairs,
+  kerningPairsByMaster: project.kerningPairsByMaster,
   statusDefinitions: project.statusDefinitions,
   settings: project.settings,
   lineMetricsHorizontalLayout: project.lineMetricsHorizontalLayout,
@@ -473,13 +477,32 @@ const resolveDesignspacePath = (
   )
 }
 
+// The kerning pairs a given UFO package should carry: the source (master)
+// that came from this UFO keeps its own set; the default UFO (no by-master
+// entry) carries the canonical pairs.
+export const resolveUfoKerningPairs = (
+  project: KumikoProjectRecord,
+  ufoId: string
+) => {
+  const byMaster = project.kerningPairsByMaster
+  if (byMaster) {
+    const masterSource = Object.values(project.sources ?? {}).find(
+      (fontSource) => fontSource.ufoId === ufoId && byMaster[fontSource.id]
+    )
+    if (masterSource) {
+      return byMaster[masterSource.id]
+    }
+  }
+  return project.kerningPairs
+}
+
 const shouldSkipUfoKerningFiles = (
   project: KumikoProjectRecord,
   source: KumikoProjectUfoSource
 ) => {
   const hasKerningData =
     (project.kerningGroups?.length ?? 0) > 0 ||
-    (project.kerningPairs?.length ?? 0) > 0
+    (resolveUfoKerningPairs(project, source.ufoId)?.length ?? 0) > 0
   const hadKerningContent =
     Object.keys(source.groupsExtra ?? {}).length > 0 ||
     Object.keys(source.kerningExtra ?? {}).length > 0
@@ -893,9 +916,17 @@ const buildMetadata = (
     glyphMetadata
   )
   // Canonical project kerning wins; imported non-kerning groups survive.
-  const ufoKerning = serializeUfoKerning(metadataFontData, {
-    groups: source.groupsExtra,
-  })
+  // Each UFO gets its own master's pairs — writing the default master's
+  // kerning into every UFO would clobber the other masters' data.
+  const ufoKerning = serializeUfoKerning(
+    {
+      kerningGroups: metadataFontData.kerningGroups,
+      kerningPairs: resolveUfoKerningPairs(project, source.ufoId),
+    },
+    {
+      groups: source.groupsExtra,
+    }
+  )
   return {
     projectId: project.projectId,
     ufoId: source.ufoId,
@@ -1947,6 +1978,29 @@ export const applyKumikoRemoteSnapshot = async (input: {
     ? buildUfoFontLevelFontData(remoteFontLevel)
     : null
 
+  // Remote kerning.plist changes on non-default UFOs land in the per-master
+  // pair sets, so the next push round-trips them instead of clobbering.
+  const nextKerningPairsByMaster = { ...project.kerningPairsByMaster }
+  let kerningByMasterChanged = false
+  for (const [ufoId, remoteMetadata] of remoteFontLevelByUfoId) {
+    if (!remoteMetadata?.kerning) {
+      continue
+    }
+    for (const fontSource of Object.values(project.sources ?? {})) {
+      if (
+        fontSource.ufoId !== ufoId ||
+        !project.kerningPairsByMaster?.[fontSource.id]
+      ) {
+        continue
+      }
+      nextKerningPairsByMaster[fontSource.id] = parseUfoKerning(
+        remoteMetadata.groups,
+        remoteMetadata.kerning
+      ).kerningPairs
+      kerningByMasterChanged = true
+    }
+  }
+
   await saveKumikoProjectRecord({
     ...project,
     ...(remoteFontData
@@ -1961,6 +2015,9 @@ export const applyKumikoRemoteSnapshot = async (input: {
           lineMetricsHorizontalLayout:
             remoteFontData.lineMetricsHorizontalLayout,
         }
+      : {}),
+    ...(kerningByMasterChanged
+      ? { kerningPairsByMaster: nextKerningPairsByMaster }
       : {}),
     glyphOrder: nextGlyphOrder,
     sourceData: {

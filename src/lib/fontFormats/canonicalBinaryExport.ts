@@ -1,3 +1,4 @@
+import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
 import {
   exportGlyphListAsBinary,
   type BinaryFontExportFormat,
@@ -495,6 +496,7 @@ const getVariableMasterSources = (
 interface BakedMaster {
   fileName: string
   buildNames: { familyName: string; styleName: string }
+  sourceId: string
   glyphs: GlyphData[]
   source: {
     filename: string
@@ -620,6 +622,7 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     return {
       fileName,
       buildNames,
+      sourceId: source.id,
       glyphs: baked.glyphs,
       source: {
         filename: fileName,
@@ -639,7 +642,14 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
   const masters = await Promise.all(
     bakedMasters.map(async (master) => {
       const blob = await exportGlyphListAsBinary({
-        fontData: masterFontData,
+        fontData: {
+          ...masterFontData,
+          // Per-master pairs compile into each master, so varLib merges them
+          // into interpolated GPOS kerning deltas.
+          kerningPairs: shouldCompileFeaturesBeforeVariableBuild
+            ? getMasterKerningPairs(fontData, master.sourceId)
+            : undefined,
+        },
         glyphs: [...master.glyphs, ...bracketAlternateGlyphs],
         format: 'otf',
         familyName: master.buildNames.familyName,

@@ -23,6 +23,7 @@ import {
   type KerningGroup,
   type KerningPair,
 } from 'src/store'
+import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
 import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
 import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
 import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
@@ -279,6 +280,14 @@ export function KernPairView({
     (store) => store.requestEditorRightPanelTab
   )
   const openSpacingPairInEditor = useOpenSpacingPairInEditor()
+  const activeMasterId = useStore((store) => store.activeMasterId)
+  // Non-default masters carry their own pair sets; edits below go through the
+  // kerning actions, which target the same active master.
+  const masterPairs = getMasterKerningPairs(fontData, activeMasterId)
+  const activeMasterName =
+    activeMasterId && fontData.kerningPairsByMaster?.[activeMasterId]
+      ? (fontData.sources?.[activeMasterId]?.name ?? activeMasterId)
+      : null
   const [filter, setFilter] = useState('')
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [wordListText, setWordListText] = useState('')
@@ -305,15 +314,14 @@ export function KernPairView({
   }
 
   const pairs = useMemo(() => {
-    const all = fontData.kerningPairs ?? []
     const query = filter.trim().toLowerCase()
     if (!query) {
-      return all
+      return masterPairs
     }
-    return all.filter((pair) =>
+    return masterPairs.filter((pair) =>
       pairKey(pair, groups).toLowerCase().includes(query)
     )
-  }, [fontData, filter, groups])
+  }, [masterPairs, filter, groups])
 
   const selectedPair =
     pairs.find((pair) => pairKey(pair, groups) === selectedKey) ?? null
@@ -327,9 +335,14 @@ export function KernPairView({
         </Text>
         <Badge size="sm" variant="outline">
           {t('featureWorkspace.kernPairCount', {
-            count: (fontData.kerningPairs ?? []).length,
+            count: masterPairs.length,
           })}
         </Badge>
+        {activeMasterName ? (
+          <Badge size="sm" variant="subtle" fontFamily="mono">
+            {t('featureWorkspace.kernMaster', { master: activeMasterName })}
+          </Badge>
+        ) : null}
         <Input
           size="xs"
           maxW="260px"

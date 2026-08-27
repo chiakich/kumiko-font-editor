@@ -315,3 +315,16 @@ export function describeKerningSelector(
   const name = group?.name ?? selector.classId
   return name.startsWith('@') ? name : `@${name}`
 }
+
+// The pair set a given master kerns with: non-default masters carry their own
+// entry in kerningPairsByMaster; everything else (default master, single-
+// master projects, null master) uses the canonical kerningPairs.
+export const getMasterKerningPairs = (
+  fontData: Pick<FontData, 'kerningPairs' | 'kerningPairsByMaster'>,
+  masterId: string | null | undefined
+): KerningPair[] => {
+  if (masterId && fontData.kerningPairsByMaster?.[masterId]) {
+    return fontData.kerningPairsByMaster[masterId]
+  }
+  return fontData.kerningPairs ?? []
+}

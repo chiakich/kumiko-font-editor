@@ -1141,6 +1141,7 @@
     "featureVariationsTitle": "特性變體(FeatureVariations)",
     "featureVariationsReadOnly": "唯讀",
     "featureVariationsHint": "可變字型的軸區間特性替換。Kumiko 會保留原始資料但尚未支援編輯;重建版面表時請使用保留原編譯表的匯出政策。",
-    "featureVariationsAlways": "(無條件)"
+    "featureVariationsAlways": "(無條件)",
+    "kernMaster": "Master:{{master}}"
   }
 }
