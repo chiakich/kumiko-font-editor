@@ -40,11 +40,13 @@ const validateRuleShape = (
   diagnostics: FeatureDiagnostic[]
 ) => {
   if (rule.kind === 'ligatureSubstitution') {
-    if (rule.components.length === 0) {
+    if (rule.components.length < 2) {
+      // Matches the serializer: a one-component "ligature" is dropped from
+      // the generated FEA, so surface why instead of failing silently.
       diagnostics.push(
         makeDiagnostic(
           'error',
-          'Ligature substitutions need at least one component glyph.',
+          'Ligature substitutions need at least two component glyphs.',
           { kind: 'rule', ruleId: rule.id },
           [rule.id, 'empty-components']
         )

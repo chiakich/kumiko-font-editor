@@ -434,8 +434,12 @@ function MarkRuleCard({
       </Text>
       {Object.entries(rule.anchors).map(([markClassId, anchor]) => (
         <Badge key={markClassId} variant="subtle" fontFamily="mono">
-          @{markClassNameById.get(markClassId) ?? markClassId} ({anchor.x},{' '}
-          {anchor.y})
+          @
+          {(markClassNameById.get(markClassId) ?? markClassId).replace(
+            /^@/,
+            ''
+          )}{' '}
+          ({anchor.x}, {anchor.y})
         </Badge>
       ))}
     </HStack>

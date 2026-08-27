@@ -118,9 +118,12 @@ export function GlyphPickerPopover({
   }, [fontData, query])
   const suffixText = variantSuffix.trim().replace(/^\./, '')
   const variantName = variantSource ? `${variantSource.id}.${suffixText}` : ''
+  // The full name must satisfy the glyph-name grammar the copy action checks,
+  // or the store will silently refuse to create the glyph.
   const canCreateVariant = Boolean(
     variantSource &&
     /^[A-Za-z0-9_.]+$/.test(suffixText) &&
+    /^[A-Za-z_.][A-Za-z0-9_.-]*$/.test(variantName) &&
     !fontData.glyphs[variantName]
   )
 
@@ -170,7 +173,11 @@ export function GlyphPickerPopover({
       return
     }
     createGlyphVariant(variantSource.id, variantName)
-    pick(variantName)
+    // The copy can still fail silently (e.g. unloaded source outlines): only
+    // hand the name to the rule field when the glyph really exists now.
+    if (useStore.getState().fontData?.glyphs[variantName]) {
+      pick(variantName)
+    }
   }
 
   return (

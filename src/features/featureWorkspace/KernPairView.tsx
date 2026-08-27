@@ -17,10 +17,16 @@ import {
   type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import { useStore, type FontData, type KerningPair } from 'src/store'
+import {
+  useStore,
+  type FontData,
+  type KerningGroup,
+  type KerningPair,
+} from 'src/store'
 import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
 import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
 import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import { EDITOR_RIGHT_PANEL_KERNING_TAB } from 'src/features/editor/rightPanel/rightPanelTabs'
 import { getShapingPreviewFontBuffer } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
 import { PREVIEW_GLYPH_PLACEHOLDER } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
 import type { ShapingPreviewRun } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
@@ -33,31 +39,38 @@ interface KernPairViewProps {
   onPreviewText: (text: string) => void
 }
 
-// Group references are stored as ids or names; both display as @name.
-const selectorLabel = (selector: GlyphSelector, fontData: FontData) => {
+// Group references are stored as ids or names (with or without '@'): one
+// index resolves all three forms so pair rows never scan the group list.
+type GroupIndex = ReadonlyMap<string, KerningGroup>
+
+const buildGroupIndex = (fontData: FontData): GroupIndex => {
+  const index = new Map<string, KerningGroup>()
+  for (const group of fontData.kerningGroups ?? []) {
+    index.set(group.id, group)
+    index.set(group.name, group)
+    index.set(`@${group.name}`, group)
+  }
+  return index
+}
+
+const selectorLabel = (selector: GlyphSelector, groups: GroupIndex) => {
   if (selector.kind === 'glyph') {
     return selector.glyph
   }
-  const group = (fontData.kerningGroups ?? []).find(
-    (candidate) =>
-      candidate.id === selector.classId ||
-      candidate.name === selector.classId ||
-      `@${candidate.name}` === selector.classId
-  )
+  const group = groups.get(selector.classId)
   return `@${(group?.name ?? selector.classId).replace(/^@/, '')}`
 }
 
 // A concrete glyph that can stand in for the selector in the pair preview.
-const selectorSampleGlyph = (selector: GlyphSelector, fontData: FontData) => {
+const selectorSampleGlyph = (
+  selector: GlyphSelector,
+  groups: GroupIndex,
+  fontData: FontData
+) => {
   if (selector.kind === 'glyph') {
     return selector.glyph
   }
-  const group = (fontData.kerningGroups ?? []).find(
-    (candidate) =>
-      candidate.id === selector.classId ||
-      candidate.name === selector.classId ||
-      `@${candidate.name}` === selector.classId
-  )
+  const group = groups.get(selector.classId)
   return group?.glyphs.find((glyphId) => fontData.glyphs[glyphId]) ?? null
 }
 
@@ -65,7 +78,8 @@ const selectorSampleGlyph = (selector: GlyphSelector, fontData: FontData) => {
 // glyph. Returns null when nothing in the project matches.
 const parseKernSideText = (
   text: string,
-  fontData: FontData
+  fontData: FontData,
+  groups: GroupIndex
 ): GlyphSelector | null => {
   const trimmed = text.trim()
   if (!trimmed) {
@@ -73,9 +87,7 @@ const parseKernSideText = (
   }
   if (trimmed.startsWith('@')) {
     const name = trimmed.slice(1)
-    const group = (fontData.kerningGroups ?? []).find(
-      (candidate) => candidate.name === name || candidate.id === trimmed
-    )
+    const group = groups.get(name) ?? groups.get(trimmed)
     return group ? { kind: 'class', classId: group.id } : null
   }
   return fontData.glyphs[trimmed] ? { kind: 'glyph', glyph: trimmed } : null
@@ -126,8 +138,8 @@ function KernSideField({
   )
 }
 
-const pairKey = (pair: KerningPair, fontData: FontData) =>
-  `${selectorLabel(pair.left, fontData)}|${selectorLabel(pair.right, fontData)}`
+const pairKey = (pair: KerningPair, groups: GroupIndex) =>
+  `${selectorLabel(pair.left, groups)}|${selectorLabel(pair.right, groups)}`
 
 function PairPreview({
   fontData,
@@ -144,8 +156,9 @@ function PairPreview({
     before: ShapingPreviewRun
     after: ShapingPreviewRun
   } | null>(null)
-  const leftGlyph = selectorSampleGlyph(pair.left, fontData)
-  const rightGlyph = selectorSampleGlyph(pair.right, fontData)
+  const groups = useMemo(() => buildGroupIndex(fontData), [fontData])
+  const leftGlyph = selectorSampleGlyph(pair.left, groups, fontData)
+  const rightGlyph = selectorSampleGlyph(pair.right, groups, fontData)
   const key = `${leftGlyph}|${rightGlyph}|${pair.value}`
 
   useEffect(() => {
@@ -273,8 +286,9 @@ export function KernPairView({
   const [draftRight, setDraftRight] = useState('')
   const [draftValue, setDraftValue] = useState('')
 
-  const draftLeftSelector = parseKernSideText(draftLeft, fontData)
-  const draftRightSelector = parseKernSideText(draftRight, fontData)
+  const groups = useMemo(() => buildGroupIndex(fontData), [fontData])
+  const draftLeftSelector = parseKernSideText(draftLeft, fontData, groups)
+  const draftRightSelector = parseKernSideText(draftRight, fontData, groups)
   const draftValueNumber = Number(draftValue.trim())
   const canAddPair =
     Boolean(draftLeftSelector && draftRightSelector) &&
@@ -297,12 +311,12 @@ export function KernPairView({
       return all
     }
     return all.filter((pair) =>
-      pairKey(pair, fontData).toLowerCase().includes(query)
+      pairKey(pair, groups).toLowerCase().includes(query)
     )
-  }, [fontData, filter])
+  }, [fontData, filter, groups])
 
   const selectedPair =
-    pairs.find((pair) => pairKey(pair, fontData) === selectedKey) ?? null
+    pairs.find((pair) => pairKey(pair, groups) === selectedKey) ?? null
   const irKernFeature = state.features.find((feature) => feature.tag === 'kern')
 
   return (
@@ -407,7 +421,7 @@ export function KernPairView({
             if (!pair) {
               return null
             }
-            const key = pairKey(pair, fontData)
+            const key = pairKey(pair, groups)
             const isSelected = key === selectedKey
             return (
               <HStack
@@ -423,10 +437,10 @@ export function KernPairView({
                 onClick={() => setSelectedKey(isSelected ? null : key)}
               >
                 <Text flex={1} minW={0} lineClamp={1}>
-                  {selectorLabel(pair.left, fontData)}
+                  {selectorLabel(pair.left, groups)}
                 </Text>
                 <Text flex={1} minW={0} lineClamp={1}>
-                  {selectorLabel(pair.right, fontData)}
+                  {selectorLabel(pair.right, groups)}
                 </Text>
                 <Input
                   size="2xs"
@@ -510,15 +524,22 @@ export function KernPairView({
               pair={selectedPair}
             />
             {(() => {
-              const left = selectorSampleGlyph(selectedPair.left, fontData)
-              const right = selectorSampleGlyph(selectedPair.right, fontData)
+              const left = selectorSampleGlyph(
+                selectedPair.left,
+                groups,
+                fontData
+              )
+              const right = selectorSampleGlyph(
+                selectedPair.right,
+                groups,
+                fontData
+              )
               return left && right ? (
                 <Button
                   size="2xs"
                   variant="outline"
                   onClick={() => {
-                    // Kerning is the fourth right-panel tab in the editor.
-                    requestEditorRightPanelTab(3)
+                    requestEditorRightPanelTab(EDITOR_RIGHT_PANEL_KERNING_TAB)
                     openSpacingPairInEditor(left, right)
                   }}
                 >

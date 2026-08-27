@@ -74,6 +74,10 @@ describe('featureAuthoring', () => {
     )
     const blankFea = generateFea(added.state).text
     expect(blankFea).not.toMatch(/sub\s+by/)
+    // The empty lookup block and its feature reference must not be emitted
+    // either — `lookup x { } x;` is invalid FEA.
+    expect(blankFea).not.toContain('lookup_ss02_manual_1')
+    expect(blankFea).not.toContain('feature ss02')
 
     // Once filled in, the rule serializes normally.
     const filled = {

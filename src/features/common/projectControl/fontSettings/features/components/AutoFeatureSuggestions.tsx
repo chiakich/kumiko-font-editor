@@ -6,7 +6,9 @@ interface AutoFeatureSuggestionsProps {
   suggestions: AutoFeatureSuggestion[]
   onAccept: (suggestion: AutoFeatureSuggestion) => void
   onIgnore: (suggestion: AutoFeatureSuggestion) => void
-  onScan: () => void
+  // Optional: suggestions derive live from the state, so most hosts need no
+  // explicit rescan button.
+  onScan?: () => void
 }
 
 export function AutoFeatureSuggestions({
@@ -23,9 +25,11 @@ export function AutoFeatureSuggestions({
         <Text fontWeight="semibold">
           {t('projectControl.autoFeatureSuggestions')}
         </Text>
-        <Button size="sm" onClick={onScan}>
-          {t('projectControl.scan')}
-        </Button>
+        {onScan ? (
+          <Button size="sm" onClick={onScan}>
+            {t('projectControl.scan')}
+          </Button>
+        ) : null}
       </HStack>
       {suggestions.length === 0 ? (
         <Text fontSize="sm" color="mutedForeground">

@@ -8,12 +8,12 @@ import {
   Text,
   Textarea,
 } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
 import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
 import {
-  countGlyphClassRuleReferences,
+  countGlyphClassReferences,
   createGlyphClass,
   deleteGlyphClass,
   updateGlyphClass,
@@ -36,16 +36,17 @@ function GlyphClassCard({
   glyphClass,
   fontData,
   state,
+  referenceCount,
   onStateChange,
 }: {
   glyphClass: GlyphClass
   fontData: FontData
   state: OpenTypeFeaturesState
+  referenceCount: number
   onStateChange: (next: OpenTypeFeaturesState) => void
 }) {
   const { t } = useTranslation()
   const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const referenceCount = countGlyphClassRuleReferences(state, glyphClass.id)
   const missingMembers = glyphClass.glyphs.filter(
     (glyphId) => !fontData.glyphs[glyphId]
   )
@@ -220,6 +221,11 @@ export function GlyphClassesView({
 }: GlyphClassesViewProps) {
   const { t } = useTranslation()
   const [newName, setNewName] = useState('')
+  // One pass for all cards; per-card counting is quadratic at CJK scale.
+  const referenceCounts = useMemo(
+    () => countGlyphClassReferences(state),
+    [state]
+  )
 
   const commitNewClass = () => {
     const created = createGlyphClass(state, newName)
@@ -277,6 +283,7 @@ export function GlyphClassesView({
             glyphClass={glyphClass}
             fontData={fontData}
             state={state}
+            referenceCount={referenceCounts.get(glyphClass.id) ?? 0}
             onStateChange={onStateChange}
           />
         ))

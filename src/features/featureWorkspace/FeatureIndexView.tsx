@@ -35,7 +35,6 @@ interface FeatureIndexViewProps {
   onOpenKern: () => void
   onAcceptSuggestion: (suggestion: AutoFeatureSuggestion) => void
   onIgnoreSuggestion: (suggestion: AutoFeatureSuggestion) => void
-  onScanSuggestions: () => void
 }
 
 const SPECIMEN_SIZE = 34
@@ -52,7 +51,6 @@ export function FeatureIndexView({
   onOpenKern,
   onAcceptSuggestion,
   onIgnoreSuggestion,
-  onScanSuggestions,
 }: FeatureIndexViewProps) {
   const { t } = useTranslation()
   const feaFileInputRef = useRef<HTMLInputElement | null>(null)
@@ -219,7 +217,6 @@ export function FeatureIndexView({
             suggestions={suggestions}
             onAccept={onAcceptSuggestion}
             onIgnore={onIgnoreSuggestion}
-            onScan={onScanSuggestions}
           />
         </Box>
       ) : null}

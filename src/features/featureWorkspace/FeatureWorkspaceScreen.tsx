@@ -113,13 +113,18 @@ export function FeatureWorkspaceScreen() {
     initialLanguageOptionId: savedSnapshot?.languageOptionId,
   })
   // Keep the snapshot current so leaving the workspace never loses state.
+  // Debounced: a store write per keystroke would wake every subscriber for
+  // scratch UI state.
   useEffect(() => {
-    setFeatureWorkspaceSnapshot({
-      view,
-      text: preview.text,
-      direction: preview.direction,
-      languageOptionId: preview.languageOptionId,
-    })
+    const timer = setTimeout(() => {
+      setFeatureWorkspaceSnapshot({
+        view,
+        text: preview.text,
+        direction: preview.direction,
+        languageOptionId: preview.languageOptionId,
+      })
+    }, 300)
+    return () => clearTimeout(timer)
   }, [
     view,
     preview.text,
@@ -444,20 +449,7 @@ export function FeatureWorkspaceScreen() {
             fontData={fontData}
             onOpenFeature={openFeature}
           />
-        ) : view.kind === 'index' ? (
-          <FeatureIndexView
-            state={openTypeFeatures}
-            fontData={fontData}
-            diagnostics={diagnostics}
-            suggestions={suggestions}
-            onStateChange={handleChange}
-            onOpenFeature={openFeature}
-            onOpenKern={() => setView({ kind: 'kern' })}
-            onAcceptSuggestion={acceptSuggestion}
-            onIgnoreSuggestion={ignoreSuggestion}
-            onScanSuggestions={() => handleChange({ ...openTypeFeatures })}
-          />
-        ) : selectedFeature ? (
+        ) : view.kind === 'feature' && selectedFeature ? (
           <FeatureDetailView
             feature={selectedFeature}
             state={openTypeFeatures}
@@ -467,6 +459,7 @@ export function FeatureWorkspaceScreen() {
             onBack={() => setView({ kind: 'index' })}
           />
         ) : (
+          // The index doubles as the fallback for a stale feature selection.
           <FeatureIndexView
             state={openTypeFeatures}
             fontData={fontData}
@@ -477,7 +470,6 @@ export function FeatureWorkspaceScreen() {
             onOpenKern={() => setView({ kind: 'kern' })}
             onAcceptSuggestion={acceptSuggestion}
             onIgnoreSuggestion={ignoreSuggestion}
-            onScanSuggestions={() => handleChange({ ...openTypeFeatures })}
           />
         )}
       </HStack>

@@ -1,9 +1,9 @@
 import { getRuleClassReferences } from 'src/lib/openTypeFeatures/ruleReferences'
 import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
 
-// FEA class-name grammar: letters, digits, underscore and dots; must not
-// start with a digit. The IR stores class names WITH their '@' prefix
-// (matching serializeFea, which emits the name verbatim).
+// FEA class-name grammar (isValidGlyphClassName): '@' then a letter or
+// underscore, then letters/digits/underscore/dots. The IR stores class names
+// WITH their '@' prefix (matching serializeFea, which emits them verbatim).
 export const sanitizeGlyphClassName = (name: string) => {
   const cleaned = name
     .replace(/^@/, '')
@@ -12,16 +12,37 @@ export const sanitizeGlyphClassName = (name: string) => {
   if (!cleaned) {
     return ''
   }
-  return `@${/^[A-Za-z_.]/.test(cleaned) ? cleaned : `_${cleaned}`}`
+  return `@${/^[A-Za-z_]/.test(cleaned) ? cleaned : `_${cleaned}`}`
+}
+
+// Everything that keeps a class alive: rule selectors plus lookup-level
+// mark-attachment / mark-filtering references. One pass over all lookups.
+export const countGlyphClassReferences = (
+  state: OpenTypeFeaturesState
+): Map<string, number> => {
+  const counts = new Map<string, number>()
+  const bump = (classId: string) =>
+    counts.set(classId, (counts.get(classId) ?? 0) + 1)
+  for (const lookup of state.lookups) {
+    if (lookup.markAttachmentClassId) {
+      bump(lookup.markAttachmentClassId)
+    }
+    if (lookup.markFilteringSetClassId) {
+      bump(lookup.markFilteringSetClassId)
+    }
+    for (const rule of lookup.rules) {
+      for (const classId of getRuleClassReferences(rule)) {
+        bump(classId)
+      }
+    }
+  }
+  return counts
 }
 
 export const countGlyphClassRuleReferences = (
   state: OpenTypeFeaturesState,
   classId: string
-) =>
-  state.lookups
-    .flatMap((lookup) => lookup.rules)
-    .filter((rule) => getRuleClassReferences(rule).includes(classId)).length
+) => countGlyphClassReferences(state).get(classId) ?? 0
 
 export function createGlyphClass(
   state: OpenTypeFeaturesState,
@@ -63,6 +84,16 @@ export function updateGlyphClass(
 ): OpenTypeFeaturesState {
   const name =
     update.name !== undefined ? sanitizeGlyphClassName(update.name) : undefined
+  // Renaming onto an existing class would serialize two definitions of the
+  // same @name, which feaLib rejects; refuse the collision instead.
+  if (
+    name &&
+    state.glyphClasses.some(
+      (glyphClass) => glyphClass.id !== classId && glyphClass.name === name
+    )
+  ) {
+    return state
+  }
   return {
     ...state,
     glyphClasses: state.glyphClasses.map((glyphClass) =>

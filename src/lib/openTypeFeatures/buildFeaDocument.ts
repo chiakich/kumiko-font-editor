@@ -63,15 +63,27 @@ const markRuleMissingAnchorsComment = (rule: Rule) => ({
   value: `Cannot serialize rule ${rule.id}: mark positioning rule has no mark anchors`,
 })
 
-const selectorHasContent = (selector: GlyphSelector) =>
-  selector.kind === 'glyph' ? selector.glyph.trim().length > 0 : true
+const selectorHasContent = (
+  selector: GlyphSelector,
+  populatedClassIds: ReadonlySet<string>
+) =>
+  selector.kind === 'glyph'
+    ? selector.glyph.trim().length > 0
+    : populatedClassIds.has(selector.classId)
 
 // A rule the user is still filling in (blank glyph fields from the visual
-// editor's "add rule") must not reach the compiler as invalid FEA.
-const isRuleIncomplete = (rule: Rule): boolean => {
+// editor's "add rule", or a reference to a still-empty class) must not reach
+// the compiler as invalid FEA.
+const isRuleIncomplete = (
+  rule: Rule,
+  populatedClassIds: ReadonlySet<string>
+): boolean => {
   switch (rule.kind) {
     case 'singleSubstitution':
-      return !selectorHasContent(rule.target) || !rule.replacement.trim()
+      return (
+        !selectorHasContent(rule.target, populatedClassIds) ||
+        !rule.replacement.trim()
+      )
     case 'ligatureSubstitution':
       return (
         rule.components.length < 2 ||
@@ -79,7 +91,10 @@ const isRuleIncomplete = (rule: Rule): boolean => {
         !rule.replacement.trim()
       )
     case 'pairPositioning':
-      return !selectorHasContent(rule.left) || !selectorHasContent(rule.right)
+      return (
+        !selectorHasContent(rule.left, populatedClassIds) ||
+        !selectorHasContent(rule.right, populatedClassIds)
+      )
     default:
       return false
   }
@@ -88,9 +103,10 @@ const isRuleIncomplete = (rule: Rule): boolean => {
 const ruleToNode = (
   rule: Rule,
   markClassNameById: Map<string, string>,
-  lookupNameById: Map<string, string>
+  lookupNameById: Map<string, string>,
+  populatedClassIds: ReadonlySet<string>
 ): FeaNode | null => {
-  if (isRuleIncomplete(rule)) {
+  if (isRuleIncomplete(rule, populatedClassIds)) {
     return null
   }
   switch (rule.kind) {
@@ -252,12 +268,15 @@ const ruleToNode = (
   }
 }
 
+// Returns null when no rule in the lookup is serializable (e.g. a freshly
+// added blank rule): an empty lookup block is invalid FEA.
 const lookupToBlock = (
   lookup: LookupRecord,
   markClassNameById: Map<string, string>,
   glyphClassNameById: Map<string, string>,
-  lookupNameById: Map<string, string>
-): FeaNode => {
+  lookupNameById: Map<string, string>,
+  populatedClassIds: ReadonlySet<string>
+): FeaNode | null => {
   const markAttachmentClassName = lookup.markAttachmentClassId
     ? glyphClassNameById.get(lookup.markAttachmentClassId)
     : undefined
@@ -277,6 +296,15 @@ const lookupToBlock = (
     ...(missingMarkAttachmentClass ? { markAttachmentType: false } : {}),
     ...(missingMarkFilteringSet ? { useMarkFilteringSet: false } : {}),
   }
+  const ruleNodes = lookup.rules
+    .map((rule) =>
+      ruleToNode(rule, markClassNameById, lookupNameById, populatedClassIds)
+    )
+    .filter((node): node is FeaNode => Boolean(node))
+  if (ruleNodes.length === 0) {
+    return null
+  }
+
   const statements: FeaNode[] = [
     ...(missingMarkAttachmentClass
       ? [
@@ -304,9 +332,7 @@ const lookupToBlock = (
           },
         ]
       : []),
-    ...lookup.rules
-      .map((rule) => ruleToNode(rule, markClassNameById, lookupNameById))
-      .filter((node): node is FeaNode => Boolean(node)),
+    ...ruleNodes,
   ]
 
   return {
@@ -319,23 +345,29 @@ const lookupToBlock = (
 
 const featureEntryStatements = (
   entry: FeatureEntry,
-  lookupById: Map<string, LookupRecord>
+  lookupById: Map<string, LookupRecord>,
+  emittedLookupIds: ReadonlySet<string>
 ): FeaNode[] => {
-  const statements: FeaNode[] = [
-    { kind: 'ScriptStatement', script: entry.script },
-    { kind: 'LanguageStatement', language: entry.language },
-  ]
-
+  const lookupStatements: FeaNode[] = []
   for (const lookupId of entry.lookupIds) {
     const lookup = lookupById.get(lookupId)
-    if (lookup) {
-      statements.push({
+    if (lookup && emittedLookupIds.has(lookup.id)) {
+      lookupStatements.push({
         kind: 'Raw',
         value: `  lookup ${lookup.name};`,
       })
     }
   }
-  return statements
+  // An entry whose lookups are all unserializable (still being edited) emits
+  // nothing — a script/language pair with no rules is dead weight at best.
+  if (lookupStatements.length === 0) {
+    return []
+  }
+  return [
+    { kind: 'ScriptStatement', script: entry.script },
+    { kind: 'LanguageStatement', language: entry.language },
+    ...lookupStatements,
+  ]
 }
 
 const lookupReferenceStatement = (lookup: LookupRecord): FeaNode => ({
@@ -409,18 +441,21 @@ const featureParamsStatements = (
 
 const featureStatements = (
   feature: FeatureRecord,
-  lookupById: Map<string, LookupRecord>
+  lookupById: Map<string, LookupRecord>,
+  emittedLookupIds: ReadonlySet<string>
 ): FeaNode[] => {
   if (feature.tag !== 'aalt') {
     return feature.entries.flatMap((entry) =>
-      featureEntryStatements(entry, lookupById)
+      featureEntryStatements(entry, lookupById, emittedLookupIds)
     )
   }
 
   const lookupIds = new Set(feature.entries.flatMap((entry) => entry.lookupIds))
   return [...lookupIds].flatMap((lookupId) => {
     const lookup = lookupById.get(lookupId)
-    return lookup ? [lookupReferenceStatement(lookup)] : []
+    return lookup && emittedLookupIds.has(lookup.id)
+      ? [lookupReferenceStatement(lookup)]
+      : []
   })
 }
 
@@ -544,6 +579,31 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
       !stateGlyphClassIds.has(glyphClass.id)
   )
 
+  const populatedClassIds = new Set([
+    ...state.glyphClasses
+      .filter((glyphClass) => glyphClass.glyphs.length > 0)
+      .map((glyphClass) => glyphClass.id),
+    ...gdefDerivedGlyphClasses
+      .filter((glyphClass) => glyphClass.glyphs.length > 0)
+      .map((glyphClass) => glyphClass.id),
+  ])
+  const lookupBlocks = orderedLookups
+    .map((lookup) =>
+      lookupToBlock(
+        lookup,
+        markClassNameById,
+        glyphClassNameById,
+        lookupNameById,
+        populatedClassIds
+      )
+    )
+    .filter((block): block is FeaNode => Boolean(block))
+  const emittedLookupIds = new Set(
+    lookupBlocks.flatMap((block) =>
+      block.kind === 'LookupBlock' && block.lookupId ? [block.lookupId] : []
+    )
+  )
+
   const statements: FeaNode[] = [
     ...headerComments.map((value) => ({ kind: 'Comment' as const, value })),
     ...(rawFeatureTextForOutput
@@ -554,18 +614,24 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
       script: languageSystem.script,
       language: languageSystem.language,
     })),
-    ...state.glyphClasses.map((glyphClass) => ({
-      kind: 'GlyphClass' as const,
-      name: toClassName(glyphClass.name),
-      glyphs: glyphClass.glyphs,
-      classId: glyphClass.id,
-    })),
-    ...referencedGdefGlyphClasses.map((glyphClass) => ({
-      kind: 'GlyphClass' as const,
-      name: toClassName(glyphClass.name),
-      glyphs: glyphClass.glyphs,
-      classId: glyphClass.id,
-    })),
+    // `@name = [];` is invalid FEA — a still-empty class (just created in the
+    // class manager) stays out of the document until it has members.
+    ...state.glyphClasses
+      .filter((glyphClass) => glyphClass.glyphs.length > 0)
+      .map((glyphClass) => ({
+        kind: 'GlyphClass' as const,
+        name: toClassName(glyphClass.name),
+        glyphs: glyphClass.glyphs,
+        classId: glyphClass.id,
+      })),
+    ...referencedGdefGlyphClasses
+      .filter((glyphClass) => glyphClass.glyphs.length > 0)
+      .map((glyphClass) => ({
+        kind: 'GlyphClass' as const,
+        name: toClassName(glyphClass.name),
+        glyphs: glyphClass.glyphs,
+        classId: glyphClass.id,
+      })),
     ...state.markClasses.flatMap((markClass) =>
       markClass.marks.map((mark) => ({
         kind: 'MarkClass' as const,
@@ -582,25 +648,28 @@ export const buildFeaDocument = (state: OpenTypeFeaturesState) => {
           },
         ]
       : []),
-    ...orderedLookups.map((lookup) =>
-      lookupToBlock(
-        lookup,
-        markClassNameById,
-        glyphClassNameById,
-        lookupNameById
-      )
-    ),
+    ...lookupBlocks,
     ...state.features
       .filter((feature) => feature.isActive)
-      .map((feature) => ({
-        kind: 'FeatureBlock' as const,
-        tag: feature.tag,
-        featureId: feature.id,
-        statements: [
+      .flatMap((feature) => {
+        const statements = [
           ...featureParamsStatements(feature.featureParams),
-          ...featureStatements(feature, lookupById),
-        ],
-      })),
+          ...featureStatements(feature, lookupById, emittedLookupIds),
+        ]
+        // A feature with nothing serializable yet (freshly created, or all
+        // rules still blank) stays out — an empty block is invalid FEA.
+        if (statements.length === 0) {
+          return []
+        }
+        return [
+          {
+            kind: 'FeatureBlock' as const,
+            tag: feature.tag,
+            featureId: feature.id,
+            statements,
+          },
+        ]
+      }),
   ]
 
   return {

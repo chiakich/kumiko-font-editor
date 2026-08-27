@@ -87,6 +87,52 @@ describe('classAuthoring', () => {
     expect(generateFea(state).text).toContain('@legacy = [a];')
   })
 
+  it('never serializes an empty class definition', () => {
+    const created = createGlyphClass(
+      createEmptyOpenTypeFeaturesState(),
+      'kana'
+    )!
+    expect(generateFea(created.state).text).not.toContain('= [];')
+  })
+
+  it('sanitizes a leading dot into a valid class name', () => {
+    expect(sanitizeGlyphClassName('.vert')).toBe('@_.vert')
+  })
+
+  it('refuses a rename that collides with another class', () => {
+    const first = createGlyphClass(createEmptyOpenTypeFeaturesState(), 'kana')!
+    const second = createGlyphClass(first.state, 'kanji')!
+    const renamed = updateGlyphClass(second.state, second.classId, {
+      name: 'kana',
+    })
+    expect(renamed).toBe(second.state)
+  })
+
+  it('counts lookupflag class references so they cannot be deleted', () => {
+    const created = createGlyphClass(
+      createEmptyOpenTypeFeaturesState(),
+      'marks'
+    )!
+    const state = {
+      ...created.state,
+      lookups: [
+        {
+          id: 'lookup_1',
+          name: 'lookup_1',
+          table: 'GPOS' as const,
+          lookupType: 'markToBasePos' as const,
+          lookupFlag: { useMarkFilteringSet: true },
+          markFilteringSetClassId: created.classId,
+          editable: true,
+          origin: 'manual' as const,
+          rules: [],
+        },
+      ],
+    }
+    expect(countGlyphClassRuleReferences(state, created.classId)).toBe(1)
+    expect(deleteGlyphClass(state, created.classId)).toBeNull()
+  })
+
   it('refuses to delete a referenced class and counts references', () => {
     const state = stateWithClassReference()
     const classId = state.glyphClasses[0].id
