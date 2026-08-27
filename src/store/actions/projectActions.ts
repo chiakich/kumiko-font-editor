@@ -549,15 +549,20 @@ export const buildProjectActions = (
       if (!state.fontData) {
         return
       }
-      const hadSources = Object.keys(state.fontData.sources ?? {}).length > 0
+      const prevSources = state.fontData.sources ?? {}
+      // Only a genuinely new non-default master gets a seeded entry:
+      // re-applying an existing source (the default master included) must not
+      // change which pair set it kerns with.
+      const isNewNonDefaultMaster =
+        Object.keys(prevSources).length > 0 && !prevSources[input.source.id]
       state.fontData.sources = {
-        ...(state.fontData.sources ?? {}),
+        ...prevSources,
         [input.source.id]: input.source,
       }
       // Non-default masters must carry their own kerning entry: without one,
       // getMasterKerningPairs falls back to the canonical (default) pairs.
       if (
-        hadSources &&
+        isNewNonDefaultMaster &&
         !state.fontData.kerningPairsByMaster?.[input.source.id]
       ) {
         state.fontData.kerningPairsByMaster = {
