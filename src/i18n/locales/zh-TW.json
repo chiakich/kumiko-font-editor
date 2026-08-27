@@ -1052,7 +1052,11 @@
     "featureModeGrid": "對照網格",
     "substitutionGridEmpty": "這個特性沒有一對一替換規則。",
     "substitutionGridCount": "{{count}} 組對照",
-    "substitutionGridMissing": "缺字形"
+    "substitutionGridMissing": "缺字形",
+    "addRuleSingleSub": "＋ 替換規則",
+    "addRuleLigature": "＋ 連字規則",
+    "addRulePair": "＋ 字對規則",
+    "ruleDelete": "刪除規則"
   },
   "settings": {
     "appearance": "外觀主題",
@@ -1101,6 +1105,12 @@
     "languageSelect": "語言系統",
     "languageAuto": "自動偵測語言",
     "stylisticSetName": "選單名稱",
-    "stylisticSetNamePlaceholder": "這組替代字在應用程式選單顯示的名稱…"
+    "stylisticSetNamePlaceholder": "這組替代字在應用程式選單顯示的名稱…",
+    "addFeature": "新增特性",
+    "addFeatureTagPlaceholder": "特性標籤(如 ss02)",
+    "kernNewLeft": "左側(字符或 @群組)",
+    "kernNewRight": "右側(字符或 @群組)",
+    "kernAddPair": "新增字對",
+    "kernOpenInEditor": "在編輯器中調整"
   }
 }

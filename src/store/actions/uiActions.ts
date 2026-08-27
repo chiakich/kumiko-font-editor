@@ -344,6 +344,11 @@ export const buildUiActions = (set: ImmerSet) => ({
       markUiStateDirty(state)
     }),
 
+  requestEditorRightPanelTab: (index: number | null) =>
+    set((state) => {
+      state.editorRightPanelTabRequest = index
+    }),
+
   setDesignspaceScrubbing: (isScrubbing: boolean) =>
     set((state) => {
       state.isDesignspaceScrubbing = isScrubbing

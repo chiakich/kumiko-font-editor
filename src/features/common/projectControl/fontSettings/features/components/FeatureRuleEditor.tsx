@@ -1,6 +1,7 @@
 import {
   Badge,
   Box,
+  Button,
   HStack,
   IconButton,
   Input,
@@ -15,6 +16,7 @@ import {
   textToSelector,
 } from 'src/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
 import type {
+  FeatureRecord,
   GlyphSelector,
   LigatureSubstitutionRule,
   LookupRecord,
@@ -27,6 +29,11 @@ import type {
 import type { FontData } from 'src/store'
 import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
 import {
+  addRuleToFeature,
+  deleteLookupRule,
+  type CreatableRuleKind,
+} from 'src/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
+import {
   getValueRecordFieldText,
   updateValueRecordField,
   type ValueRecordField,
@@ -37,6 +44,8 @@ interface FeatureRuleEditorProps {
   lookupIds: readonly string[]
   // Present where glyph fields should offer the picker.
   fontData?: FontData | null
+  // When present the editor offers creating new rules on this feature.
+  feature?: FeatureRecord
   onStateChange: (next: OpenTypeFeaturesState) => void
 }
 
@@ -425,16 +434,31 @@ function LookupCard({
       ) : (
         <Stack gap={2} separator={<Box borderBottomWidth="1px" />}>
           {lookup.rules.map((rule) => (
-            <RuleCard
-              key={rule.id}
-              rule={rule}
-              state={state}
-              disabled={disabled}
-              fontData={fontData}
-              onRuleChange={(next) =>
-                onStateChange(updateLookupRule(state, lookup.id, next))
-              }
-            />
+            <HStack key={rule.id} gap={1} align="flex-start">
+              <Box flex={1} minW={0}>
+                <RuleCard
+                  rule={rule}
+                  state={state}
+                  disabled={disabled}
+                  fontData={fontData}
+                  onRuleChange={(next) =>
+                    onStateChange(updateLookupRule(state, lookup.id, next))
+                  }
+                />
+              </Box>
+              {!disabled ? (
+                <IconButton
+                  size="2xs"
+                  variant="ghost"
+                  aria-label={t('projectControl.ruleDelete')}
+                  onClick={() =>
+                    onStateChange(deleteLookupRule(state, lookup.id, rule.id))
+                  }
+                >
+                  ×
+                </IconButton>
+              ) : null}
+            </HStack>
           ))}
         </Stack>
       )}
@@ -445,10 +469,17 @@ function LookupCard({
 // The visual half of the per-feature editor: one card per lookup, one row per
 // rule, editable for the rule kinds the visual editor understands so far
 // (single/ligature substitution and pair positioning — contextual stays code).
+const ADD_RULE_KINDS: Array<{ kind: CreatableRuleKind; labelKey: string }> = [
+  { kind: 'singleSubstitution', labelKey: 'projectControl.addRuleSingleSub' },
+  { kind: 'ligatureSubstitution', labelKey: 'projectControl.addRuleLigature' },
+  { kind: 'pairPositioning', labelKey: 'projectControl.addRulePair' },
+]
+
 export function FeatureRuleEditor({
   state,
   lookupIds,
   fontData = null,
+  feature,
   onStateChange,
 }: FeatureRuleEditorProps) {
   const { t } = useTranslation()
@@ -456,11 +487,31 @@ export function FeatureRuleEditor({
     .map((lookupId) => state.lookups.find((lookup) => lookup.id === lookupId))
     .filter((lookup): lookup is LookupRecord => Boolean(lookup))
 
+  const addRuleRow = feature ? (
+    <HStack gap={1} wrap="wrap">
+      {ADD_RULE_KINDS.map(({ kind, labelKey }) => (
+        <Button
+          key={kind}
+          size="2xs"
+          variant="outline"
+          onClick={() =>
+            onStateChange(addRuleToFeature(state, feature, kind).state)
+          }
+        >
+          {t(labelKey)}
+        </Button>
+      ))}
+    </HStack>
+  ) : null
+
   if (lookups.length === 0) {
     return (
-      <Text fontSize="sm" color="mutedForeground">
-        {t('projectControl.noLookupsForFeature')}
-      </Text>
+      <Stack gap={2}>
+        <Text fontSize="sm" color="mutedForeground">
+          {t('projectControl.noLookupsForFeature')}
+        </Text>
+        {addRuleRow}
+      </Stack>
     )
   }
 
@@ -475,6 +526,7 @@ export function FeatureRuleEditor({
           onStateChange={onStateChange}
         />
       ))}
+      {addRuleRow}
     </Stack>
   )
 }

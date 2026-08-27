@@ -148,6 +148,7 @@ const initialState = {
   visibleBackdropLayerIds: [],
   hideActiveLayer: false,
   workspaceView: 'overview' as const,
+  editorRightPanelTabRequest: null,
   overviewGroupBy: 'script' as const,
   overviewSectionId: 'all',
   overviewGridState: null,

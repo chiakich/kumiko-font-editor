@@ -458,6 +458,9 @@ export interface GlobalState {
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
   workspaceView: WorkspaceView
+  // One-shot request from other screens (e.g. the feature workspace) to open
+  // a specific editor right-panel tab; the panel consumes and clears it.
+  editorRightPanelTabRequest: number | null
   overviewCustomFilters: OverviewCustomFilter[]
   overviewSearchOptions: OverviewSearchOptionsState
   overviewGroupBy: OverviewGroupByState
@@ -489,6 +492,7 @@ export interface GlobalState {
     activeGlyphIndex?: number
   ) => void
   setWorkspaceView: (view: WorkspaceView) => void
+  requestEditorRightPanelTab: (index: number | null) => void
   setOverviewGrouping: (groupBy: OverviewGroupByState) => void
   setOverviewSectionId: (sectionId: string) => void
   setOverviewGridState: (state: unknown | null) => void

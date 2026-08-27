@@ -29,6 +29,10 @@ import { prewarmOpenTypeFeatureCompiler } from 'src/lib/openTypeFeatures'
 import { useStore } from 'src/store'
 import { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+import {
+  createFeature,
+  VALID_FEATURE_TAG,
+} from 'src/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
 import { listWorkspaceFeatures } from 'src/features/featureWorkspace/workspaceFeatureModel'
 import { WorkspacePreviewHome } from 'src/features/featureWorkspace/WorkspacePreviewHome'
 import { KernPairView } from 'src/features/featureWorkspace/KernPairView'
@@ -56,6 +60,7 @@ export function FeatureWorkspaceScreen() {
   const updateFontSettings = useStore((state) => state.updateFontSettings)
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
   const [view, setView] = useState<WorkspaceView>({ kind: 'home' })
+  const [isAddingFeature, setIsAddingFeature] = useState(false)
 
   const openTypeFeatures = useMemo(
     () =>
@@ -116,6 +121,21 @@ export function FeatureWorkspaceScreen() {
       : null
   const openFeature = (featureId: string) =>
     setView({ kind: 'feature', featureId })
+  const commitNewFeature = (rawTag: string) => {
+    const tag = rawTag.trim().toLowerCase()
+    setIsAddingFeature(false)
+    if (!VALID_FEATURE_TAG.test(tag)) {
+      return
+    }
+    const created = createFeature(openTypeFeatures, tag)
+    if (!created) {
+      return
+    }
+    if (created.state !== openTypeFeatures) {
+      handleChange(created.state)
+    }
+    setView({ kind: 'feature', featureId: created.featureId })
+  }
   const openRow = (row: (typeof rows)[number]) => {
     if (row.isProjectKerning) {
       setView({ kind: 'kern' })
@@ -295,6 +315,33 @@ export function FeatureWorkspaceScreen() {
               ) : null}
             </HStack>
           ))}
+          {isAddingFeature ? (
+            <Input
+              size="2xs"
+              fontFamily="mono"
+              autoFocus
+              maxLength={4}
+              placeholder={t('featureWorkspace.addFeatureTagPlaceholder')}
+              aria-label={t('featureWorkspace.addFeature')}
+              onBlur={(event) => commitNewFeature(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  commitNewFeature(event.currentTarget.value)
+                } else if (event.key === 'Escape') {
+                  setIsAddingFeature(false)
+                }
+              }}
+            />
+          ) : (
+            <Button
+              size="2xs"
+              variant="ghost"
+              color="mutedForeground"
+              onClick={() => setIsAddingFeature(true)}
+            >
+              {t('featureWorkspace.addFeature')}
+            </Button>
+          )}
           <Box flex={1} />
           <Button
             size="xs"

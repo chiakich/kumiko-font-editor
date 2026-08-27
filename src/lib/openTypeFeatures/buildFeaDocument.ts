@@ -6,6 +6,7 @@ import type {
   FeatureParamName,
   FeatureParams,
   FeatureRecord,
+  GlyphSelector,
   LookupFlagIR,
   LookupRecord,
   OpenTypeFeaturesState,
@@ -58,11 +59,36 @@ const markRuleMissingAnchorsComment = (rule: Rule) => ({
   value: `Cannot serialize rule ${rule.id}: mark positioning rule has no mark anchors`,
 })
 
+const selectorHasContent = (selector: GlyphSelector) =>
+  selector.kind === 'glyph' ? selector.glyph.trim().length > 0 : true
+
+// A rule the user is still filling in (blank glyph fields from the visual
+// editor's "add rule") must not reach the compiler as invalid FEA.
+const isRuleIncomplete = (rule: Rule): boolean => {
+  switch (rule.kind) {
+    case 'singleSubstitution':
+      return !selectorHasContent(rule.target) || !rule.replacement.trim()
+    case 'ligatureSubstitution':
+      return (
+        rule.components.length < 2 ||
+        rule.components.some((glyph) => !glyph.trim()) ||
+        !rule.replacement.trim()
+      )
+    case 'pairPositioning':
+      return !selectorHasContent(rule.left) || !selectorHasContent(rule.right)
+    default:
+      return false
+  }
+}
+
 const ruleToNode = (
   rule: Rule,
   markClassNameById: Map<string, string>,
   lookupNameById: Map<string, string>
 ): FeaNode | null => {
+  if (isRuleIncomplete(rule)) {
+    return null
+  }
   switch (rule.kind) {
     case 'singleSubstitution':
       return {

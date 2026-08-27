@@ -1052,7 +1052,11 @@
     "featureModeGrid": "Proof grid",
     "substitutionGridEmpty": "This feature has no one-to-one substitutions.",
     "substitutionGridCount": "{{count}} mappings",
-    "substitutionGridMissing": "missing"
+    "substitutionGridMissing": "missing",
+    "addRuleSingleSub": "+ Substitution rule",
+    "addRuleLigature": "+ Ligature rule",
+    "addRulePair": "+ Pair rule",
+    "ruleDelete": "Delete rule"
   },
   "settings": {
     "appearance": "Appearance",
@@ -1101,6 +1105,12 @@
     "languageSelect": "Language system",
     "languageAuto": "Auto-detect language",
     "stylisticSetName": "Menu name",
-    "stylisticSetNamePlaceholder": "The name applications show for this set…"
+    "stylisticSetNamePlaceholder": "The name applications show for this set…",
+    "addFeature": "Add feature",
+    "addFeatureTagPlaceholder": "Feature tag (e.g. ss02)",
+    "kernNewLeft": "Left (glyph or @group)",
+    "kernNewRight": "Right (glyph or @group)",
+    "kernAddPair": "Add pair",
+    "kernOpenInEditor": "Adjust in editor"
   }
 }

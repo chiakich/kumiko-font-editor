@@ -131,6 +131,7 @@ export function FeatureDocument({
           state={state}
           lookupIds={lookupIds}
           fontData={fontData ?? null}
+          feature={feature}
           onStateChange={onStateChange}
         />
       ) : mode === 'grid' && fontData ? (

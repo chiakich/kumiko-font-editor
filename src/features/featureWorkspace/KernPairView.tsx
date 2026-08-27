@@ -18,6 +18,8 @@ import {
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
 import { useStore, type FontData, type KerningPair } from 'src/store'
 import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
+import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
+import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
 import { getShapingPreviewFontBuffer } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
 import { PREVIEW_GLYPH_PLACEHOLDER } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
 import type { ShapingPreviewRun } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
@@ -54,6 +56,71 @@ const selectorSampleGlyph = (selector: GlyphSelector, fontData: FontData) => {
       `@${candidate.name}` === selector.classId
   )
   return group?.glyphs.find((glyphId) => fontData.glyphs[glyphId]) ?? null
+}
+
+// Text form of one pair side: '@name' names a kerning group, anything else a
+// glyph. Returns null when nothing in the project matches.
+const parseKernSideText = (
+  text: string,
+  fontData: FontData
+): GlyphSelector | null => {
+  const trimmed = text.trim()
+  if (!trimmed) {
+    return null
+  }
+  if (trimmed.startsWith('@')) {
+    const name = trimmed.slice(1)
+    const group = (fontData.kerningGroups ?? []).find(
+      (candidate) => candidate.name === name || candidate.id === trimmed
+    )
+    return group ? { kind: 'class', classId: group.id } : null
+  }
+  return fontData.glyphs[trimmed] ? { kind: 'glyph', glyph: trimmed } : null
+}
+
+function KernSideField({
+  fontData,
+  value,
+  onChange,
+  'aria-label': ariaLabel,
+}: {
+  fontData: FontData
+  value: string
+  onChange: (next: string) => void
+  'aria-label': string
+}) {
+  const { t } = useTranslation()
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
+  return (
+    <HStack gap={0.5}>
+      <Input
+        size="2xs"
+        width="140px"
+        fontFamily="mono"
+        value={value}
+        aria-label={ariaLabel}
+        placeholder={ariaLabel}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <Button
+        size="2xs"
+        variant="ghost"
+        aria-label={t('projectControl.glyphPickerOpen')}
+        onClick={() => setIsPickerOpen(true)}
+      >
+        ⌕
+      </Button>
+      {isPickerOpen ? (
+        <GlyphPickerPopover
+          fontData={fontData}
+          isOpen={isPickerOpen}
+          initialQuery={value.startsWith('@') ? '' : value}
+          onClose={() => setIsPickerOpen(false)}
+          onPick={(glyphId) => onChange(glyphId)}
+        />
+      ) : null}
+    </HStack>
+  )
 }
 
 const pairKey = (pair: KerningPair, fontData: FontData) =>
@@ -191,8 +258,32 @@ export function KernPairView({
   const { t } = useTranslation()
   const upsertKerningPair = useStore((store) => store.upsertKerningPair)
   const deleteKerningPair = useStore((store) => store.deleteKerningPair)
+  const requestEditorRightPanelTab = useStore(
+    (store) => store.requestEditorRightPanelTab
+  )
+  const openSpacingPairInEditor = useOpenSpacingPairInEditor()
   const [filter, setFilter] = useState('')
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [draftLeft, setDraftLeft] = useState('')
+  const [draftRight, setDraftRight] = useState('')
+  const [draftValue, setDraftValue] = useState('')
+
+  const draftLeftSelector = parseKernSideText(draftLeft, fontData)
+  const draftRightSelector = parseKernSideText(draftRight, fontData)
+  const draftValueNumber = Number(draftValue.trim())
+  const canAddPair =
+    Boolean(draftLeftSelector && draftRightSelector) &&
+    draftValue.trim() !== '' &&
+    Number.isFinite(draftValueNumber)
+  const commitNewPair = () => {
+    if (!canAddPair || !draftLeftSelector || !draftRightSelector) {
+      return
+    }
+    upsertKerningPair(draftLeftSelector, draftRightSelector, draftValueNumber)
+    setDraftLeft('')
+    setDraftRight('')
+    setDraftValue('')
+  }
 
   const pairs = useMemo(() => {
     const all = fontData.kerningPairs ?? []
@@ -232,6 +323,44 @@ export function KernPairView({
         <Text fontSize="xs" color="mutedForeground">
           {t('featureWorkspace.kernSourceHint')}
         </Text>
+      </HStack>
+
+      <HStack gap={2} wrap="wrap">
+        <KernSideField
+          fontData={fontData}
+          value={draftLeft}
+          onChange={setDraftLeft}
+          aria-label={t('featureWorkspace.kernNewLeft')}
+        />
+        <KernSideField
+          fontData={fontData}
+          value={draftRight}
+          onChange={setDraftRight}
+          aria-label={t('featureWorkspace.kernNewRight')}
+        />
+        <Input
+          size="2xs"
+          width="72px"
+          textAlign="right"
+          fontFamily="mono"
+          value={draftValue}
+          aria-label={t('featureWorkspace.kernValue')}
+          placeholder="-40"
+          onChange={(event) => setDraftValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              commitNewPair()
+            }
+          }}
+        />
+        <Button
+          size="2xs"
+          variant="outline"
+          disabled={!canAddPair}
+          onClick={commitNewPair}
+        >
+          {t('featureWorkspace.kernAddPair')}
+        </Button>
       </HStack>
 
       {irKernFeature ? (
@@ -332,7 +461,30 @@ export function KernPairView({
 
       <Box borderTopWidth="1px" borderColor="controlBorder" pt={3} minH="96px">
         {selectedPair ? (
-          <PairPreview fontData={fontData} state={state} pair={selectedPair} />
+          <HStack gap={4} align="center">
+            <PairPreview
+              fontData={fontData}
+              state={state}
+              pair={selectedPair}
+            />
+            {(() => {
+              const left = selectorSampleGlyph(selectedPair.left, fontData)
+              const right = selectorSampleGlyph(selectedPair.right, fontData)
+              return left && right ? (
+                <Button
+                  size="2xs"
+                  variant="outline"
+                  onClick={() => {
+                    // Kerning is the fourth right-panel tab in the editor.
+                    requestEditorRightPanelTab(3)
+                    openSpacingPairInEditor(left, right)
+                  }}
+                >
+                  {t('featureWorkspace.kernOpenInEditor')}
+                </Button>
+              ) : null
+            })()}
+          </HStack>
         ) : (
           <Text fontSize="xs" color="mutedForeground">
             {t('featureWorkspace.kernSelectHint')}
