@@ -229,11 +229,69 @@ decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts
   kerning delta)、編輯器 canvas/Kerning 面板/工作區 kern 檯全部跟隨
   active master。合併後才編譯的路徑仍只有 canonical kerning(無 delta)。
   尚缺:在 app 內新增 master 時自動補 byMaster 條目;靜態 instance 匯出
-  的 kerning 不插值。
+  的 kerning 不插值。(兩者已於 2026-08-28 尾巴輪清償,見下節。)
 - **UI 元件測試**已引入 @testing-library(happy-dom 環境,`test/ui/`,
   harness `renderWithProviders` 固定 zh-TW 並 mock paper.js):覆蓋
   class 管理、規則新增/刪除、kern 新增字對 + per-master 路由、詞表、
   picker 建立變體與其失敗守衛。只測關鍵流程,不追覆蓋率。
+
+### 深水區尾巴輪(2026-08-28,同日下午)
+
+- **app 內新增 master 自動補 kerning 條目**:`applyImportedMaster` 在專案
+  已有 source 時為新的(先前不存在的)master 種 `kerningPairsByMaster`
+  條目——copy 方式帶入 base master 字對副本(字距沿軸恆定,直到編輯),
+  font/empty 方式種空陣列;`updateFontSettings` 新增 source 同樣補條目、
+  移除 source 時刪掉殘留條目;glyph 改名也改寫所有 master 的字對 selector。
+  測試:`test/store/masterKerningEntries.test.ts`。
+- **靜態 instance 匯出的 kerning 插值**
+  (`src/lib/kerning/interpolateKerning.ts`):字對取全 master 聯集(group
+  引用以 id/name/@name 正規化到 group id 再比對),缺對視為 0(比照
+  varLib 合併語意),用 DiscreteVariationModel(與輪廓插值同一套權重)在
+  instance location 求值;location 正落在某 master 上時直接用該 master 的
+  字對;designspace 退化時回退 canonical。
+  `exportCanonicalProjectInstanceAsBinary` 已接上。
+  測試:`test/kerning/interpolateKerning.test.ts`。
+- **KerningValidationCard 跟隨 active master**(順手):驗證卡改驗
+  `getMasterKerningPairs(fontData, activeMasterId)`,與 Kerning 面板其他
+  卡片看到的字對一致;工作區特性列的 kern 字對數
+  (FeatureWorkspaceScreen / FeatureIndexView)同樣跟隨 active master。
+  KerningGroupManager 只讀 kerningGroups(全 master 共用),不需感知。
+- **直排(ttb)預覽誠實化**:`shapingPreviewModel` 補上 HarfBuzz 的
+  horizontal-only 特性清單(calt/clig/curs/dist/kern/liga/rclt,對照
+  hb-ot-shape 的 horizontal_features)——直排時這些 chip 不再誤標為預設
+  開啟;直排預設集只有 vert(hb 不會自動開 vrt2/vkrn,chip 預設關,
+  這樣 +vkrn 才發得出去)。工作區直排預覽在專案有 canonical kerning 時
+  顯示「直排不套用 kern、vkrn 尚未支援」提示(`kernVerticalHint`)。
+
+### vkrn / 直排字距調查(2026-08-28)
+
+結論:**完整 vkrn 模型此輪不做**,先以誠實呈現落地(見上)。筆記:
+
+- UFO 沒有標準 vkrn 儲存(kerning.plist 只有橫排);Glyphs 用
+  `vertKerning`,binary 存 GPOS `vkrn`。若要支援,資料模型需另開
+  `verticalKerningPairs`(+ per-master 版本),同步序列化只能走 lib 自訂
+  key 或 FEA snippet,round-trip 成本高。
+- FEA 端可行:feaLib 對 `feature vkrn` 的 single value record 使用
+  y-advance 語意,合成管線(synthesizeKerning)可平行複製一份。缺的是
+  資料模型、編輯 UI 與匯入(GPOS vkrn 反編譯目前併入一般 IR)。
+- 最小可行的下一步(未做):讓 kern 工作檯在 direction ttb 時切到
+  vkrn 字對集;先決條件是上面的資料模型。
+
+### FeatureVariations 重建(conditionset)評估(2026-08-28)
+
+結論:**以目前資料模型不可行,不硬做**。原因:
+
+- `state.featureVariations` 只存摘要(軸區間 → 特性 tag + lookup 數),
+  換用 lookup 的規則內容沒有解析保存——摘要重建不出 conditionset 的
+  variation block 本體。
+- 編譯管線相容性其實不是主要障礙:合併後編譯路徑(merged variable font
+  再 compileManagedFontFeatures)有 fvar,feaLib 的 conditionset/variation
+  語法理論上可用;但 per-master 編譯 + varLib 合併路徑(bracket layer
+  存在時)已經由 designspace `<rules>` 產生 FeatureVariations,兩邊同時
+  產生會重複/衝突。
+- 若future要做:先把 FeatureVariations 的 alternate lookup 完整反編譯進
+  IR(比照一般 lookup),再依編譯路徑擇一產生(designspace rules 或 FEA
+  conditionset),摘要卡退役。
 
 ## 已知順手債
 
