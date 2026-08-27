@@ -10,6 +10,10 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
+import {
+  selectorToText,
+  textToSelector,
+} from 'src/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
 import type {
   GlyphSelector,
   LigatureSubstitutionRule,
@@ -34,40 +38,6 @@ interface FeatureRuleEditorProps {
   // Present where glyph fields should offer the picker.
   fontData?: FontData | null
   onStateChange: (next: OpenTypeFeaturesState) => void
-}
-
-// "@Name" in a selector field means a class; anything else is a glyph name.
-// The mapping goes through class *names* here because that is what people
-// type, while the IR stores class ids.
-const selectorToText = (
-  selector: GlyphSelector,
-  state: OpenTypeFeaturesState
-) => {
-  if (selector.kind === 'glyph') {
-    return selector.glyph
-  }
-  const glyphClass = state.glyphClasses.find(
-    (candidate) => candidate.id === selector.classId
-  )
-  return `@${glyphClass?.name ?? selector.classId}`
-}
-
-const textToSelector = (
-  text: string,
-  state: OpenTypeFeaturesState
-): GlyphSelector | null => {
-  const trimmed = text.trim()
-  if (!trimmed) {
-    return null
-  }
-  if (trimmed.startsWith('@')) {
-    const name = trimmed.slice(1)
-    const glyphClass = state.glyphClasses.find(
-      (candidate) => candidate.name === name
-    )
-    return glyphClass ? { kind: 'class', classId: glyphClass.id } : null
-  }
-  return { kind: 'glyph', glyph: trimmed }
 }
 
 // A text field plus the glyph picker: unencoded glyphs cannot be typed, so

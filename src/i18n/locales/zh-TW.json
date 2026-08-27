@@ -1045,7 +1045,10 @@
     "glyphPickerVariants": "同基底的變體",
     "glyphPickerMatches": "符合（{{count}}）",
     "glyphPickerEmpty": "沒有符合的字形。",
-    "glyphPickerOpen": "開啟字形挑選器"
+    "glyphPickerOpen": "開啟字形挑選器",
+    "featureModeTable": "規則表",
+    "ruleTableFilter": "過濾規則、字形或 @class…",
+    "ruleTableCount": "{{count}} 條規則"
   },
   "settings": {
     "appearance": "外觀主題",

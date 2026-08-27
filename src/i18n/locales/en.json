@@ -1045,7 +1045,10 @@
     "glyphPickerVariants": "Variants of this base",
     "glyphPickerMatches": "Matches ({{count}})",
     "glyphPickerEmpty": "No matching glyphs.",
-    "glyphPickerOpen": "Open the glyph picker"
+    "glyphPickerOpen": "Open the glyph picker",
+    "featureModeTable": "Rule table",
+    "ruleTableFilter": "Filter rules, glyphs or @class…",
+    "ruleTableCount": "{{count}} rules"
   },
   "settings": {
     "appearance": "Appearance",

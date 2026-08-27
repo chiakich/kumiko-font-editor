@@ -1,5 +1,6 @@
 import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
 import { FeatureRuleEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
+import { RuleTableView } from 'src/features/common/projectControl/fontSettings/features/components/RuleTableView'
 import {
   Badge,
   Button,
@@ -43,11 +44,15 @@ export function FeatureDocument({
   onStateChange?: (next: OpenTypeFeaturesState) => void
 }) {
   const { t } = useTranslation()
-  // Two views of the same feature: rule cards for the kinds the visual editor
-  // understands, the generated FEA block for everything.
-  const [mode, setMode] = useState<'visual' | 'code'>('visual')
   const lookupIds = Array.from(
     new Set(feature.entries.flatMap((entry) => entry.lookupIds))
+  )
+  const ruleCount = countFeatureRules(feature, state)
+  // Three views of the same feature: rule cards for the kinds the visual
+  // editor understands, a flat virtualized table that survives CJK-scale rule
+  // counts (and is the default there), and the generated FEA block.
+  const [mode, setMode] = useState<'visual' | 'table' | 'code'>(() =>
+    ruleCount > 100 ? 'table' : 'visual'
   )
   const sourceSectionRecords = findOpenTypeSourceSectionsForRecord(state, {
     kind: 'feature',
@@ -76,6 +81,15 @@ export function FeatureDocument({
         >
           {t('projectControl.featureModeVisual')}
         </Button>
+        {ruleCount > 0 ? (
+          <Button
+            size="2xs"
+            variant={mode === 'table' ? 'solid' : 'outline'}
+            onClick={() => setMode('table')}
+          >
+            {t('projectControl.featureModeTable')}
+          </Button>
+        ) : null}
         <Button
           size="2xs"
           variant={mode === 'code' ? 'solid' : 'outline'}
@@ -89,6 +103,12 @@ export function FeatureDocument({
           state={state}
           lookupIds={lookupIds}
           fontData={fontData ?? null}
+          onStateChange={onStateChange}
+        />
+      ) : mode === 'table' && onStateChange ? (
+        <RuleTableView
+          state={state}
+          lookupIds={lookupIds}
           onStateChange={onStateChange}
         />
       ) : (
