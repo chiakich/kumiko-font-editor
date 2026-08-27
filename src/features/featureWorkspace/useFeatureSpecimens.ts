@@ -67,10 +67,23 @@ export const useFeatureSpecimens = (input: {
           if (sample.glyphs.length === 0) {
             continue
           }
-          const text = PREVIEW_GLYPH_PLACEHOLDER.repeat(sample.glyphs.length)
-          const glyphTokens = new Map(
-            sample.glyphs.map((name, index) => [index, name])
-          )
+          // Encoded sample glyphs enter as real characters so the feature can
+          // actually fire on them; only unencoded ones ride as tokens (which
+          // deliberately sit outside substitution — see shapingPreviewTokens).
+          let text = ''
+          const glyphTokens = new Map<number, string>()
+          for (const name of sample.glyphs) {
+            const unicode = fontData.glyphs[name]?.unicodes?.[0]
+            const codePoint = unicode
+              ? Number.parseInt(unicode, 16)
+              : Number.NaN
+            if (Number.isFinite(codePoint)) {
+              text += String.fromCodePoint(codePoint)
+            } else {
+              glyphTokens.set(text.length, name)
+              text += PREVIEW_GLYPH_PLACEHOLDER
+            }
+          }
           const shape = (features: string[]) =>
             shapeTextWithHarfBuzz(buffer, text, {
               features,
