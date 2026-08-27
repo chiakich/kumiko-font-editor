@@ -61,7 +61,39 @@ export function FeatureWorkspaceScreen() {
   const projectTitle = useStore((state) => state.projectTitle)
   const updateFontSettings = useStore((state) => state.updateFontSettings)
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
-  const [view, setView] = useState<WorkspaceView>({ kind: 'home' })
+  const workspaceRequest = useStore((state) => state.featureWorkspaceRequest)
+  const requestFeatureWorkspace = useStore(
+    (state) => state.requestFeatureWorkspace
+  )
+  const savedSnapshot = useStore.getState().featureWorkspaceSnapshot
+  const setFeatureWorkspaceSnapshot = useStore(
+    (state) => state.setFeatureWorkspaceSnapshot
+  )
+  const [view, setView] = useState<WorkspaceView>(
+    savedSnapshot?.view ?? { kind: 'home' }
+  )
+  // Consume a deep-link request from another screen (editor panels).
+  useEffect(() => {
+    if (!workspaceRequest) {
+      return
+    }
+    const timer = setTimeout(() => {
+      requestFeatureWorkspace(null)
+      if (workspaceRequest.kind === 'feature') {
+        const target = useStore
+          .getState()
+          .fontData?.openTypeFeatures?.features.find(
+            (feature) => feature.tag === workspaceRequest.tag
+          )
+        setView(
+          target ? { kind: 'feature', featureId: target.id } : { kind: 'index' }
+        )
+      } else {
+        setView({ kind: workspaceRequest.kind })
+      }
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [workspaceRequest, requestFeatureWorkspace])
   const [isAddingFeature, setIsAddingFeature] = useState(false)
 
   const openTypeFeatures = useMemo(
@@ -76,7 +108,25 @@ export function FeatureWorkspaceScreen() {
   const preview = useShapingPreview({
     fontData,
     openTypeFeatures,
+    initialText: savedSnapshot?.text,
+    initialDirection: savedSnapshot?.direction,
+    initialLanguageOptionId: savedSnapshot?.languageOptionId,
   })
+  // Keep the snapshot current so leaving the workspace never loses state.
+  useEffect(() => {
+    setFeatureWorkspaceSnapshot({
+      view,
+      text: preview.text,
+      direction: preview.direction,
+      languageOptionId: preview.languageOptionId,
+    })
+  }, [
+    view,
+    preview.text,
+    preview.direction,
+    preview.languageOptionId,
+    setFeatureWorkspaceSnapshot,
+  ])
 
   const diagnostics = useMemo(
     () =>
@@ -379,6 +429,10 @@ export function FeatureWorkspaceScreen() {
             fontData={fontData}
             state={openTypeFeatures}
             onOpenIrKern={openFeature}
+            onPreviewText={(text) => {
+              preview.setText(text)
+              setView({ kind: 'home' })
+            }}
           />
         ) : view.kind === 'home' ? (
           <WorkspacePreviewHome

@@ -349,6 +349,23 @@ export const buildUiActions = (set: ImmerSet) => ({
       state.editorRightPanelTabRequest = index
     }),
 
+  // Deep link into the feature workspace: switches the workspace view and
+  // leaves a one-shot request the workspace screen consumes.
+  requestFeatureWorkspace: (request: GlobalState['featureWorkspaceRequest']) =>
+    set((state) => {
+      state.featureWorkspaceRequest = request
+      if (request) {
+        state.workspaceView = 'features'
+      }
+    }),
+
+  setFeatureWorkspaceSnapshot: (
+    snapshot: GlobalState['featureWorkspaceSnapshot']
+  ) =>
+    set((state) => {
+      state.featureWorkspaceSnapshot = snapshot
+    }),
+
   setDesignspaceScrubbing: (isScrubbing: boolean) =>
     set((state) => {
       state.isDesignspaceScrubbing = isScrubbing

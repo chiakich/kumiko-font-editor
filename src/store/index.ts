@@ -149,6 +149,8 @@ const initialState = {
   hideActiveLayer: false,
   workspaceView: 'overview' as const,
   editorRightPanelTabRequest: null,
+  featureWorkspaceRequest: null,
+  featureWorkspaceSnapshot: null,
   overviewGroupBy: 'script' as const,
   overviewSectionId: 'all',
   overviewGridState: null,

@@ -209,7 +209,8 @@
     "kerningIssueEmptyGroup": "空群組",
     "kerningIssueMissingGlyph": "字符不存在",
     "kerningIssueDuplicateMembership": "同側重複 membership",
-    "kerningIssueMissingGroupReference": "引用不存在的群組"
+    "kerningIssueMissingGroupReference": "引用不存在的群組",
+    "openInFeatureWorkspace": "在特性工作區開啟"
   },
   "fontExport": {
     "close": "關閉",
@@ -1130,6 +1131,10 @@
     "classMissingMembers": "{{count}} 個成員不存在",
     "classAddMember": "＋ 加入字符",
     "classDelete": "刪除",
-    "classDeleteBlocked": "仍有規則引用此類別,無法刪除"
+    "classDeleteBlocked": "仍有規則引用此類別,無法刪除",
+    "kernWordList": "詞表",
+    "kernWordListHint": "每行一組測試文字,點一下載入預覽",
+    "kernWordListPlaceholder": "例如:文字排版\n(可多行)",
+    "attachFeaFile": "掛載 .fea 檔案"
   }
 }

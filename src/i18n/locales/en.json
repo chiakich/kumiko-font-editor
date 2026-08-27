@@ -209,7 +209,8 @@
     "kerningIssueEmptyGroup": "Empty group",
     "kerningIssueMissingGlyph": "Missing glyph",
     "kerningIssueDuplicateMembership": "Duplicate membership",
-    "kerningIssueMissingGroupReference": "Missing group reference"
+    "kerningIssueMissingGroupReference": "Missing group reference",
+    "openInFeatureWorkspace": "Open in feature workspace"
   },
   "fontExport": {
     "close": "Close",
@@ -1130,6 +1131,10 @@
     "classMissingMembers": "{{count}} members missing",
     "classAddMember": "+ Add glyph",
     "classDelete": "Delete",
-    "classDeleteBlocked": "Rules still reference this class; it cannot be deleted"
+    "classDeleteBlocked": "Rules still reference this class; it cannot be deleted",
+    "kernWordList": "Word list",
+    "kernWordListHint": "One test string per line; click to load it into the preview",
+    "kernWordListPlaceholder": "e.g. typography\n(multiple lines allowed)",
+    "attachFeaFile": "Attach .fea file"
   }
 }

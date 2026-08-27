@@ -45,12 +45,20 @@ const COMPILE_DEBOUNCE_MS = 600
 export const useShapingPreview = (input: {
   fontData: FontData | null
   openTypeFeatures: OpenTypeFeaturesState | undefined
+  // Restore a previous session of the preview (e.g. the workspace snapshot).
+  initialText?: string
+  initialDirection?: PreviewDirection
+  initialLanguageOptionId?: string | null
 }) => {
   const { fontData, openTypeFeatures } = input
-  const [text, setText] = useState('')
-  const [direction, setDirection] = useState<PreviewDirection>('ltr')
+  const [text, setText] = useState(input.initialText ?? '')
+  const [direction, setDirection] = useState<PreviewDirection>(
+    input.initialDirection ?? 'ltr'
+  )
   // Selected language system (locl and per-script rules need it); null = auto.
-  const [languageOptionId, setLanguageOptionId] = useState<string | null>(null)
+  const [languageOptionId, setLanguageOptionId] = useState<string | null>(
+    input.initialLanguageOptionId ?? null
+  )
   const [featureOverrides, setFeatureOverrides] = useState<
     Record<string, boolean>
   >({})

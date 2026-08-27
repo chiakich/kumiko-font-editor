@@ -1,17 +1,22 @@
 import {
   Badge,
   Box,
+  Button,
   HStack,
   Spinner,
   Stack,
   Switch,
   Text,
 } from '@chakra-ui/react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import type {
-  AutoFeatureSuggestion,
-  FeatureDiagnostic,
-  OpenTypeFeaturesState,
+import {
+  classifyRawFeatureTextSource,
+  getRawFeatureText,
+  setRawFeatureTextSource,
+  type AutoFeatureSuggestion,
+  type FeatureDiagnostic,
+  type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 import type { FontData } from 'src/store'
 import { AutoFeatureSuggestions } from 'src/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
@@ -50,6 +55,25 @@ export function FeatureIndexView({
   onScanSuggestions,
 }: FeatureIndexViewProps) {
   const { t } = useTranslation()
+  const feaFileInputRef = useRef<HTMLInputElement | null>(null)
+  const attachFeaFile = async (file: File) => {
+    const text = await file.text()
+    if (!text.trim()) {
+      return
+    }
+    // Appended manual FEA joins the raw snippet source: parseable blocks are
+    // classified into the IR, the rest compiles verbatim.
+    const existing = getRawFeatureText(state) ?? ''
+    const joined = existing
+      ? `${existing.replace(/\s+$/, '')}\n\n${text}`
+      : text
+    onStateChange(
+      classifyRawFeatureTextSource(
+        setRawFeatureTextSource(state, joined, { origin: 'manual-input' }),
+        { origin: 'manual-input' }
+      )
+    )
+  }
   const rows = listWorkspaceFeatures(state, diagnostics, {
     projectKerningPairCount: fontData.kerningPairs?.length ?? 0,
   })
@@ -64,6 +88,27 @@ export function FeatureIndexView({
       <HStack gap={2} color="mutedForeground">
         <Text fontSize="xs">{t('featureWorkspace.indexHint')}</Text>
         {specimens.isLoading ? <Spinner size="xs" /> : null}
+        <Box flex={1} />
+        <input
+          ref={feaFileInputRef}
+          type="file"
+          accept=".fea,text/plain"
+          style={{ display: 'none' }}
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            if (file) {
+              void attachFeaFile(file)
+            }
+          }}
+        />
+        <Button
+          size="2xs"
+          variant="outline"
+          onClick={() => feaFileInputRef.current?.click()}
+        >
+          {t('featureWorkspace.attachFeaFile')}
+        </Button>
       </HStack>
       {rows.length === 0 ? (
         <Text fontSize="sm" color="mutedForeground">

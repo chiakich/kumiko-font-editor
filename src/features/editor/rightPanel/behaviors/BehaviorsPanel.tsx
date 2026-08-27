@@ -59,6 +59,9 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   const upsertAnchorBehavior = useStore((state) => state.upsertAnchorBehavior)
   const deleteAnchorBehavior = useStore((state) => state.deleteAnchorBehavior)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
+  const requestFeatureWorkspace = useStore(
+    (state) => state.requestFeatureWorkspace
+  )
 
   const combinationRows = useMemo(
     () => (fontData ? deriveGlyphCombinationBehaviors(fontData, glyph.id) : []),
@@ -176,6 +179,14 @@ export function BehaviorsPanel({ fontData, glyph }: BehaviorsPanelProps) {
   return (
     <>
       <Stack gap={4}>
+        <Button
+          size="2xs"
+          variant="outline"
+          alignSelf="flex-start"
+          onClick={() => requestFeatureWorkspace({ kind: 'home' })}
+        >
+          {t('editor.openInFeatureWorkspace')}
+        </Button>
         <CombinationBehaviorList
           rows={combinationRows}
           onCommit={(draft) => upsertCombinationBehavior(draft)}

@@ -461,6 +461,26 @@ export interface GlobalState {
   // One-shot request from other screens (e.g. the feature workspace) to open
   // a specific editor right-panel tab; the panel consumes and clears it.
   editorRightPanelTabRequest: number | null
+  // Last feature-workspace UI state so leaving and returning does not reset
+  // the preview text, direction, or open view. Session-only.
+  featureWorkspaceSnapshot: {
+    view:
+      | { kind: 'home' }
+      | { kind: 'index' }
+      | { kind: 'feature'; featureId: string }
+      | { kind: 'kern' }
+      | { kind: 'classes' }
+    text: string
+    direction: 'ltr' | 'ttb'
+    languageOptionId: string | null
+  } | null
+  // One-shot deep link into the feature workspace, consumed by its screen.
+  featureWorkspaceRequest:
+    | { kind: 'home' }
+    | { kind: 'kern' }
+    | { kind: 'classes' }
+    | { kind: 'feature'; tag: string }
+    | null
   overviewCustomFilters: OverviewCustomFilter[]
   overviewSearchOptions: OverviewSearchOptionsState
   overviewGroupBy: OverviewGroupByState
@@ -493,6 +513,12 @@ export interface GlobalState {
   ) => void
   setWorkspaceView: (view: WorkspaceView) => void
   requestEditorRightPanelTab: (index: number | null) => void
+  requestFeatureWorkspace: (
+    request: GlobalState['featureWorkspaceRequest']
+  ) => void
+  setFeatureWorkspaceSnapshot: (
+    snapshot: GlobalState['featureWorkspaceSnapshot']
+  ) => void
   setOverviewGrouping: (groupBy: OverviewGroupByState) => void
   setOverviewSectionId: (sectionId: string) => void
   setOverviewGridState: (state: unknown | null) => void

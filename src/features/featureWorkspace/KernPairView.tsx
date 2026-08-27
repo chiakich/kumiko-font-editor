@@ -7,6 +7,7 @@ import {
   Spinner,
   Stack,
   Text,
+  Textarea,
 } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -28,6 +29,8 @@ interface KernPairViewProps {
   fontData: FontData
   state: OpenTypeFeaturesState
   onOpenIrKern: (featureId: string) => void
+  // Load a word-list line into the workspace preview (jumps to home).
+  onPreviewText: (text: string) => void
 }
 
 // Group references are stored as ids or names; both display as @name.
@@ -254,6 +257,7 @@ export function KernPairView({
   fontData,
   state,
   onOpenIrKern,
+  onPreviewText,
 }: KernPairViewProps) {
   const { t } = useTranslation()
   const upsertKerningPair = useStore((store) => store.upsertKerningPair)
@@ -264,6 +268,7 @@ export function KernPairView({
   const openSpacingPairInEditor = useOpenSpacingPairInEditor()
   const [filter, setFilter] = useState('')
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [wordListText, setWordListText] = useState('')
   const [draftLeft, setDraftLeft] = useState('')
   const [draftRight, setDraftRight] = useState('')
   const [draftValue, setDraftValue] = useState('')
@@ -458,6 +463,43 @@ export function KernPairView({
           }}
         />
       </Box>
+
+      <Stack gap={1.5}>
+        <HStack gap={2}>
+          <Text fontSize="xs" fontWeight={700}>
+            {t('featureWorkspace.kernWordList')}
+          </Text>
+          <Text fontSize="10px" color="mutedForeground">
+            {t('featureWorkspace.kernWordListHint')}
+          </Text>
+        </HStack>
+        <Textarea
+          size="xs"
+          fontFamily="glyph"
+          rows={2}
+          value={wordListText}
+          placeholder={t('featureWorkspace.kernWordListPlaceholder')}
+          aria-label={t('featureWorkspace.kernWordList')}
+          onChange={(event) => setWordListText(event.target.value)}
+        />
+        <HStack gap={1} wrap="wrap">
+          {wordListText
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line, index) => (
+              <Button
+                key={`${index}_${line}`}
+                size="2xs"
+                variant="outline"
+                fontFamily="glyph"
+                onClick={() => onPreviewText(line)}
+              >
+                {line}
+              </Button>
+            ))}
+        </HStack>
+      </Stack>
 
       <Box borderTopWidth="1px" borderColor="controlBorder" pt={3} minH="96px">
         {selectedPair ? (
