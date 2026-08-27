@@ -111,6 +111,13 @@ export function FeatureWorkspaceScreen() {
       : null
   const openFeature = (featureId: string) =>
     setView({ kind: 'feature', featureId })
+  const openRow = (row: (typeof rows)[number]) => {
+    if (row.isProjectKerning) {
+      setView({ kind: 'kern' })
+    } else if (row.featureId) {
+      openFeature(row.featureId)
+    }
+  }
 
   return (
     <Stack h="100dvh" gap={0} bg="background" color="foreground">
@@ -238,18 +245,22 @@ export function FeatureWorkspaceScreen() {
               py={1.5}
               borderRadius="md"
               bg={
-                view.kind === 'feature' && selectedFeature?.tag === row.tag
+                (view.kind === 'feature' && selectedFeature?.tag === row.tag) ||
+                (view.kind === 'kern' && row.isProjectKerning)
                   ? 'accent'
                   : 'card'
               }
               color={
-                view.kind === 'feature' && selectedFeature?.tag === row.tag
+                (view.kind === 'feature' && selectedFeature?.tag === row.tag) ||
+                (view.kind === 'kern' && row.isProjectKerning)
                   ? 'accentForeground'
                   : undefined
               }
               opacity={row.enabled ? 1 : 0.55}
-              cursor={row.featureId ? 'pointer' : 'default'}
-              onClick={() => row.featureId && openFeature(row.featureId)}
+              cursor={
+                row.featureId || row.isProjectKerning ? 'pointer' : 'default'
+              }
+              onClick={() => openRow(row)}
             >
               <Switch.Root
                 size="xs"
