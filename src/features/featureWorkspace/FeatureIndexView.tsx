@@ -145,6 +145,7 @@ export function FeatureIndexView({
             <Switch.Root
               size="sm"
               checked={row.enabled}
+              disabled={row.isProjectKerning}
               onCheckedChange={(event) =>
                 onStateChange(
                   setFeatureTagEnabled(state, row.tag, event.checked)

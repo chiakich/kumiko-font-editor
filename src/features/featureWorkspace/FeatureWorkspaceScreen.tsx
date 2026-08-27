@@ -342,6 +342,9 @@ export function FeatureWorkspaceScreen() {
               <Switch.Root
                 size="xs"
                 checked={row.enabled}
+                // Project kerning is synthesized straight from kerning.plist
+                // data; it has no off switch short of deleting the pairs.
+                disabled={row.isProjectKerning}
                 onCheckedChange={(event) =>
                   handleChange(
                     setFeatureTagEnabled(
