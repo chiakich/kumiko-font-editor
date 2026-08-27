@@ -18,6 +18,7 @@ import {
   isOffCurveNode,
   isOnCurveNode,
 } from 'src/store/glyphGeometry'
+import { parseLegacyKernPairs } from 'src/lib/fontFormats/legacyKernImport'
 import { activeLayer } from 'src/store/glyphLayer'
 import {
   getComponentMatrix,
@@ -480,6 +481,26 @@ export const importBinaryFontFile = async (file: File) => {
     createFontFingerprint(fontData),
     glyphOrder
   )
+
+  // Legacy `kern` table: convert to project kerning unless the font already
+  // carries a GPOS kern feature (which shapers prefer, and which the IR or
+  // preserved tables already cover — importing both would double the kerning).
+  const hasGposKern =
+    fontData.openTypeFeatures?.features.some(
+      (feature) => feature.tag === 'kern'
+    ) ||
+    fontData.openTypeFeatures?.rawFeatureSnippets?.some(
+      (snippet) => snippet.kind === 'feature' && snippet.tag === 'kern'
+    )
+  if (!hasGposKern) {
+    const legacyPairs = parseLegacyKernPairs(
+      (font as { kerningPairs?: Record<string, number> }).kerningPairs,
+      glyphOrder
+    )
+    if (legacyPairs.length > 0) {
+      fontData.kerningPairs = legacyPairs
+    }
+  }
 
   return {
     projectId: `font-${Date.now()}`,
