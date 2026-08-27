@@ -1,4 +1,12 @@
-import { Badge, Button, HStack, Stack, Switch, Text } from '@chakra-ui/react'
+import {
+  Badge,
+  Button,
+  HStack,
+  Input,
+  Stack,
+  Switch,
+  Text,
+} from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import type {
   FeatureRecord,
@@ -11,6 +19,11 @@ import {
   isFeatureTagEnabled,
   setFeatureTagEnabled,
 } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+import {
+  getStylisticSetName,
+  isStylisticSetTag,
+  setStylisticSetName,
+} from 'src/features/common/projectControl/fontSettings/features/utils/featureParamsEdit'
 
 interface FeatureDetailViewProps {
   feature: FeatureRecord
@@ -33,6 +46,10 @@ export function FeatureDetailView({
 }: FeatureDetailViewProps) {
   const { t } = useTranslation()
   const enabled = isFeatureTagEnabled(state, feature.tag)
+  const isStylisticSet = isStylisticSetTag(feature.tag)
+  const stylisticSetName = isStylisticSet
+    ? getStylisticSetName(state, feature.id)
+    : ''
 
   return (
     <Stack flex={1} minH={0} overflow="auto" p={5} gap={4} maxW="1080px">
@@ -64,6 +81,26 @@ export function FeatureDetailView({
           </Switch.Label>
         </Switch.Root>
       </HStack>
+      {isStylisticSet ? (
+        <HStack gap={2} maxW="480px">
+          <Text fontSize="xs" color="mutedForeground" flexShrink={0}>
+            {t('featureWorkspace.stylisticSetName')}
+          </Text>
+          <Input
+            size="xs"
+            key={stylisticSetName}
+            defaultValue={stylisticSetName}
+            placeholder={t('featureWorkspace.stylisticSetNamePlaceholder')}
+            onBlur={(event) => {
+              if (event.target.value.trim() !== stylisticSetName) {
+                onStateChange(
+                  setStylisticSetName(state, feature.id, event.target.value)
+                )
+              }
+            }}
+          />
+        </HStack>
+      ) : null}
       <FeatureDocument
         feature={feature}
         generatedFea={generatedFea}

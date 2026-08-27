@@ -1099,6 +1099,8 @@
     "kernSelectHint": "Select a pair to compare it live with the current font.",
     "kernPreviewUnavailable": "This pair references glyphs the font does not have.",
     "languageSelect": "Language system",
-    "languageAuto": "Auto-detect language"
+    "languageAuto": "Auto-detect language",
+    "stylisticSetName": "Menu name",
+    "stylisticSetNamePlaceholder": "The name applications show for this set…"
   }
 }

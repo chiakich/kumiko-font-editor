@@ -1099,6 +1099,8 @@
     "kernSelectHint": "點一列字對，這裡會用目前的字型即時對照。",
     "kernPreviewUnavailable": "這個字對的字形不在字型裡，無法預覽。",
     "languageSelect": "語言系統",
-    "languageAuto": "自動偵測語言"
+    "languageAuto": "自動偵測語言",
+    "stylisticSetName": "選單名稱",
+    "stylisticSetNamePlaceholder": "這組替代字在應用程式選單顯示的名稱…"
   }
 }
