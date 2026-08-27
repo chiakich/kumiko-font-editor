@@ -217,6 +217,11 @@ per-master kerning 插值模型、device tables；UI 元件層測試需先決定
 
 ## 已知順手債
 
+- Worker RPC client(requestId + pending map + onerror 重建)已有六份近似
+  拷貝(compiler、sfnt、draftSave、componentSearch、gitSync、
+  referenceResidual、overviewPreview)——值得抽一個
+  `createWorkerRpcClient` 共用。
+
 - `FontSettingsModal.tsx:44` tab 標籤硬編碼中文陣列未走 i18n。
 - `BehaviorsPanel.tsx:120` toast 硬編碼中文。
 - Kerning 字對預覽用 unicode 字元 fallback（`□`），非 shaped glyph——預覽條
