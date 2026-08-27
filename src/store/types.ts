@@ -742,6 +742,9 @@ export interface GlobalState {
     source: FontSource
     layersByGlyphId: Record<string, GlyphLayerData>
     newGlyphs?: GlyphData[]
+    // Pairs to seed the new master's kerning entry with (a copy-method master
+    // copies its base master's pairs); defaults to an empty set.
+    kerningPairs?: KerningPair[]
   }) => void
   setPreviewGlyphMetrics: (glyphId: string, metrics: GlyphMetrics) => void
   setComponentGhostPaths: (paths: PathData[] | null) => void

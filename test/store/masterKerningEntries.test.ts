@@ -45,6 +45,18 @@ describe('kerningPairsByMaster entries follow source CRUD', () => {
     expect(useStore.getState().fontData?.kerningPairsByMaster?.Bold).toEqual([])
   })
 
+  it('applyImportedMaster seeds provided pairs (copy-method masters)', () => {
+    useStore.getState().loadProjectState('p', 'P', fontData())
+    useStore.getState().applyImportedMaster({
+      source: { id: 'Bold', name: 'Bold', location: { Weight: 100 } },
+      layersByGlyphId: {},
+      kerningPairs: [pair(-10)],
+    })
+    expect(
+      useStore.getState().fontData?.kerningPairsByMaster?.Bold[0].value
+    ).toBe(-10)
+  })
+
   it('applyImportedMaster keeps an existing entry untouched', () => {
     const data = fontData()
     data.sources = {
@@ -73,6 +85,33 @@ describe('kerningPairsByMaster entries follow source CRUD', () => {
     expect(
       useStore.getState().fontData?.kerningPairsByMaster?.Light
     ).toBeUndefined()
+  })
+
+  it('re-applying an existing entry-less source keeps it on canonical pairs', () => {
+    const data = fontData()
+    data.sources = {
+      ...data.sources,
+      Bold: { id: 'Bold', name: 'Bold', location: { Weight: 100 } },
+    }
+    useStore.getState().loadProjectState('p', 'P', data)
+    useStore.getState().applyImportedMaster({
+      source: { id: 'Bold', name: 'Bold', location: { Weight: 100 } },
+      layersByGlyphId: {},
+    })
+    expect(
+      useStore.getState().fontData?.kerningPairsByMaster?.Bold
+    ).toBeUndefined()
+  })
+
+  it('updateFontSettings seeds an entry for a source it adds', () => {
+    useStore.getState().loadProjectState('p', 'P', fontData())
+    useStore.getState().updateFontSettings({
+      sources: {
+        Light: { id: 'Light', name: 'Light', location: { Weight: 0 } },
+        Bold: { id: 'Bold', name: 'Bold', location: { Weight: 100 } },
+      },
+    })
+    expect(useStore.getState().fontData?.kerningPairsByMaster?.Bold).toEqual([])
   })
 
   it('updateFontSettings drops the entry of a removed source', () => {

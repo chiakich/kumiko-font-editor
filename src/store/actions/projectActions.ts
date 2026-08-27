@@ -8,6 +8,7 @@ import type {
   GlyphData,
   GlyphLayerData,
   GlobalState,
+  KerningPair,
 } from 'src/store/types'
 import {
   clearProjectArchive,
@@ -503,6 +504,21 @@ export const buildProjectActions = (
             delete state.fontData.kerningPairsByMaster[id]
           }
         }
+        // Same invariant as applyImportedMaster: a new non-default master
+        // gets its own (empty) pair set instead of inheriting the canonical.
+        if (Object.keys(prevSources).length > 0) {
+          for (const id of Object.keys(nextSources)) {
+            if (
+              !prevSources[id] &&
+              !state.fontData.kerningPairsByMaster?.[id]
+            ) {
+              state.fontData.kerningPairsByMaster = {
+                ...(state.fontData.kerningPairsByMaster ?? {}),
+                [id]: [],
+              }
+            }
+          }
+        }
         if (removed.length > 0 || renamed.length > 0) {
           const removedSet = new Set(removed)
           for (const glyph of Object.values(state.fontData.glyphs)) {
@@ -544,6 +560,7 @@ export const buildProjectActions = (
     source: FontSource
     layersByGlyphId: Record<string, GlyphLayerData>
     newGlyphs?: GlyphData[]
+    kerningPairs?: KerningPair[]
   }) =>
     set((state) => {
       if (!state.fontData) {
@@ -567,7 +584,7 @@ export const buildProjectActions = (
       ) {
         state.fontData.kerningPairsByMaster = {
           ...(state.fontData.kerningPairsByMaster ?? {}),
-          [input.source.id]: [],
+          [input.source.id]: input.kerningPairs ?? [],
         }
       }
       for (const [glyphId, layer] of Object.entries(input.layersByGlyphId)) {

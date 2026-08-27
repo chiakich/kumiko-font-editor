@@ -129,7 +129,10 @@ const renameGlyphReferences = (
     )
   }
 
-  for (const pair of fontData.kerningPairs ?? []) {
+  for (const pair of [
+    ...(fontData.kerningPairs ?? []),
+    ...Object.values(fontData.kerningPairsByMaster ?? {}).flat(),
+  ]) {
     pair.left = renameGlyphSelector(pair.left, oldGlyphId, newGlyphId)
     pair.right = renameGlyphSelector(pair.right, oldGlyphId, newGlyphId)
   }
