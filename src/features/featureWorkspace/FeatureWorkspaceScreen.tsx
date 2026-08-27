@@ -166,6 +166,32 @@ export function FeatureWorkspaceScreen() {
             {t('projectControl.shapingVertical')}
           </Button>
         </HStack>
+        {preview.languageOptions.length > 0 ? (
+          <select
+            aria-label={t('featureWorkspace.languageSelect')}
+            value={preview.languageOptionId ?? ''}
+            onChange={(event) =>
+              preview.setLanguageOptionId(event.target.value || null)
+            }
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--chakra-colors-control-border)',
+              borderRadius: '6px',
+              padding: '2px 6px',
+              fontSize: '11px',
+              fontFamily: 'inherit',
+              color: 'inherit',
+              flexShrink: 0,
+            }}
+          >
+            <option value="">{t('featureWorkspace.languageAuto')}</option>
+            {preview.languageOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <Box flex={1} />
         <HStack gap={1} wrap="wrap" justify="flex-end">
           {preview.toggles.map((toggle) => {

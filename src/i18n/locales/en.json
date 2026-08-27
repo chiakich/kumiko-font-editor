@@ -1097,6 +1097,8 @@
     "kernValue": "Kerning value",
     "kernDelete": "Delete pair",
     "kernSelectHint": "Select a pair to compare it live with the current font.",
-    "kernPreviewUnavailable": "This pair references glyphs the font does not have."
+    "kernPreviewUnavailable": "This pair references glyphs the font does not have.",
+    "languageSelect": "Language system",
+    "languageAuto": "Auto-detect language"
   }
 }

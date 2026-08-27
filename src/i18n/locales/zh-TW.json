@@ -1097,6 +1097,8 @@
     "kernValue": "字距值",
     "kernDelete": "刪除字對",
     "kernSelectHint": "點一列字對，這裡會用目前的字型即時對照。",
-    "kernPreviewUnavailable": "這個字對的字形不在字型裡，無法預覽。"
+    "kernPreviewUnavailable": "這個字對的字形不在字型裡，無法預覽。",
+    "languageSelect": "語言系統",
+    "languageAuto": "自動偵測語言"
   }
 }

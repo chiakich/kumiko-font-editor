@@ -17,6 +17,10 @@ import {
   buildPlaceholderText,
   parsePreviewSegments,
 } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
+import {
+  listShapingLanguageOptions,
+  type ShapingLanguageOption,
+} from 'src/features/common/projectControl/fontSettings/features/utils/shapingLanguage'
 
 export type ShapingPreviewFontStatus =
   | { state: 'idle' }
@@ -45,6 +49,8 @@ export const useShapingPreview = (input: {
   const { fontData, openTypeFeatures } = input
   const [text, setText] = useState('')
   const [direction, setDirection] = useState<PreviewDirection>('ltr')
+  // Selected language system (locl and per-script rules need it); null = auto.
+  const [languageOptionId, setLanguageOptionId] = useState<string | null>(null)
   const [featureOverrides, setFeatureOverrides] = useState<
     Record<string, boolean>
   >({})
@@ -130,7 +136,14 @@ export const useShapingPreview = (input: {
     [toggles]
   )
 
-  const featureKey = `${direction}|${disabledList.join(',')}|${featureList.join(',')}`
+  const languageOptions = useMemo(
+    () => listShapingLanguageOptions(openTypeFeatures),
+    [openTypeFeatures]
+  )
+  const languageOption: ShapingLanguageOption | null =
+    languageOptions.find((option) => option.id === languageOptionId) ?? null
+
+  const featureKey = `${direction}|${languageOption?.id ?? ''}|${disabledList.join(',')}|${featureList.join(',')}`
   // `/glyphName` tokens: shaped as placeholders, swapped for the named glyph.
   const placeholder = useMemo(
     () => buildPlaceholderText(parsePreviewSegments(text)),
@@ -150,6 +163,8 @@ export const useShapingPreview = (input: {
         features,
         includeGlyphShapes: true,
         glyphTokens: placeholder.tokensByCluster,
+        script: languageOption?.hbScript,
+        language: languageOption?.hbLanguage,
       })
     void Promise.all([shapeRun(disabledList), shapeRun(featureList)]).then(
       ([beforeResult, afterResult]) => {
@@ -193,6 +208,7 @@ export const useShapingPreview = (input: {
     disabledList,
     direction,
     placeholder,
+    languageOption,
   ])
 
   // A result only counts while its inputs are still the current ones.
@@ -235,6 +251,9 @@ export const useShapingPreview = (input: {
     setText,
     direction,
     setDirection,
+    languageOptions,
+    languageOptionId,
+    setLanguageOptionId,
     toggles,
     featureOverrides,
     toggleFeature,
@@ -256,6 +275,8 @@ export const useShapingPreview = (input: {
             glyphTokens: placeholder.tokensByCluster,
             features: featureList,
             direction,
+            script: languageOption?.hbScript,
+            language: languageOption?.hbLanguage,
           }
         : null,
   }

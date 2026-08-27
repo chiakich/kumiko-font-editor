@@ -11,6 +11,8 @@ export interface ShapingTraceInputs {
   glyphTokens: ReadonlyMap<number, string>
   features: string[]
   direction: HarfBuzzDirection
+  script?: string
+  language?: string
 }
 
 // Runs the (comparatively expensive) HarfBuzz trace only while something wants
@@ -34,6 +36,8 @@ export const useShapingTrace = (
     void traceTextShaping(inputs.buffer, inputs.text, {
       direction: inputs.direction,
       features: inputs.features,
+      script: inputs.script,
+      language: inputs.language,
     }).then((result) => {
       if (cancelled) {
         return
@@ -55,6 +59,8 @@ export const useShapingTrace = (
     traced.inputs.buffer === inputs.buffer &&
     traced.inputs.text === inputs.text &&
     traced.inputs.direction === inputs.direction &&
+    traced.inputs.script === inputs.script &&
+    traced.inputs.language === inputs.language &&
     traced.inputs.features.join(',') === inputs.features.join(',')
       ? traced
       : null
