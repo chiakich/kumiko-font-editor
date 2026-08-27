@@ -73,6 +73,12 @@ export { parseGdefTable } from 'src/lib/openTypeFeatures/gdefParser'
 export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
 export { serializeFeaDocument } from 'src/lib/openTypeFeatures/serializeFea'
 export { shapeTextWithHarfBuzz } from 'src/lib/openTypeFeatures/shapeTextWithHarfBuzz'
+export {
+  traceTextShaping,
+  type ShapeTraceResult,
+  type ShapingTraceStep,
+} from 'src/lib/openTypeFeatures/traceShaping'
+export { getGlyphCatalog } from 'src/lib/openTypeFeatures/harfbuzzGlyphCatalog'
 export { validateFeatures } from 'src/lib/openTypeFeatures/validateFeatures'
 export {
   applyAutoFeatureSuggestion,

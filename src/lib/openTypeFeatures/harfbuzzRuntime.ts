@@ -41,12 +41,38 @@ interface HarfBuzzBuffer {
   setScript(script: string): void
 }
 
+export interface HarfBuzzTraceGlyph {
+  g: number
+  cl: number
+  dx?: number
+  dy?: number
+  ax?: number
+  ay?: number
+}
+
+export interface HarfBuzzTraceEntry {
+  // HarfBuzz shaping message, e.g. "end lookup 25 feature 'calt'".
+  m: string
+  // Buffer snapshot right after the message.
+  t: HarfBuzzTraceGlyph[]
+  // Whether the buffer holds glyphs yet (false during Unicode preprocessing).
+  glyphs: boolean
+}
+
 export interface HarfBuzzRuntime {
   createBlob(buffer: ArrayBuffer | Uint8Array): HarfBuzzBlob
   createBuffer(): HarfBuzzBuffer
   createFace(blob: HarfBuzzBlob, index: number): HarfBuzzFace
   createFont(face: HarfBuzzFace): HarfBuzzFont
   shape(font: HarfBuzzFont, buffer: HarfBuzzBuffer, features?: string): void
+  // Shapes like shape() while collecting a per-message trace of the buffer.
+  shapeWithTrace(
+    font: HarfBuzzFont,
+    buffer: HarfBuzzBuffer,
+    features: string | undefined,
+    stopAtLookup: number,
+    stopPhase: number
+  ): HarfBuzzTraceEntry[]
 }
 
 let runtimePromise: Promise<HarfBuzzRuntime> | null = null
