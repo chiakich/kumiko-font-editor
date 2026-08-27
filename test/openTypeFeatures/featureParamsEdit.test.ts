@@ -43,3 +43,14 @@ describe('stylistic set params editing', () => {
     expect(next.features[0].featureParams).toBeUndefined()
   })
 })
+
+describe('character variant label editing', () => {
+  it('validates cv tags', async () => {
+    const { isCharacterVariantTag } =
+      await import('src/features/common/projectControl/fontSettings/features/utils/featureParamsEdit')
+    expect(isCharacterVariantTag('cv01')).toBe(true)
+    expect(isCharacterVariantTag('cv99')).toBe(true)
+    expect(isCharacterVariantTag('cv00')).toBe(false)
+    expect(isCharacterVariantTag('ss01')).toBe(false)
+  })
+})

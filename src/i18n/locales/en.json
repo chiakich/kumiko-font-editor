@@ -1061,7 +1061,8 @@
     "glyphPickerCreateVariantFrom": "Create a variant of {{glyph}}:",
     "glyphPickerVariantSuffix": "Variant suffix",
     "glyphPickerCreateVariant": "Create variant",
-    "glyphPickerVariantExists": "This name already exists"
+    "glyphPickerVariantExists": "This name already exists",
+    "contextAppliesLookups": "applies lookups:"
   },
   "settings": {
     "appearance": "Appearance",
@@ -1135,6 +1136,7 @@
     "kernWordList": "Word list",
     "kernWordListHint": "One test string per line; click to load it into the preview",
     "kernWordListPlaceholder": "e.g. typography\n(multiple lines allowed)",
-    "attachFeaFile": "Attach .fea file"
+    "attachFeaFile": "Attach .fea file",
+    "characterVariantLabel": "Menu label (cv)"
   }
 }

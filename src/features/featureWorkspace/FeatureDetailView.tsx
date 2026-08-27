@@ -21,7 +21,10 @@ import {
 } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
 import {
   getStylisticSetName,
+  getCharacterVariantLabel,
+  isCharacterVariantTag,
   isStylisticSetTag,
+  setCharacterVariantLabel,
   setStylisticSetName,
 } from 'src/features/common/projectControl/fontSettings/features/utils/featureParamsEdit'
 
@@ -49,6 +52,10 @@ export function FeatureDetailView({
   const isStylisticSet = isStylisticSetTag(feature.tag)
   const stylisticSetName = isStylisticSet
     ? getStylisticSetName(state, feature.id)
+    : ''
+  const isCharacterVariant = isCharacterVariantTag(feature.tag)
+  const characterVariantLabel = isCharacterVariant
+    ? getCharacterVariantLabel(state, feature.id)
     : ''
 
   return (
@@ -95,6 +102,30 @@ export function FeatureDetailView({
               if (event.target.value.trim() !== stylisticSetName) {
                 onStateChange(
                   setStylisticSetName(state, feature.id, event.target.value)
+                )
+              }
+            }}
+          />
+        </HStack>
+      ) : null}
+      {isCharacterVariant ? (
+        <HStack gap={2} maxW="480px">
+          <Text fontSize="xs" color="mutedForeground" flexShrink={0}>
+            {t('featureWorkspace.characterVariantLabel')}
+          </Text>
+          <Input
+            size="xs"
+            key={characterVariantLabel}
+            defaultValue={characterVariantLabel}
+            placeholder={t('featureWorkspace.stylisticSetNamePlaceholder')}
+            onBlur={(event) => {
+              if (event.target.value.trim() !== characterVariantLabel) {
+                onStateChange(
+                  setCharacterVariantLabel(
+                    state,
+                    feature.id,
+                    event.target.value
+                  )
                 )
               }
             }}

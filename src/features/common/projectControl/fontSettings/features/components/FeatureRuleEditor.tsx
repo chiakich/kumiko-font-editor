@@ -16,10 +16,13 @@ import {
   textToSelector,
 } from 'src/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
 import type {
+  ContextualRule,
   FeatureRecord,
   GlyphSelector,
   LigatureSubstitutionRule,
   LookupRecord,
+  MarkToBaseRule,
+  MarkToMarkRule,
   OpenTypeFeaturesState,
   PairPositioningRule,
   Rule,
@@ -342,6 +345,103 @@ function PairPositioningCard({
   )
 }
 
+// Read-only context visualization: backtrack (dim) → input (marked) →
+// lookahead (dim). The FEA code view stays the editing surface for these.
+function ContextualRuleCard({
+  rule,
+  state,
+}: {
+  rule: ContextualRule
+  state: OpenTypeFeaturesState
+}) {
+  const { t } = useTranslation()
+  const lookupNameById = new Map(
+    state.lookups.map((lookup) => [lookup.id, lookup.name])
+  )
+  const chip = (
+    selector: GlyphSelector,
+    key: string,
+    tone: 'context' | 'input'
+  ) => (
+    <Badge
+      key={key}
+      variant={tone === 'input' ? 'solid' : 'outline'}
+      fontFamily="mono"
+      opacity={tone === 'input' ? 1 : 0.65}
+    >
+      {selectorToText(selector, state)}
+      {tone === 'input' ? '\u2019' : ''}
+    </Badge>
+  )
+  return (
+    <Stack gap={1.5}>
+      <HStack gap={1.5} wrap="wrap">
+        <Badge variant="outline" fontFamily="mono">
+          {rule.kind === 'contextualSubstitution' ? 'sub' : 'pos'}
+        </Badge>
+        {rule.backtrack.map((selector, index) =>
+          chip(selector, `b${index}`, 'context')
+        )}
+        {rule.input.map((input, index) =>
+          chip(input.selector, `i${index}`, 'input')
+        )}
+        {rule.lookahead.map((selector, index) =>
+          chip(selector, `l${index}`, 'context')
+        )}
+      </HStack>
+      {rule.input.some((input) => (input.lookupIds ?? []).length > 0) ? (
+        <HStack gap={2} wrap="wrap">
+          <Text fontSize="10px" color="mutedForeground">
+            {t('projectControl.contextAppliesLookups')}
+          </Text>
+          {rule.input.flatMap((input, index) =>
+            (input.lookupIds ?? []).map((lookupId) => (
+              <Text
+                key={`${index}_${lookupId}`}
+                fontSize="10px"
+                fontFamily="mono"
+                color="mutedForeground"
+              >
+                {lookupNameById.get(lookupId) ?? lookupId}
+              </Text>
+            ))
+          )}
+        </HStack>
+      ) : null}
+    </Stack>
+  )
+}
+
+// Read-only mark attachment summary: which glyphs, which mark classes, where.
+function MarkRuleCard({
+  rule,
+  state,
+}: {
+  rule: MarkToBaseRule | MarkToMarkRule
+  state: OpenTypeFeaturesState
+}) {
+  const markClassNameById = new Map(
+    state.markClasses.map((markClass) => [markClass.id, markClass.name])
+  )
+  const base = rule.kind === 'markToBase' ? rule.baseGlyphs : rule.baseMarks
+  return (
+    <HStack gap={2} wrap="wrap">
+      <Badge variant="outline" fontFamily="mono">
+        {rule.kind === 'markToBase' ? 'mark' : 'mkmk'}
+      </Badge>
+      <Text fontSize="xs" fontFamily="mono">
+        {selectorToText(base, state)}
+      </Text>
+      {Object.entries(rule.anchors).map(([markClassId, anchor]) => (
+        <Badge key={markClassId} variant="subtle" fontFamily="mono">
+          @{markClassNameById.get(markClassId) ?? markClassId} ({anchor.x},{' '}
+          {anchor.y})
+        </Badge>
+      ))}
+    </HStack>
+  )
+}
+
 function RuleCard({
   rule,
   state,
@@ -387,6 +487,15 @@ function RuleCard({
         onRuleChange={onRuleChange}
       />
     )
+  }
+  if (
+    rule.kind === 'contextualSubstitution' ||
+    rule.kind === 'contextualPositioning'
+  ) {
+    return <ContextualRuleCard rule={rule} state={state} />
+  }
+  if (rule.kind === 'markToBase' || rule.kind === 'markToMark') {
+    return <MarkRuleCard rule={rule} state={state} />
   }
   return (
     <Text fontSize="xs" color="mutedForeground" fontFamily="mono">

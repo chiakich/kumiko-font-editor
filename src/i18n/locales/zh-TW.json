@@ -1061,7 +1061,8 @@
     "glyphPickerCreateVariantFrom": "從 {{glyph}} 建立新變體:",
     "glyphPickerVariantSuffix": "變體後綴",
     "glyphPickerCreateVariant": "建立變體",
-    "glyphPickerVariantExists": "此名稱已存在"
+    "glyphPickerVariantExists": "此名稱已存在",
+    "contextAppliesLookups": "套用 lookup:"
   },
   "settings": {
     "appearance": "外觀主題",
@@ -1135,6 +1136,7 @@
     "kernWordList": "詞表",
     "kernWordListHint": "每行一組測試文字,點一下載入預覽",
     "kernWordListPlaceholder": "例如:文字排版\n(可多行)",
-    "attachFeaFile": "掛載 .fea 檔案"
+    "attachFeaFile": "掛載 .fea 檔案",
+    "characterVariantLabel": "選單名稱(cv)"
   }
 }
