@@ -213,6 +213,65 @@ export function FeatureIndexView({
       })}
       {suggestions.length > 0 ? (
         <Box pt={2}>
+          {(state.featureVariations ?? []).length > 0 ? (
+            <Stack
+              gap={2}
+              p={3}
+              borderWidth="1px"
+              borderColor="controlBorder"
+              borderRadius="md"
+              bg="card"
+            >
+              <HStack gap={2}>
+                <Text fontSize="xs" fontWeight={700}>
+                  {t('featureWorkspace.featureVariationsTitle')}
+                </Text>
+                <Badge size="sm" colorPalette="orange">
+                  {t('featureWorkspace.featureVariationsReadOnly')}
+                </Badge>
+              </HStack>
+              <Text fontSize="10px" color="mutedForeground">
+                {t('featureWorkspace.featureVariationsHint')}
+              </Text>
+              {(state.featureVariations ?? []).flatMap((summary) =>
+                summary.records.map((record, recordIndex) => (
+                  <HStack
+                    key={`${summary.table}_${recordIndex}`}
+                    gap={2}
+                    wrap="wrap"
+                    fontFamily="mono"
+                    fontSize="11px"
+                  >
+                    <Badge size="sm" variant="outline">
+                      {summary.table}
+                    </Badge>
+                    {record.conditions.length === 0 ? (
+                      <Text color="mutedForeground">
+                        {t('featureWorkspace.featureVariationsAlways')}
+                      </Text>
+                    ) : (
+                      record.conditions.map((condition, conditionIndex) => (
+                        <Text key={conditionIndex}>
+                          {condition.axisTag ?? `axis#${condition.axisIndex}`} [
+                          {condition.min.toFixed(2)} …{' '}
+                          {condition.max.toFixed(2)}]
+                        </Text>
+                      ))
+                    )}
+                    <Text color="mutedForeground">→</Text>
+                    {record.substitutions.map((substitution, subIndex) => (
+                      <Text key={subIndex}>
+                        {substitution.featureTag ??
+                          `feature#${substitution.featureIndex}`}{' '}
+                        ({substitution.alternateLookupCount} lookups)
+                      </Text>
+                    ))}
+                  </HStack>
+                ))
+              )}
+            </Stack>
+          ) : null}
+
           <AutoFeatureSuggestions
             suggestions={suggestions}
             onAccept={onAcceptSuggestion}

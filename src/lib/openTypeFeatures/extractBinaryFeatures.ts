@@ -2,6 +2,10 @@ import {
   findSfntTable,
   readSfntTableDirectory,
 } from 'src/lib/openTypeFeatures/binaryReader'
+import {
+  parseFeatureVariations,
+  parseFvarAxisTags,
+} from 'src/lib/openTypeFeatures/featureVariationsParser'
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
 import { createCompiledTableSourceSection } from 'src/lib/openTypeFeatures/featureSourceSections'
 import {
@@ -687,6 +691,22 @@ export const extractBinaryFeatures = (
       .map((lookup) => toUnsupportedLookup(entry.inventory.table, lookup))
   )
   state.gdef = parsedGdef?.gdef ?? null
+  const axisTags = parseFvarAxisTags(buffer)
+  const featureVariations = inventories.flatMap((inventory) =>
+    inventory.featureVariationsOffset !== undefined
+      ? (parseFeatureVariations({
+          buffer,
+          table: inventory.table,
+          tableOffset: inventory.tableOffset,
+          featureVariationsOffset: inventory.featureVariationsOffset,
+          features: inventory.features,
+          axisTags,
+        }) ?? [])
+      : []
+  )
+  if (featureVariations.length > 0) {
+    state.featureVariations = featureVariations
+  }
   state.diagnostics = diagnostics
   state.sourceSections = toCompiledLayoutSourceSections(
     inventories,

@@ -525,6 +525,10 @@ export interface OpenTypeFeaturesState {
   autoFeatureConfig: AutoFeatureConfig
   ignoredSuggestionIds: string[]
   exportPolicy: ExportPolicy
+  // Read-only summaries of imported FeatureVariations tables (rvrn and
+  // friends). Not reconstructed into editable rules; kept for display and
+  // preservation awareness.
+  featureVariations?: import('src/lib/openTypeFeatures/featureVariationsParser').FeatureVariationsSummary[]
   /** Raw FEA source split into per-feature / per-prefix blocks. */
   rawFeatureSnippets?: RawFeatureSnippet[]
   /**

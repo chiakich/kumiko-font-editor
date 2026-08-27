@@ -1137,6 +1137,10 @@
     "kernWordListHint": "每行一組測試文字,點一下載入預覽",
     "kernWordListPlaceholder": "例如:文字排版\n(可多行)",
     "attachFeaFile": "掛載 .fea 檔案",
-    "characterVariantLabel": "選單名稱(cv)"
+    "characterVariantLabel": "選單名稱(cv)",
+    "featureVariationsTitle": "特性變體(FeatureVariations)",
+    "featureVariationsReadOnly": "唯讀",
+    "featureVariationsHint": "可變字型的軸區間特性替換。Kumiko 會保留原始資料但尚未支援編輯;重建版面表時請使用保留原編譯表的匯出政策。",
+    "featureVariationsAlways": "(無條件)"
   }
 }

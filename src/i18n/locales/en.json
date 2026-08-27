@@ -1137,6 +1137,10 @@
     "kernWordListHint": "One test string per line; click to load it into the preview",
     "kernWordListPlaceholder": "e.g. typography\n(multiple lines allowed)",
     "attachFeaFile": "Attach .fea file",
-    "characterVariantLabel": "Menu label (cv)"
+    "characterVariantLabel": "Menu label (cv)",
+    "featureVariationsTitle": "Feature variations",
+    "featureVariationsReadOnly": "read-only",
+    "featureVariationsHint": "Axis-range feature substitutions from a variable font. Kumiko preserves the original data but cannot edit it yet; use the preserve-compiled-tables export policy when rebuilding.",
+    "featureVariationsAlways": "(unconditional)"
   }
 }
