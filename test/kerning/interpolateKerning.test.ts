@@ -78,10 +78,48 @@ describe('interpolateKerningPairsAtLocation', () => {
     expect(findPair(pairs, 'T', 'o')?.value).toBeCloseTo(-40)
   })
 
+  it('treats a pair missing from a master entry but present in canonical as 0 there', () => {
+    const fontData = baseFontData()
+    fontData.kerningPairs = [pair('A', 'V', -20), pair('W', 'a', -30)]
+    // Bold's own entry lacks W/a, so Bold contributes 0 for it.
+    const pairs = interpolateKerningPairsAtLocation(fontData, { Weight: 50 })
+    expect(findPair(pairs, 'W', 'a')?.value).toBeCloseTo(-15)
+  })
+
+  it('matches class pairs across masters through group reference aliases', () => {
+    const fontData = baseFontData()
+    fontData.kerningGroups = [
+      { id: 'public.kern1.A', name: 'A', side: 'left', glyphs: ['A'] },
+    ] as never
+    // Canonical references the group by id, the master by '@name'.
+    fontData.kerningPairs = [
+      {
+        id: 'p1',
+        left: { kind: 'class', classId: 'public.kern1.A' },
+        right: { kind: 'glyph', glyph: 'V' },
+        value: -20,
+      },
+    ]
+    fontData.kerningPairsByMaster = {
+      Bold: [
+        {
+          id: 'p2',
+          left: { kind: 'class', classId: '@A' },
+          right: { kind: 'glyph', glyph: 'V' },
+          value: -60,
+        },
+      ],
+    }
+    const pairs = interpolateKerningPairsAtLocation(fontData, { Weight: 50 })
+    expect(pairs).toHaveLength(1)
+    expect(pairs[0].value).toBeCloseTo(-40)
+  })
+
   it('falls back to canonical pairs without per-master kerning', () => {
     const fontData = baseFontData()
     delete fontData.kerningPairsByMaster
     const pairs = interpolateKerningPairsAtLocation(fontData, { Weight: 50 })
-    expect(pairs).toEqual(fontData.kerningPairs)
+    expect(findPair(pairs, 'A', 'V')?.value).toBe(-20)
+    expect(pairs).toHaveLength(1)
   })
 })
