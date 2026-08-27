@@ -146,6 +146,28 @@ decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts
    `valueRecordState`：single/ligature substitution 與 pair positioning 可
    直接編輯（selector 支援 `@ClassName`），其餘 rule kind 唯讀降級提示。
    contextual 等複雜 kind 仍待後續。
+
+### 家族化檢視與 kern 資料層（2026-08，UI 討論第二輪）
+
+「不同特性需要不同檢視」以 lookup 家族落地，而非 per-tag 面板：
+
+- **kern 資料層**：`fontData.kerningPairs/kerningGroups`（kerning.plist 模型）
+  此前完全不進二進位匯出與預覽。現在 `synthesizeKerning.ts` 在每次編譯時
+  將其合成為 kern feature（`compileManagedFontFeatures` 第三參數；variable
+  build 亦接線，per-master 或合併後擇一）。IR kern 已涵蓋的字對自動略過以免
+  加倍；`preserve-compiled-layout-tables` 政策下不注入。kern auto-suggestion
+  因此退場。Pyodide 回歸測試：`kerningCompileRuntime.test.ts`。
+- **kern 字對工作檯**（`KernPairView`）：kerningPairs 的投影——虛擬化字對表、
+  值就地編輯（走既有 kerning actions）、選取列以目前字型即時 before/after
+  對照；匯入的 GPOS kern 另列並可跳規則表。
+- **對照網格**（`SubstitutionGridView`）：一對一替換家族（vert/ssXX…）的
+  proof sheet，class 展開成員、缺字形標示、點格開字形編輯器；singleSub 為主
+  的 feature 預設此檢視，detail 共四模式（視覺規則/對照網格/規則表/FEA）。
+- **語言系統選擇器**：`shapingLanguage.ts` 將 languagesystems 的 OT tag 映射
+  到 HarfBuzz 的 ISO script/BCP47 language，工作區頂欄可切，locl 可驗證。
+- **ss 選單名稱**：detail 直接編輯 stylisticSet featureParams 首個名稱
+  （`featureParamsEdit.ts`），generateFea 照常輸出 featureNames。
+
 5. **Behaviors panel 整合**——互相跳轉，不合併。（未動工）
 
 ## 已知順手債
