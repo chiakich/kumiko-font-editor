@@ -498,6 +498,11 @@ export const buildProjectActions = (
           (id) =>
             prevSources[id] && prevSources[id].name !== nextSources[id].name
         )
+        if (removed.length > 0 && state.fontData.kerningPairsByMaster) {
+          for (const id of removed) {
+            delete state.fontData.kerningPairsByMaster[id]
+          }
+        }
         if (removed.length > 0 || renamed.length > 0) {
           const removedSet = new Set(removed)
           for (const glyph of Object.values(state.fontData.glyphs)) {
@@ -544,9 +549,21 @@ export const buildProjectActions = (
       if (!state.fontData) {
         return
       }
+      const hadSources = Object.keys(state.fontData.sources ?? {}).length > 0
       state.fontData.sources = {
         ...(state.fontData.sources ?? {}),
         [input.source.id]: input.source,
+      }
+      // Non-default masters must carry their own kerning entry: without one,
+      // getMasterKerningPairs falls back to the canonical (default) pairs.
+      if (
+        hadSources &&
+        !state.fontData.kerningPairsByMaster?.[input.source.id]
+      ) {
+        state.fontData.kerningPairsByMaster = {
+          ...(state.fontData.kerningPairsByMaster ?? {}),
+          [input.source.id]: [],
+        }
       }
       for (const [glyphId, layer] of Object.entries(input.layersByGlyphId)) {
         const glyph = state.fontData.glyphs[glyphId]
