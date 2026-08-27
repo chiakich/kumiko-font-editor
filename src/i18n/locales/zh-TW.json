@@ -1036,7 +1036,9 @@
     "ruleKindNotEditable": "{{kind}} 規則目前只能以 FEA 程式碼檢視",
     "lookupReadOnly": "唯讀",
     "noRules": "這個 lookup 沒有規則。",
-    "noLookupsForFeature": "這個特性還沒有 lookup。切到 FEA 程式碼檢視它的產出。"
+    "noLookupsForFeature": "這個特性還沒有 lookup。切到 FEA 程式碼檢視它的產出。",
+    "shapingHorizontal": "橫排",
+    "shapingVertical": "直排"
   },
   "settings": {
     "appearance": "外觀主題",

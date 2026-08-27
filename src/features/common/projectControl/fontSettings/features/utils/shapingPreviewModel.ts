@@ -1,4 +1,9 @@
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import type {
+  HarfBuzzDirection,
+  OpenTypeFeaturesState,
+} from 'src/lib/openTypeFeatures'
+
+export type PreviewDirection = Extract<HarfBuzzDirection, 'ltr' | 'ttb'>
 
 // Features HarfBuzz applies without being asked (the required/default set for
 // horizontal text). Everything else starts life off, which is exactly the
@@ -21,8 +26,16 @@ const DEFAULT_ON_FEATURES = new Set([
   'rvrn',
 ])
 
-export const isFeatureOnByDefault = (tag: string) =>
-  DEFAULT_ON_FEATURES.has(tag)
+// Features HarfBuzz turns on only for vertical text.
+const VERTICAL_ON_FEATURES = new Set(['vert', 'vrt2', 'vkrn'])
+
+export const isFeatureOnByDefault = (
+  tag: string,
+  direction: PreviewDirection = 'ltr'
+) =>
+  direction === 'ttb'
+    ? DEFAULT_ON_FEATURES.has(tag) || VERTICAL_ON_FEATURES.has(tag)
+    : DEFAULT_ON_FEATURES.has(tag)
 
 export interface PreviewFeatureToggle {
   tag: string
@@ -33,7 +46,8 @@ export interface PreviewFeatureToggle {
 // Every feature the state knows about, whether it lives in the IR or only in a
 // raw snippet, deduplicated and in source order.
 export const listPreviewFeatureToggles = (
-  state: OpenTypeFeaturesState | undefined
+  state: OpenTypeFeaturesState | undefined,
+  direction: PreviewDirection = 'ltr'
 ): PreviewFeatureToggle[] => {
   if (!state) {
     return []
@@ -68,7 +82,7 @@ export const listPreviewFeatureToggles = (
     }
   }
   return tags
-    .map((tag) => ({ tag, defaultOn: isFeatureOnByDefault(tag) }))
+    .map((tag) => ({ tag, defaultOn: isFeatureOnByDefault(tag, direction) }))
     .sort((left, right) => left.tag.localeCompare(right.tag))
 }
 

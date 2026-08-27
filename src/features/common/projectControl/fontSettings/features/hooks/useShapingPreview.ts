@@ -11,6 +11,7 @@ import {
   buildDisabledFeatureList,
   buildShapingFeatureList,
   listPreviewFeatureToggles,
+  type PreviewDirection,
 } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
 
 export type ShapingPreviewFontStatus =
@@ -39,6 +40,7 @@ export const useShapingPreview = (input: {
 }) => {
   const { fontData, openTypeFeatures } = input
   const [text, setText] = useState('')
+  const [direction, setDirection] = useState<PreviewDirection>('ltr')
   const [featureOverrides, setFeatureOverrides] = useState<
     Record<string, boolean>
   >({})
@@ -59,8 +61,8 @@ export const useShapingPreview = (input: {
   const requestRef = useRef(0)
 
   const toggles = useMemo(
-    () => listPreviewFeatureToggles(openTypeFeatures),
-    [openTypeFeatures]
+    () => listPreviewFeatureToggles(openTypeFeatures, direction),
+    [openTypeFeatures, direction]
   )
 
   const wantsPreview = text.trim().length > 0
@@ -116,7 +118,7 @@ export const useShapingPreview = (input: {
     [toggles]
   )
 
-  const featureKey = `${disabledList.join(',')}|${featureList.join(',')}`
+  const featureKey = `${direction}|${disabledList.join(',')}|${featureList.join(',')}`
 
   // Shape both runs. Shaping is cheap next to compiling, so no debounce here —
   // the preview follows the text field keystroke by keystroke.
@@ -127,6 +129,7 @@ export const useShapingPreview = (input: {
     let cancelled = false
     const shapeRun = (features: string[]) =>
       shapeTextWithHarfBuzz(buffer, text, {
+        direction,
         features,
         includeGlyphShapes: true,
       })
@@ -164,7 +167,7 @@ export const useShapingPreview = (input: {
     return () => {
       cancelled = true
     }
-  }, [buffer, text, featureKey, featureList, disabledList])
+  }, [buffer, text, featureKey, featureList, disabledList, direction])
 
   // A result only counts while its inputs are still the current ones.
   const current =
@@ -194,6 +197,8 @@ export const useShapingPreview = (input: {
   return {
     text,
     setText,
+    direction,
+    setDirection,
     toggles,
     featureOverrides,
     toggleFeature,

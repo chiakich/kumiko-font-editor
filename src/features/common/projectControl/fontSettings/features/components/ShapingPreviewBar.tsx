@@ -25,12 +25,14 @@ const RUN_SIZE = 44
 function PreviewRunRow({
   label,
   run,
+  direction,
 }: {
   label: string
   run: ShapingPreviewRun | null
+  direction: 'ltr' | 'ttb'
 }) {
   return (
-    <HStack gap={3} minH={`${RUN_SIZE}px`} align="center">
+    <HStack gap={3} minH={`${RUN_SIZE}px`} align="flex-start">
       <Text
         fontSize="10px"
         fontWeight={600}
@@ -42,12 +44,19 @@ function PreviewRunRow({
       >
         {label}
       </Text>
-      <Box overflowX="auto" flexGrow={1} minW={0}>
+      <Box
+        overflowX="auto"
+        overflowY="auto"
+        flexGrow={1}
+        minW={0}
+        maxH={direction === 'ttb' ? '260px' : undefined}
+      >
         {run ? (
           <ShapedRunSvg
             glyphs={run.glyphs}
             unitsPerEm={run.unitsPerEm}
             size={RUN_SIZE}
+            direction={direction}
           />
         ) : null}
       </Box>
@@ -75,6 +84,24 @@ export function ShapingPreviewBar({ preview }: ShapingPreviewBarProps) {
           placeholder={t('projectControl.shapingPreviewPlaceholder')}
           onChange={(event) => preview.setText(event.target.value)}
         />
+        <HStack gap={0.5} bg="muted" borderRadius="md" p="2px">
+          <Button
+            size="2xs"
+            variant={preview.direction === 'ltr' ? 'solid' : 'ghost'}
+            onClick={() => preview.setDirection('ltr')}
+            aria-pressed={preview.direction === 'ltr'}
+          >
+            {t('projectControl.shapingHorizontal')}
+          </Button>
+          <Button
+            size="2xs"
+            variant={preview.direction === 'ttb' ? 'solid' : 'ghost'}
+            onClick={() => preview.setDirection('ttb')}
+            aria-pressed={preview.direction === 'ttb'}
+          >
+            {t('projectControl.shapingVertical')}
+          </Button>
+        </HStack>
         {preview.fontStatus.state === 'compiling' ? (
           <HStack gap={1.5} color="mutedForeground">
             <Spinner size="xs" />
@@ -117,10 +144,12 @@ export function ShapingPreviewBar({ preview }: ShapingPreviewBarProps) {
           <PreviewRunRow
             label={t('projectControl.shapingBefore')}
             run={preview.before}
+            direction={preview.direction}
           />
           <PreviewRunRow
             label={t('projectControl.shapingAfter')}
             run={preview.after}
+            direction={preview.direction}
           />
           {preview.after && preview.before ? (
             <HStack gap={2}>

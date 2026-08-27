@@ -1036,7 +1036,9 @@
     "ruleKindNotEditable": "{{kind}} rules can only be viewed as FEA code for now",
     "lookupReadOnly": "Read-only",
     "noRules": "This lookup has no rules.",
-    "noLookupsForFeature": "This feature has no lookups yet. Switch to FEA code to see its output."
+    "noLookupsForFeature": "This feature has no lookups yet. Switch to FEA code to see its output.",
+    "shapingHorizontal": "Horizontal",
+    "shapingVertical": "Vertical"
   },
   "settings": {
     "appearance": "Appearance",
