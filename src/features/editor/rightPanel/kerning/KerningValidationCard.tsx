@@ -3,10 +3,11 @@ import { WarningTriangle } from 'iconoir-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  getMasterKerningPairs,
   validateKerning,
   type KerningValidationIssueKind,
 } from 'src/lib/kerning/resolveKerning'
-import type { FontData } from 'src/store'
+import { useStore, type FontData } from 'src/store'
 import { KerningCard } from 'src/features/editor/rightPanel/kerning/KerningPairInspector'
 
 const ISSUE_LABEL_KEYS: Record<KerningValidationIssueKind, string> = {
@@ -24,8 +25,17 @@ export function KerningValidationCard({
   fontData,
 }: KerningValidationCardProps) {
   const { t } = useTranslation()
+  const activeMasterId = useStore((state) => state.activeMasterId)
 
-  const issues = useMemo(() => validateKerning(fontData), [fontData])
+  // Validate the pair set the rest of the panel shows (active master's).
+  const issues = useMemo(
+    () =>
+      validateKerning({
+        ...fontData,
+        kerningPairs: getMasterKerningPairs(fontData, activeMasterId),
+      }),
+    [fontData, activeMasterId]
+  )
   if (issues.length === 0) return null
 
   return (
