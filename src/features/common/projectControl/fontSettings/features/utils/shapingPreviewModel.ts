@@ -26,8 +26,9 @@ const DEFAULT_ON_FEATURES = new Set([
   'rvrn',
 ])
 
-// Features HarfBuzz turns on only for vertical text.
-const VERTICAL_ON_FEATURES = new Set(['vert', 'vrt2', 'vkrn'])
+// The only feature hb-ot-shape enables for vertical text; vrt2/vkrn are NOT
+// applied by default, so their chips must start off (and stay toggleable).
+const VERTICAL_ON_FEATURES = new Set(['vert'])
 
 // HarfBuzz applies these only when shaping horizontally (hb-ot-shape's
 // horizontal_features list); in vertical text they stay off, so the chips

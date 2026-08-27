@@ -93,9 +93,18 @@ describe('harfbuzz default set', () => {
     expect(isFeatureOnByDefault('kern', 'ttb')).toBe(false)
     expect(isFeatureOnByDefault('liga', 'ttb')).toBe(false)
     expect(isFeatureOnByDefault('vert', 'ttb')).toBe(true)
-    expect(isFeatureOnByDefault('vkrn', 'ttb')).toBe(true)
+    // hb-ot-shape enables only vert for vertical; vrt2/vkrn need an explicit
+    // toggle, so their chips must start off to make +vkrn emittable.
+    expect(isFeatureOnByDefault('vkrn', 'ttb')).toBe(false)
+    expect(isFeatureOnByDefault('vrt2', 'ttb')).toBe(false)
     // Direction-independent defaults stay on.
     expect(isFeatureOnByDefault('ccmp', 'ttb')).toBe(true)
     expect(isFeatureOnByDefault('mark', 'ttb')).toBe(true)
+  })
+
+  it('keeps horizontal-only features on for ltr', () => {
+    for (const tag of ['calt', 'clig', 'curs', 'dist', 'liga', 'rclt']) {
+      expect(isFeatureOnByDefault(tag)).toBe(true)
+    }
   })
 })
