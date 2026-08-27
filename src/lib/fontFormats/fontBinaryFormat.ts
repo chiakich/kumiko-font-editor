@@ -697,6 +697,8 @@ interface ExportGlyphListInput {
     | 'unitsPerEm'
     | 'lineMetricsHorizontalLayout'
     | 'openTypeFeatures'
+    | 'kerningGroups'
+    | 'kerningPairs'
   >
   glyphs: GlyphData[]
   familyName?: string
@@ -785,7 +787,13 @@ export const exportGlyphListAsBinary = (
   const getOutputBuffer = async () => {
     const compiledBuffer = await compileManagedFontFeatures(
       sfntBuffer,
-      input.fontData.openTypeFeatures
+      input.fontData.openTypeFeatures,
+      // Kerning rides along so kerning.plist data reaches the binary.
+      {
+        kerningGroups: input.fontData.kerningGroups,
+        kerningPairs: input.fontData.kerningPairs,
+        availableGlyphIds: new Set(input.glyphs.map((glyph) => glyph.id)),
+      }
     )
 
     if (input.format === 'woff') {

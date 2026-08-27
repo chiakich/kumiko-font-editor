@@ -47,9 +47,12 @@ export interface PreviewFeatureToggle {
 // raw snippet, deduplicated and in source order.
 export const listPreviewFeatureToggles = (
   state: OpenTypeFeaturesState | undefined,
-  direction: PreviewDirection = 'ltr'
+  direction: PreviewDirection = 'ltr',
+  // Tags present in the compiled font beyond the feature state — today the
+  // kern feature synthesized from project kerning data.
+  extraTags: readonly string[] = []
 ): PreviewFeatureToggle[] => {
-  if (!state) {
+  if (!state && extraTags.length === 0) {
     return []
   }
   const tags: string[] = []
@@ -60,13 +63,16 @@ export const listPreviewFeatureToggles = (
       tags.push(tag)
     }
   }
-  for (const feature of state.features) {
+  for (const feature of state?.features ?? []) {
     push(feature.tag)
+  }
+  for (const tag of extraTags) {
+    push(tag)
   }
   // Raw-authoritative snippets carry feature blocks the IR does not model;
   // their tags still deserve a chip.
   const activeSnippets =
-    state.rawFeatureSnippets?.filter((snippet) => !snippet.disabled) ?? []
+    state?.rawFeatureSnippets?.filter((snippet) => !snippet.disabled) ?? []
   for (const snippet of activeSnippets) {
     if (snippet.kind === 'feature') {
       push(snippet.tag)

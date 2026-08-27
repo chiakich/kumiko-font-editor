@@ -1,6 +1,5 @@
 import { buildLigatureSuggestions } from 'src/lib/openTypeFeatures/buildLigatureSuggestions'
 import { buildLocalizedSuggestions } from 'src/lib/openTypeFeatures/buildLocalizedSuggestions'
-import { buildKerningSuggestions } from 'src/lib/openTypeFeatures/buildKerningSuggestions'
 import { buildMarkSuggestions } from 'src/lib/openTypeFeatures/buildMarkSuggestions'
 import { buildSuffixSuggestions } from 'src/lib/openTypeFeatures/buildSuffixSuggestions'
 import type {
@@ -31,7 +30,8 @@ export const buildAutoFeatureSuggestions = (
     ...buildLigatureSuggestions(fontData, state),
     ...buildSuffixSuggestions(fontData, state),
     ...buildLocalizedSuggestions(fontData, state),
-    ...buildKerningSuggestions(fontData, state),
+    // Kerning no longer needs a suggestion: project kerning data is
+    // synthesized into the kern feature at every compile (synthesizeKerning).
     ...buildMarkSuggestions(fontData, state),
   ].filter(
     (suggestion) =>

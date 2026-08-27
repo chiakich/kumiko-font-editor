@@ -1,6 +1,10 @@
 import { compileFontWithFeatures } from 'src/lib/openTypeFeatures/compileFontWithFeatures'
 import { needsOpenTypeFeatureCompilationForBinaryExport } from 'src/lib/openTypeFeatures/exportPolicy'
 import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+import {
+  synthesizeKerningFea,
+  type SynthesizeKerningInput,
+} from 'src/lib/openTypeFeatures/synthesizeKerning'
 import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures/types'
 
 const DEFAULT_AFFECTED_TABLES: Array<'GSUB' | 'GPOS' | 'GDEF'> = [
@@ -11,19 +15,42 @@ const DEFAULT_AFFECTED_TABLES: Array<'GSUB' | 'GPOS' | 'GDEF'> = [
 
 export const compileManagedFontFeatures = async (
   inputFontBuffer: ArrayBuffer,
-  openTypeFeatures: OpenTypeFeaturesState | undefined
+  openTypeFeatures: OpenTypeFeaturesState | undefined,
+  // Project kerning data (the UFO kerning.plist model). When present it is
+  // synthesized into a kern feature, so panel-edited kerning reaches the
+  // binary without a manual conversion step.
+  kerning?: Omit<SynthesizeKerningInput, 'state'>
 ) => {
-  if (
-    !openTypeFeatures ||
-    !needsOpenTypeFeatureCompilationForBinaryExport(openTypeFeatures)
-  ) {
+  // preserve-compiled-layout-tables means exactly that: no rebuild, so no
+  // kern injection either — the imported GPOS stays byte-identical.
+  const preservesCompiledTables =
+    openTypeFeatures?.exportPolicy === 'preserve-compiled-layout-tables'
+  const syntheticKern =
+    kerning && !preservesCompiledTables
+      ? synthesizeKerningFea({ ...kerning, state: openTypeFeatures })
+      : null
+  const needsFeatureCompile = Boolean(
+    openTypeFeatures &&
+    needsOpenTypeFeatureCompilationForBinaryExport(openTypeFeatures)
+  )
+  if (!needsFeatureCompile && !syntheticKern) {
     return inputFontBuffer
   }
 
-  const generated = generateFea(openTypeFeatures)
+  const generated = openTypeFeatures
+    ? generateFea(openTypeFeatures)
+    : { text: '', sourceMap: { entries: [] } }
+  // Synthetic kern is appended after the generated text so the source map's
+  // line numbers stay valid.
+  const feaText = [
+    needsFeatureCompile ? generated.text : '',
+    syntheticKern?.text ?? '',
+  ]
+    .filter(Boolean)
+    .join('\n')
   const result = await compileFontWithFeatures(
     inputFontBuffer,
-    generated.text,
+    feaText,
     { affectedTables: DEFAULT_AFFECTED_TABLES },
     generated.sourceMap
   )

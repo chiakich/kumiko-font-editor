@@ -584,10 +584,18 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     familyName,
     variableSources
   )
+  // Features (and synthesized kerning) either compile into each master before
+  // varLib merges, or once on the merged font — never both.
   const masterFontData = {
     ...fontData,
     openTypeFeatures: shouldCompileFeaturesBeforeVariableBuild
       ? fontData.openTypeFeatures
+      : undefined,
+    kerningGroups: shouldCompileFeaturesBeforeVariableBuild
+      ? fontData.kerningGroups
+      : undefined,
+    kerningPairs: shouldCompileFeaturesBeforeVariableBuild
+      ? fontData.kerningPairs
       : undefined,
   }
   const bakedMasters: BakedMaster[] = variableSources.map((source, index) => {
@@ -672,7 +680,12 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     ? variableBuffer
     : await compileManagedFontFeatures(
         variableBuffer,
-        fontData.openTypeFeatures
+        fontData.openTypeFeatures,
+        {
+          kerningGroups: fontData.kerningGroups,
+          kerningPairs: fontData.kerningPairs,
+          availableGlyphIds: new Set(glyphs.map((glyph) => glyph.id)),
+        }
       )
   return new Blob([compiledBuffer], { type: 'font/otf' })
 }
