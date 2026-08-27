@@ -27,6 +27,7 @@ interface FeatureIndexViewProps {
   suggestions: AutoFeatureSuggestion[]
   onStateChange: (next: OpenTypeFeaturesState) => void
   onOpenFeature: (featureId: string) => void
+  onOpenKern: () => void
   onAcceptSuggestion: (suggestion: AutoFeatureSuggestion) => void
   onIgnoreSuggestion: (suggestion: AutoFeatureSuggestion) => void
   onScanSuggestions: () => void
@@ -43,12 +44,15 @@ export function FeatureIndexView({
   suggestions,
   onStateChange,
   onOpenFeature,
+  onOpenKern,
   onAcceptSuggestion,
   onIgnoreSuggestion,
   onScanSuggestions,
 }: FeatureIndexViewProps) {
   const { t } = useTranslation()
-  const rows = listWorkspaceFeatures(state, diagnostics)
+  const rows = listWorkspaceFeatures(state, diagnostics, {
+    projectKerningPairCount: fontData.kerningPairs?.length ?? 0,
+  })
   const specimens = useFeatureSpecimens({
     fontData,
     openTypeFeatures: state,
@@ -79,9 +83,19 @@ export function FeatureIndexView({
             borderRadius="lg"
             bg="card"
             opacity={row.enabled ? 1 : 0.55}
-            cursor={row.featureId ? 'pointer' : 'default'}
-            onClick={() => row.featureId && onOpenFeature(row.featureId)}
-            _hover={row.featureId ? { borderColor: 'controlBorderHover' } : {}}
+            cursor={
+              row.featureId || row.isProjectKerning ? 'pointer' : 'default'
+            }
+            onClick={() =>
+              row.isProjectKerning
+                ? onOpenKern()
+                : row.featureId && onOpenFeature(row.featureId)
+            }
+            _hover={
+              row.featureId || row.isProjectKerning
+                ? { borderColor: 'controlBorderHover' }
+                : {}
+            }
           >
             <Switch.Root
               size="sm"

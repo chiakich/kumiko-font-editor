@@ -1084,6 +1084,15 @@
     "specimenUnavailable": "無法選樣（僅原文規則）",
     "backToIndex": "特性總覽",
     "featureEnabled": "已啟用",
-    "featureDisabled": "已停用"
+    "featureDisabled": "已停用",
+    "kernTitle": "字距（kern）",
+    "kernPairCount": "{{count}} 個字對",
+    "kernSourceHint": "這裡是專案字距資料的投影，匯出與預覽都由它自動生成 kern 特性。",
+    "kernIrNote": "這個字型另外帶有匯入的 GPOS kern 規則（與專案字距分開套用，重複的字對會自動略過）。",
+    "kernIrOpen": "檢視匯入的規則",
+    "kernValue": "字距值",
+    "kernDelete": "刪除字對",
+    "kernSelectHint": "點一列字對，這裡會用目前的字型即時對照。",
+    "kernPreviewUnavailable": "這個字對的字形不在字型裡，無法預覽。"
   }
 }

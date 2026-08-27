@@ -1084,6 +1084,15 @@
     "specimenUnavailable": "no sample (raw-only rules)",
     "backToIndex": "Feature index",
     "featureEnabled": "Enabled",
-    "featureDisabled": "Disabled"
+    "featureDisabled": "Disabled",
+    "kernTitle": "Kerning (kern)",
+    "kernPairCount": "{{count}} pairs",
+    "kernSourceHint": "A projection of the project kerning data; exports and previews synthesize the kern feature from it.",
+    "kernIrNote": "This font also carries imported GPOS kern rules (applied separately; duplicate pairs are skipped automatically).",
+    "kernIrOpen": "View imported rules",
+    "kernValue": "Kerning value",
+    "kernDelete": "Delete pair",
+    "kernSelectHint": "Select a pair to compare it live with the current font.",
+    "kernPreviewUnavailable": "This pair references glyphs the font does not have."
   }
 }

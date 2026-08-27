@@ -13,6 +13,37 @@ import { buildFeatureSpecimenGlyphs } from 'src/features/common/projectControl/f
 import { PREVIEW_GLYPH_PLACEHOLDER } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
 import type { ShapingPreviewRun } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 
+// First kerning pair whose two sides resolve to real glyphs.
+const sampleProjectKerningPair = (fontData: FontData): string[] => {
+  const groups = fontData.kerningGroups ?? []
+  const resolve = (selector: {
+    kind: 'glyph' | 'class'
+    glyph?: string
+    classId?: string
+  }): string | null => {
+    if (selector.kind === 'glyph') {
+      return selector.glyph && fontData.glyphs[selector.glyph]
+        ? selector.glyph
+        : null
+    }
+    const group = groups.find(
+      (candidate) =>
+        candidate.id === selector.classId ||
+        candidate.name === selector.classId ||
+        `@${candidate.name}` === selector.classId
+    )
+    return group?.glyphs.find((glyphId) => fontData.glyphs[glyphId]) ?? null
+  }
+  for (const pair of fontData.kerningPairs ?? []) {
+    const left = resolve(pair.left)
+    const right = resolve(pair.right)
+    if (left && right && pair.value !== 0) {
+      return [left, right]
+    }
+  }
+  return []
+}
+
 export interface FeatureSpecimen {
   before: ShapingPreviewRun
   after: ShapingPreviewRun
@@ -39,11 +70,20 @@ export const useFeatureSpecimens = (input: {
     if (!openTypeFeatures) {
       return []
     }
-    return listPreviewFeatureToggles(openTypeFeatures).map((toggle) => ({
-      tag: toggle.tag,
-      glyphs: buildFeatureSpecimenGlyphs(openTypeFeatures, toggle.tag),
-    }))
-  }, [openTypeFeatures])
+    const hasProjectKerning = (fontData?.kerningPairs?.length ?? 0) > 0
+    return listPreviewFeatureToggles(
+      openTypeFeatures,
+      'ltr',
+      hasProjectKerning ? ['kern'] : []
+    ).map((toggle) => {
+      let glyphs = buildFeatureSpecimenGlyphs(openTypeFeatures, toggle.tag)
+      // Synthesized kern has no IR rules; sample the first project pair.
+      if (glyphs.length === 0 && toggle.tag === 'kern' && fontData) {
+        glyphs = sampleProjectKerningPair(fontData)
+      }
+      return { tag: toggle.tag, glyphs }
+    })
+  }, [openTypeFeatures, fontData])
 
   useEffect(() => {
     if (!enabled || !fontData || !openTypeFeatures) {

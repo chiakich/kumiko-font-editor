@@ -30,6 +30,7 @@ import { useShapingPreview } from 'src/features/common/projectControl/fontSettin
 import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
 import { listWorkspaceFeatures } from 'src/features/featureWorkspace/workspaceFeatureModel'
 import { WorkspacePreviewHome } from 'src/features/featureWorkspace/WorkspacePreviewHome'
+import { KernPairView } from 'src/features/featureWorkspace/KernPairView'
 import { FeatureIndexView } from 'src/features/featureWorkspace/FeatureIndexView'
 import { FeatureDetailView } from 'src/features/featureWorkspace/FeatureDetailView'
 
@@ -37,6 +38,7 @@ type WorkspaceView =
   | { kind: 'home' }
   | { kind: 'index' }
   | { kind: 'feature'; featureId: string }
+  | { kind: 'kern' }
 
 // The OpenType feature workspace, preview first: the home view is a live
 // shaped run with a per-glyph rule trace; the specimen index and per-feature
@@ -98,7 +100,9 @@ export function FeatureWorkspaceScreen() {
   const ignoreSuggestion = (suggestion: AutoFeatureSuggestion) =>
     handleChange(ignoreAutoFeatureSuggestion(openTypeFeatures, suggestion))
 
-  const rows = listWorkspaceFeatures(openTypeFeatures, diagnostics)
+  const rows = listWorkspaceFeatures(openTypeFeatures, diagnostics, {
+    projectKerningPairCount: fontData.kerningPairs?.length ?? 0,
+  })
   const selectedFeature =
     view.kind === 'feature'
       ? (openTypeFeatures.features.find(
@@ -266,7 +270,13 @@ export function FeatureWorkspaceScreen() {
           </Button>
         </Stack>
 
-        {view.kind === 'home' ? (
+        {view.kind === 'kern' ? (
+          <KernPairView
+            fontData={fontData}
+            state={openTypeFeatures}
+            onOpenIrKern={openFeature}
+          />
+        ) : view.kind === 'home' ? (
           <WorkspacePreviewHome
             preview={preview}
             state={openTypeFeatures}
@@ -281,6 +291,7 @@ export function FeatureWorkspaceScreen() {
             suggestions={suggestions}
             onStateChange={handleChange}
             onOpenFeature={openFeature}
+            onOpenKern={() => setView({ kind: 'kern' })}
             onAcceptSuggestion={acceptSuggestion}
             onIgnoreSuggestion={ignoreSuggestion}
             onScanSuggestions={() => handleChange({ ...openTypeFeatures })}
@@ -302,6 +313,7 @@ export function FeatureWorkspaceScreen() {
             suggestions={suggestions}
             onStateChange={handleChange}
             onOpenFeature={openFeature}
+            onOpenKern={() => setView({ kind: 'kern' })}
             onAcceptSuggestion={acceptSuggestion}
             onIgnoreSuggestion={ignoreSuggestion}
             onScanSuggestions={() => handleChange({ ...openTypeFeatures })}
