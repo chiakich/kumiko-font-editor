@@ -38,12 +38,14 @@ import { WorkspacePreviewHome } from 'src/features/featureWorkspace/WorkspacePre
 import { KernPairView } from 'src/features/featureWorkspace/KernPairView'
 import { FeatureIndexView } from 'src/features/featureWorkspace/FeatureIndexView'
 import { FeatureDetailView } from 'src/features/featureWorkspace/FeatureDetailView'
+import { GlyphClassesView } from 'src/features/featureWorkspace/GlyphClassesView'
 
 type WorkspaceView =
   | { kind: 'home' }
   | { kind: 'index' }
   | { kind: 'feature'; featureId: string }
   | { kind: 'kern' }
+  | { kind: 'classes' }
 
 // The OpenType feature workspace, preview first: the home view is a live
 // shaped run with a per-glyph rule trace; the specimen index and per-feature
@@ -345,6 +347,13 @@ export function FeatureWorkspaceScreen() {
           <Box flex={1} />
           <Button
             size="xs"
+            variant={view.kind === 'classes' ? 'solid' : 'ghost'}
+            onClick={() => setView({ kind: 'classes' })}
+          >
+            {t('featureWorkspace.openClasses')}
+          </Button>
+          <Button
+            size="xs"
             variant={view.kind === 'index' ? 'solid' : 'outline'}
             onClick={() => setView({ kind: 'index' })}
           >
@@ -359,7 +368,13 @@ export function FeatureWorkspaceScreen() {
           </Button>
         </Stack>
 
-        {view.kind === 'kern' ? (
+        {view.kind === 'classes' ? (
+          <GlyphClassesView
+            fontData={fontData}
+            state={openTypeFeatures}
+            onStateChange={handleChange}
+          />
+        ) : view.kind === 'kern' ? (
           <KernPairView
             fontData={fontData}
             state={openTypeFeatures}

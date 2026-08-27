@@ -1111,6 +1111,21 @@
     "kernNewLeft": "左側(字符或 @群組)",
     "kernNewRight": "右側(字符或 @群組)",
     "kernAddPair": "新增字對",
-    "kernOpenInEditor": "在編輯器中調整"
+    "kernOpenInEditor": "在編輯器中調整",
+    "openClasses": "字符類別",
+    "classesTitle": "字符類別",
+    "classesEmpty": "尚無字符類別。建立類別後,規則就能以 @名稱 引用一組字符。",
+    "className": "類別名稱",
+    "classNew": "新增類別",
+    "classNewPlaceholder": "類別名稱(如 kana)",
+    "classMembers": "成員字符",
+    "classMembersPlaceholder": "以空格分隔的字符名稱",
+    "classMemberCount": "{{count}} 個成員",
+    "classReferenceCount": "{{count}} 條規則引用",
+    "classUnused": "未被引用",
+    "classMissingMembers": "{{count}} 個成員不存在",
+    "classAddMember": "＋ 加入字符",
+    "classDelete": "刪除",
+    "classDeleteBlocked": "仍有規則引用此類別,無法刪除"
   }
 }

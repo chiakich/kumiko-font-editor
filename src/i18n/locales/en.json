@@ -1111,6 +1111,21 @@
     "kernNewLeft": "Left (glyph or @group)",
     "kernNewRight": "Right (glyph or @group)",
     "kernAddPair": "Add pair",
-    "kernOpenInEditor": "Adjust in editor"
+    "kernOpenInEditor": "Adjust in editor",
+    "openClasses": "Glyph classes",
+    "classesTitle": "Glyph classes",
+    "classesEmpty": "No glyph classes yet. Create one so rules can reference a set of glyphs as @name.",
+    "className": "Class name",
+    "classNew": "New class",
+    "classNewPlaceholder": "Class name (e.g. kana)",
+    "classMembers": "Member glyphs",
+    "classMembersPlaceholder": "Space-separated glyph names",
+    "classMemberCount": "{{count}} members",
+    "classReferenceCount": "referenced by {{count}} rules",
+    "classUnused": "unreferenced",
+    "classMissingMembers": "{{count}} members missing",
+    "classAddMember": "+ Add glyph",
+    "classDelete": "Delete",
+    "classDeleteBlocked": "Rules still reference this class; it cannot be deleted"
   }
 }

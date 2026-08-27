@@ -1,0 +1,72 @@
+import { describe, expect, it } from 'vitest'
+import {
+  countGlyphClassRuleReferences,
+  createGlyphClass,
+  deleteGlyphClass,
+  sanitizeGlyphClassName,
+  updateGlyphClass,
+} from 'src/features/common/projectControl/fontSettings/features/utils/classAuthoring'
+import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+
+const stateWithClassReference = (): OpenTypeFeaturesState => {
+  const created = createGlyphClass(createEmptyOpenTypeFeaturesState(), 'kana')!
+  return {
+    ...created.state,
+    lookups: [
+      {
+        id: 'lookup_1',
+        name: 'lookup_1',
+        table: 'GSUB',
+        lookupType: 'singleSubst',
+        lookupFlag: {},
+        editable: true,
+        origin: 'manual',
+        rules: [
+          {
+            id: 'rule_1',
+            kind: 'singleSubstitution',
+            target: { kind: 'class', classId: created.classId },
+            replacement: 'a.alt',
+            meta: { origin: 'manual' },
+          },
+        ],
+      },
+    ],
+  }
+}
+
+describe('classAuthoring', () => {
+  it('sanitizes class names to the FEA grammar', () => {
+    expect(sanitizeGlyphClassName('@kana')).toBe('kana')
+    expect(sanitizeGlyphClassName('平假名')).toBe('___')
+    expect(sanitizeGlyphClassName('2x')).toBe('_2x')
+    expect(sanitizeGlyphClassName('  ')).toBe('')
+  })
+
+  it('creates a class once and dedupes members on update', () => {
+    const created = createGlyphClass(
+      createEmptyOpenTypeFeaturesState(),
+      'kana'
+    )!
+    expect(created.state.glyphClasses).toHaveLength(1)
+    const again = createGlyphClass(created.state, 'kana')!
+    expect(again.state).toBe(created.state)
+
+    const updated = updateGlyphClass(created.state, created.classId, {
+      glyphs: ['a', 'b', 'a', ''],
+    })
+    expect(updated.glyphClasses[0].glyphs).toEqual(['a', 'b'])
+  })
+
+  it('refuses to delete a referenced class and counts references', () => {
+    const state = stateWithClassReference()
+    const classId = state.glyphClasses[0].id
+    expect(countGlyphClassRuleReferences(state, classId)).toBe(1)
+    expect(deleteGlyphClass(state, classId)).toBeNull()
+
+    const withoutRule = { ...state, lookups: [] }
+    const deleted = deleteGlyphClass(withoutRule, classId)
+    expect(deleted?.glyphClasses).toHaveLength(0)
+  })
+})
