@@ -18,7 +18,8 @@ import {
   type FeatureDiagnostic,
   type OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
+import { useStore, type FontData } from 'src/store'
+import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
 import { AutoFeatureSuggestions } from 'src/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
 import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
 import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
@@ -53,6 +54,7 @@ export function FeatureIndexView({
   onIgnoreSuggestion,
 }: FeatureIndexViewProps) {
   const { t } = useTranslation()
+  const activeMasterId = useStore((store) => store.activeMasterId)
   const feaFileInputRef = useRef<HTMLInputElement | null>(null)
   const attachFeaFile = async (file: File) => {
     const text = await file.text()
@@ -73,7 +75,10 @@ export function FeatureIndexView({
     )
   }
   const rows = listWorkspaceFeatures(state, diagnostics, {
-    projectKerningPairCount: fontData.kerningPairs?.length ?? 0,
+    // The count next to the synthesized kern row follows the active master,
+    // like the kern workbench it opens.
+    projectKerningPairCount: getMasterKerningPairs(fontData, activeMasterId)
+      .length,
   })
   const specimens = useFeatureSpecimens({
     fontData,

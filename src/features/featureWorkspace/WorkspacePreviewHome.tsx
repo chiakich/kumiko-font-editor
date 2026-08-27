@@ -40,13 +40,9 @@ export function WorkspacePreviewHome({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const isVertical = preview.direction === 'ttb'
   const hasText = preview.text.trim().length > 0
-  // Any master's pairs count: the honest message is about the project, not
-  // only the active master.
-  const hasProjectKerning =
-    (fontData.kerningPairs?.length ?? 0) > 0 ||
-    Object.values(fontData.kerningPairsByMaster ?? {}).some(
-      (pairs) => pairs.length > 0
-    )
+  // Same gate as the kern chip (useShapingPreview): the preview font compiles
+  // the canonical pairs, so only those make the hint true.
+  const hasProjectKerning = (fontData.kerningPairs?.length ?? 0) > 0
   const afterGlyphs = useMemo(
     () => preview.after?.glyphs ?? [],
     [preview.after]

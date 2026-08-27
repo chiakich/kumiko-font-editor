@@ -27,6 +27,7 @@ import {
 } from 'src/lib/openTypeFeatures'
 import { prewarmOpenTypeFeatureCompiler } from 'src/lib/openTypeFeatures'
 import { useStore } from 'src/store'
+import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
 import { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
 import {
@@ -58,6 +59,7 @@ export function FeatureWorkspaceScreen() {
   }, [])
   const { t } = useTranslation()
   const fontData = useStore((state) => state.fontData)
+  const activeMasterId = useStore((state) => state.activeMasterId)
   const projectTitle = useStore((state) => state.projectTitle)
   const updateFontSettings = useStore((state) => state.updateFontSettings)
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
@@ -168,7 +170,9 @@ export function FeatureWorkspaceScreen() {
     handleChange(ignoreAutoFeatureSuggestion(openTypeFeatures, suggestion))
 
   const rows = listWorkspaceFeatures(openTypeFeatures, diagnostics, {
-    projectKerningPairCount: fontData.kerningPairs?.length ?? 0,
+    // Follows the active master, like the kern workbench the row opens.
+    projectKerningPairCount: getMasterKerningPairs(fontData, activeMasterId)
+      .length,
   })
   const selectedFeature =
     view.kind === 'feature'
