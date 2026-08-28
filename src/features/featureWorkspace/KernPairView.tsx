@@ -368,7 +368,9 @@ export function KernPairView({
 
   const selectedPair =
     pairs.find((pair) => pairKey(pair, groups) === selectedKey) ?? null
-  const irKernFeature = state.features.find((feature) => feature.tag === 'kern')
+  const irKernFeature = state.features.find(
+    (feature) => feature.tag === (orientation === 'vertical' ? 'vkrn' : 'kern')
+  )
 
   return (
     <Stack flex={1} minH={0} overflow="hidden" p={5} gap={3} maxW="1080px">
@@ -618,7 +620,8 @@ export function KernPairView({
                 groups,
                 fontData
               )
-              return left && right ? (
+              // The editor's Kerning panel edits horizontal pairs only.
+              return left && right && orientation === 'horizontal' ? (
                 <Button
                   size="2xs"
                   variant="outline"
