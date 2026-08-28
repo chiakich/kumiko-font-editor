@@ -308,6 +308,30 @@ fallback;認真支援直排要在匯出管線補 vhea/vmtx(可在 fontTools 後�
   IR(比照一般 lookup),再依編譯路徑擇一產生(designspace rules 或 FEA
   conditionset),摘要卡退役。
 
+### vkrn 自我 review 修正(2026-08-28)
+
+- **class 引用 round-trip**:`serializeUfoKerning` 現在也回傳
+  `verticalKerning`——直排字對的 class 引用經同一份 `keyByGroupId` 映射成
+  UFO group key。此前 lib 存的是 in-memory id(app 內建的群組是 uuid),
+  re-import 後全部 dangling 並在合成時靜默進 `skippedPairCount`。
+- **lib key 生命週期**:`buildUfoLibFromFontData` 第三參數接管該 key——
+  baseLib 的舊值一定被覆寫,清空後仍寫 `[]`,所以刪除會同步(此前刪光
+  字對後舊值留在 lib.plist,下次 pull 又復活)。
+- **舊專案 fallback**:非預設 master(以橫排 by-master 條目識別)缺該
+  orientation 條目時回傳 `[]` 而非 canonical,否則首推會把預設 master 的
+  vkrn 複製到每個 UFO。
+- **pull 防護**:只有 remote lib 真的帶該 key 才回寫,外部工具改寫過的
+  lib 不會清掉本地直排字距。
+- UI:直排字對預覽補上 `direction="ttb"`(否則以橫排 pen 走位,整條縮成
+  1 unit 寬);特性總覽的 vkrn 列改為開直排分頁;直排提示依「有無直排
+  字距」分成兩句(HarfBuzz 不自動開 vkrn,已用新 wasm 實測確認)。
+- 重構:`orientedKerning` / `getMasterKerningPairs(…, orientation)` /
+  `hasKerningForOrientation` 取代 5 處手寫投射;
+  `kerningPairSets.ts` 收攏「走訪/過濾所有字對集」與 master 條目種子;
+  `collectIrKernPairKeys` 改為單次掃描回傳 per-tag 索引。
+- 極性已鎖:測試改為方向性斷言(`-80` → 下行 advance magnitude 減 80 =
+  變緊,與橫排一致)。
+
 ## 已知順手債
 
 - Worker RPC client(requestId + pending map + onerror 重建)已有六份近似
