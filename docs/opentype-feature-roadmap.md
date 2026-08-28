@@ -263,19 +263,37 @@ decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts
   這樣 +vkrn 才發得出去)。工作區直排預覽在專案有 canonical kerning 時
   顯示「直排不套用 kern、vkrn 尚未支援」提示(`kernVerticalHint`)。
 
-### vkrn / 直排字距調查(2026-08-28)
+### vkrn / 直排字距(2026-08-28,已落地)
 
-結論:**完整 vkrn 模型此輪不做**,先以誠實呈現落地(見上)。筆記:
+資料模型與管線照 kerningPairs 的模式平行實作:
 
-- UFO 沒有標準 vkrn 儲存(kerning.plist 只有橫排);Glyphs 用
-  `vertKerning`,binary 存 GPOS `vkrn`。若要支援,資料模型需另開
-  `verticalKerningPairs`(+ per-master 版本),同步序列化只能走 lib 自訂
-  key 或 FEA snippet,round-trip 成本高。
-- FEA 端可行:feaLib 對 `feature vkrn` 的 single value record 使用
-  y-advance 語意,合成管線(synthesizeKerning)可平行複製一份。缺的是
-  資料模型、編輯 UI 與匯入(GPOS vkrn 反編譯目前併入一般 IR)。
-- 最小可行的下一步(未做):讓 kern 工作檯在 direction ttb 時切到
-  vkrn 字對集;先決條件是上面的資料模型。
+- `FontData.verticalKerningPairs` / `verticalKerningPairsByMaster`(共用
+  kerningGroups;master CRUD 種子、glyph 改名、群組改名/刪除清理都涵蓋)。
+- **合成**:`synthesizeKerningFea` 同時輸出 `feature vkrn`,value record 用
+  顯式 `<0 0 0 v>`(y-advance),IR vkrn 特性已涵蓋的字對照樣去重;所有
+  編譯路徑(匯出、預覽、variable per-master、靜態 instance 插值)接通。
+- **UFO round-trip**:UFO 無標準直排字距儲存,走 lib key
+  `com.kumiko.fontEditor.verticalKerning`(JSON KerningPair[];
+  `parseVerticalKerningLib` 防禦性解析);sync 每個 UFO 寫自己 master 的
+  值,遠端 pull 回寫。
+- **UI**:kern 工作檯新增「橫排 kern / 直排 vkrn」分頁(vkrn rail 列直接
+  開直排分頁);actions 帶 orientation 參數。
+
+**已知限制(重要)**:打包的 harfbuzzjs 0.10.3 以 `HB_TINY` 編譯,
+`HB_NO_VERTICAL` 把 GPOS y-advance 套用整個編掉——**站內預覽永遠看不到
+vkrn 效果**(經 debug 驗證:x-advance 兩個方向都套用、y-advance 兩個方向
+都不套用)。因此:
+
+- 匯出字型的 GPOS 內容正確(`verticalKerning.test.ts` 以 fontTools 驗證
+  value record),真實 shaper(瀏覽器/InDesign/OS)會套用。
+- 工作檯的直排字對對照是**以字對值模擬**的(標「模擬」徽章),直排預覽
+  顯示提示文字。測試固定了這個限制的斷言——若未來升級 harfbuzzjs
+  (需以 emscripten 重建 hb.wasm,config-override.h 加
+  `#undef HB_NO_VERTICAL`,參考同 repo 的 config-override-subset.h),
+  斷言會失敗提醒移除模擬路徑。
+- 另一個直排缺口:opentype.js 匯出不寫 vhea/vmtx,直排 metrics 靠 shaper
+  fallback;認真支援直排要在匯出管線補 vhea/vmtx(可在 fontTools 後處理
+  階段加)。
 
 ### FeatureVariations 重建(conditionset)評估(2026-08-28)
 
