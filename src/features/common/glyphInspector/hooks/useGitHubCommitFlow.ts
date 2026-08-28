@@ -44,6 +44,7 @@ import {
   useGitHubSyncStatus,
 } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
+import { useGitSyncPrewarm } from 'src/features/common/glyphInspector/hooks/useGitSyncPrewarm'
 import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
 import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
@@ -195,7 +196,7 @@ export const useGitHubCommitFlow = ({
         ...collectSentGlyphChanges({
           report: syncReport,
           fontData,
-          voidedPaths: voidedLineKeys,
+          voidedKeys: voidedLineKeys,
         }),
         fallbackTitle: projectTitle,
       }),
@@ -226,6 +227,13 @@ export const useGitHubCommitFlow = ({
   const queryClient = useQueryClient()
   const viewerQuery = useGitHubViewerQuery(hasGitHubSource)
   const githubViewer = viewerQuery.data ?? null
+  // Warm the git stack (chunk, worker, packfile clone, fork status) in the
+  // background so the first send-panel open does not pay for all of it.
+  useGitSyncPrewarm({
+    projectId,
+    repoFullName: githubRepoFullName,
+    enabled: hasGitHubSource && Boolean(githubViewer),
+  })
   const forkStatusQuery = useGitHubForkStatusQuery({
     repo: githubRepoFullName,
     branch: null,
@@ -521,15 +529,11 @@ export const useGitHubCommitFlow = ({
         })
       )
 
+      // The message field stays as the user left it: prefilling it here would
+      // both discard a typed message and hide the receipt-derived suggestion,
+      // which only ever shows as the placeholder of an empty field.
       const nextDraft: Partial<Omit<ScopedGitHubCommitDraft, 'repoFullName'>> =
-        {
-          // The git worker materializes the actual files exactly once when it
-          // commits. Preparing the legacy REST payload here would serialize
-          // and hash the same glyphs only to fill this text field.
-          commitMessage: buildGlyphCommitMessage({
-            fallbackTitle: projectTitle,
-          }),
-        }
+        {}
       if (!selectedBranch) {
         const activeTarget = collaboration.activeTarget
         const activeDraft = Boolean(

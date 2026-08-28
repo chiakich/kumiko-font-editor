@@ -212,6 +212,17 @@ export interface FontData {
   glyphOrder?: string[]
   kerningGroups?: KerningGroup[]
   kerningPairs?: KerningPair[]
+  // Pair values for non-default masters, keyed by the master's source id.
+  // Convention: every non-default master gets an entry (possibly empty) at
+  // import; a master id absent here kerns with the canonical `kerningPairs`
+  // (the default master's set). Groups stay font-wide.
+  kerningPairsByMaster?: Record<string, KerningPair[]>
+  // Vertical (vkrn) kerning, mirroring the horizontal model: values adjust
+  // the y-advance in top-to-bottom text. Shares kerningGroups. UFO has no
+  // standard storage for this, so sync round-trips it through the lib key
+  // com.kumiko.fontEditor.verticalKerning.
+  verticalKerningPairs?: KerningPair[]
+  verticalKerningPairsByMaster?: Record<string, KerningPair[]>
   fontInfo?: FontInfo
   axes?: FontAxes
   sources?: Record<string, FontSource>
@@ -301,6 +312,9 @@ export interface FontSource {
   id: string
   name: string
   location: Record<string, number>
+  // The UFO package this source came from (multi-UFO designspace projects);
+  // sync uses it to write each UFO's own kerning.plist.
+  ufoId?: string
   italicAngle?: number
   lineMetricsHorizontalLayout?: Record<string, { value: number; zone?: number }>
   lineMetricsVerticalLayout?: Record<string, { value: number; zone?: number }>
@@ -356,7 +370,7 @@ export interface ViewportState {
   pan: { x: number; y: number }
 }
 
-export type WorkspaceView = 'overview' | 'editor'
+export type WorkspaceView = 'overview' | 'editor' | 'features'
 export type OverviewGroupByState = 'none' | 'script' | 'block'
 export type PersistenceStatus = 'idle' | 'queued' | 'saving' | 'saved' | 'error'
 
@@ -458,6 +472,29 @@ export interface GlobalState {
   selectedNodeIds: string[]
   selectedSegment: SelectedSegmentState | null
   workspaceView: WorkspaceView
+  // One-shot request from other screens (e.g. the feature workspace) to open
+  // a specific editor right-panel tab; the panel consumes and clears it.
+  editorRightPanelTabRequest: number | null
+  // Last feature-workspace UI state so leaving and returning does not reset
+  // the preview text, direction, or open view. Session-only.
+  featureWorkspaceSnapshot: {
+    view:
+      | { kind: 'home' }
+      | { kind: 'index' }
+      | { kind: 'feature'; featureId: string }
+      | { kind: 'kern' }
+      | { kind: 'classes' }
+    text: string
+    direction: 'ltr' | 'ttb'
+    languageOptionId: string | null
+  } | null
+  // One-shot deep link into the feature workspace, consumed by its screen.
+  featureWorkspaceRequest:
+    | { kind: 'home' }
+    | { kind: 'kern' }
+    | { kind: 'classes' }
+    | { kind: 'feature'; tag: string }
+    | null
   overviewCustomFilters: OverviewCustomFilter[]
   overviewSearchOptions: OverviewSearchOptionsState
   overviewGroupBy: OverviewGroupByState
@@ -489,6 +526,13 @@ export interface GlobalState {
     activeGlyphIndex?: number
   ) => void
   setWorkspaceView: (view: WorkspaceView) => void
+  requestEditorRightPanelTab: (index: number | null) => void
+  requestFeatureWorkspace: (
+    request: GlobalState['featureWorkspaceRequest']
+  ) => void
+  setFeatureWorkspaceSnapshot: (
+    snapshot: GlobalState['featureWorkspaceSnapshot']
+  ) => void
   setOverviewGrouping: (groupBy: OverviewGroupByState) => void
   setOverviewSectionId: (sectionId: string) => void
   setOverviewGridState: (state: unknown | null) => void
@@ -533,12 +577,18 @@ export interface GlobalState {
     counterpartGlyphId: string
     value: number
   }) => void
+  createGlyphVariant: (sourceGlyphId: string, newGlyphId: string) => void
   upsertKerningPair: (
     left: GlyphSelector,
     right: GlyphSelector,
-    value: number
+    value: number,
+    orientation?: 'horizontal' | 'vertical'
   ) => void
-  deleteKerningPair: (left: GlyphSelector, right: GlyphSelector) => void
+  deleteKerningPair: (
+    left: GlyphSelector,
+    right: GlyphSelector,
+    orientation?: 'horizontal' | 'vertical'
+  ) => void
   upsertKerningGroup: (draft: {
     id?: string
     side: 'left' | 'right'
@@ -703,6 +753,9 @@ export interface GlobalState {
     source: FontSource
     layersByGlyphId: Record<string, GlyphLayerData>
     newGlyphs?: GlyphData[]
+    // Pairs to seed the new master's kerning entry with (a copy-method master
+    // copies its base master's pairs); defaults to an empty set.
+    kerningPairs?: KerningPair[]
   }) => void
   setPreviewGlyphMetrics: (glyphId: string, metrics: GlyphMetrics) => void
   setComponentGhostPaths: (paths: PathData[] | null) => void

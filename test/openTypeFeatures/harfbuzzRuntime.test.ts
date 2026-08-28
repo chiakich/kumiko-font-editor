@@ -35,9 +35,7 @@ describe('HarfBuzz shaping runtime', () => {
   })
 
   it('shapes text with HarfBuzz WASM', async () => {
-    const fontBuffer = await readFile(
-      'node_modules/harfbuzzjs/test/fonts/noto/NotoSans-Regular.ttf'
-    )
+    const fontBuffer = await readFile('test/fixtures/ttf/NotoSans-Regular.ttf')
 
     const result = await shapeTextWithHarfBuzz(
       fontBuffer.buffer.slice(

@@ -66,6 +66,12 @@ function ReceiptRow({
   const statusLabel = isVoided
     ? t('gitFlow.receipt.status.voided')
     : t(`gitFlow.receipt.status.${line.status}`)
+  // A font-level file reads as what it means; the raw path stays underneath so
+  // several masters' same-named plists stay distinguishable.
+  const label = line.fontFileKind
+    ? t(`gitFlow.receipt.fontFile.${line.fontFileKind}`)
+    : line.label
+  const detail = line.detail && line.detail !== label ? line.detail : null
 
   return (
     <Box
@@ -134,9 +140,21 @@ function ReceiptRow({
             ·
           </Text>
         )}
-        <Text fontSize="12px" lineClamp={1}>
-          {line.label}
-        </Text>
+        <Stack gap={0} minWidth={0}>
+          <Text fontSize="12px" lineClamp={1}>
+            {label}
+          </Text>
+          {detail ? (
+            <Text
+              fontFamily="mono"
+              fontSize="9.5px"
+              opacity={0.55}
+              lineClamp={1}
+            >
+              {detail}
+            </Text>
+          ) : null}
+        </Stack>
       </HStack>
       <Text
         fontSize="10px"

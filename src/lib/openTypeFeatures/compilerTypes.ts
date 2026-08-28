@@ -32,6 +32,8 @@ export interface CompileResult {
 
 export interface CompileRequestMessage {
   type: 'compile-font-features'
+  // Correlates a response with its request on the persistent compiler worker.
+  requestId?: number
   payload: {
     inputFontBuffer: ArrayBuffer
     generatedFea: string
@@ -42,11 +44,13 @@ export interface CompileRequestMessage {
 
 export interface CompileSuccessMessage {
   type: 'compile-success'
+  requestId?: number
   payload: CompileResult
 }
 
 export interface CompileErrorMessage {
   type: 'compile-error'
+  requestId?: number
   payload: {
     backend: OpenTypeCompilerBackend
     diagnostics: FeatureDiagnostic[]

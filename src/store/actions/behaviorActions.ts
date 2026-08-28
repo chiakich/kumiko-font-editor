@@ -39,6 +39,29 @@ type ImmerSet = Parameters<
 >[0]
 
 export const buildBehaviorActions = (set: ImmerSet) => ({
+  // Copy an existing glyph's outlines into a new unencoded variant glyph
+  // (e.g. comma -> comma.vert) so a substitution rule has a real target.
+  createGlyphVariant: (sourceGlyphId: string, newGlyphId: string) =>
+    set((state) => {
+      if (!state.fontData) return
+      const variant = makeEditableGlyphCopy(
+        state.fontData,
+        newGlyphId,
+        sourceGlyphId
+      )
+      if (!variant) return
+      state.fontData.glyphs[newGlyphId] = variant
+      if (
+        state.fontData.glyphOrder &&
+        !state.fontData.glyphOrder.includes(newGlyphId)
+      ) {
+        state.fontData.glyphOrder = [...state.fontData.glyphOrder, newGlyphId]
+      }
+      markGlyphDirty(state, newGlyphId)
+      syncFilteredGlyphList(state)
+      markProjectDirty(state)
+    }),
+
   upsertCombinationBehavior: (draft: CombinationBehaviorDraft) =>
     set((state) => {
       if (!state.fontData) return

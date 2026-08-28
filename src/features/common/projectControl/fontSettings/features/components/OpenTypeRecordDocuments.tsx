@@ -1,12 +1,17 @@
+import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
+import { FeatureRuleEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
+import { RuleTableView } from 'src/features/common/projectControl/fontSettings/features/components/RuleTableView'
+import { SubstitutionGridView } from 'src/features/common/projectControl/fontSettings/features/components/SubstitutionGridView'
 import {
   Badge,
+  Button,
   HStack,
   SimpleGrid,
   Stack,
   Text,
-  Textarea,
   Field,
 } from '@chakra-ui/react'
+import { useState } from 'react'
 import {
   Metric,
   SourceSectionsDocument,
@@ -20,11 +25,14 @@ import {
   type OpenTypeTableTag,
 } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
+import type { FontData } from 'src/store'
 
 export function FeatureDocument({
   feature,
   generatedFea,
   state,
+  fontData,
+  onStateChange,
 }: {
   feature: FeatureRecord
   generatedFea: {
@@ -32,11 +40,39 @@ export function FeatureDocument({
     text: string
   }
   state: OpenTypeFeaturesState
+  // Present where the visual editor should offer a glyph picker.
+  fontData?: FontData | null
+  onStateChange?: (next: OpenTypeFeaturesState) => void
 }) {
   const { t } = useTranslation()
   const lookupIds = Array.from(
     new Set(feature.entries.flatMap((entry) => entry.lookupIds))
   )
+  const ruleCount = countFeatureRules(feature, state)
+  // One-to-one substitution features read best as a before/after proof sheet.
+  const lookupByIdForKinds = new Map(
+    state.lookups.map((lookup) => [lookup.id, lookup])
+  )
+  const featureRuleKinds = feature.entries
+    .flatMap((entry) => entry.lookupIds)
+    .flatMap((lookupId) =>
+      (lookupByIdForKinds.get(lookupId)?.rules ?? []).map((rule) => rule.kind)
+    )
+  const singleSubCount = featureRuleKinds.filter(
+    (kind) => kind === 'singleSubstitution'
+  ).length
+  const hasGrid = singleSubCount > 0
+  // Four views of the same feature: rule cards, the substitution proof sheet,
+  // a flat virtualized table that survives CJK-scale rule counts, and the
+  // generated FEA block. The default follows the feature's dominant shape.
+  const [mode, setMode] = useState<'visual' | 'grid' | 'table' | 'code'>(() => {
+    if (ruleCount > 100) {
+      return singleSubCount * 2 > ruleCount ? 'grid' : 'table'
+    }
+    return singleSubCount > 0 && singleSubCount === ruleCount
+      ? 'grid'
+      : 'visual'
+  })
   const sourceSectionRecords = findOpenTypeSourceSectionsForRecord(state, {
     kind: 'feature',
     id: feature.id,
@@ -56,17 +92,73 @@ export function FeatureDocument({
           value={countFeatureRules(feature, state)}
         />
       </SimpleGrid>
-      <Field.Root>
-        <Field.Label textStyle="label">
-          {t('projectControl.featureBlock')}
-        </Field.Label>
-        <Textarea
-          minH="360px"
-          fontFamily="mono"
-          value={featureFea || t('projectControl.noFeatureBlock')}
-          readOnly
+      <HStack gap={1}>
+        <Button
+          size="2xs"
+          variant={mode === 'visual' ? 'solid' : 'outline'}
+          onClick={() => setMode('visual')}
+        >
+          {t('projectControl.featureModeVisual')}
+        </Button>
+        {hasGrid && fontData ? (
+          <Button
+            size="2xs"
+            variant={mode === 'grid' ? 'solid' : 'outline'}
+            onClick={() => setMode('grid')}
+          >
+            {t('projectControl.featureModeGrid')}
+          </Button>
+        ) : null}
+        {ruleCount > 0 ? (
+          <Button
+            size="2xs"
+            variant={mode === 'table' ? 'solid' : 'outline'}
+            onClick={() => setMode('table')}
+          >
+            {t('projectControl.featureModeTable')}
+          </Button>
+        ) : null}
+        <Button
+          size="2xs"
+          variant={mode === 'code' ? 'solid' : 'outline'}
+          onClick={() => setMode('code')}
+        >
+          {t('projectControl.featureModeCode')}
+        </Button>
+      </HStack>
+      {mode === 'visual' && onStateChange ? (
+        <FeatureRuleEditor
+          state={state}
+          lookupIds={lookupIds}
+          fontData={fontData ?? null}
+          feature={feature}
+          onStateChange={onStateChange}
         />
-      </Field.Root>
+      ) : mode === 'grid' && fontData ? (
+        <SubstitutionGridView
+          state={state}
+          lookupIds={lookupIds}
+          fontData={fontData}
+        />
+      ) : mode === 'table' && onStateChange ? (
+        <RuleTableView
+          state={state}
+          lookupIds={lookupIds}
+          onStateChange={onStateChange}
+        />
+      ) : (
+        <Field.Root>
+          <Field.Label textStyle="label">
+            {t('projectControl.featureBlock')}
+          </Field.Label>
+          <FeaCodeEditor
+            value={featureFea || t('projectControl.noFeatureBlock')}
+            readOnly
+            minHeight="360px"
+            aria-label={t('projectControl.featureBlock')}
+          />
+        </Field.Root>
+      )}
       <SourceSectionsDocument
         emptyText={t('projectControl.noSourceSections')}
         sourceSectionRecords={sourceSectionRecords}

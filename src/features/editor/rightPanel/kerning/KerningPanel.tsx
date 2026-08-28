@@ -1,6 +1,6 @@
-import { Stack, Text } from '@chakra-ui/react'
+import { Button, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import type { FontData } from 'src/store'
+import { useStore, type FontData } from 'src/store'
 import { KerningPairInspector } from 'src/features/editor/rightPanel/kerning/KerningPairInspector'
 import { KerningPairList } from 'src/features/editor/rightPanel/kerning/KerningPairList'
 import { KerningGroupManager } from 'src/features/editor/rightPanel/kerning/KerningGroupManager'
@@ -13,6 +13,9 @@ interface KerningPanelProps {
 
 export function KerningPanel({ fontData }: KerningPanelProps) {
   const { t } = useTranslation()
+  const requestFeatureWorkspace = useStore(
+    (state) => state.requestFeatureWorkspace
+  )
 
   if (!fontData) {
     return (
@@ -24,6 +27,14 @@ export function KerningPanel({ fontData }: KerningPanelProps) {
 
   return (
     <Stack gap={4}>
+      <Button
+        size="2xs"
+        variant="outline"
+        alignSelf="flex-start"
+        onClick={() => requestFeatureWorkspace({ kind: 'kern' })}
+      >
+        {t('editor.openInFeatureWorkspace')}
+      </Button>
       <KerningPairInspector fontData={fontData} />
       <KerningValidationCard fontData={fontData} />
       <KerningPairList fontData={fontData} />

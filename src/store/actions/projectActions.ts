@@ -1,3 +1,7 @@
+import {
+  dropMasterKerningEntries,
+  seedMasterKerningEntries,
+} from 'src/lib/kerning/kerningPairSets'
 /**
  * Project-level store actions: load, close, hydrate, and mark save state.
  */
@@ -8,6 +12,7 @@ import type {
   GlyphData,
   GlyphLayerData,
   GlobalState,
+  KerningPair,
 } from 'src/store/types'
 import {
   clearProjectArchive,
@@ -498,6 +503,18 @@ export const buildProjectActions = (
           (id) =>
             prevSources[id] && prevSources[id].name !== nextSources[id].name
         )
+        for (const id of removed) {
+          dropMasterKerningEntries(state.fontData, id)
+        }
+        // Same invariant as applyImportedMaster: a new non-default master
+        // gets its own (empty) pair sets instead of inheriting the canonical.
+        if (Object.keys(prevSources).length > 0) {
+          for (const id of Object.keys(nextSources)) {
+            if (!prevSources[id]) {
+              seedMasterKerningEntries(state.fontData, id)
+            }
+          }
+        }
         if (removed.length > 0 || renamed.length > 0) {
           const removedSet = new Set(removed)
           for (const glyph of Object.values(state.fontData.glyphs)) {
@@ -539,14 +556,28 @@ export const buildProjectActions = (
     source: FontSource
     layersByGlyphId: Record<string, GlyphLayerData>
     newGlyphs?: GlyphData[]
+    kerningPairs?: KerningPair[]
   }) =>
     set((state) => {
       if (!state.fontData) {
         return
       }
+      const prevSources = state.fontData.sources ?? {}
+      // Only a genuinely new non-default master gets a seeded entry:
+      // re-applying an existing source (the default master included) must not
+      // change which pair set it kerns with.
+      const isNewNonDefaultMaster =
+        Object.keys(prevSources).length > 0 && !prevSources[input.source.id]
       state.fontData.sources = {
-        ...(state.fontData.sources ?? {}),
+        ...prevSources,
         [input.source.id]: input.source,
+      }
+      // Non-default masters must carry their own kerning entry: without one,
+      // getMasterKerningPairs falls back to the canonical (default) pairs.
+      if (isNewNonDefaultMaster) {
+        seedMasterKerningEntries(state.fontData, input.source.id, {
+          kerningPairs: input.kerningPairs,
+        })
       }
       for (const [glyphId, layer] of Object.entries(input.layersByGlyphId)) {
         const glyph = state.fontData.glyphs[glyphId]

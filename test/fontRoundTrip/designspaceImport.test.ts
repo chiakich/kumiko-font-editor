@@ -508,8 +508,18 @@ describe('buildMultiMasterFontData', () => {
 
     const glyph = fontData.glyphs.A
     expect(fontData.sources).toEqual({
-      Light: { id: 'Light', name: 'Light', location: { Weight: 0 } },
-      Bold: { id: 'Bold', name: 'Bold', location: { Weight: 100 } },
+      Light: {
+        id: 'Light',
+        name: 'Light',
+        location: { Weight: 0 },
+        ufoId: expect.any(String),
+      },
+      Bold: {
+        id: 'Bold',
+        name: 'Bold',
+        location: { Weight: 100 },
+        ufoId: expect.any(String),
+      },
     })
     expect(fontData.glyphs['A.bracket.bracket']).toBeUndefined()
     expect(glyph.layerOrder).toEqual(['Light', 'Bold', 'A Brace', 'bracket'])
@@ -817,5 +827,60 @@ describe('canonical multi-master UFO export', () => {
     const files = unzipSync(new Uint8Array(await blob.arrayBuffer()))
     expect(strFromU8(files['Light.ufo/glyphs/A.glif'])).toContain('x="10"')
     expect(strFromU8(files['Bold.ufo/glyphs/A.glif'])).toContain('x="80"')
+  })
+})
+
+describe('per-master kerning import', () => {
+  const designspaceXml = `<?xml version="1.0" encoding="UTF-8"?>
+<designspace format="4.1">
+  <axes>
+    <axis name="Weight" tag="wght" minimum="0" default="0" maximum="100"/>
+  </axes>
+  <sources>
+    <source filename="sources/Light.ufo" name="Light" stylename="Light">
+      <location><dimension name="Weight" xvalue="0"/></location>
+    </source>
+    <source filename="sources/Bold.ufo" name="Bold" stylename="Bold">
+      <location><dimension name="Weight" xvalue="100"/></location>
+    </source>
+  </sources>
+</designspace>`
+
+  it('keeps each master its own pairs and merges groups by id', () => {
+    const light = {
+      ...metadata('sources/Light.ufo'),
+      groups: { 'public.kern1.round': ['A'] },
+      kerning: { A: { A: -20 } },
+    }
+    const bold = {
+      ...metadata('sources/Bold.ufo'),
+      groups: {
+        'public.kern1.round': ['A'],
+        'public.kern2.flat': ['A'],
+      },
+      kerning: { A: { A: -60 }, 'public.kern1.round': { A: -10 } },
+    }
+    const fontData = buildMultiMasterFontData(
+      [light, bold],
+      [
+        glyphRecord('sources/Light.ufo', 10, 500),
+        glyphRecord('sources/Bold.ufo', 80, 700),
+      ],
+      parseDesignspace(designspaceXml)
+    )
+
+    // Default (Light) pairs are canonical.
+    expect(fontData.kerningPairs).toHaveLength(1)
+    expect(fontData.kerningPairs?.[0].value).toBe(-20)
+    // Bold keeps its own values.
+    const boldPairs = fontData.kerningPairsByMaster?.Bold ?? []
+    expect(boldPairs.map((pair) => pair.value).sort()).toEqual(
+      [-60, -10].sort()
+    )
+    // Groups merged across masters without duplicating shared ids.
+    const groupIds = (fontData.kerningGroups ?? []).map((group) => group.id)
+    expect(groupIds).toContain('public.kern1.round')
+    expect(groupIds).toContain('public.kern2.flat')
+    expect(groupIds.filter((id) => id === 'public.kern1.round')).toHaveLength(1)
   })
 })

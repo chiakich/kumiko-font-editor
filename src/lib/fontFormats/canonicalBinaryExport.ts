@@ -1,4 +1,9 @@
 import {
+  hasKerningForOrientation,
+  getMasterKerningPairs,
+} from 'src/lib/kerning/resolveKerning'
+import { interpolateKerningPairsAtLocation } from 'src/lib/kerning/interpolateKerning'
+import {
   exportGlyphListAsBinary,
   type BinaryFontExportFormat,
 } from 'src/lib/fontFormats/fontBinaryFormat'
@@ -159,7 +164,23 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
   }
 
   return exportGlyphListAsBinary({
-    fontData,
+    fontData: {
+      ...fontData,
+      // Static instances kern with values interpolated at their location, not
+      // the default master's canonical pairs. Vertical kerning interpolates
+      // through the same model, and only when the project has any.
+      kerningPairs: interpolateKerningPairsAtLocation(
+        fontData,
+        instance.location
+      ),
+      verticalKerningPairs: hasKerningForOrientation(fontData, 'vertical')
+        ? interpolateKerningPairsAtLocation(
+            fontData,
+            instance.location,
+            'vertical'
+          )
+        : undefined,
+    },
     glyphs: baked.glyphs,
     format: input.format,
     familyName: instance.familyName,
@@ -495,6 +516,7 @@ const getVariableMasterSources = (
 interface BakedMaster {
   fileName: string
   buildNames: { familyName: string; styleName: string }
+  sourceId: string
   glyphs: GlyphData[]
   source: {
     filename: string
@@ -584,10 +606,21 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     familyName,
     variableSources
   )
+  // Features (and synthesized kerning) either compile into each master before
+  // varLib merges, or once on the merged font — never both.
   const masterFontData = {
     ...fontData,
     openTypeFeatures: shouldCompileFeaturesBeforeVariableBuild
       ? fontData.openTypeFeatures
+      : undefined,
+    kerningGroups: shouldCompileFeaturesBeforeVariableBuild
+      ? fontData.kerningGroups
+      : undefined,
+    kerningPairs: shouldCompileFeaturesBeforeVariableBuild
+      ? fontData.kerningPairs
+      : undefined,
+    verticalKerningPairs: shouldCompileFeaturesBeforeVariableBuild
+      ? fontData.verticalKerningPairs
       : undefined,
   }
   const bakedMasters: BakedMaster[] = variableSources.map((source, index) => {
@@ -612,6 +645,7 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     return {
       fileName,
       buildNames,
+      sourceId: source.id,
       glyphs: baked.glyphs,
       source: {
         filename: fileName,
@@ -631,7 +665,17 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
   const masters = await Promise.all(
     bakedMasters.map(async (master) => {
       const blob = await exportGlyphListAsBinary({
-        fontData: masterFontData,
+        fontData: {
+          ...masterFontData,
+          // Per-master pairs compile into each master, so varLib merges them
+          // into interpolated GPOS kerning deltas.
+          kerningPairs: shouldCompileFeaturesBeforeVariableBuild
+            ? getMasterKerningPairs(fontData, master.sourceId)
+            : undefined,
+          verticalKerningPairs: shouldCompileFeaturesBeforeVariableBuild
+            ? getMasterKerningPairs(fontData, master.sourceId, 'vertical')
+            : undefined,
+        },
         glyphs: [...master.glyphs, ...bracketAlternateGlyphs],
         format: 'otf',
         familyName: master.buildNames.familyName,
@@ -672,7 +716,13 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     ? variableBuffer
     : await compileManagedFontFeatures(
         variableBuffer,
-        fontData.openTypeFeatures
+        fontData.openTypeFeatures,
+        {
+          kerningGroups: fontData.kerningGroups,
+          kerningPairs: fontData.kerningPairs,
+          verticalKerningPairs: fontData.verticalKerningPairs,
+          availableGlyphIds: new Set(glyphs.map((glyph) => glyph.id)),
+        }
       )
   return new Blob([compiledBuffer], { type: 'font/otf' })
 }

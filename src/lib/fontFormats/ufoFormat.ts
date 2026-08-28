@@ -4,6 +4,7 @@ import type {
   GlyphData,
   GlyphLayerData,
   GlyphMetrics,
+  KerningPair,
   PathData,
   PathNode,
 } from 'src/store'
@@ -46,6 +47,7 @@ import {
   type UfoTextStyle,
 } from 'src/lib/fontFormats/ufoTextStyle'
 import {
+  KUMIKO_VERTICAL_KERNING_LIB_KEY,
   defaultFontSource,
   fontInfoFromUfoFontInfo,
   fontAxesFromLib,
@@ -55,7 +57,11 @@ import {
   settingsFromLib,
 } from 'src/lib/fontFormats/fontInfoSettings'
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { parseUfoKerning } from 'src/lib/fontFormats/ufoKerning'
+import {
+  parseUfoKerning,
+  parseVerticalKerningLib,
+  type ParsedUfoKerning,
+} from 'src/lib/fontFormats/ufoKerning'
 import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
 import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
 import type {
@@ -801,9 +807,13 @@ const buildFontDataFromUfoGlyphs = (
       : 'Regular'
   const masterId = metadata.ufoId
   const ufoKerning = parseUfoKerning(metadata.groups, metadata.kerning)
+  const verticalKerningPairs = parseVerticalKerningLib(
+    metadata.lib?.[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+  )
   return {
     kerningGroups: ufoKerning.kerningGroups,
     kerningPairs: ufoKerning.kerningPairs,
+    ...(verticalKerningPairs.length > 0 ? { verticalKerningPairs } : {}),
     glyphs: Object.fromEntries(
       glyphRecords.map((record) => {
         const glyphId = record.glyphName
@@ -1332,7 +1342,38 @@ export const buildMultiMasterFontData = (
       id: master.sourceId,
       name: master.name,
       location: master.location,
+      ufoId: master.ufoId,
     }
+  }
+
+  // Per-master kerning: the default master's pairs are the canonical set
+  // (already on `base`); every other master keeps its own UFO's pairs so a
+  // sync never clobbers them with the default's. Groups merge by id (UFO
+  // group keys are the ids, so identical names collide into one record).
+  const kerningGroups = [...(base.kerningGroups ?? [])]
+  const knownGroupIds = new Set(kerningGroups.map((group) => group.id))
+  const kerningPairsByMaster: Record<string, KerningPair[]> = {}
+  const verticalKerningPairsByMaster: Record<string, KerningPair[]> = {}
+  const parsedKerningByUfo = new Map<string, ParsedUfoKerning>()
+  for (const master of regularMasters) {
+    if (master === defaultMaster) {
+      continue
+    }
+    let parsed = parsedKerningByUfo.get(master.ufoId)
+    if (!parsed) {
+      parsed = parseUfoKerning(master.metadata.groups, master.metadata.kerning)
+      parsedKerningByUfo.set(master.ufoId, parsed)
+    }
+    for (const group of parsed.kerningGroups) {
+      if (!knownGroupIds.has(group.id)) {
+        knownGroupIds.add(group.id)
+        kerningGroups.push(group)
+      }
+    }
+    kerningPairsByMaster[master.sourceId] = parsed.kerningPairs
+    verticalKerningPairsByMaster[master.sourceId] = parseVerticalKerningLib(
+      master.metadata.lib?.[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+    )
   }
 
   return {
@@ -1340,6 +1381,13 @@ export const buildMultiMasterFontData = (
     glyphs,
     axes: designspaceToFontAxes(designspace),
     sources,
+    kerningGroups,
+    ...(Object.keys(kerningPairsByMaster).length > 0
+      ? { kerningPairsByMaster }
+      : {}),
+    ...(Object.keys(verticalKerningPairsByMaster).length > 0
+      ? { verticalKerningPairsByMaster }
+      : {}),
     exportInstances: designspaceToExportInstances(designspace),
   }
 }

@@ -33,6 +33,7 @@ import {
   buildEmptyMasterLayer,
 } from 'src/font/masterLayerBuilders'
 import { getGlyphMasterLayerForSource } from 'src/font/designspaceLocation'
+import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
 import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
 import {
   makeId,
@@ -192,10 +193,22 @@ export function AddMasterModal({
         method === 'font' ? null : baseSourceId,
         distance
       )
+      // A copied master keeps kerning constant across the axis until edited;
+      // font/empty masters start with no kerning of their own.
+      const seedKerningPairs =
+        method === 'copy'
+          ? structuredClone(
+              getMasterKerningPairs(
+                useStore.getState().fontData ?? {},
+                baseSourceId
+              )
+            )
+          : undefined
       applyImportedMaster({
         source,
         layersByGlyphId,
         newGlyphs: result.createdGlyphs,
+        kerningPairs: seedKerningPairs,
       })
       onMasterAdded(source)
       toaster.create({

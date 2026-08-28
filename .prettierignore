@@ -1,2 +1,3 @@
 pnpm-lock.yaml
 .design
+vendor/harfbuzzjs

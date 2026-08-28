@@ -1,5 +1,5 @@
 import { Box, Stack, Tabs, Text, useDisclosure } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ExportErrorModal } from 'src/features/common/fontExport/ExportErrorModal'
 import { ExportFontModal } from 'src/features/common/fontExport/ExportFontModal'
 import { useFontExport } from 'src/features/common/fontExport/useFontExport'
@@ -36,6 +36,21 @@ export function EditorRightPanel() {
   const fontExport = useFontExport()
   const updateFontSettings = useStore((state) => state.updateFontSettings)
   const [activeTabIndex, setActiveTabIndex] = useState(0)
+  const tabRequest = useStore((state) => state.editorRightPanelTabRequest)
+  const requestEditorRightPanelTab = useStore(
+    (state) => state.requestEditorRightPanelTab
+  )
+  // Other screens (feature workspace) can ask for a tab; consume once.
+  useEffect(() => {
+    if (tabRequest === null) {
+      return
+    }
+    const timer = setTimeout(() => {
+      setActiveTabIndex(tabRequest)
+      requestEditorRightPanelTab(null)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [tabRequest, requestEditorRightPanelTab])
 
   return (
     <Box

@@ -249,7 +249,9 @@ export function GitHubCommitModal({
       : workbenchState === 'failed'
         ? t('gitFlow.footer.pushAborted')
         : isAdvancedOpen && baseSha
-          ? `base ${shortSha(baseSha)} · ${sendCount} files`
+          ? `base ${shortSha(baseSha)} · ${t('gitFlow.receipt.itemCount', {
+              count: sendCount,
+            })}`
           : t('gitFlow.footer.savedLocally')
 
   return (

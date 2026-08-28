@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react'
 import { OpenTypeDocumentWorkspace } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentWorkspace'
 import { OpenTypeOutline } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeOutline'
 import { OpenTypeStatusBar } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeStatusBar'
+import { ShapingPreviewBar } from 'src/features/common/projectControl/fontSettings/features/components/ShapingPreviewBar'
+import { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 import {
   DEFAULT_OPEN_TYPE_SELECTION,
   type OpenTypeWorkbenchSelection,
@@ -85,6 +87,12 @@ export function FontFeaturesTab({
   }
 
   const activeSelection = normalizeSelection(selected, openTypeFeatures)
+  const shapingPreview = useShapingPreview({ fontData, openTypeFeatures })
+  // Compiler failures land as line marks on the generated FEA view.
+  const compileErrorLocations =
+    shapingPreview.fontStatus.state === 'error'
+      ? shapingPreview.fontStatus.errorLocations
+      : []
 
   return (
     <Stack gap={5} h="100%" minH={0}>
@@ -108,7 +116,10 @@ export function FontFeaturesTab({
         <GridItem minH={0} minW={0} overflow="auto" pr={1}>
           <Box pb={1}>
             <OpenTypeDocumentWorkspace
+              compileErrorLocations={compileErrorLocations}
               diagnostics={diagnostics}
+              fontData={fontData}
+              onStateChange={onOpenTypeFeaturesChange}
               generatedFea={generatedFea}
               rawFeatureText={getRawFeatureText(openTypeFeatures) ?? ''}
               selection={activeSelection}
@@ -125,6 +136,7 @@ export function FontFeaturesTab({
           </Box>
         </GridItem>
       </Grid>
+      <ShapingPreviewBar preview={shapingPreview} />
     </Stack>
   )
 }

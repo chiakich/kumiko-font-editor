@@ -3,6 +3,8 @@ import {
   barcodeForHash,
   buildChangeReceipt,
   collectSentGlyphChanges,
+  fontFileKindFor,
+  glyphLineKey,
   resolveReceiptExclusions,
 } from 'src/features/common/glyphInspector/utils/changeReceipt'
 import type { GlyphSyncEntry, ProjectSyncReport } from 'src/lib/github/sync'
@@ -41,13 +43,18 @@ describe('change receipt', () => {
   it('groups glyphs and font files, and resolves the glyph character', () => {
     const receipt = buildChangeReceipt({
       report: report([
-        entry({ path: 'F.ufo/glyphs/A.glif', status: 'localModified' }),
+        entry({
+          path: 'F.ufo/glyphs/A.glif',
+          status: 'localModified',
+          remoteSha: 'x',
+        }),
         entry({
           path: 'F.ufo/fontinfo.plist',
           status: 'localModified',
           kind: 'font',
           glyphName: null,
           fileName: 'fontinfo.plist',
+          remoteSha: 'x',
         }),
       ]),
       fontData,
@@ -57,30 +64,54 @@ describe('change receipt', () => {
 
     expect(receipt.glyphLines).toEqual([
       {
-        key: 'F.ufo/glyphs/A.glif',
-        path: 'F.ufo/glyphs/A.glif',
+        key: glyphLineKey('A'),
+        path: null,
         glyphId: 'A',
         kind: 'glyph',
         char: '安',
         label: 'A',
+        fontFileKind: null,
+        detail: null,
         status: 'modified',
       },
     ])
     expect(receipt.fontLines.map((line) => line.label)).toEqual([
       'fontinfo.plist',
     ])
+    expect(receipt.fontLines[0]?.fontFileKind).toBe('fontinfo')
+    expect(receipt.fontLines[0]?.detail).toBe('F.ufo/fontinfo.plist')
     expect(receipt.totalCount).toBe(2)
   })
 
-  it('lists a conflict once and counts it', () => {
-    const conflict = entry({
-      path: 'F.ufo/glyphs/B.glif',
-      status: 'conflict',
-      glyphName: 'B',
-      fileName: 'B.glif',
+  it('keeps glyph line keys stable whether or not the report has landed', () => {
+    const before = buildChangeReceipt({
+      report: null,
+      fontData,
+      dirtyGlyphIds: ['A'],
+      deletedGlyphIds: [],
     })
+    const after = buildChangeReceipt({
+      report: report([
+        entry({ path: 'F.ufo/glyphs/A.glif', status: 'localModified' }),
+      ]),
+      fontData,
+      dirtyGlyphIds: ['A'],
+      deletedGlyphIds: [],
+    })
+
+    expect(before.glyphLines[0]?.key).toBe(after.glyphLines[0]?.key)
+  })
+
+  it('shows one line per glyph across masters and settles a shared status', () => {
     const receipt = buildChangeReceipt({
-      report: report([conflict]),
+      report: report([
+        entry({
+          path: 'Regular.ufo/glyphs/A.glif',
+          status: 'localModified',
+          remoteSha: 'x',
+        }),
+        entry({ path: 'Bold.ufo/glyphs/A.glif', status: 'conflict' }),
+      ]),
       fontData,
       dirtyGlyphIds: [],
       deletedGlyphIds: [],
@@ -89,6 +120,51 @@ describe('change receipt', () => {
     expect(receipt.glyphLines).toHaveLength(1)
     expect(receipt.glyphLines[0]?.status).toBe('conflict')
     expect(receipt.conflictCount).toBe(1)
+  })
+
+  it('reads as an addition only when no master exists upstream', () => {
+    const added = buildChangeReceipt({
+      report: report([
+        entry({
+          path: 'Regular.ufo/glyphs/B.glif',
+          status: 'localModified',
+          glyphName: 'B',
+          fileName: 'B.glif',
+        }),
+        entry({
+          path: 'Bold.ufo/glyphs/B.glif',
+          status: 'localModified',
+          glyphName: 'B',
+          fileName: 'B.glif',
+        }),
+      ]),
+      fontData,
+      dirtyGlyphIds: [],
+      deletedGlyphIds: [],
+    })
+    expect(added.glyphLines[0]?.status).toBe('added')
+
+    const modified = buildChangeReceipt({
+      report: report([
+        entry({
+          path: 'Regular.ufo/glyphs/B.glif',
+          status: 'localModified',
+          glyphName: 'B',
+          fileName: 'B.glif',
+          remoteSha: 'x',
+        }),
+        entry({
+          path: 'Bold.ufo/glyphs/B.glif',
+          status: 'localModified',
+          glyphName: 'B',
+          fileName: 'B.glif',
+        }),
+      ]),
+      fontData,
+      dirtyGlyphIds: [],
+      deletedGlyphIds: [],
+    })
+    expect(modified.glyphLines[0]?.status).toBe('modified')
   })
 
   it('leaves remote-only changes off the receipt — they are not ours to send', () => {
@@ -119,6 +195,19 @@ describe('change receipt', () => {
         ['B', 'deleted'],
       ]
     )
+  })
+})
+
+describe('font file kinds', () => {
+  it('names the well-known font-level files', () => {
+    expect(fontFileKindFor('kerning.plist')).toBe('kerning')
+    expect(fontFileKindFor('features.fea')).toBe('features')
+    expect(fontFileKindFor('MyFont.designspace')).toBe('designspace')
+    expect(fontFileKindFor('order.plist')).toBe('order')
+  })
+
+  it('returns null for files it cannot explain', () => {
+    expect(fontFileKindFor('something.plist')).toBeNull()
   })
 })
 
@@ -165,7 +254,7 @@ describe('what the commit message may claim', () => {
     const sent = collectSentGlyphChanges({
       report: changes,
       fontData,
-      voidedPaths: [],
+      voidedKeys: [],
     })
 
     expect(sent.updated.map((glyph) => glyph.glyphName)).toEqual(['A'])
@@ -173,12 +262,26 @@ describe('what the commit message may claim', () => {
     expect(sent.deleted.map((glyph) => glyph.glyphName)).toEqual(['C'])
   })
 
+  it('claims a multi-master glyph once', () => {
+    const sent = collectSentGlyphChanges({
+      report: report([
+        entry({ path: 'Regular.ufo/glyphs/A.glif', status: 'localModified' }),
+        entry({ path: 'Bold.ufo/glyphs/A.glif', status: 'localModified' }),
+      ]),
+      fontData,
+      voidedKeys: [],
+    })
+
+    expect(sent.added.map((glyph) => glyph.glyphName)).toEqual(['A'])
+    expect(sent.updated).toEqual([])
+  })
+
   // Claiming a glyph that was struck out would put a lie in the PR title.
-  it('drops struck-out paths', () => {
+  it('drops struck-out glyphs', () => {
     const sent = collectSentGlyphChanges({
       report: changes,
       fontData,
-      voidedPaths: ['F.ufo/glyphs/B.glif', 'F.ufo/glyphs/C.glif'],
+      voidedKeys: [glyphLineKey('B'), glyphLineKey('C')],
     })
 
     expect(sent.added).toEqual([])
@@ -190,11 +293,7 @@ describe('what the commit message may claim', () => {
     const sent = collectSentGlyphChanges({
       report: changes,
       fontData,
-      voidedPaths: [
-        'F.ufo/glyphs/A.glif',
-        'F.ufo/glyphs/B.glif',
-        'F.ufo/glyphs/C.glif',
-      ],
+      voidedKeys: [glyphLineKey('A'), glyphLineKey('B'), glyphLineKey('C')],
     })
 
     expect(sent).toEqual({ added: [], updated: [], deleted: [] })
@@ -202,7 +301,7 @@ describe('what the commit message may claim', () => {
 })
 
 describe('striking lines out', () => {
-  it('addresses report-backed lines by path', () => {
+  it('addresses glyphs by id and font files by path', () => {
     const receipt = buildChangeReceipt({
       report: report([
         entry({ path: 'F.ufo/glyphs/A.glif', status: 'localModified' }),
@@ -222,17 +321,17 @@ describe('striking lines out', () => {
     expect(
       resolveReceiptExclusions({
         receipt,
-        voidedKeys: ['F.ufo/glyphs/A.glif', 'F.ufo/fontinfo.plist'],
+        voidedKeys: [glyphLineKey('A'), 'F.ufo/fontinfo.plist'],
       })
     ).toEqual({
-      excludePaths: ['F.ufo/glyphs/A.glif', 'F.ufo/fontinfo.plist'],
-      excludeGlyphIds: [],
+      excludePaths: ['F.ufo/fontinfo.plist'],
+      excludeGlyphIds: ['A'],
     })
   })
 
-  // Without a report there are no paths yet, so the glyph id carries the
-  // exclusion and the commit resolves it through the format adapter.
-  it('falls back to glyph ids with no report loaded', () => {
+  // Without a report there are no paths yet; the glyph id carries the
+  // exclusion either way and the commit resolves it through the format adapter.
+  it('uses the same glyph key with no report loaded', () => {
     const receipt = buildChangeReceipt({
       report: null,
       fontData,
@@ -240,7 +339,9 @@ describe('striking lines out', () => {
       deletedGlyphIds: [],
     })
 
-    expect(resolveReceiptExclusions({ receipt, voidedKeys: ['B'] })).toEqual({
+    expect(
+      resolveReceiptExclusions({ receipt, voidedKeys: [glyphLineKey('B')] })
+    ).toEqual({
       excludePaths: [],
       excludeGlyphIds: ['B'],
     })

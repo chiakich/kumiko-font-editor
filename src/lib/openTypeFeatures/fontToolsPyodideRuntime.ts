@@ -182,7 +182,12 @@ export const buildVariableFontWithFontToolsRuntime = async (input: {
 }
 
 export const getFontToolsRuntime = () => {
-  runtimePromise ??= loadFontToolsRuntime()
+  // A failed load (offline, CDN hiccup) must not be cached forever: clear the
+  // slot so the next compile retries instead of rejecting for the session.
+  runtimePromise ??= loadFontToolsRuntime().catch((error: unknown) => {
+    runtimePromise = null
+    throw error
+  })
   return runtimePromise
 }
 

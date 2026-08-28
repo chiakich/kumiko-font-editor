@@ -1,3 +1,4 @@
+import { listAllKerningPairs } from 'src/lib/kerning/kerningPairSets'
 /**
  * Glyph-level store actions: add/delete glyphs, update node positions/types,
  * update glyph metrics.
@@ -129,7 +130,7 @@ const renameGlyphReferences = (
     )
   }
 
-  for (const pair of fontData.kerningPairs ?? []) {
+  for (const pair of listAllKerningPairs(fontData)) {
     pair.left = renameGlyphSelector(pair.left, oldGlyphId, newGlyphId)
     pair.right = renameGlyphSelector(pair.right, oldGlyphId, newGlyphId)
   }

@@ -96,6 +96,9 @@ export const parseUfoKerning = (
 export interface SerializedUfoKerning {
   groups: Record<string, unknown>
   kerning: Record<string, Record<string, number>>
+  // Lib-ready vertical pairs with class references rewritten to the same UFO
+  // group keys groups.plist uses, so they survive a round-trip.
+  verticalKerning: KerningPair[]
   warnings: string[]
 }
 
@@ -119,7 +122,10 @@ const ufoGroupKey = (group: KerningGroup, usedKeys: Set<string>) => {
 // Non-kerning groups from the imported UFO are preserved; kern1/kern2 entries
 // are regenerated from canonical kerning data so edits and deletions stick.
 export const serializeUfoKerning = (
-  fontData: Pick<FontData, 'kerningGroups' | 'kerningPairs'>,
+  fontData: Pick<
+    FontData,
+    'kerningGroups' | 'kerningPairs' | 'verticalKerningPairs'
+  >,
   extras?: { groups?: Record<string, unknown> | null }
 ): SerializedUfoKerning => {
   const warnings: string[] = []
@@ -158,5 +164,68 @@ export const serializeUfoKerning = (
     kerning[first][second] = pair.value
   }
 
-  return { groups, kerning, warnings }
+  // Vertical pairs go through the same group-key mapping: on re-import the
+  // group ids ARE the UFO keys, so class references keep resolving.
+  const remapSelector = (selector: GlyphSelector): GlyphSelector | null => {
+    if (selector.kind === 'glyph') return selector
+    const group = maps.groupByReference.get(selector.classId)
+    const key = group ? keyByGroupId.get(group.id) : null
+    return key ? { kind: 'class', classId: key } : null
+  }
+  const verticalKerning: KerningPair[] = []
+  for (const pair of fontData.verticalKerningPairs ?? []) {
+    const left = remapSelector(pair.left)
+    const right = remapSelector(pair.right)
+    if (!left || !right || !Number.isFinite(pair.value)) {
+      warnings.push('vertical kerning pair skipped: unresolved group reference')
+      continue
+    }
+    verticalKerning.push({
+      ...(pair.id ? { id: pair.id } : {}),
+      left,
+      right,
+      value: pair.value,
+    })
+  }
+
+  return { groups, kerning, verticalKerning, warnings }
+}
+
+// Sanitize the com.kumiko.fontEditor.verticalKerning lib value (our own JSON
+// round-trip of KerningPair[]); a foreign or corrupted value yields [].
+export const parseVerticalKerningLib = (value: unknown): KerningPair[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  const toSelector = (raw: unknown): GlyphSelector | null => {
+    if (typeof raw !== 'object' || raw === null) return null
+    const record = raw as { kind?: unknown; glyph?: unknown; classId?: unknown }
+    if (record.kind === 'glyph' && typeof record.glyph === 'string') {
+      return { kind: 'glyph', glyph: record.glyph }
+    }
+    if (record.kind === 'class' && typeof record.classId === 'string') {
+      return { kind: 'class', classId: record.classId }
+    }
+    return null
+  }
+  const pairs: KerningPair[] = []
+  for (const entry of value) {
+    if (typeof entry !== 'object' || entry === null) continue
+    const record = entry as {
+      left?: unknown
+      right?: unknown
+      value?: unknown
+      id?: unknown
+    }
+    const left = toSelector(record.left)
+    const right = toSelector(record.right)
+    if (!left || !right || typeof record.value !== 'number') continue
+    pairs.push({
+      ...(typeof record.id === 'string' ? { id: record.id } : {}),
+      left,
+      right,
+      value: record.value,
+    })
+  }
+  return pairs
 }

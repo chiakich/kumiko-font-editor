@@ -21,6 +21,7 @@ import type { OpenTypeWorkbenchSelection } from 'src/features/common/projectCont
 import { UnsupportedLookupList } from 'src/features/common/projectControl/fontSettings/features/components/UnsupportedLookupList'
 import type {
   AutoFeatureSuggestion,
+  CompilerErrorLocation,
   ExportPolicy,
   FeatureDiagnostic,
   FeatureRecord,
@@ -28,9 +29,16 @@ import type {
   OpenTypeFeaturesState,
 } from 'src/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
+import type { FontData } from 'src/store'
 
 interface OpenTypeDocumentWorkspaceProps {
+  // Compiler failures from the live preview compile, in generated-FEA lines.
+  compileErrorLocations: CompilerErrorLocation[]
   diagnostics: FeatureDiagnostic[]
+  // Present where the visual rule editor should offer the glyph picker.
+  fontData?: FontData | null
+  // Feature-state replacement, for the visual rule editor.
+  onStateChange?: (next: OpenTypeFeaturesState) => void
   generatedFea: {
     sourceMap: GeneratedFeaSourceMap
     text: string
@@ -47,7 +55,10 @@ interface OpenTypeDocumentWorkspaceProps {
 }
 
 export function OpenTypeDocumentWorkspace({
+  compileErrorLocations,
   diagnostics,
+  fontData,
+  onStateChange,
   generatedFea,
   rawFeatureText,
   selection,
@@ -70,7 +81,10 @@ export function OpenTypeDocumentWorkspace({
         title={getSelectionTitle(selection, selectedFeature, t)}
       />
       <SelectionView
+        compileErrorLocations={compileErrorLocations}
         diagnostics={diagnostics}
+        fontData={fontData}
+        onStateChange={onStateChange}
         generatedFea={generatedFea}
         rawFeatureText={rawFeatureText}
         selectedFeature={selectedFeature}
@@ -88,7 +102,10 @@ export function OpenTypeDocumentWorkspace({
 }
 
 function SelectionView({
+  compileErrorLocations,
   diagnostics,
+  fontData,
+  onStateChange,
   generatedFea,
   rawFeatureText,
   selectedFeature,
@@ -135,6 +152,8 @@ function SelectionView({
         feature={selectedFeature}
         generatedFea={generatedFea}
         state={state}
+        fontData={fontData}
+        onStateChange={onStateChange}
       />
     ) : (
       <Text fontSize="sm" color="mutedForeground">
@@ -151,6 +170,7 @@ function SelectionView({
     {
       'generated-fea': (
         <GeneratedFeaPreview
+          compileErrorLocations={compileErrorLocations}
           feaText={generatedFea.text}
           sourceMap={generatedFea.sourceMap}
         />

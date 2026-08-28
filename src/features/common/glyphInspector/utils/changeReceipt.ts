@@ -3,17 +3,61 @@ import type { FontData, GlyphData } from 'src/store'
 
 export type ChangeReceiptStatus = 'modified' | 'added' | 'deleted' | 'conflict'
 
+// Font-level files a UFO / glyphspackage tree can carry. The receipt shows
+// these as what they mean, not as bare plist file names.
+export type FontFileKind =
+  | 'metainfo'
+  | 'fontinfo'
+  | 'lib'
+  | 'features'
+  | 'groups'
+  | 'kerning'
+  | 'contents'
+  | 'layercontents'
+  | 'layerinfo'
+  | 'order'
+  | 'designspace'
+
+const FONT_FILE_KIND_BY_NAME: Record<string, FontFileKind> = {
+  'metainfo.plist': 'metainfo',
+  'fontinfo.plist': 'fontinfo',
+  'lib.plist': 'lib',
+  'features.fea': 'features',
+  'groups.plist': 'groups',
+  'kerning.plist': 'kerning',
+  'contents.plist': 'contents',
+  'layercontents.plist': 'layercontents',
+  'layerinfo.plist': 'layerinfo',
+  'order.plist': 'order',
+}
+
+export const fontFileKindFor = (fileName: string): FontFileKind | null => {
+  if (fileName.toLowerCase().endsWith('.designspace')) {
+    return 'designspace'
+  }
+  return FONT_FILE_KIND_BY_NAME[fileName.toLowerCase()] ?? null
+}
+
+// A glyph line's key is the glyph itself, not one of its files: it survives the
+// sync report arriving (which swaps ids for paths) and covers every master.
+const GLYPH_KEY_PREFIX = 'glyph:'
+export const glyphLineKey = (glyphId: string) => `${GLYPH_KEY_PREFIX}${glyphId}`
+
 export interface ChangeReceiptLine {
-  // Git path when the sync report knows it, otherwise the glyph id — either way
-  // the stable key the void set is addressed by.
+  // Stable identity the void set is addressed by: glyph lines use the glyph id
+  // (report or not), font lines use their git path.
   key: string
-  // How the commit can exclude this line. A path needs the report; a glyph id
-  // does not, so striking lines out works before the report lands.
+  // Git path for font lines. Glyph lines carry none: a glyph can own several
+  // paths (one per master), so exclusion goes through the glyph id instead.
   path: string | null
   glyphId: string | null
   kind: 'glyph' | 'font'
   char: string | null
   label: string
+  // What a font-level file means, for lines whose file name alone says nothing.
+  fontFileKind: FontFileKind | null
+  // Secondary line under the label — the git path for font files.
+  detail: string | null
   status: ChangeReceiptStatus
 }
 
@@ -29,19 +73,39 @@ const charForGlyph = (glyph: GlyphData | undefined) => {
   return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : null
 }
 
-const statusForEntry = (
-  status: ProjectSyncReport['entries'][number]['status']
-): ChangeReceiptStatus | null => {
-  switch (status) {
-    case 'localModified':
-      return 'modified'
+type ReportEntry = ProjectSyncReport['entries'][number]
+
+const isSendableStatus = (status: ReportEntry['status']) =>
+  status === 'localModified' ||
+  status === 'localDeleted' ||
+  status === 'conflict'
+
+// One status for a glyph across all its masters. Any conflicting master makes
+// the whole glyph a conflict; it reads as deleted only when every master
+// deletes it; and it is an addition only when no master exists upstream.
+const statusForGlyphEntries = (
+  entries: readonly ReportEntry[]
+): ChangeReceiptStatus => {
+  if (entries.some((entry) => entry.status === 'conflict')) {
+    return 'conflict'
+  }
+  if (entries.every((entry) => entry.status === 'localDeleted')) {
+    return 'deleted'
+  }
+  if (entries.every((entry) => entry.remoteSha === null)) {
+    return 'added'
+  }
+  return 'modified'
+}
+
+const statusForFontEntry = (entry: ReportEntry): ChangeReceiptStatus => {
+  switch (entry.status) {
     case 'localDeleted':
       return 'deleted'
     case 'conflict':
       return 'conflict'
     default:
-      // Remote-only changes are not ours to send.
-      return null
+      return entry.remoteSha === null ? 'added' : 'modified'
   }
 }
 
@@ -63,59 +127,79 @@ export const buildChangeReceipt = (input: {
   const fontLines: ChangeReceiptLine[] = []
 
   if (input.report) {
-    const seen = new Set<string>()
-    const entries = [...input.report.conflicts, ...input.report.localChanges]
-    for (const entry of entries) {
-      if (seen.has(entry.path)) {
+    const seenPaths = new Set<string>()
+    // One line per glyph, however many masters its change spans.
+    const entriesByGlyph = new Map<string, ReportEntry[]>()
+    for (const entry of [
+      ...input.report.conflicts,
+      ...input.report.localChanges,
+    ]) {
+      if (seenPaths.has(entry.path) || !isSendableStatus(entry.status)) {
         continue
       }
-      const status = statusForEntry(entry.status)
-      if (!status) {
+      seenPaths.add(entry.path)
+      if (entry.kind === 'glyph' && entry.glyphName) {
+        const group = entriesByGlyph.get(entry.glyphName)
+        if (group) {
+          group.push(entry)
+        } else {
+          entriesByGlyph.set(entry.glyphName, [entry])
+        }
         continue
       }
-      seen.add(entry.path)
-      const line: ChangeReceiptLine = {
+      fontLines.push({
         key: entry.path,
         path: entry.path,
-        glyphId: entry.kind === 'glyph' ? entry.glyphName : null,
-        kind: entry.kind,
-        char:
-          entry.kind === 'glyph' && entry.glyphName
-            ? charForGlyph(glyphByName.get(entry.glyphName))
-            : null,
-        label: entry.glyphName ?? entry.fileName,
-        status,
-      }
-      if (entry.kind === 'font') {
-        fontLines.push(line)
-      } else {
-        glyphLines.push(line)
-      }
+        glyphId: null,
+        kind: 'font',
+        char: null,
+        label: entry.fileName,
+        fontFileKind: fontFileKindFor(entry.fileName),
+        detail: entry.path,
+        status: statusForFontEntry(entry),
+      })
+    }
+    for (const [glyphName, entries] of entriesByGlyph) {
+      glyphLines.push({
+        key: glyphLineKey(glyphName),
+        path: null,
+        glyphId: glyphName,
+        kind: 'glyph',
+        char: charForGlyph(glyphByName.get(glyphName)),
+        label: glyphName,
+        fontFileKind: null,
+        detail: null,
+        status: statusForGlyphEntries(entries),
+      })
     }
   } else {
-    for (const glyphId of input.dirtyGlyphIds) {
+    const localLine = (
+      glyphId: string,
+      status: ChangeReceiptStatus
+    ): ChangeReceiptLine => {
       const glyph = glyphs[glyphId]
-      glyphLines.push({
-        key: glyphId,
+      return {
+        key: glyphLineKey(glyphId),
         path: null,
         glyphId,
         kind: 'glyph',
         char: charForGlyph(glyph),
         label: glyph?.name ?? glyphId,
-        status: 'modified',
-      })
+        fontFileKind: null,
+        detail: null,
+        status,
+      }
+    }
+    // A glyph edited and then deleted sits in both lists; deletion is what the
+    // send will carry, so that is the one line it gets.
+    const deleted = new Set(input.deletedGlyphIds)
+    for (const glyphId of input.dirtyGlyphIds) {
+      if (!deleted.has(glyphId)) {
+        glyphLines.push(localLine(glyphId, 'modified'))
+      }
     }
     for (const glyphId of input.deletedGlyphIds) {
-      const glyph = glyphs[glyphId]
-      glyphLines.push({
-        key: glyphId,
-        path: null,
-        glyphId,
-        kind: 'glyph',
-        char: charForGlyph(glyph),
-        label: glyph?.name ?? glyphId,
-        status: 'deleted',
-      })
+      glyphLines.push(localLine(glyphId, 'deleted'))
     }
   }
 
@@ -168,34 +252,50 @@ export interface SentGlyphChanges {
   deleted: { glyphName: string; unicodes?: readonly string[] }[]
 }
 
-// What the commit will really carry: struck-out paths are dropped, so the
-// suggested message never claims more than the send does.
+// What the commit will really carry: struck-out glyphs are dropped, so the
+// suggested message never claims more than the send does. Voided keys are line
+// keys, matching what the receipt hands the void set.
 export const collectSentGlyphChanges = (input: {
   report: ProjectSyncReport | null
   fontData: FontData | null
-  voidedPaths: readonly string[]
+  voidedKeys: readonly string[]
 }): SentGlyphChanges => {
-  const voided = new Set(input.voidedPaths)
+  const voided = new Set(input.voidedKeys)
   const glyphOf = (glyphName: string) => ({
     glyphName,
     unicodes: input.fontData?.glyphs[glyphName]?.unicodes,
   })
-  const localChanges = (input.report?.localChanges ?? []).filter(
-    (entry) =>
-      entry.kind === 'glyph' && entry.glyphName && !voided.has(entry.path)
-  )
-
-  return {
-    added: localChanges
-      .filter((entry) => entry.status !== 'localDeleted' && !entry.remoteSha)
-      .map((entry) => glyphOf(entry.glyphName!)),
-    updated: localChanges
-      .filter((entry) => entry.status !== 'localDeleted' && entry.remoteSha)
-      .map((entry) => glyphOf(entry.glyphName!)),
-    deleted: localChanges
-      .filter((entry) => entry.status === 'localDeleted')
-      .map((entry) => glyphOf(entry.glyphName!)),
+  // Grouped like the receipt: a glyph changed in several masters is still one
+  // claim in the message.
+  const entriesByGlyph = new Map<string, ReportEntry[]>()
+  for (const entry of input.report?.localChanges ?? []) {
+    if (
+      entry.kind !== 'glyph' ||
+      !entry.glyphName ||
+      voided.has(glyphLineKey(entry.glyphName))
+    ) {
+      continue
+    }
+    const group = entriesByGlyph.get(entry.glyphName)
+    if (group) {
+      group.push(entry)
+    } else {
+      entriesByGlyph.set(entry.glyphName, [entry])
+    }
   }
+
+  const sent: SentGlyphChanges = { added: [], updated: [], deleted: [] }
+  for (const [glyphName, entries] of entriesByGlyph) {
+    const status = statusForGlyphEntries(entries)
+    if (status === 'deleted') {
+      sent.deleted.push(glyphOf(glyphName))
+    } else if (status === 'added') {
+      sent.added.push(glyphOf(glyphName))
+    } else {
+      sent.updated.push(glyphOf(glyphName))
+    }
+  }
+  return sent
 }
 
 export interface ReceiptExclusions {
@@ -203,9 +303,10 @@ export interface ReceiptExclusions {
   excludeGlyphIds: string[]
 }
 
-// Struck-out lines, split by how the commit can address them. A line with a
-// path uses it; one without falls back to its glyph, which the adapter resolves
-// to a path at commit time — so striking out works with no sync report loaded.
+// Struck-out lines, split by how the commit can address them. Glyph lines go by
+// glyph id — the adapter resolves every master's path at commit time, so this
+// works with no sync report loaded and never misses a sibling master. Font
+// lines go by their git path.
 export const resolveReceiptExclusions = (input: {
   receipt: ChangeReceipt
   voidedKeys: readonly string[]
@@ -219,7 +320,7 @@ export const resolveReceiptExclusions = (input: {
   return {
     excludePaths: lines.flatMap((line) => (line.path ? [line.path] : [])),
     excludeGlyphIds: lines.flatMap((line) =>
-      !line.path && line.glyphId ? [line.glyphId] : []
+      line.glyphId ? [line.glyphId] : []
     ),
   }
 }

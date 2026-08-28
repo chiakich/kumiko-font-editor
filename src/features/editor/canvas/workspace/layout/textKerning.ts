@@ -5,18 +5,31 @@ import type {
   OpenTypeFeaturesState,
   PairPositioningRule,
 } from 'src/lib/openTypeFeatures'
-import { resolveKerningPair } from 'src/lib/kerning/resolveKerning'
+import {
+  getMasterKerningPairs,
+  resolveKerningPair,
+} from 'src/lib/kerning/resolveKerning'
 
 export function getTextKerningValue(
   fontData: FontData,
   leftGlyphId: string | null,
-  rightGlyphId: string | null
+  rightGlyphId: string | null,
+  // The master whose pair values apply (per-master kerning); null/omitted
+  // kerns with the canonical (default master) set.
+  masterId?: string | null
 ) {
   if (!leftGlyphId || !rightGlyphId) return 0
 
   // Canonical project kerning wins over derived GPOS rules so edits in the
   // Kerning panel preview immediately, following UFO pair priority.
-  const resolved = resolveKerningPair(fontData, leftGlyphId, rightGlyphId)
+  const resolved = resolveKerningPair(
+    {
+      kerningGroups: fontData.kerningGroups,
+      kerningPairs: getMasterKerningPairs(fontData, masterId),
+    },
+    leftGlyphId,
+    rightGlyphId
+  )
   if (resolved.priority !== 'none') {
     return resolved.value
   }
