@@ -54,8 +54,8 @@ importers:
         specifier: 12.38.0
         version: 12.38.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       harfbuzzjs:
-        specifier: 0.10.3
-        version: 0.10.3
+        specifier: file:./vendor/harfbuzzjs
+        version: file:vendor/harfbuzzjs
       i18next:
         specifier: 26.1.0
         version: 26.1.0(typescript@6.0.3)
@@ -1523,8 +1523,8 @@ packages:
     resolution: {integrity: sha512-Hjdiy8RziuCcn5z04QI/rlsNuQoG8P0xxjgvsSMpi89cvIXIOcucQtiHS1yHSShxoBcSCeYqAskINmTiy/mlfw==}
     engines: {node: '>=20.0.0'}
 
-  harfbuzzjs@0.10.3:
-    resolution: {integrity: sha512-GJnLUrgLMadlMYrBGEXwYEimObbysy3prWT4HyPpFQERvgTU/OZ+ReUlEPOum6w4RBtFXzXiCCmECOr4sz3qwQ==}
+  harfbuzzjs@file:vendor/harfbuzzjs:
+    resolution: {directory: vendor/harfbuzzjs, type: directory}
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -4205,7 +4205,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  harfbuzzjs@0.10.3: {}
+  harfbuzzjs@file:vendor/harfbuzzjs: {}
 
   has-flag@4.0.0: {}
 

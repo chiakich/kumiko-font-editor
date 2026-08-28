@@ -44,7 +44,7 @@ describe('vertical kerning synthesis', () => {
   })
 
   it(
-    'compiles vkrn into a GPOS y-advance pair (preview HarfBuzz cannot apply it)',
+    'compiled vkrn adjusts the y-advance in top-to-bottom shaping',
     { timeout: 120_000 },
     async () => {
       const sfnt = buildExportSfntBuffer({
@@ -111,11 +111,9 @@ json.dumps({
       expect(gpos.secondGlyph).toBe('V')
       expect(gpos.yAdvance).toBe(-80)
 
-      // Known limitation, asserted so a runtime upgrade flags it: the bundled
-      // harfbuzzjs is built with HB_TINY (HB_NO_VERTICAL), which strips GPOS
-      // y-advance application — the in-app ttb preview shows no vkrn effect.
-      // If this assertion starts failing after a harfbuzzjs upgrade, the
-      // preview can drop its simulated vertical kerning path.
+      // The vendored harfbuzzjs build re-enables vertical layout
+      // (vendor/harfbuzzjs, HB_NO_VERTICAL removed), so the in-app ttb
+      // preview applies the pair for real: 80 units tighter.
       const shape = (features: string[]) =>
         shapeTextWithHarfBuzz(buffer, 'AV', { direction: 'ttb', features })
       const off = await shape(['-vkrn'])
@@ -124,7 +122,21 @@ json.dumps({
       if (!off.ok || !on.ok) {
         return
       }
-      expect(on.glyphs[0].yAdvance).toBe(off.glyphs[0].yAdvance)
+      expect(Math.abs(on.glyphs[0].yAdvance - off.glyphs[0].yAdvance)).toBe(80)
+      // Horizontal shaping ignores vkrn entirely.
+      const horizontalOn = await shapeTextWithHarfBuzz(buffer, 'AV', {
+        features: ['+vkrn'],
+      })
+      const horizontalOff = await shapeTextWithHarfBuzz(buffer, 'AV', {
+        features: ['-vkrn'],
+      })
+      expect(horizontalOn.ok && horizontalOff.ok).toBe(true)
+      if (horizontalOn.ok && horizontalOff.ok) {
+        expect(horizontalOn.glyphs[0].xAdvance).toBe(
+          horizontalOff.glyphs[0].xAdvance
+        )
+        expect(horizontalOn.glyphs[0].yAdvance).toBe(0)
+      }
     }
   )
 })

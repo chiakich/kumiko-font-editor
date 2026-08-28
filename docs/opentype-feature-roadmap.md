@@ -279,21 +279,18 @@ decode`）——`toPostScriptFontName` 在匯出層消毒（`fontBinaryFormat.ts
 - **UI**:kern 工作檯新增「橫排 kern / 直排 vkrn」分頁(vkrn rail 列直接
   開直排分頁);actions 帶 orientation 參數。
 
-**已知限制(重要)**:打包的 harfbuzzjs 0.10.3 以 `HB_TINY` 編譯,
-`HB_NO_VERTICAL` 把 GPOS y-advance 套用整個編掉——**站內預覽永遠看不到
-vkrn 效果**(經 debug 驗證:x-advance 兩個方向都套用、y-advance 兩個方向
-都不套用)。因此:
+**HB_TINY 限制已解決(2026-08-28)**:npm 版 harfbuzzjs 0.10.3 以
+`HB_TINY`(含 `HB_NO_VERTICAL`)編譯,GPOS y-advance 套用被編掉,站內
+預覽原本看不到 vkrn。現改用 **vendored 重建版**(`vendor/harfbuzzjs`,
+package.json 以 `file:` 依賴引用):與 npm 版唯一差異是
+`config-override.h` 加了 `#undef HB_NO_VERTICAL`,以
+`emscripten/emsdk:3.1.56` 容器重建(hb.wasm 397KB→408KB),來源與升級
+步驟見 `vendor/harfbuzzjs/VENDOR.md`。`verticalKerning.test.ts` 現在斷言
+ttb 預覽真的套用 vkrn;工作檯的模擬路徑已移除。
 
-- 匯出字型的 GPOS 內容正確(`verticalKerning.test.ts` 以 fontTools 驗證
-  value record),真實 shaper(瀏覽器/InDesign/OS)會套用。
-- 工作檯的直排字對對照是**以字對值模擬**的(標「模擬」徽章),直排預覽
-  顯示提示文字。測試固定了這個限制的斷言——若未來升級 harfbuzzjs
-  (需以 emscripten 重建 hb.wasm,config-override.h 加
-  `#undef HB_NO_VERTICAL`,參考同 repo 的 config-override-subset.h),
-  斷言會失敗提醒移除模擬路徑。
-- 另一個直排缺口:opentype.js 匯出不寫 vhea/vmtx,直排 metrics 靠 shaper
-  fallback;認真支援直排要在匯出管線補 vhea/vmtx(可在 fontTools 後處理
-  階段加)。
+仍存的直排缺口:opentype.js 匯出不寫 vhea/vmtx,直排 metrics 靠 shaper
+fallback;認真支援直排要在匯出管線補 vhea/vmtx(可在 fontTools 後處理
+階段加)。
 
 ### FeatureVariations 重建(conditionset)評估(2026-08-28)
 

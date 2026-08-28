@@ -197,7 +197,8 @@ export function WorkspacePreviewHome({
         ) : null}
         {isVertical &&
         hasText &&
-        (hasProjectKerning || hasProjectVerticalKerning) ? (
+        hasProjectKerning &&
+        !hasProjectVerticalKerning ? (
           <Text fontSize="xs" color="mutedForeground">
             {t('featureWorkspace.kernVerticalHint')}
           </Text>

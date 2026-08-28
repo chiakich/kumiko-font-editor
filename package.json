@@ -26,7 +26,7 @@
   },
   "lint-staged": {
     "*": "prettier --check --ignore-unknown",
-    "*.{js,jsx,ts,tsx}": "eslint --max-warnings=0"
+    "*.{js,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.36.0",
@@ -44,7 +44,7 @@
     "fflate": "^0.8.2",
     "fonteditor-core": "2.6.3",
     "framer-motion": "12.38.0",
-    "harfbuzzjs": "0.10.3",
+    "harfbuzzjs": "file:./vendor/harfbuzzjs",
     "i18next": "26.1.0",
     "iconoir-react": "7.11.0",
     "immer": "11.1.4",

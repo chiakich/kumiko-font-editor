@@ -212,28 +212,17 @@ function PairPreview({
         return
       }
       const unitsPerEm = after.unitsPerEm ?? 1000
-      // The bundled HarfBuzz build (HB_TINY) strips vertical GPOS, so the
-      // vkrn effect is simulated on the shaped run and labeled as such; the
-      // exported binary carries the real GPOS pair.
-      const afterGlyphs =
-        orientation === 'vertical'
-          ? before.glyphs.map((glyph, index) =>
-              index === 0
-                ? { ...glyph, yAdvance: glyph.yAdvance - pair.value }
-                : glyph
-            )
-          : after.glyphs
       setRuns({
         key,
         before: { glyphs: before.glyphs, unitsPerEm },
-        after: { glyphs: afterGlyphs, unitsPerEm },
+        after: { glyphs: after.glyphs, unitsPerEm },
       })
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [fontData, state, leftGlyph, rightGlyph, key, orientation, pair.value])
+  }, [fontData, state, leftGlyph, rightGlyph, key, orientation])
 
   if (!leftGlyph || !rightGlyph) {
     return (
@@ -273,15 +262,6 @@ function PairPreview({
           <Text fontSize="xs" fontFamily="mono" color="yellow.600">
             {pair.value}
           </Text>
-          {orientation === 'vertical' ? (
-            <Badge
-              size="sm"
-              variant="subtle"
-              title={t('featureWorkspace.kernSimulatedPreviewHint')}
-            >
-              {t('featureWorkspace.kernSimulatedPreview')}
-            </Badge>
-          ) : null}
         </>
       ) : (
         <Spinner size="xs" color="mutedForeground" />

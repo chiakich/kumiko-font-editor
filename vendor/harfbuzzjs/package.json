@@ -1,0 +1,34 @@
+{
+	"name": "harfbuzzjs",
+	"version": "0.10.3-kumiko.1",
+	"description": "harfbuzzjs 0.10.3 rebuilt with vertical layout support (HB_NO_VERTICAL removed); see VENDOR.md",
+	"main": "index.js",
+	"keywords": [
+		"harfbuzz",
+		"opentype",
+		"truetype",
+		"ttf",
+		"otf",
+		"graphics",
+		"complex scripts",
+		"typography",
+		"font rendering",
+		"font",
+		"fonts",
+		"emoji"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/harfbuzz/harfbuzzjs.git"
+	},
+	"author": "Ebrahim Byagowi <ebrahim@gnu.org>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/harfbuzz/harfbuzzjs/issues"
+	},
+	"homepage": "https://github.com/harfbuzz/harfbuzzjs#readme",
+	"devDependencies": {
+		"chai": "^4.3.7",
+		"mocha": "^10.2.0"
+	}
+}

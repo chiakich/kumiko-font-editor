@@ -1088,7 +1088,7 @@
     "editRule": "Edit rule →",
     "openGlyph": "Open in editor →",
     "missingVertTitle": "These glyphs have no .vert form yet",
-    "kernVerticalHint": "The in-app vertical preview does not apply kerning (the bundled HB_TINY HarfBuzz strips vertical positioning); maintain vertical pairs in the kern workbench’s \"Vertical vkrn\" tab — exported fonts carry the real GPOS.",
+    "kernVerticalHint": "Vertical text does not apply horizontal kern; maintain vertical pairs in the kern workbench’s \"Vertical vkrn\" tab and enable the vkrn chip when previewing.",
     "railTitle": "Features",
     "openIndex": "Feature index",
     "openHome": "Shaping preview",
@@ -1145,8 +1145,6 @@
     "featureVariationsAlways": "(unconditional)",
     "kernMaster": "master: {{master}}",
     "kernHorizontal": "Horizontal kern",
-    "kernVertical": "Vertical vkrn",
-    "kernSimulatedPreview": "simulated",
-    "kernSimulatedPreviewHint": "The in-app preview engine (HB_TINY HarfBuzz) does not apply vertical positioning; this comparison simulates the pair value. Exported fonts carry the real GPOS."
+    "kernVertical": "Vertical vkrn"
   }
 }
