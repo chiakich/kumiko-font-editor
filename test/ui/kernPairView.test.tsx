@@ -92,3 +92,53 @@ describe('KernPairView', () => {
     expect(onPreviewText).toHaveBeenCalledWith('abba')
   })
 })
+
+describe('KernPairView vertical tab', () => {
+  it('adds a pair to the vertical set from the vkrn tab', async () => {
+    seedStore({})
+    const user = userEvent.setup()
+    renderWithProviders(
+      <KernPairView
+        fontData={useStore.getState().fontData!}
+        state={createEmptyOpenTypeFeaturesState()}
+        onOpenIrKern={vi.fn()}
+        onPreviewText={vi.fn()}
+      />
+    )
+    await user.click(screen.getByRole('button', { name: '直排 vkrn' }))
+    await user.type(screen.getByLabelText('左側(字符或 @群組)'), 'a')
+    await user.type(screen.getByLabelText('右側(字符或 @群組)'), 'b')
+    await user.type(screen.getByLabelText('字距值'), '-80{Enter}')
+    const next = useStore.getState().fontData!
+    expect(next.verticalKerningPairs).toHaveLength(1)
+    expect(next.verticalKerningPairs?.[0].value).toBe(-80)
+    expect(next.kerningPairs ?? []).toHaveLength(0)
+  })
+
+  it('opens on the vertical tab when routed from the vkrn rail row', () => {
+    seedStore({
+      fontData: {
+        ...makeFontData(['a', 'b']),
+        verticalKerningPairs: [
+          {
+            id: 'v1',
+            left: { kind: 'glyph', glyph: 'a' },
+            right: { kind: 'glyph', glyph: 'b' },
+            value: -80,
+          },
+        ],
+      },
+    })
+    renderWithProviders(
+      <KernPairView
+        fontData={useStore.getState().fontData!}
+        state={createEmptyOpenTypeFeaturesState()}
+        onOpenIrKern={vi.fn()}
+        onPreviewText={vi.fn()}
+        initialOrientation="vertical"
+      />
+    )
+    // The count badge follows the open tab: 1 vertical pair, 0 horizontal.
+    expect(screen.getByText('1 個字對')).toBeInTheDocument()
+  })
+})

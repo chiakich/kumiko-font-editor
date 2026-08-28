@@ -25,15 +25,18 @@ export interface WorkspaceFeatureRow {
 export const listWorkspaceFeatures = (
   state: OpenTypeFeaturesState,
   diagnostics: readonly FeatureDiagnostic[],
-  options: { projectKerningPairCount?: number } = {}
+  options: {
+    projectKerningPairCount?: number
+    projectVerticalKerningPairCount?: number
+  } = {}
 ): WorkspaceFeatureRow[] => {
   const projectPairCount = options.projectKerningPairCount ?? 0
+  const projectVerticalPairCount = options.projectVerticalKerningPairCount ?? 0
   const lookupById = new Map(state.lookups.map((lookup) => [lookup.id, lookup]))
-  const rows = listPreviewFeatureToggles(
-    state,
-    'ltr',
-    projectPairCount > 0 ? ['kern'] : []
-  ).map(({ tag }) => {
+  const rows = listPreviewFeatureToggles(state, 'ltr', [
+    ...(projectPairCount > 0 ? ['kern'] : []),
+    ...(projectVerticalPairCount > 0 ? ['vkrn'] : []),
+  ]).map(({ tag }) => {
     const features = state.features.filter((feature) => feature.tag === tag)
     const featureIds = new Set(features.map((feature) => feature.id))
     const lookupIds = new Set(
@@ -46,14 +49,20 @@ export const listWorkspaceFeatures = (
       0
     )
     const origins = [...new Set(features.map((feature) => feature.origin))]
-    const isProjectKerning = tag === 'kern' && projectPairCount > 0
+    const projectCount =
+      tag === 'kern'
+        ? projectPairCount
+        : tag === 'vkrn'
+          ? projectVerticalPairCount
+          : 0
+    const isProjectKerning = projectCount > 0
     return {
       tag,
       enabled: isProjectKerning || isFeatureTagEnabled(state, tag),
       featureId: features[0]?.id ?? null,
       origins:
         origins.length > 0 ? origins : isProjectKerning ? ['project'] : ['raw'],
-      ruleCount: ruleCount + (isProjectKerning ? projectPairCount : 0),
+      ruleCount: ruleCount + projectCount,
       diagnosticsCount: diagnostics.filter(
         (diagnostic) =>
           diagnostic.target.kind === 'feature' &&

@@ -47,6 +47,7 @@ import {
   type UfoTextStyle,
 } from 'src/lib/fontFormats/ufoTextStyle'
 import {
+  KUMIKO_VERTICAL_KERNING_LIB_KEY,
   defaultFontSource,
   fontInfoFromUfoFontInfo,
   fontAxesFromLib,
@@ -58,6 +59,7 @@ import {
 import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
 import {
   parseUfoKerning,
+  parseVerticalKerningLib,
   type ParsedUfoKerning,
 } from 'src/lib/fontFormats/ufoKerning'
 import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
@@ -805,9 +807,13 @@ const buildFontDataFromUfoGlyphs = (
       : 'Regular'
   const masterId = metadata.ufoId
   const ufoKerning = parseUfoKerning(metadata.groups, metadata.kerning)
+  const verticalKerningPairs = parseVerticalKerningLib(
+    metadata.lib?.[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+  )
   return {
     kerningGroups: ufoKerning.kerningGroups,
     kerningPairs: ufoKerning.kerningPairs,
+    ...(verticalKerningPairs.length > 0 ? { verticalKerningPairs } : {}),
     glyphs: Object.fromEntries(
       glyphRecords.map((record) => {
         const glyphId = record.glyphName
@@ -1347,6 +1353,7 @@ export const buildMultiMasterFontData = (
   const kerningGroups = [...(base.kerningGroups ?? [])]
   const knownGroupIds = new Set(kerningGroups.map((group) => group.id))
   const kerningPairsByMaster: Record<string, KerningPair[]> = {}
+  const verticalKerningPairsByMaster: Record<string, KerningPair[]> = {}
   const parsedKerningByUfo = new Map<string, ParsedUfoKerning>()
   for (const master of regularMasters) {
     if (master === defaultMaster) {
@@ -1364,6 +1371,9 @@ export const buildMultiMasterFontData = (
       }
     }
     kerningPairsByMaster[master.sourceId] = parsed.kerningPairs
+    verticalKerningPairsByMaster[master.sourceId] = parseVerticalKerningLib(
+      master.metadata.lib?.[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+    )
   }
 
   return {
@@ -1374,6 +1384,9 @@ export const buildMultiMasterFontData = (
     kerningGroups,
     ...(Object.keys(kerningPairsByMaster).length > 0
       ? { kerningPairsByMaster }
+      : {}),
+    ...(Object.keys(verticalKerningPairsByMaster).length > 0
+      ? { verticalKerningPairsByMaster }
       : {}),
     exportInstances: designspaceToExportInstances(designspace),
   }

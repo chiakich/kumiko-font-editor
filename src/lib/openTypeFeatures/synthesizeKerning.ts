@@ -15,6 +15,8 @@ const sanitizeClassName = (name: string) => {
 export interface SynthesizeKerningInput {
   kerningGroups?: readonly KerningGroup[]
   kerningPairs?: readonly KerningPair[]
+  // Vertical (vkrn) pairs: values adjust the y-advance in vertical text.
+  verticalKerningPairs?: readonly KerningPair[]
   // Glyphs actually present in the export; pairs and members outside are
   // dropped so feaLib never sees a name the font lacks.
   availableGlyphIds: ReadonlySet<string>
@@ -37,9 +39,12 @@ const selectorKey = (
     ? `g:${selector.glyph}`
     : `c:${classNameByRef.get(selector.classId) ?? selector.classId.replace(/^@/, '')}`
 
-// Pair keys the IR kern feature already positions (accepted suggestions or
-// imported GPOS recreated as IR).
-const collectIrKernPairKeys = (state: OpenTypeFeaturesState | undefined) => {
+// Pair keys the IR's own kerning feature (kern or vkrn) already positions
+// (accepted suggestions or imported GPOS recreated as IR).
+const collectIrKernPairKeys = (
+  state: OpenTypeFeaturesState | undefined,
+  tag: 'kern' | 'vkrn'
+) => {
   const keys = new Set<string>()
   if (!state) {
     return keys
@@ -52,7 +57,7 @@ const collectIrKernPairKeys = (state: OpenTypeFeaturesState | undefined) => {
   )
   const lookupById = new Map(state.lookups.map((lookup) => [lookup.id, lookup]))
   for (const feature of state.features) {
-    if (feature.tag !== 'kern' || !feature.isActive) {
+    if (feature.tag !== tag || !feature.isActive) {
       continue
     }
     for (const lookupId of feature.entries.flatMap(
@@ -85,7 +90,8 @@ export const synthesizeKerningFea = (
 ): SyntheticKerningFea | null => {
   const groups = input.kerningGroups ?? []
   const pairs = input.kerningPairs ?? []
-  if (pairs.length === 0) {
+  const verticalPairs = input.verticalKerningPairs ?? []
+  if (pairs.length === 0 && verticalPairs.length === 0) {
     return null
   }
 
@@ -109,9 +115,7 @@ export const synthesizeKerningFea = (
     membersByClassName.set(className, members)
   }
 
-  const irPairKeys = collectIrKernPairKeys(input.state)
   const usedClassNames = new Set<string>()
-  const rules: string[] = []
   let skippedPairCount = 0
 
   const selectorText = (selector: GlyphSelector): string | null => {
@@ -132,29 +136,47 @@ export const synthesizeKerningFea = (
     return `@${className}`
   }
 
-  for (const pair of pairs) {
-    if (!Number.isFinite(pair.value) || pair.value === 0) {
-      skippedPairCount += 1
-      continue
-    }
-    if (
-      irPairKeys.has(
-        `${selectorKey(pair.left, classNameByRef)}|${selectorKey(pair.right, classNameByRef)}`
+  const buildRules = (
+    pairList: readonly KerningPair[],
+    tag: 'kern' | 'vkrn'
+  ): string[] => {
+    const irPairKeys = collectIrKernPairKeys(input.state, tag)
+    const ruleLines: string[] = []
+    for (const pair of pairList) {
+      if (!Number.isFinite(pair.value) || pair.value === 0) {
+        skippedPairCount += 1
+        continue
+      }
+      if (
+        irPairKeys.has(
+          `${selectorKey(pair.left, classNameByRef)}|${selectorKey(pair.right, classNameByRef)}`
+        )
+      ) {
+        skippedPairCount += 1
+        continue
+      }
+      const left = selectorText(pair.left)
+      const right = selectorText(pair.right)
+      if (!left || !right) {
+        skippedPairCount += 1
+        continue
+      }
+      const value = Math.round(pair.value)
+      // vkrn adjusts the y-advance: spell out the value record so the
+      // semantics never depend on feaLib's single-value special-casing.
+      ruleLines.push(
+        tag === 'vkrn'
+          ? `    pos ${left} ${right} <0 0 0 ${value}>;`
+          : `    pos ${left} ${right} ${value};`
       )
-    ) {
-      skippedPairCount += 1
-      continue
     }
-    const left = selectorText(pair.left)
-    const right = selectorText(pair.right)
-    if (!left || !right) {
-      skippedPairCount += 1
-      continue
-    }
-    rules.push(`    pos ${left} ${right} ${Math.round(pair.value)};`)
+    return ruleLines
   }
 
-  if (rules.length === 0) {
+  const rules = buildRules(pairs, 'kern')
+  const verticalRules = buildRules(verticalPairs, 'vkrn')
+
+  if (rules.length === 0 && verticalRules.length === 0) {
     return null
   }
 
@@ -166,13 +188,18 @@ export const synthesizeKerningFea = (
     )
 
   const text = [
-    '# Kumiko: kern feature synthesized from project kerning data.',
+    '# Kumiko: kerning features synthesized from project kerning data.',
     ...classLines,
-    'feature kern {',
-    ...rules,
-    '} kern;',
+    ...(rules.length > 0 ? ['feature kern {', ...rules, '} kern;'] : []),
+    ...(verticalRules.length > 0
+      ? ['feature vkrn {', ...verticalRules, '} vkrn;']
+      : []),
     '',
   ].join('\n')
 
-  return { text, pairCount: rules.length, skippedPairCount }
+  return {
+    text,
+    pairCount: rules.length + verticalRules.length,
+    skippedPairCount,
+  }
 }

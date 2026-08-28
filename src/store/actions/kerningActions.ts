@@ -23,14 +23,27 @@ export interface KerningGroupDraft {
   glyphs: string[]
 }
 
-// Pair edits land on the active master's set: non-default masters keep their
-// own pairs in kerningPairsByMaster, everything else edits the canonical set.
-const resolveKerningPairsDraft = (state: {
-  fontData: GlobalState['fontData']
-  activeMasterId: GlobalState['activeMasterId']
-}): KerningPair[] => {
+export type KerningOrientation = 'horizontal' | 'vertical'
+
+// Pair edits land on the active master's set for the given orientation:
+// non-default masters keep their own pairs in the by-master records,
+// everything else edits the canonical set.
+const resolveKerningPairsDraft = (
+  state: {
+    fontData: GlobalState['fontData']
+    activeMasterId: GlobalState['activeMasterId']
+  },
+  orientation: KerningOrientation
+): KerningPair[] => {
   const fontData = state.fontData!
   const masterId = state.activeMasterId
+  if (orientation === 'vertical') {
+    if (masterId && fontData.verticalKerningPairsByMaster?.[masterId]) {
+      return fontData.verticalKerningPairsByMaster[masterId]
+    }
+    fontData.verticalKerningPairs ??= []
+    return fontData.verticalKerningPairs
+  }
   if (masterId && fontData.kerningPairsByMaster?.[masterId]) {
     return fontData.kerningPairsByMaster[masterId]
   }
@@ -42,14 +55,15 @@ export const buildKerningActions = (set: ImmerSet) => ({
   upsertKerningPair: (
     left: GlyphSelector,
     right: GlyphSelector,
-    value: number
+    value: number,
+    orientation: KerningOrientation = 'horizontal'
   ) =>
     set((state) => {
       if (!state.fontData) return
       if (!Number.isFinite(value)) return
 
       const maps = buildKerningGroupMaps(state.fontData.kerningGroups)
-      const pairs = resolveKerningPairsDraft(state)
+      const pairs = resolveKerningPairsDraft(state, orientation)
       const index = findKerningPairIndex(pairs, left, right, maps)
 
       if (index >= 0) {
@@ -65,12 +79,16 @@ export const buildKerningActions = (set: ImmerSet) => ({
       markProjectDirty(state)
     }),
 
-  deleteKerningPair: (left: GlyphSelector, right: GlyphSelector) =>
+  deleteKerningPair: (
+    left: GlyphSelector,
+    right: GlyphSelector,
+    orientation: KerningOrientation = 'horizontal'
+  ) =>
     set((state) => {
       if (!state.fontData) return
 
       const maps = buildKerningGroupMaps(state.fontData.kerningGroups)
-      const pairs = resolveKerningPairsDraft(state)
+      const pairs = resolveKerningPairsDraft(state, orientation)
       const index = findKerningPairIndex(pairs, left, right, maps)
       if (index < 0) return
 
@@ -103,6 +121,8 @@ export const buildKerningActions = (set: ImmerSet) => ({
           const allPairSets = [
             state.fontData.kerningPairs ?? [],
             ...Object.values(state.fontData.kerningPairsByMaster ?? {}),
+            state.fontData.verticalKerningPairs ?? [],
+            ...Object.values(state.fontData.verticalKerningPairsByMaster ?? {}),
           ]
           for (const pair of allPairSets.flat()) {
             for (const side of ['left', 'right'] as const) {
@@ -157,6 +177,17 @@ export const buildKerningActions = (set: ImmerSet) => ({
         state.fontData.kerningPairsByMaster ?? {}
       )) {
         state.fontData.kerningPairsByMaster![masterId] = withoutGroup(pairs)
+      }
+      if (state.fontData.verticalKerningPairs) {
+        state.fontData.verticalKerningPairs = withoutGroup(
+          state.fontData.verticalKerningPairs
+        )
+      }
+      for (const [masterId, pairs] of Object.entries(
+        state.fontData.verticalKerningPairsByMaster ?? {}
+      )) {
+        state.fontData.verticalKerningPairsByMaster![masterId] =
+          withoutGroup(pairs)
       }
       markProjectDirty(state)
     }),

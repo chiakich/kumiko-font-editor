@@ -720,6 +720,7 @@ interface ExportGlyphListInput {
     | 'openTypeFeatures'
     | 'kerningGroups'
     | 'kerningPairs'
+    | 'verticalKerningPairs'
   >
   glyphs: GlyphData[]
   familyName?: string
@@ -813,6 +814,7 @@ export const exportGlyphListAsBinary = (
       {
         kerningGroups: input.fontData.kerningGroups,
         kerningPairs: input.fontData.kerningPairs,
+        verticalKerningPairs: input.fontData.verticalKerningPairs,
         availableGlyphIds: new Set(input.glyphs.map((glyph) => glyph.id)),
       }
     )

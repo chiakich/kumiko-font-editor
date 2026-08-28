@@ -11,6 +11,10 @@ import type {
 
 export const KUMIKO_AXES_LIB_KEY = 'com.kumiko.fontEditor.axes'
 export const KUMIKO_SOURCES_LIB_KEY = 'com.kumiko.fontEditor.sources'
+// UFO has no standard vertical-kerning storage (kerning.plist is horizontal
+// only); vkrn pairs round-trip through this lib key instead.
+export const KUMIKO_VERTICAL_KERNING_LIB_KEY =
+  'com.kumiko.fontEditor.verticalKerning'
 export const KUMIKO_EXPORT_INSTANCES_LIB_KEY =
   'com.kumiko.fontEditor.exportInstances'
 export const KUMIKO_SETTINGS_LIB_KEY = 'com.kumiko.fontEditor.settings'
@@ -548,6 +552,9 @@ export const buildUfoLibFromFontData = (
     ...(baseLib ?? {}),
     ...(fontData.axes ? { [KUMIKO_AXES_LIB_KEY]: fontData.axes } : {}),
     ...(fontData.sources ? { [KUMIKO_SOURCES_LIB_KEY]: fontData.sources } : {}),
+    ...((fontData.verticalKerningPairs?.length ?? 0) > 0
+      ? { [KUMIKO_VERTICAL_KERNING_LIB_KEY]: fontData.verticalKerningPairs }
+      : {}),
     ...(fontData.exportInstances
       ? { [KUMIKO_EXPORT_INSTANCES_LIB_KEY]: fontData.exportInstances }
       : {}),

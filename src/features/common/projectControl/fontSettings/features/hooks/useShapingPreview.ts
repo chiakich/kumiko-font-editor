@@ -81,14 +81,15 @@ export const useShapingPreview = (input: {
   // Kerning synthesized from project kerning data is a real feature in the
   // compiled preview font, so it gets a chip even with no IR kern feature.
   const hasProjectKerning = (fontData?.kerningPairs?.length ?? 0) > 0
+  const hasProjectVerticalKerning =
+    (fontData?.verticalKerningPairs?.length ?? 0) > 0
   const toggles = useMemo(
     () =>
-      listPreviewFeatureToggles(
-        openTypeFeatures,
-        direction,
-        hasProjectKerning ? ['kern'] : []
-      ),
-    [openTypeFeatures, direction, hasProjectKerning]
+      listPreviewFeatureToggles(openTypeFeatures, direction, [
+        ...(hasProjectKerning ? ['kern'] : []),
+        ...(hasProjectVerticalKerning ? ['vkrn'] : []),
+      ]),
+    [openTypeFeatures, direction, hasProjectKerning, hasProjectVerticalKerning]
   )
 
   const wantsPreview = text.trim().length > 0

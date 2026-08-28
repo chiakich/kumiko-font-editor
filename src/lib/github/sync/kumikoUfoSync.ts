@@ -55,8 +55,10 @@ import { selectUfoFeatureText } from 'src/lib/openTypeFeatures'
 import { userNameToFileName } from 'src/lib/fontFormats/ufoFileNames'
 import {
   parseUfoKerning,
+  parseVerticalKerningLib,
   serializeUfoKerning,
 } from 'src/lib/fontFormats/ufoKerning'
+import { KUMIKO_VERTICAL_KERNING_LIB_KEY } from 'src/lib/fontFormats/fontInfoSettings'
 import {
   buildBoundsResolver,
   buildWorkspaceFileMapFromEntries,
@@ -206,6 +208,8 @@ const makeProjectFontDataFromMetadata = (
   kerningGroups: project.kerningGroups,
   kerningPairs: project.kerningPairs,
   kerningPairsByMaster: project.kerningPairsByMaster,
+  verticalKerningPairs: project.verticalKerningPairs,
+  verticalKerningPairsByMaster: project.verticalKerningPairsByMaster,
   statusDefinitions: project.statusDefinitions,
   settings: project.settings,
   lineMetricsHorizontalLayout: project.lineMetricsHorizontalLayout,
@@ -494,6 +498,22 @@ export const resolveUfoKerningPairs = (
     }
   }
   return project.kerningPairs
+}
+
+export const resolveUfoVerticalKerningPairs = (
+  project: KumikoProjectRecord,
+  ufoId: string
+) => {
+  const byMaster = project.verticalKerningPairsByMaster
+  if (byMaster) {
+    const masterSource = Object.values(project.sources ?? {}).find(
+      (fontSource) => fontSource.ufoId === ufoId && byMaster[fontSource.id]
+    )
+    if (masterSource) {
+      return byMaster[masterSource.id]
+    }
+  }
+  return project.verticalKerningPairs
 }
 
 const shouldSkipUfoKerningFiles = (
@@ -937,7 +957,17 @@ const buildMetadata = (
       source,
       project.title || project.projectId
     ),
-    lib: buildUfoLibFromFontData(metadataFontData, source.libExtra),
+    lib: buildUfoLibFromFontData(
+      {
+        ...metadataFontData,
+        // Each UFO's lib carries its own master's vertical kerning.
+        verticalKerningPairs: resolveUfoVerticalKerningPairs(
+          project,
+          source.ufoId
+        ),
+      },
+      source.libExtra
+    ),
     groups: ufoKerning.groups,
     kerning: ufoKerning.kerning,
     featuresText: selectUfoFeatureText(metadataFontData),
@@ -1981,23 +2011,36 @@ export const applyKumikoRemoteSnapshot = async (input: {
   // Remote kerning.plist changes on non-default UFOs land in the per-master
   // pair sets, so the next push round-trips them instead of clobbering.
   const nextKerningPairsByMaster = { ...project.kerningPairsByMaster }
+  const nextVerticalKerningPairsByMaster = {
+    ...project.verticalKerningPairsByMaster,
+  }
   let kerningByMasterChanged = false
+  let verticalKerningByMasterChanged = false
   for (const [ufoId, remoteMetadata] of remoteFontLevelByUfoId) {
-    if (!remoteMetadata?.kerning) {
-      continue
-    }
     for (const fontSource of Object.values(project.sources ?? {})) {
-      if (
-        fontSource.ufoId !== ufoId ||
-        !project.kerningPairsByMaster?.[fontSource.id]
-      ) {
+      if (fontSource.ufoId !== ufoId) {
         continue
       }
-      nextKerningPairsByMaster[fontSource.id] = parseUfoKerning(
-        remoteMetadata.groups,
-        remoteMetadata.kerning
-      ).kerningPairs
-      kerningByMasterChanged = true
+      if (
+        remoteMetadata?.kerning &&
+        project.kerningPairsByMaster?.[fontSource.id]
+      ) {
+        nextKerningPairsByMaster[fontSource.id] = parseUfoKerning(
+          remoteMetadata.groups,
+          remoteMetadata.kerning
+        ).kerningPairs
+        kerningByMasterChanged = true
+      }
+      if (
+        remoteMetadata?.lib &&
+        project.verticalKerningPairsByMaster?.[fontSource.id]
+      ) {
+        nextVerticalKerningPairsByMaster[fontSource.id] =
+          parseVerticalKerningLib(
+            remoteMetadata.lib[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+          )
+        verticalKerningByMasterChanged = true
+      }
     }
   }
 
@@ -2011,6 +2054,7 @@ export const applyKumikoRemoteSnapshot = async (input: {
           settings: remoteFontData.settings,
           kerningGroups: remoteFontData.kerningGroups,
           kerningPairs: remoteFontData.kerningPairs,
+          verticalKerningPairs: remoteFontData.verticalKerningPairs,
           openTypeFeatures: remoteFontData.openTypeFeatures,
           lineMetricsHorizontalLayout:
             remoteFontData.lineMetricsHorizontalLayout,
@@ -2018,6 +2062,9 @@ export const applyKumikoRemoteSnapshot = async (input: {
       : {}),
     ...(kerningByMasterChanged
       ? { kerningPairsByMaster: nextKerningPairsByMaster }
+      : {}),
+    ...(verticalKerningByMasterChanged
+      ? { verticalKerningPairsByMaster: nextVerticalKerningPairsByMaster }
       : {}),
     glyphOrder: nextGlyphOrder,
     sourceData: {

@@ -26,12 +26,14 @@ const buildPreviewFontBuffer = async (
       openTypeFeatures,
       kerningGroups: fontData.kerningGroups,
       kerningPairs: fontData.kerningPairs,
+      verticalKerningPairs: fontData.verticalKerningPairs,
     },
     glyphs,
   })
   return compileManagedFontFeatures(sfntBuffer, openTypeFeatures, {
     kerningGroups: fontData.kerningGroups,
     kerningPairs: fontData.kerningPairs,
+    verticalKerningPairs: fontData.verticalKerningPairs,
     availableGlyphIds: new Set(glyphs.map((glyph) => glyph.id)),
   })
 }

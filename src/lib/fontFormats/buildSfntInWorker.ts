@@ -10,6 +10,7 @@ export interface BuildSfntPayload {
     | 'openTypeFeatures'
     | 'kerningGroups'
     | 'kerningPairs'
+    | 'verticalKerningPairs'
   >
   glyphs: GlyphData[]
 }

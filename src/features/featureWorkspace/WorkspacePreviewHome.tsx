@@ -43,6 +43,8 @@ export function WorkspacePreviewHome({
   // Same gate as the kern chip (useShapingPreview): the preview font compiles
   // the canonical pairs, so only those make the hint true.
   const hasProjectKerning = (fontData.kerningPairs?.length ?? 0) > 0
+  const hasProjectVerticalKerning =
+    (fontData.verticalKerningPairs?.length ?? 0) > 0
   const afterGlyphs = useMemo(
     () => preview.after?.glyphs ?? [],
     [preview.after]
@@ -193,7 +195,9 @@ export function WorkspacePreviewHome({
             })}
           </Text>
         ) : null}
-        {isVertical && hasText && hasProjectKerning ? (
+        {isVertical &&
+        hasText &&
+        (hasProjectKerning || hasProjectVerticalKerning) ? (
           <Text fontSize="xs" color="mutedForeground">
             {t('featureWorkspace.kernVerticalHint')}
           </Text>

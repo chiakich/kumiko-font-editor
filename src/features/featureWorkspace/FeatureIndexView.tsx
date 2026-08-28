@@ -79,6 +79,13 @@ export function FeatureIndexView({
     // like the kern workbench it opens.
     projectKerningPairCount: getMasterKerningPairs(fontData, activeMasterId)
       .length,
+    projectVerticalKerningPairCount: getMasterKerningPairs(
+      {
+        kerningPairs: fontData.verticalKerningPairs,
+        kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
+      },
+      activeMasterId
+    ).length,
   })
   const specimens = useFeatureSpecimens({
     fontData,

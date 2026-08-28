@@ -504,17 +504,27 @@ export const buildProjectActions = (
             delete state.fontData.kerningPairsByMaster[id]
           }
         }
+        if (removed.length > 0 && state.fontData.verticalKerningPairsByMaster) {
+          for (const id of removed) {
+            delete state.fontData.verticalKerningPairsByMaster[id]
+          }
+        }
         // Same invariant as applyImportedMaster: a new non-default master
         // gets its own (empty) pair set instead of inheriting the canonical.
         if (Object.keys(prevSources).length > 0) {
           for (const id of Object.keys(nextSources)) {
-            if (
-              !prevSources[id] &&
-              !state.fontData.kerningPairsByMaster?.[id]
-            ) {
-              state.fontData.kerningPairsByMaster = {
-                ...(state.fontData.kerningPairsByMaster ?? {}),
-                [id]: [],
+            if (!prevSources[id]) {
+              if (!state.fontData.kerningPairsByMaster?.[id]) {
+                state.fontData.kerningPairsByMaster = {
+                  ...(state.fontData.kerningPairsByMaster ?? {}),
+                  [id]: [],
+                }
+              }
+              if (!state.fontData.verticalKerningPairsByMaster?.[id]) {
+                state.fontData.verticalKerningPairsByMaster = {
+                  ...(state.fontData.verticalKerningPairsByMaster ?? {}),
+                  [id]: [],
+                }
               }
             }
           }
@@ -585,6 +595,15 @@ export const buildProjectActions = (
         state.fontData.kerningPairsByMaster = {
           ...(state.fontData.kerningPairsByMaster ?? {}),
           [input.source.id]: input.kerningPairs ?? [],
+        }
+      }
+      if (
+        isNewNonDefaultMaster &&
+        !state.fontData.verticalKerningPairsByMaster?.[input.source.id]
+      ) {
+        state.fontData.verticalKerningPairsByMaster = {
+          ...(state.fontData.verticalKerningPairsByMaster ?? {}),
+          [input.source.id]: [],
         }
       }
       for (const [glyphId, layer] of Object.entries(input.layersByGlyphId)) {

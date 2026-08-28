@@ -1088,7 +1088,7 @@
     "editRule": "編輯規則 →",
     "openGlyph": "在編輯器開啟 →",
     "missingVertTitle": "這些字形還沒有 .vert 直排變體",
-    "kernVerticalHint": "專案字距只合成橫排 kern 特性，直排（vkrn）尚未支援，這裡的直排預覽不會套用字距。",
+    "kernVerticalHint": "站內直排預覽不套用字距(精簡版 HarfBuzz 不含直排定位);直排字距請在 kern 工作檯的「直排 vkrn」分頁維護,實際效果以匯出字型為準。",
     "railTitle": "特性",
     "openIndex": "特性總覽",
     "openHome": "整形預覽",
@@ -1143,6 +1143,10 @@
     "featureVariationsReadOnly": "唯讀",
     "featureVariationsHint": "可變字型的軸區間特性替換。Kumiko 會保留原始資料但尚未支援編輯;重建版面表時請使用保留原編譯表的匯出政策。",
     "featureVariationsAlways": "(無條件)",
-    "kernMaster": "Master:{{master}}"
+    "kernMaster": "Master:{{master}}",
+    "kernHorizontal": "橫排 kern",
+    "kernVertical": "直排 vkrn",
+    "kernSimulatedPreview": "模擬",
+    "kernSimulatedPreviewHint": "站內預覽引擎(精簡版 HarfBuzz)不套用直排定位;此對照以字對值模擬,實際效果以匯出字型為準。"
   }
 }

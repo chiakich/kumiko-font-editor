@@ -1088,7 +1088,7 @@
     "editRule": "Edit rule →",
     "openGlyph": "Open in editor →",
     "missingVertTitle": "These glyphs have no .vert form yet",
-    "kernVerticalHint": "Project kerning is synthesized as the horizontal kern feature only; vertical kerning (vkrn) is not supported yet, so this vertical preview applies no kerning.",
+    "kernVerticalHint": "The in-app vertical preview does not apply kerning (the bundled HB_TINY HarfBuzz strips vertical positioning); maintain vertical pairs in the kern workbench’s \"Vertical vkrn\" tab — exported fonts carry the real GPOS.",
     "railTitle": "Features",
     "openIndex": "Feature index",
     "openHome": "Shaping preview",
@@ -1143,6 +1143,10 @@
     "featureVariationsReadOnly": "read-only",
     "featureVariationsHint": "Axis-range feature substitutions from a variable font. Kumiko preserves the original data but cannot edit it yet; use the preserve-compiled-tables export policy when rebuilding.",
     "featureVariationsAlways": "(unconditional)",
-    "kernMaster": "master: {{master}}"
+    "kernMaster": "master: {{master}}",
+    "kernHorizontal": "Horizontal kern",
+    "kernVertical": "Vertical vkrn",
+    "kernSimulatedPreview": "simulated",
+    "kernSimulatedPreviewHint": "The in-app preview engine (HB_TINY HarfBuzz) does not apply vertical positioning; this comparison simulates the pair value. Exported fonts carry the real GPOS."
   }
 }

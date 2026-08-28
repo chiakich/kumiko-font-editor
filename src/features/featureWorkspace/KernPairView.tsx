@@ -38,6 +38,8 @@ interface KernPairViewProps {
   onOpenIrKern: (featureId: string) => void
   // Load a word-list line into the workspace preview (jumps to home).
   onPreviewText: (text: string) => void
+  // Which pair set to open on (the vkrn rail row opens the vertical tab).
+  initialOrientation?: 'horizontal' | 'vertical'
 }
 
 // Group references are stored as ids or names (with or without '@'): one
@@ -146,10 +148,12 @@ function PairPreview({
   fontData,
   state,
   pair,
+  orientation,
 }: {
   fontData: FontData
   state: OpenTypeFeaturesState
   pair: KerningPair
+  orientation: 'horizontal' | 'vertical'
 }) {
   const { t } = useTranslation()
   const [runs, setRuns] = useState<{
@@ -192,31 +196,44 @@ function PairPreview({
             [0, leftGlyph],
             [1, rightGlyph],
           ])
+      const tag = orientation === 'vertical' ? 'vkrn' : 'kern'
       const shape = (features: string[]) =>
         shapeTextWithHarfBuzz(buffer, shapedText, {
           features,
           includeGlyphShapes: true,
           glyphTokens,
+          ...(orientation === 'vertical' ? { direction: 'ttb' as const } : {}),
         })
       const [before, after] = await Promise.all([
-        shape(['-kern']),
-        shape(['+kern']),
+        shape([`-${tag}`]),
+        shape([`+${tag}`]),
       ])
       if (cancelled || !before.ok || !after.ok) {
         return
       }
       const unitsPerEm = after.unitsPerEm ?? 1000
+      // The bundled HarfBuzz build (HB_TINY) strips vertical GPOS, so the
+      // vkrn effect is simulated on the shaped run and labeled as such; the
+      // exported binary carries the real GPOS pair.
+      const afterGlyphs =
+        orientation === 'vertical'
+          ? before.glyphs.map((glyph, index) =>
+              index === 0
+                ? { ...glyph, yAdvance: glyph.yAdvance - pair.value }
+                : glyph
+            )
+          : after.glyphs
       setRuns({
         key,
         before: { glyphs: before.glyphs, unitsPerEm },
-        after: { glyphs: after.glyphs, unitsPerEm },
+        after: { glyphs: afterGlyphs, unitsPerEm },
       })
     }
     void run()
     return () => {
       cancelled = true
     }
-  }, [fontData, state, leftGlyph, rightGlyph, key])
+  }, [fontData, state, leftGlyph, rightGlyph, key, orientation, pair.value])
 
   if (!leftGlyph || !rightGlyph) {
     return (
@@ -256,6 +273,15 @@ function PairPreview({
           <Text fontSize="xs" fontFamily="mono" color="yellow.600">
             {pair.value}
           </Text>
+          {orientation === 'vertical' ? (
+            <Badge
+              size="sm"
+              variant="subtle"
+              title={t('featureWorkspace.kernSimulatedPreviewHint')}
+            >
+              {t('featureWorkspace.kernSimulatedPreview')}
+            </Badge>
+          ) : null}
         </>
       ) : (
         <Spinner size="xs" color="mutedForeground" />
@@ -272,6 +298,7 @@ export function KernPairView({
   state,
   onOpenIrKern,
   onPreviewText,
+  initialOrientation,
 }: KernPairViewProps) {
   const { t } = useTranslation()
   const upsertKerningPair = useStore((store) => store.upsertKerningPair)
@@ -281,11 +308,22 @@ export function KernPairView({
   )
   const openSpacingPairInEditor = useOpenSpacingPairInEditor()
   const activeMasterId = useStore((store) => store.activeMasterId)
+  // Horizontal (kern) and vertical (vkrn) pair sets share this workbench.
+  const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>(
+    initialOrientation ?? 'horizontal'
+  )
+  const orientedFontData =
+    orientation === 'vertical'
+      ? {
+          kerningPairs: fontData.verticalKerningPairs,
+          kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
+        }
+      : fontData
   // Non-default masters carry their own pair sets; edits below go through the
-  // kerning actions, which target the same active master.
-  const masterPairs = getMasterKerningPairs(fontData, activeMasterId)
+  // kerning actions, which target the same active master and orientation.
+  const masterPairs = getMasterKerningPairs(orientedFontData, activeMasterId)
   const activeMasterName =
-    activeMasterId && fontData.kerningPairsByMaster?.[activeMasterId]
+    activeMasterId && orientedFontData.kerningPairsByMaster?.[activeMasterId]
       ? (fontData.sources?.[activeMasterId]?.name ?? activeMasterId)
       : null
   const [filter, setFilter] = useState('')
@@ -307,7 +345,12 @@ export function KernPairView({
     if (!canAddPair || !draftLeftSelector || !draftRightSelector) {
       return
     }
-    upsertKerningPair(draftLeftSelector, draftRightSelector, draftValueNumber)
+    upsertKerningPair(
+      draftLeftSelector,
+      draftRightSelector,
+      draftValueNumber,
+      orientation
+    )
     setDraftLeft('')
     setDraftRight('')
     setDraftValue('')
@@ -333,6 +376,28 @@ export function KernPairView({
         <Text fontSize="sm" fontWeight={800}>
           {t('featureWorkspace.kernTitle')}
         </Text>
+        <HStack gap={0.5} bg="muted" borderRadius="md" p="2px">
+          <Button
+            size="2xs"
+            variant={orientation === 'horizontal' ? 'solid' : 'ghost'}
+            onClick={() => {
+              setOrientation('horizontal')
+              setSelectedKey(null)
+            }}
+          >
+            {t('featureWorkspace.kernHorizontal')}
+          </Button>
+          <Button
+            size="2xs"
+            variant={orientation === 'vertical' ? 'solid' : 'ghost'}
+            onClick={() => {
+              setOrientation('vertical')
+              setSelectedKey(null)
+            }}
+          >
+            {t('featureWorkspace.kernVertical')}
+          </Button>
+        </HStack>
         <Badge size="sm" variant="outline">
           {t('featureWorkspace.kernPairCount', {
             count: masterPairs.length,
@@ -467,7 +532,12 @@ export function KernPairView({
                   onBlur={(event) => {
                     const parsed = Number(event.target.value.trim())
                     if (Number.isFinite(parsed) && parsed !== pair.value) {
-                      upsertKerningPair(pair.left, pair.right, parsed)
+                      upsertKerningPair(
+                        pair.left,
+                        pair.right,
+                        parsed,
+                        orientation
+                      )
                     } else {
                       event.target.value = String(pair.value)
                     }
@@ -480,7 +550,7 @@ export function KernPairView({
                   aria-label={t('featureWorkspace.kernDelete')}
                   onClick={(event) => {
                     event.stopPropagation()
-                    deleteKerningPair(pair.left, pair.right)
+                    deleteKerningPair(pair.left, pair.right, orientation)
                   }}
                 >
                   ×
@@ -535,6 +605,7 @@ export function KernPairView({
               fontData={fontData}
               state={state}
               pair={selectedPair}
+              orientation={orientation}
             />
             {(() => {
               const left = selectorSampleGlyph(

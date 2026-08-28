@@ -217,6 +217,12 @@ export interface FontData {
   // import; a master id absent here kerns with the canonical `kerningPairs`
   // (the default master's set). Groups stay font-wide.
   kerningPairsByMaster?: Record<string, KerningPair[]>
+  // Vertical (vkrn) kerning, mirroring the horizontal model: values adjust
+  // the y-advance in top-to-bottom text. Shares kerningGroups. UFO has no
+  // standard storage for this, so sync round-trips it through the lib key
+  // com.kumiko.fontEditor.verticalKerning.
+  verticalKerningPairs?: KerningPair[]
+  verticalKerningPairsByMaster?: Record<string, KerningPair[]>
   fontInfo?: FontInfo
   axes?: FontAxes
   sources?: Record<string, FontSource>
@@ -575,9 +581,14 @@ export interface GlobalState {
   upsertKerningPair: (
     left: GlyphSelector,
     right: GlyphSelector,
-    value: number
+    value: number,
+    orientation?: 'horizontal' | 'vertical'
   ) => void
-  deleteKerningPair: (left: GlyphSelector, right: GlyphSelector) => void
+  deleteKerningPair: (
+    left: GlyphSelector,
+    right: GlyphSelector,
+    orientation?: 'horizontal' | 'vertical'
+  ) => void
   upsertKerningGroup: (draft: {
     id?: string
     side: 'left' | 'right'

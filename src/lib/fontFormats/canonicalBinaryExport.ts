@@ -164,9 +164,18 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
     fontData: {
       ...fontData,
       // Static instances kern with values interpolated at their location, not
-      // the default master's canonical pairs.
+      // the default master's canonical pairs. Vertical kerning interpolates
+      // through the same model over its own pair sets.
       kerningPairs: interpolateKerningPairsAtLocation(
         fontData,
+        instance.location
+      ),
+      verticalKerningPairs: interpolateKerningPairsAtLocation(
+        {
+          ...fontData,
+          kerningPairs: fontData.verticalKerningPairs,
+          kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
+        },
         instance.location
       ),
     },
@@ -608,6 +617,9 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
     kerningPairs: shouldCompileFeaturesBeforeVariableBuild
       ? fontData.kerningPairs
       : undefined,
+    verticalKerningPairs: shouldCompileFeaturesBeforeVariableBuild
+      ? fontData.verticalKerningPairs
+      : undefined,
   }
   const bakedMasters: BakedMaster[] = variableSources.map((source, index) => {
     const buildNames = variableBuildMasterNames[index]
@@ -658,6 +670,15 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
           kerningPairs: shouldCompileFeaturesBeforeVariableBuild
             ? getMasterKerningPairs(fontData, master.sourceId)
             : undefined,
+          verticalKerningPairs: shouldCompileFeaturesBeforeVariableBuild
+            ? getMasterKerningPairs(
+                {
+                  kerningPairs: fontData.verticalKerningPairs,
+                  kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
+                },
+                master.sourceId
+              )
+            : undefined,
         },
         glyphs: [...master.glyphs, ...bracketAlternateGlyphs],
         format: 'otf',
@@ -703,6 +724,7 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
         {
           kerningGroups: fontData.kerningGroups,
           kerningPairs: fontData.kerningPairs,
+          verticalKerningPairs: fontData.verticalKerningPairs,
           availableGlyphIds: new Set(glyphs.map((glyph) => glyph.id)),
         }
       )

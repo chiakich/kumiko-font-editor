@@ -45,7 +45,7 @@ type WorkspaceView =
   | { kind: 'home' }
   | { kind: 'index' }
   | { kind: 'feature'; featureId: string }
-  | { kind: 'kern' }
+  | { kind: 'kern'; orientation?: 'horizontal' | 'vertical' }
   | { kind: 'classes' }
 
 // The OpenType feature workspace, preview first: the home view is a live
@@ -173,6 +173,13 @@ export function FeatureWorkspaceScreen() {
     // Follows the active master, like the kern workbench the row opens.
     projectKerningPairCount: getMasterKerningPairs(fontData, activeMasterId)
       .length,
+    projectVerticalKerningPairCount: getMasterKerningPairs(
+      {
+        kerningPairs: fontData.verticalKerningPairs,
+        kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
+      },
+      activeMasterId
+    ).length,
   })
   const selectedFeature =
     view.kind === 'feature'
@@ -199,7 +206,10 @@ export function FeatureWorkspaceScreen() {
   }
   const openRow = (row: (typeof rows)[number]) => {
     if (row.isProjectKerning) {
-      setView({ kind: 'kern' })
+      setView({
+        kind: 'kern',
+        orientation: row.tag === 'vkrn' ? 'vertical' : 'horizontal',
+      })
     } else if (row.featureId) {
       openFeature(row.featureId)
     }
@@ -438,6 +448,8 @@ export function FeatureWorkspaceScreen() {
           />
         ) : view.kind === 'kern' ? (
           <KernPairView
+            key={view.orientation ?? 'horizontal'}
+            initialOrientation={view.orientation}
             fontData={fontData}
             state={openTypeFeatures}
             onOpenIrKern={openFeature}

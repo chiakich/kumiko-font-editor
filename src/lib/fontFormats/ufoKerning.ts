@@ -160,3 +160,42 @@ export const serializeUfoKerning = (
 
   return { groups, kerning, warnings }
 }
+
+// Sanitize the com.kumiko.fontEditor.verticalKerning lib value (our own JSON
+// round-trip of KerningPair[]); a foreign or corrupted value yields [].
+export const parseVerticalKerningLib = (value: unknown): KerningPair[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  const toSelector = (raw: unknown): GlyphSelector | null => {
+    if (typeof raw !== 'object' || raw === null) return null
+    const record = raw as { kind?: unknown; glyph?: unknown; classId?: unknown }
+    if (record.kind === 'glyph' && typeof record.glyph === 'string') {
+      return { kind: 'glyph', glyph: record.glyph }
+    }
+    if (record.kind === 'class' && typeof record.classId === 'string') {
+      return { kind: 'class', classId: record.classId }
+    }
+    return null
+  }
+  const pairs: KerningPair[] = []
+  for (const entry of value) {
+    if (typeof entry !== 'object' || entry === null) continue
+    const record = entry as {
+      left?: unknown
+      right?: unknown
+      value?: unknown
+      id?: unknown
+    }
+    const left = toSelector(record.left)
+    const right = toSelector(record.right)
+    if (!left || !right || typeof record.value !== 'number') continue
+    pairs.push({
+      ...(typeof record.id === 'string' ? { id: record.id } : {}),
+      left,
+      right,
+      value: record.value,
+    })
+  }
+  return pairs
+}
