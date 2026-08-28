@@ -33,7 +33,7 @@ interface FeatureIndexViewProps {
   suggestions: AutoFeatureSuggestion[]
   onStateChange: (next: OpenTypeFeaturesState) => void
   onOpenFeature: (featureId: string) => void
-  onOpenKern: () => void
+  onOpenKern: (orientation: 'horizontal' | 'vertical') => void
   onAcceptSuggestion: (suggestion: AutoFeatureSuggestion) => void
   onIgnoreSuggestion: (suggestion: AutoFeatureSuggestion) => void
 }
@@ -80,11 +80,9 @@ export function FeatureIndexView({
     projectKerningPairCount: getMasterKerningPairs(fontData, activeMasterId)
       .length,
     projectVerticalKerningPairCount: getMasterKerningPairs(
-      {
-        kerningPairs: fontData.verticalKerningPairs,
-        kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
-      },
-      activeMasterId
+      fontData,
+      activeMasterId,
+      'vertical'
     ).length,
   })
   const specimens = useFeatureSpecimens({
@@ -143,7 +141,7 @@ export function FeatureIndexView({
             }
             onClick={() =>
               row.isProjectKerning
-                ? onOpenKern()
+                ? onOpenKern(row.tag === 'vkrn' ? 'vertical' : 'horizontal')
                 : row.featureId && onOpenFeature(row.featureId)
             }
             _hover={

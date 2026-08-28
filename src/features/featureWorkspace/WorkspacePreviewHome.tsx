@@ -195,10 +195,12 @@ export function WorkspacePreviewHome({
             })}
           </Text>
         ) : null}
-        {isVertical &&
-        hasText &&
-        hasProjectKerning &&
-        !hasProjectVerticalKerning ? (
+        {isVertical && hasText && hasProjectVerticalKerning ? (
+          // HarfBuzz does not enable vkrn on its own, even in vertical text.
+          <Text fontSize="xs" color="mutedForeground">
+            {t('featureWorkspace.kernVerticalChipHint')}
+          </Text>
+        ) : isVertical && hasText && hasProjectKerning ? (
           <Text fontSize="xs" color="mutedForeground">
             {t('featureWorkspace.kernVerticalHint')}
           </Text>

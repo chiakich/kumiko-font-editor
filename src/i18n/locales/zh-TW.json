@@ -1088,7 +1088,7 @@
     "editRule": "編輯規則 →",
     "openGlyph": "在編輯器開啟 →",
     "missingVertTitle": "這些字形還沒有 .vert 直排變體",
-    "kernVerticalHint": "直排不套用橫排 kern;直排字距請在 kern 工作檯的「直排 vkrn」分頁維護,預覽時開啟 vkrn chip。",
+    "kernVerticalHint": "直排不套用橫排 kern;直排字距請在 kern 工作檯的「直排 vkrn」分頁新增。",
     "railTitle": "特性",
     "openIndex": "特性總覽",
     "openHome": "整形預覽",
@@ -1145,6 +1145,7 @@
     "featureVariationsAlways": "(無條件)",
     "kernMaster": "Master:{{master}}",
     "kernHorizontal": "橫排 kern",
-    "kernVertical": "直排 vkrn"
+    "kernVertical": "直排 vkrn",
+    "kernVerticalChipHint": "此專案有直排字距。HarfBuzz 不會自動套用 vkrn,請在右上開啟 vkrn 特性才看得到效果。"
   }
 }

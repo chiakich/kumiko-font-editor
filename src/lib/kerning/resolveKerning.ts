@@ -316,15 +316,63 @@ export function describeKerningSelector(
   return name.startsWith('@') ? name : `@${name}`
 }
 
+export type KerningOrientation = 'horizontal' | 'vertical'
+
+export type OrientedKerningSource = Pick<
+  FontData,
+  | 'kerningPairs'
+  | 'kerningPairsByMaster'
+  | 'verticalKerningPairs'
+  | 'verticalKerningPairsByMaster'
+>
+
+// One orientation's pair sets in the canonical shape, so every consumer
+// (master resolution, interpolation, synthesis, UI) reads the same fields
+// instead of hand-projecting the vertical ones.
+export const orientedKerning = (
+  fontData: OrientedKerningSource,
+  orientation: KerningOrientation = 'horizontal'
+): Pick<FontData, 'kerningPairs' | 'kerningPairsByMaster'> =>
+  orientation === 'vertical'
+    ? {
+        kerningPairs: fontData.verticalKerningPairs,
+        kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
+      }
+    : {
+        kerningPairs: fontData.kerningPairs,
+        kerningPairsByMaster: fontData.kerningPairsByMaster,
+      }
+
 // The pair set a given master kerns with: non-default masters carry their own
-// entry in kerningPairsByMaster; everything else (default master, single-
-// master projects, null master) uses the canonical kerningPairs.
+// entry in the by-master record; everything else (default master, single-
+// master projects, null master) uses the canonical pairs.
 export const getMasterKerningPairs = (
-  fontData: Pick<FontData, 'kerningPairs' | 'kerningPairsByMaster'>,
-  masterId: string | null | undefined
+  fontData: OrientedKerningSource,
+  masterId: string | null | undefined,
+  orientation: KerningOrientation = 'horizontal'
 ): KerningPair[] => {
-  if (masterId && fontData.kerningPairsByMaster?.[masterId]) {
-    return fontData.kerningPairsByMaster[masterId]
+  const { kerningPairs, kerningPairsByMaster } = orientedKerning(
+    fontData,
+    orientation
+  )
+  if (masterId && kerningPairsByMaster?.[masterId]) {
+    return kerningPairsByMaster[masterId]
   }
-  return fontData.kerningPairs ?? []
+  return kerningPairs ?? []
+}
+
+// Whether any master carries kerning for this orientation — the guard export
+// paths use before paying for an interpolation pass.
+export const hasKerningForOrientation = (
+  fontData: OrientedKerningSource,
+  orientation: KerningOrientation
+) => {
+  const { kerningPairs, kerningPairsByMaster } = orientedKerning(
+    fontData,
+    orientation
+  )
+  return (
+    (kerningPairs?.length ?? 0) > 0 ||
+    Object.values(kerningPairsByMaster ?? {}).some((pairs) => pairs.length > 0)
+  )
 }

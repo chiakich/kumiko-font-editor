@@ -23,7 +23,10 @@ import {
   type KerningGroup,
   type KerningPair,
 } from 'src/store'
-import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
+import {
+  getMasterKerningPairs,
+  orientedKerning,
+} from 'src/lib/kerning/resolveKerning'
 import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
 import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
 import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
@@ -233,6 +236,7 @@ function PairPreview({
   }
 
   const current = runs && runs.key === key ? runs : null
+  const runDirection = orientation === 'vertical' ? 'ttb' : 'ltr'
   return (
     <HStack gap={5} align="center" minH="72px">
       {current ? (
@@ -245,6 +249,7 @@ function PairPreview({
               <ShapedRunSvg
                 glyphs={current.before.glyphs}
                 unitsPerEm={current.before.unitsPerEm}
+                direction={runDirection}
                 size={52}
               />
             </Box>
@@ -256,6 +261,7 @@ function PairPreview({
             <ShapedRunSvg
               glyphs={current.after.glyphs}
               unitsPerEm={current.after.unitsPerEm}
+              direction={runDirection}
               size={52}
             />
           </Stack>
@@ -292,18 +298,18 @@ export function KernPairView({
   const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>(
     initialOrientation ?? 'horizontal'
   )
-  const orientedFontData =
-    orientation === 'vertical'
-      ? {
-          kerningPairs: fontData.verticalKerningPairs,
-          kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
-        }
-      : fontData
   // Non-default masters carry their own pair sets; edits below go through the
   // kerning actions, which target the same active master and orientation.
-  const masterPairs = getMasterKerningPairs(orientedFontData, activeMasterId)
+  const masterPairs = getMasterKerningPairs(
+    fontData,
+    activeMasterId,
+    orientation
+  )
   const activeMasterName =
-    activeMasterId && orientedFontData.kerningPairsByMaster?.[activeMasterId]
+    activeMasterId &&
+    orientedKerning(fontData, orientation).kerningPairsByMaster?.[
+      activeMasterId
+    ]
       ? (fontData.sources?.[activeMasterId]?.name ?? activeMasterId)
       : null
   const [filter, setFilter] = useState('')

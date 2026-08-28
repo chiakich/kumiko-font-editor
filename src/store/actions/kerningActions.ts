@@ -5,6 +5,10 @@ import {
   findKerningPairIndex,
   normalizeKerningSelector,
 } from 'src/lib/kerning/resolveKerning'
+import {
+  filterAllKerningPairs,
+  listAllKerningPairs,
+} from 'src/lib/kerning/kerningPairSets'
 import type { GlobalState, KerningGroup, KerningPair } from 'src/store/types'
 import { markProjectDirty } from 'src/store/dirtyState'
 
@@ -118,13 +122,7 @@ export const buildKerningActions = (set: ImmerSet) => ({
             existing.name,
             existing.name.startsWith('@') ? existing.name : `@${existing.name}`,
           ])
-          const allPairSets = [
-            state.fontData.kerningPairs ?? [],
-            ...Object.values(state.fontData.kerningPairsByMaster ?? {}),
-            state.fontData.verticalKerningPairs ?? [],
-            ...Object.values(state.fontData.verticalKerningPairsByMaster ?? {}),
-          ]
-          for (const pair of allPairSets.flat()) {
+          for (const pair of listAllKerningPairs(state.fontData)) {
             for (const side of ['left', 'right'] as const) {
               const selector = pair[side]
               if (
@@ -166,29 +164,10 @@ export const buildKerningActions = (set: ImmerSet) => ({
         (item) => item.id !== groupId
       )
       // Pairs pointing at a deleted group would silently stop matching.
-      const withoutGroup = (pairs: KerningPair[]) =>
-        pairs.filter(
-          (pair) => !referencesGroup(pair.left) && !referencesGroup(pair.right)
-        )
-      state.fontData.kerningPairs = withoutGroup(
-        state.fontData.kerningPairs ?? []
+      filterAllKerningPairs(
+        state.fontData,
+        (pair) => !referencesGroup(pair.left) && !referencesGroup(pair.right)
       )
-      for (const [masterId, pairs] of Object.entries(
-        state.fontData.kerningPairsByMaster ?? {}
-      )) {
-        state.fontData.kerningPairsByMaster![masterId] = withoutGroup(pairs)
-      }
-      if (state.fontData.verticalKerningPairs) {
-        state.fontData.verticalKerningPairs = withoutGroup(
-          state.fontData.verticalKerningPairs
-        )
-      }
-      for (const [masterId, pairs] of Object.entries(
-        state.fontData.verticalKerningPairsByMaster ?? {}
-      )) {
-        state.fontData.verticalKerningPairsByMaster![masterId] =
-          withoutGroup(pairs)
-      }
       markProjectDirty(state)
     }),
 })

@@ -1,4 +1,7 @@
-import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
+import {
+  hasKerningForOrientation,
+  getMasterKerningPairs,
+} from 'src/lib/kerning/resolveKerning'
 import { interpolateKerningPairsAtLocation } from 'src/lib/kerning/interpolateKerning'
 import {
   exportGlyphListAsBinary,
@@ -165,19 +168,18 @@ export const exportCanonicalProjectInstanceAsBinary = async (input: {
       ...fontData,
       // Static instances kern with values interpolated at their location, not
       // the default master's canonical pairs. Vertical kerning interpolates
-      // through the same model over its own pair sets.
+      // through the same model, and only when the project has any.
       kerningPairs: interpolateKerningPairsAtLocation(
         fontData,
         instance.location
       ),
-      verticalKerningPairs: interpolateKerningPairsAtLocation(
-        {
-          ...fontData,
-          kerningPairs: fontData.verticalKerningPairs,
-          kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
-        },
-        instance.location
-      ),
+      verticalKerningPairs: hasKerningForOrientation(fontData, 'vertical')
+        ? interpolateKerningPairsAtLocation(
+            fontData,
+            instance.location,
+            'vertical'
+          )
+        : undefined,
     },
     glyphs: baked.glyphs,
     format: input.format,
@@ -671,13 +673,7 @@ export const exportCanonicalProjectAsVariableOtf = async (input: {
             ? getMasterKerningPairs(fontData, master.sourceId)
             : undefined,
           verticalKerningPairs: shouldCompileFeaturesBeforeVariableBuild
-            ? getMasterKerningPairs(
-                {
-                  kerningPairs: fontData.verticalKerningPairs,
-                  kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
-                },
-                master.sourceId
-              )
+            ? getMasterKerningPairs(fontData, master.sourceId, 'vertical')
             : undefined,
         },
         glyphs: [...master.glyphs, ...bracketAlternateGlyphs],

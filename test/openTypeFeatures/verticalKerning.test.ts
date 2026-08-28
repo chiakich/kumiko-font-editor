@@ -122,7 +122,11 @@ json.dumps({
       if (!off.ok || !on.ok) {
         return
       }
-      expect(Math.abs(on.glyphs[0].yAdvance - off.glyphs[0].yAdvance)).toBe(80)
+      // Polarity, pinned: vertical advances run downward (negative), so a -80
+      // pair shrinks the magnitude by 80 — tighter, matching the horizontal
+      // convention the shared workbench implies.
+      expect(off.glyphs[0].yAdvance).toBeLessThan(0)
+      expect(on.glyphs[0].yAdvance).toBe(off.glyphs[0].yAdvance + 80)
       // Horizontal shaping ignores vkrn entirely.
       const horizontalOn = await shapeTextWithHarfBuzz(buffer, 'AV', {
         features: ['+vkrn'],

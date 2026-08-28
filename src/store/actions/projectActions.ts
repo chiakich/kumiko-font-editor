@@ -1,3 +1,7 @@
+import {
+  dropMasterKerningEntries,
+  seedMasterKerningEntries,
+} from 'src/lib/kerning/kerningPairSets'
 /**
  * Project-level store actions: load, close, hydrate, and mark save state.
  */
@@ -499,33 +503,15 @@ export const buildProjectActions = (
           (id) =>
             prevSources[id] && prevSources[id].name !== nextSources[id].name
         )
-        if (removed.length > 0 && state.fontData.kerningPairsByMaster) {
-          for (const id of removed) {
-            delete state.fontData.kerningPairsByMaster[id]
-          }
-        }
-        if (removed.length > 0 && state.fontData.verticalKerningPairsByMaster) {
-          for (const id of removed) {
-            delete state.fontData.verticalKerningPairsByMaster[id]
-          }
+        for (const id of removed) {
+          dropMasterKerningEntries(state.fontData, id)
         }
         // Same invariant as applyImportedMaster: a new non-default master
-        // gets its own (empty) pair set instead of inheriting the canonical.
+        // gets its own (empty) pair sets instead of inheriting the canonical.
         if (Object.keys(prevSources).length > 0) {
           for (const id of Object.keys(nextSources)) {
             if (!prevSources[id]) {
-              if (!state.fontData.kerningPairsByMaster?.[id]) {
-                state.fontData.kerningPairsByMaster = {
-                  ...(state.fontData.kerningPairsByMaster ?? {}),
-                  [id]: [],
-                }
-              }
-              if (!state.fontData.verticalKerningPairsByMaster?.[id]) {
-                state.fontData.verticalKerningPairsByMaster = {
-                  ...(state.fontData.verticalKerningPairsByMaster ?? {}),
-                  [id]: [],
-                }
-              }
+              seedMasterKerningEntries(state.fontData, id)
             }
           }
         }
@@ -588,23 +574,10 @@ export const buildProjectActions = (
       }
       // Non-default masters must carry their own kerning entry: without one,
       // getMasterKerningPairs falls back to the canonical (default) pairs.
-      if (
-        isNewNonDefaultMaster &&
-        !state.fontData.kerningPairsByMaster?.[input.source.id]
-      ) {
-        state.fontData.kerningPairsByMaster = {
-          ...(state.fontData.kerningPairsByMaster ?? {}),
-          [input.source.id]: input.kerningPairs ?? [],
-        }
-      }
-      if (
-        isNewNonDefaultMaster &&
-        !state.fontData.verticalKerningPairsByMaster?.[input.source.id]
-      ) {
-        state.fontData.verticalKerningPairsByMaster = {
-          ...(state.fontData.verticalKerningPairsByMaster ?? {}),
-          [input.source.id]: [],
-        }
+      if (isNewNonDefaultMaster) {
+        seedMasterKerningEntries(state.fontData, input.source.id, {
+          kerningPairs: input.kerningPairs,
+        })
       }
       for (const [glyphId, layer] of Object.entries(input.layersByGlyphId)) {
         const glyph = state.fontData.glyphs[glyphId]

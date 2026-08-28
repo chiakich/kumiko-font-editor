@@ -96,6 +96,9 @@ export const parseUfoKerning = (
 export interface SerializedUfoKerning {
   groups: Record<string, unknown>
   kerning: Record<string, Record<string, number>>
+  // Lib-ready vertical pairs with class references rewritten to the same UFO
+  // group keys groups.plist uses, so they survive a round-trip.
+  verticalKerning: KerningPair[]
   warnings: string[]
 }
 
@@ -119,7 +122,10 @@ const ufoGroupKey = (group: KerningGroup, usedKeys: Set<string>) => {
 // Non-kerning groups from the imported UFO are preserved; kern1/kern2 entries
 // are regenerated from canonical kerning data so edits and deletions stick.
 export const serializeUfoKerning = (
-  fontData: Pick<FontData, 'kerningGroups' | 'kerningPairs'>,
+  fontData: Pick<
+    FontData,
+    'kerningGroups' | 'kerningPairs' | 'verticalKerningPairs'
+  >,
   extras?: { groups?: Record<string, unknown> | null }
 ): SerializedUfoKerning => {
   const warnings: string[] = []
@@ -158,7 +164,31 @@ export const serializeUfoKerning = (
     kerning[first][second] = pair.value
   }
 
-  return { groups, kerning, warnings }
+  // Vertical pairs go through the same group-key mapping: on re-import the
+  // group ids ARE the UFO keys, so class references keep resolving.
+  const remapSelector = (selector: GlyphSelector): GlyphSelector | null => {
+    if (selector.kind === 'glyph') return selector
+    const group = maps.groupByReference.get(selector.classId)
+    const key = group ? keyByGroupId.get(group.id) : null
+    return key ? { kind: 'class', classId: key } : null
+  }
+  const verticalKerning: KerningPair[] = []
+  for (const pair of fontData.verticalKerningPairs ?? []) {
+    const left = remapSelector(pair.left)
+    const right = remapSelector(pair.right)
+    if (!left || !right || !Number.isFinite(pair.value)) {
+      warnings.push('vertical kerning pair skipped: unresolved group reference')
+      continue
+    }
+    verticalKerning.push({
+      ...(pair.id ? { id: pair.id } : {}),
+      left,
+      right,
+      value: pair.value,
+    })
+  }
+
+  return { groups, kerning, verticalKerning, warnings }
 }
 
 // Sanitize the com.kumiko.fontEditor.verticalKerning lib value (our own JSON

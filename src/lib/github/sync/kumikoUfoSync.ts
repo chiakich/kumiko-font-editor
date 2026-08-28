@@ -484,37 +484,48 @@ const resolveDesignspacePath = (
 // The kerning pairs a given UFO package should carry: the source (master)
 // that came from this UFO keeps its own set; the default UFO (no by-master
 // entry) carries the canonical pairs.
+const resolveUfoPairsForOrientation = (
+  project: KumikoProjectRecord,
+  ufoId: string,
+  orientation: 'horizontal' | 'vertical'
+) => {
+  const byMaster =
+    orientation === 'vertical'
+      ? project.verticalKerningPairsByMaster
+      : project.kerningPairsByMaster
+  const sources = Object.values(project.sources ?? {})
+  const ownEntry = sources.find(
+    (fontSource) => fontSource.ufoId === ufoId && byMaster?.[fontSource.id]
+  )
+  if (ownEntry && byMaster) {
+    return byMaster[ownEntry.id]
+  }
+  // A non-default master (identified by its horizontal entry) must not inherit
+  // the canonical set: projects saved before an orientation existed have no
+  // entry for it, and writing the default master's pairs into every UFO is
+  // exactly the clobbering per-master data exists to prevent.
+  const isNonDefaultMaster = sources.some(
+    (fontSource) =>
+      fontSource.ufoId === ufoId &&
+      project.kerningPairsByMaster?.[fontSource.id]
+  )
+  if (isNonDefaultMaster) {
+    return []
+  }
+  return orientation === 'vertical'
+    ? project.verticalKerningPairs
+    : project.kerningPairs
+}
+
 export const resolveUfoKerningPairs = (
   project: KumikoProjectRecord,
   ufoId: string
-) => {
-  const byMaster = project.kerningPairsByMaster
-  if (byMaster) {
-    const masterSource = Object.values(project.sources ?? {}).find(
-      (fontSource) => fontSource.ufoId === ufoId && byMaster[fontSource.id]
-    )
-    if (masterSource) {
-      return byMaster[masterSource.id]
-    }
-  }
-  return project.kerningPairs
-}
+) => resolveUfoPairsForOrientation(project, ufoId, 'horizontal')
 
 export const resolveUfoVerticalKerningPairs = (
   project: KumikoProjectRecord,
   ufoId: string
-) => {
-  const byMaster = project.verticalKerningPairsByMaster
-  if (byMaster) {
-    const masterSource = Object.values(project.sources ?? {}).find(
-      (fontSource) => fontSource.ufoId === ufoId && byMaster[fontSource.id]
-    )
-    if (masterSource) {
-      return byMaster[masterSource.id]
-    }
-  }
-  return project.verticalKerningPairs
-}
+) => resolveUfoPairsForOrientation(project, ufoId, 'vertical')
 
 const shouldSkipUfoKerningFiles = (
   project: KumikoProjectRecord,
@@ -942,6 +953,10 @@ const buildMetadata = (
     {
       kerningGroups: metadataFontData.kerningGroups,
       kerningPairs: resolveUfoKerningPairs(project, source.ufoId),
+      verticalKerningPairs: resolveUfoVerticalKerningPairs(
+        project,
+        source.ufoId
+      ),
     },
     {
       groups: source.groupsExtra,
@@ -957,17 +972,11 @@ const buildMetadata = (
       source,
       project.title || project.projectId
     ),
-    lib: buildUfoLibFromFontData(
-      {
-        ...metadataFontData,
-        // Each UFO's lib carries its own master's vertical kerning.
-        verticalKerningPairs: resolveUfoVerticalKerningPairs(
-          project,
-          source.ufoId
-        ),
-      },
-      source.libExtra
-    ),
+    lib: buildUfoLibFromFontData(metadataFontData, source.libExtra, {
+      // Each UFO's lib carries its own master's vertical kerning, with group
+      // references mapped to this UFO's group keys.
+      verticalKerning: ufoKerning.verticalKerning,
+    }),
     groups: ufoKerning.groups,
     kerning: ufoKerning.kerning,
     featuresText: selectUfoFeatureText(metadataFontData),
@@ -2031,8 +2040,11 @@ export const applyKumikoRemoteSnapshot = async (input: {
         ).kerningPairs
         kerningByMasterChanged = true
       }
+      // Only a remote lib that carries the key speaks about vertical kerning:
+      // a UFO whose lib another tool rewrote must not wipe the local set.
       if (
         remoteMetadata?.lib &&
+        KUMIKO_VERTICAL_KERNING_LIB_KEY in remoteMetadata.lib &&
         project.verticalKerningPairsByMaster?.[fontSource.id]
       ) {
         nextVerticalKerningPairsByMaster[fontSource.id] =

@@ -7,7 +7,10 @@ import { locationsMatch } from 'src/font/designspaceLocation'
 import {
   buildKerningGroupMaps,
   getMasterKerningPairs,
+  orientedKerning,
   type KerningGroupMaps,
+  type KerningOrientation,
+  type OrientedKerningSource,
 } from 'src/lib/kerning/resolveKerning'
 import type { FontData, KerningPair } from 'src/store/types'
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
@@ -28,16 +31,15 @@ const pairKey = (pair: KerningPair, maps: KerningGroupMaps) =>
 // missing from a master contributing 0 there. Falls back to the canonical
 // pairs when the project has no per-master kerning to interpolate.
 export const interpolateKerningPairsAtLocation = (
-  fontData: Pick<
-    FontData,
-    | 'axes'
-    | 'sources'
-    | 'kerningGroups'
-    | 'kerningPairs'
-    | 'kerningPairsByMaster'
-  >,
-  location: Record<string, number>
+  input: Pick<FontData, 'axes' | 'sources' | 'kerningGroups'> &
+    OrientedKerningSource,
+  location: Record<string, number>,
+  orientation: KerningOrientation = 'horizontal'
 ): KerningPair[] => {
+  const fontData = {
+    ...input,
+    ...orientedKerning(input, orientation),
+  }
   const byMaster = fontData.kerningPairsByMaster
   if (!byMaster || Object.keys(byMaster).length === 0) {
     return fontData.kerningPairs ?? []

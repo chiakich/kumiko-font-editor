@@ -7,6 +7,7 @@ import type {
   FontInfoCustomDataValue,
   FontProjectSettings,
   FontSource,
+  KerningPair,
 } from 'src/store'
 
 export const KUMIKO_AXES_LIB_KEY = 'com.kumiko.fontEditor.axes'
@@ -530,7 +531,14 @@ export const settingsFromLib = (
 
 export const buildUfoLibFromFontData = (
   fontData: FontData,
-  baseLib: Record<string, unknown> | null | undefined = {}
+  baseLib: Record<string, unknown> | null | undefined = {},
+  options?: {
+    // Lib-ready vertical pairs (group refs already mapped to UFO keys, see
+    // serializeUfoKerning). Passing this hands the key's lifecycle to us:
+    // stale values from baseLib never survive, and an emptied set keeps the
+    // key (as []) when baseLib had one, so deletions round-trip.
+    verticalKerning?: KerningPair[]
+  }
 ) => {
   // public.postscriptNames maps the working glyph name (the UFO glyph name,
   // = glyph.id) to its production name; only emit when they differ.
@@ -548,13 +556,10 @@ export const buildUfoLibFromFontData = (
     ? fontData.glyphOrder.filter((id) => id in fontData.glyphs)
     : Object.keys(fontData.glyphs)
 
-  return {
+  const lib: Record<string, unknown> = {
     ...(baseLib ?? {}),
     ...(fontData.axes ? { [KUMIKO_AXES_LIB_KEY]: fontData.axes } : {}),
     ...(fontData.sources ? { [KUMIKO_SOURCES_LIB_KEY]: fontData.sources } : {}),
-    ...((fontData.verticalKerningPairs?.length ?? 0) > 0
-      ? { [KUMIKO_VERTICAL_KERNING_LIB_KEY]: fontData.verticalKerningPairs }
-      : {}),
     ...(fontData.exportInstances
       ? { [KUMIKO_EXPORT_INSTANCES_LIB_KEY]: fontData.exportInstances }
       : {}),
@@ -581,4 +586,16 @@ export const buildUfoLibFromFontData = (
       : {}),
     'public.glyphOrder': glyphOrder,
   }
+
+  if (options && options.verticalKerning !== undefined) {
+    const baseHadKey = Object.prototype.hasOwnProperty.call(
+      baseLib ?? {},
+      KUMIKO_VERTICAL_KERNING_LIB_KEY
+    )
+    delete lib[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+    if (options.verticalKerning.length > 0 || baseHadKey) {
+      lib[KUMIKO_VERTICAL_KERNING_LIB_KEY] = options.verticalKerning
+    }
+  }
+  return lib
 }

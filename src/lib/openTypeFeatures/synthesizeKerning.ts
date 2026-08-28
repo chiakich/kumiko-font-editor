@@ -39,15 +39,16 @@ const selectorKey = (
     ? `g:${selector.glyph}`
     : `c:${classNameByRef.get(selector.classId) ?? selector.classId.replace(/^@/, '')}`
 
-// Pair keys the IR's own kerning feature (kern or vkrn) already positions
-// (accepted suggestions or imported GPOS recreated as IR).
-const collectIrKernPairKeys = (
-  state: OpenTypeFeaturesState | undefined,
-  tag: 'kern' | 'vkrn'
-) => {
-  const keys = new Set<string>()
+// Pair keys the IR's own kerning features already position (accepted
+// suggestions or imported GPOS recreated as IR), grouped by feature tag. One
+// pass over the state serves both orientations.
+const collectIrKernPairKeys = (state: OpenTypeFeaturesState | undefined) => {
+  const keysByTag = new Map<string, Set<string>>([
+    ['kern', new Set<string>()],
+    ['vkrn', new Set<string>()],
+  ])
   if (!state) {
-    return keys
+    return keysByTag
   }
   const classNameById = new Map(
     state.glyphClasses.map((glyphClass) => [
@@ -57,7 +58,8 @@ const collectIrKernPairKeys = (
   )
   const lookupById = new Map(state.lookups.map((lookup) => [lookup.id, lookup]))
   for (const feature of state.features) {
-    if (feature.tag !== tag || !feature.isActive) {
+    const keys = keysByTag.get(feature.tag)
+    if (!keys || !feature.isActive) {
       continue
     }
     for (const lookupId of feature.entries.flatMap(
@@ -79,7 +81,7 @@ const collectIrKernPairKeys = (
       }
     }
   }
-  return keys
+  return keysByTag
 }
 
 // Projects the project's kerning data (UFO kerning.plist model: groups +
@@ -136,11 +138,12 @@ export const synthesizeKerningFea = (
     return `@${className}`
   }
 
+  const irPairKeysByTag = collectIrKernPairKeys(input.state)
   const buildRules = (
     pairList: readonly KerningPair[],
     tag: 'kern' | 'vkrn'
   ): string[] => {
-    const irPairKeys = collectIrKernPairKeys(input.state, tag)
+    const irPairKeys = irPairKeysByTag.get(tag) ?? new Set<string>()
     const ruleLines: string[] = []
     for (const pair of pairList) {
       if (!Number.isFinite(pair.value) || pair.value === 0) {

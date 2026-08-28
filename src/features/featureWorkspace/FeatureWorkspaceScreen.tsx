@@ -174,11 +174,9 @@ export function FeatureWorkspaceScreen() {
     projectKerningPairCount: getMasterKerningPairs(fontData, activeMasterId)
       .length,
     projectVerticalKerningPairCount: getMasterKerningPairs(
-      {
-        kerningPairs: fontData.verticalKerningPairs,
-        kerningPairsByMaster: fontData.verticalKerningPairsByMaster,
-      },
-      activeMasterId
+      fontData,
+      activeMasterId,
+      'vertical'
     ).length,
   })
   const selectedFeature =
@@ -483,7 +481,7 @@ export function FeatureWorkspaceScreen() {
             suggestions={suggestions}
             onStateChange={handleChange}
             onOpenFeature={openFeature}
-            onOpenKern={() => setView({ kind: 'kern' })}
+            onOpenKern={(orientation) => setView({ kind: 'kern', orientation })}
             onAcceptSuggestion={acceptSuggestion}
             onIgnoreSuggestion={ignoreSuggestion}
           />

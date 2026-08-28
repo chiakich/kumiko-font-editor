@@ -1088,7 +1088,7 @@
     "editRule": "Edit rule →",
     "openGlyph": "Open in editor →",
     "missingVertTitle": "These glyphs have no .vert form yet",
-    "kernVerticalHint": "Vertical text does not apply horizontal kern; maintain vertical pairs in the kern workbench’s \"Vertical vkrn\" tab and enable the vkrn chip when previewing.",
+    "kernVerticalHint": "Vertical text does not apply horizontal kern; add vertical pairs in the kern workbench’s \"Vertical vkrn\" tab.",
     "railTitle": "Features",
     "openIndex": "Feature index",
     "openHome": "Shaping preview",
@@ -1145,6 +1145,7 @@
     "featureVariationsAlways": "(unconditional)",
     "kernMaster": "master: {{master}}",
     "kernHorizontal": "Horizontal kern",
-    "kernVertical": "Vertical vkrn"
+    "kernVertical": "Vertical vkrn",
+    "kernVerticalChipHint": "This project has vertical kerning. HarfBuzz does not apply vkrn on its own — enable the vkrn feature above to see it."
   }
 }

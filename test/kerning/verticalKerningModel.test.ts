@@ -1,9 +1,25 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { useStore } from 'src/store'
-import { buildUfoLibFromFontData } from 'src/lib/fontFormats/fontInfoSettings'
-import { KUMIKO_VERTICAL_KERNING_LIB_KEY } from 'src/lib/fontFormats/fontInfoSettings'
-import { parseVerticalKerningLib } from 'src/lib/fontFormats/ufoKerning'
+import {
+  buildUfoLibFromFontData,
+  KUMIKO_VERTICAL_KERNING_LIB_KEY,
+} from 'src/lib/fontFormats/fontInfoSettings'
+import {
+  parseUfoKerning,
+  parseVerticalKerningLib,
+  serializeUfoKerning,
+} from 'src/lib/fontFormats/ufoKerning'
 import { resolveUfoVerticalKerningPairs } from 'src/lib/github/sync/kumikoUfoSync'
+import {
+  getMasterKerningPairs,
+  hasKerningForOrientation,
+} from 'src/lib/kerning/resolveKerning'
+import {
+  dropMasterKerningEntries,
+  filterAllKerningPairs,
+  listAllKerningPairs,
+  seedMasterKerningEntries,
+} from 'src/lib/kerning/kerningPairSets'
 import type { KumikoProjectRecord } from 'src/lib/project/kumikoProjectTypes'
 import type { FontData, KerningPair } from 'src/store/types'
 
@@ -67,17 +83,80 @@ describe('vertical kerning store actions', () => {
   })
 })
 
+// The write path as sync uses it: serialize (mapping group refs to UFO keys),
+// then hand the result to the lib builder.
+const writeLib = (
+  data: FontData,
+  baseLib: Record<string, unknown> | null = {}
+) =>
+  buildUfoLibFromFontData(data, baseLib, {
+    verticalKerning: serializeUfoKerning(data).verticalKerning,
+  })
+
 describe('vertical kerning UFO round-trip', () => {
   it('writes and reads back the lib key', () => {
     const data: FontData = {
       glyphs: {},
       verticalKerningPairs: [pair(-80)],
     }
-    const lib = buildUfoLibFromFontData(data)
-    const raw = lib[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+    const raw = writeLib(data)[KUMIKO_VERTICAL_KERNING_LIB_KEY]
     expect(raw).toBeTruthy()
-    const parsed = parseVerticalKerningLib(raw)
-    expect(parsed).toEqual([pair(-80)])
+    expect(parseVerticalKerningLib(raw)).toEqual([pair(-80)])
+  })
+
+  it('rewrites class references to the UFO group keys groups.plist uses', () => {
+    // An in-app group's id is a uuid; groups.plist stores it as public.kern1.*
+    // and re-import rebuilds the group under that key, so the lib value has to
+    // carry the mapped reference or the pair dangles.
+    const data: FontData = {
+      glyphs: {},
+      kerningGroups: [
+        { id: 'uuid-1234', side: 'left', name: 'round', glyphs: ['A'] },
+      ],
+      verticalKerningPairs: [
+        {
+          id: 'v1',
+          left: { kind: 'class', classId: 'uuid-1234' },
+          right: { kind: 'glyph', glyph: 'V' },
+          value: -80,
+        },
+      ],
+    }
+    const serialized = serializeUfoKerning(data)
+    const groupKey = Object.keys(serialized.groups)[0]
+    expect(groupKey).toBe('public.kern1.round')
+    expect(serialized.verticalKerning[0].left).toEqual({
+      kind: 'class',
+      classId: groupKey,
+    })
+
+    // Re-import: the group's id IS the UFO key, so the reference resolves.
+    const reimported = parseUfoKerning(serialized.groups, serialized.kerning)
+    const parsedPairs = parseVerticalKerningLib(
+      writeLib(data)[KUMIKO_VERTICAL_KERNING_LIB_KEY]
+    )
+    expect(
+      reimported.kerningGroups.some(
+        (group) =>
+          parsedPairs[0].left.kind === 'class' &&
+          group.id === parsedPairs[0].left.classId
+      )
+    ).toBe(true)
+  })
+
+  it('clears the lib key when the last vertical pair is deleted', () => {
+    const baseLib = { [KUMIKO_VERTICAL_KERNING_LIB_KEY]: [pair(-80)] }
+    const emptied: FontData = { glyphs: {}, verticalKerningPairs: [] }
+    // The key must be re-emitted as empty, not left stale: a conditional
+    // write would let baseLib resurrect the deleted pairs on the next pull.
+    expect(writeLib(emptied, baseLib)[KUMIKO_VERTICAL_KERNING_LIB_KEY]).toEqual(
+      []
+    )
+  })
+
+  it('omits the lib key for a project that never had vertical kerning', () => {
+    const lib = writeLib({ glyphs: {} })
+    expect(KUMIKO_VERTICAL_KERNING_LIB_KEY in lib).toBe(false)
   })
 
   it('ignores foreign lib values', () => {
@@ -85,6 +164,22 @@ describe('vertical kerning UFO round-trip', () => {
     expect(
       parseVerticalKerningLib([{ left: 1, right: 2, value: 'x' }])
     ).toEqual([])
+  })
+
+  it('never writes the canonical set into a non-default master UFO', () => {
+    // A project saved before vertical kerning existed has horizontal
+    // by-master entries but no vertical ones; the default master's vertical
+    // pairs must not be cloned into every UFO.
+    const legacy = {
+      verticalKerningPairs: [pair(-10)],
+      kerningPairsByMaster: { Bold: [pair(-40)] },
+      sources: {
+        Light: { id: 'Light', name: 'Light', location: {}, ufoId: 'L.ufo' },
+        Bold: { id: 'Bold', name: 'Bold', location: {}, ufoId: 'B.ufo' },
+      },
+    } as unknown as KumikoProjectRecord
+    expect(resolveUfoVerticalKerningPairs(legacy, 'B.ufo')).toEqual([])
+    expect(resolveUfoVerticalKerningPairs(legacy, 'L.ufo')?.[0].value).toBe(-10)
   })
 
   it("resolves each UFO's own master pairs for sync", () => {
@@ -102,5 +197,71 @@ describe('vertical kerning UFO round-trip', () => {
     expect(resolveUfoVerticalKerningPairs(project, 'L.ufo')?.[0].value).toBe(
       -10
     )
+  })
+})
+
+describe('kerning pair set helpers', () => {
+  const fourSets = (): FontData => ({
+    glyphs: {},
+    kerningPairs: [pair(-1)],
+    kerningPairsByMaster: { Bold: [pair(-2)] },
+    verticalKerningPairs: [pair(-3)],
+    verticalKerningPairsByMaster: { Bold: [pair(-4)] },
+  })
+
+  it('lists every pair across both orientations and all masters', () => {
+    expect(
+      listAllKerningPairs(fourSets())
+        .map((entry) => entry.value)
+        .sort((a, b) => b - a)
+    ).toEqual([-1, -2, -3, -4])
+  })
+
+  it('filters every set, so no dangling group reference survives', () => {
+    const data = fourSets()
+    filterAllKerningPairs(data, (entry) => entry.value !== -3)
+    expect(listAllKerningPairs(data).map((entry) => entry.value)).not.toContain(
+      -3
+    )
+    expect(listAllKerningPairs(data)).toHaveLength(3)
+  })
+
+  it('seeds and drops a master entry in both orientations', () => {
+    const data: FontData = { glyphs: {}, kerningPairs: [pair(-1)] }
+    seedMasterKerningEntries(data, 'Bold')
+    expect(data.kerningPairsByMaster?.Bold).toEqual([])
+    expect(data.verticalKerningPairsByMaster?.Bold).toEqual([])
+
+    dropMasterKerningEntries(data, 'Bold')
+    expect(data.kerningPairsByMaster?.Bold).toBeUndefined()
+    expect(data.verticalKerningPairsByMaster?.Bold).toBeUndefined()
+  })
+})
+
+describe('oriented kerning accessors', () => {
+  const data: FontData = {
+    glyphs: {},
+    kerningPairs: [pair(-10)],
+    verticalKerningPairs: [pair(-80)],
+    verticalKerningPairsByMaster: { Bold: [pair(-40)] },
+  }
+
+  it('reads the requested orientation, per master', () => {
+    expect(getMasterKerningPairs(data, null)[0].value).toBe(-10)
+    expect(getMasterKerningPairs(data, null, 'vertical')[0].value).toBe(-80)
+    expect(getMasterKerningPairs(data, 'Bold', 'vertical')[0].value).toBe(-40)
+    // No vertical entry for Light: the canonical vertical set applies.
+    expect(getMasterKerningPairs(data, 'Light', 'vertical')[0].value).toBe(-80)
+  })
+
+  it('reports whether an orientation carries any kerning', () => {
+    expect(hasKerningForOrientation(data, 'vertical')).toBe(true)
+    expect(hasKerningForOrientation({ glyphs: {} }, 'vertical')).toBe(false)
+    expect(
+      hasKerningForOrientation(
+        { glyphs: {}, verticalKerningPairsByMaster: { Bold: [] } },
+        'vertical'
+      )
+    ).toBe(false)
   })
 })
