@@ -12,7 +12,7 @@ import {
   loadKumikoUfoExportExtraGlyphBatch,
   loadKumikoUfoExportGlyphBatch,
   type KumikoUfoExportStateUpdate,
-} from '@/lib/github/sync/kumikoUfoSync'
+} from '@/lib/github/sync/ufoExportManifest'
 import type { EntityId } from '@/lib/fontFormats/formatAdapter/types'
 
 export interface MaterializedFile {
