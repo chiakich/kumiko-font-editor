@@ -35,14 +35,19 @@ fork/commit/merge endpoints.
 Global, editable state lives in a single Zustand store under `src/store/`. The
 key ideas:
 
+- **The data model lives below the store.** `src/domain/` owns the font / glyph /
+  path types (`FontData`, `GlyphData`, `PathNode`, ...) and the pure functions
+  over them: `glyphLayer.ts` (active / archive layer reads), `glyphGeometry.ts`
+  (node and segment helpers), `glyphLayerOps.ts`, `glyphCopy.ts`,
+  `reconnectNodes.ts`, `componentTransform.ts`, `glyphGeometryState.ts`, and
+  `deterministicStringify.ts`. It imports nothing from the app layers and only
+  takes types from `src/lib/`, so `lib`, `font`, and workers can use the model
+  without touching the store.
 - **One store, composed actions.** `src/store/index.ts` creates the store,
   composes the mutation actions, and wires the temporal (undo/redo) entry point
-  via zundo. Types for glyph, font, selection, viewport, and global state live
-  in `src/store/types.ts`.
-- **Domain logic is split by concern**, not dumped into one file:
-  - `glyphGeometry.ts` — path/node geometry helpers (endpoint checks, node
-    lookup, sidebearing recomputation).
-  - `glyphLayer.ts` — active/archive glyph layer reads and top-level glyph sync.
+  via zundo. UI and session state types (`GlobalState`, selection, viewport,
+  persistence) live in `src/store/types.ts` and build on the domain types.
+- **Store logic is split by concern**, not dumped into one file:
   - `glyphSearch.ts` — glyph overview/search filtering and IDS dictionary
     support.
   - `editorLine.ts` — editor glyph line, cursor, and active glyph index sync.
@@ -71,7 +76,8 @@ under `src/features/editor/tools/`.
 - `src/features/common/`: feature-level UI and hooks shared across major features.
 - `src/features/common/glyphInspector/`: glyph inspector shared by the editor and overview, including glyph summary, node inspector, metrics, save, and GitHub commit flow.
 - `src/sceneView/`: low-level canvas controller, scene view, and rendering layers. It should not directly own React UI.
-- `src/store/`: Zustand global state, glyph editing data model, and mutation actions (see the breakdown above).
+- `src/domain/`: the font / glyph / path data model and pure functions over it. Bottom layer: no imports from `store`, `features`, `sceneView`, or `workers`, and only type imports from `lib`.
+- `src/store/`: Zustand global state, UI / session state types, and mutation actions (see the breakdown above).
 - `src/lib/`: data processing and integration logic shared by multiple features, such as UFO/Glyphs formats, GitHub API, IndexedDB persistence, and export worker clients.
 - `src/workers/`: Web Worker entry points for heavier background work such as search and large exports.
 - `src/hooks/`: React hooks shared across features.
@@ -99,8 +105,8 @@ under `src/features/editor/tools/`.
 
 The placement rules above are checked by tooling, in two tiers:
 
-- `eslint.config.js` fails on rules that have no violations left: shared layers (`lib`, `font`, `store`, `hooks`, `design`, `components`) never import from `src/features/`, and `src/sceneView/` never imports React, the store, or features.
-- `eslint.boundaries.config.js` runs as `pnpm lint:boundaries` with a warning budget (`--max-warnings`) for rules that are still being paid down: `lib` and `font` importing the store, workers importing features, and cross-feature imports (a feature may only import from itself and `features/common`). Lower the budget whenever you remove a violation; once a rule reaches zero, move it into `eslint.config.js` as an error.
+- `eslint.config.js` fails on rules that have no violations left: shared layers (`domain`, `lib`, `font`, `store`, `hooks`, `design`, `components`) never import from `src/features/`; `lib` and `font` never import the store; `src/domain/` never imports `store`, `sceneView`, or `workers` and takes only types from `lib`; and `src/sceneView/` never imports React, the store, or features.
+- `eslint.boundaries.config.js` runs as `pnpm lint:boundaries` with a warning budget (`--max-warnings`) for rules that are still being paid down: workers importing features, and cross-feature imports (a feature may only import from itself and `features/common`). Lower the budget whenever you remove a violation; once a rule reaches zero, move it into `eslint.config.js` as an error.
 - `pnpm lint:circular` runs madge over the `src/main.tsx` graph and fails when the number of circular dependencies rises above the baseline in `scripts/check-circular-deps.mjs`. Lower the baseline when you break a cycle.
 
 ## Deeper notes

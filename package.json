@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint --max-warnings=0 . && pnpm lint:boundaries && pnpm lint:circular",
-    "lint:boundaries": "eslint -c eslint.boundaries.config.js --max-warnings=111 src",
+    "lint:boundaries": "eslint -c eslint.boundaries.config.js --max-warnings=10 src",
     "lint:circular": "node scripts/check-circular-deps.mjs",
     "preview": "vite preview",
     "fixture:opentype-stress": "node scripts/build-opentype-stress-fixture.mjs",

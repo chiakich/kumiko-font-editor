@@ -23,16 +23,6 @@ export default defineConfig([
     linterOptions: { reportUnusedDisableDirectives: 'off' },
   },
   warnImports(
-    ['src/lib/**', 'src/font/**'],
-    [
-      {
-        regex: '^@/store(/|$)',
-        message:
-          'lib and font must not depend on the store; keep the shared model store-free.',
-      },
-    ]
-  ),
-  warnImports(
     ['src/workers/**'],
     [
       {

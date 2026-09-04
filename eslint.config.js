@@ -56,6 +56,7 @@ export default defineConfig([
   },
   forbidImports(
     [
+      'src/domain/**',
       'src/lib/**',
       'src/font/**',
       'src/store/**',
@@ -64,6 +65,30 @@ export default defineConfig([
       'src/components/**',
     ],
     [featuresImport]
+  ),
+  forbidImports(
+    ['src/lib/**', 'src/font/**'],
+    [
+      {
+        regex: '^@/store(/|$)',
+        message:
+          'lib and font must not depend on the store; keep the shared model in domain.',
+      },
+    ]
+  ),
+  forbidImports(
+    ['src/domain/**'],
+    [
+      {
+        regex: '^@/(store|sceneView|workers)(/|$)',
+        message: 'domain is the bottom layer; it must not import app layers.',
+      },
+      {
+        regex: '^@/lib(/|$)',
+        allowTypeImports: true,
+        message: 'domain may only take types from lib, never runtime code.',
+      },
+    ]
   ),
   forbidImports(
     ['src/sceneView/**'],
