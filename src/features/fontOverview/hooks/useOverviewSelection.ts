@@ -158,8 +158,8 @@ export function useOverviewSelection({
         })
       } catch (error) {
         toaster.create({
-          title: '刪除後儲存失敗',
-          description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
+          title: t('editor.unusedGlyphDeleteSaveFailed'),
+          description: t('editor.unusedGlyphDeleteSaveFailedDescription'),
           type: 'error',
           duration: 3600,
           closable: true,

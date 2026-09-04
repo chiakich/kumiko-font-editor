@@ -210,7 +210,9 @@
     "kerningIssueMissingGlyph": "Missing glyph",
     "kerningIssueDuplicateMembership": "Duplicate membership",
     "kerningIssueMissingGroupReference": "Missing group reference",
-    "openInFeatureWorkspace": "Open in feature workspace"
+    "openInFeatureWorkspace": "Open in feature workspace",
+    "unusedGlyphDeleteSaveFailed": "Saving after deletion failed",
+    "unusedGlyphDeleteSaveFailedDescription": "The glyph was removed from the current session but has not been written to the local project."
   },
   "fontExport": {
     "close": "Close",
@@ -1062,7 +1064,13 @@
     "glyphPickerVariantSuffix": "Variant suffix",
     "glyphPickerCreateVariant": "Create variant",
     "glyphPickerVariantExists": "This name already exists",
-    "contextAppliesLookups": "applies lookups:"
+    "contextAppliesLookups": "applies lookups:",
+    "fontSettingsTabBasics": "Font",
+    "fontSettingsTabMasters": "Masters",
+    "fontSettingsTabExports": "Exports",
+    "fontSettingsTabOpenType": "OpenType",
+    "fontSettingsTabOther": "Other",
+    "fontSettingsTabSupplemental": "Supplemental"
   },
   "settings": {
     "appearance": "Appearance",

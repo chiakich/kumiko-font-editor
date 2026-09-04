@@ -1,5 +1,6 @@
 import { toaster } from '@/components/ui/toaster'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getProjectArchiveMetadata } from 'src/lib/project/projectArchive'
 import { listGlyphLayers } from 'src/store/glyphLayerOps'
 import {
@@ -66,6 +67,7 @@ export function useRightPanelModel() {
   const setWorkspaceView = useStore((state) => state.setWorkspaceView)
   const markDraftSaved = useStore((state) => state.markDraftSaved)
   const deleteGlyph = useStore((state) => state.deleteGlyph)
+  const { t } = useTranslation()
   const flushCurrentDraft = useFlushCurrentDraft()
   const selectedProjectMetadata = getProjectArchiveMetadata() as {
     activeUfoId?: string | null
@@ -315,8 +317,8 @@ export function useRightPanelModel() {
       })
     } catch (error) {
       toaster.create({
-        title: '刪除後儲存失敗',
-        description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
+        title: t('editor.unusedGlyphDeleteSaveFailed'),
+        description: t('editor.unusedGlyphDeleteSaveFailedDescription'),
         type: 'error',
         duration: 3600,
         closable: true,
