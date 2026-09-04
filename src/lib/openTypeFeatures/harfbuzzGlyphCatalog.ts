@@ -17,7 +17,7 @@ const readUint16 = (bytes: Uint8Array, offset: number) =>
 
 const buildCatalog = async (fontBuffer: ArrayBuffer): Promise<GlyphCatalog> => {
   const { loadHarfBuzzRuntime } =
-    await import('src/lib/openTypeFeatures/harfbuzzRuntime')
+    await import('@/lib/openTypeFeatures/harfbuzzRuntime')
   const hb = await loadHarfBuzzRuntime()
   const blob = hb.createBlob(fontBuffer)
   try {

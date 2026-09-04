@@ -1,9 +1,9 @@
-import type { GlyphSelector } from 'src/lib/openTypeFeatures/types'
+import type { GlyphSelector } from '@/lib/openTypeFeatures/types'
 import {
   selectorFromMarkedToken,
   selectorFromToken,
   splitGlyphList,
-} from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
+} from '@/lib/openTypeFeatures/rawFeatureTextUtils'
 
 export type InlineGlyphClassRegistrar = (glyphs: string[]) => string | null
 

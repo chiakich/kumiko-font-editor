@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { serializeDesignspace } from './designspace'
-import type { FontAxes } from 'src/store'
+import type { FontAxes } from '@/domain'
 
 const axes: FontAxes = {
   axes: [

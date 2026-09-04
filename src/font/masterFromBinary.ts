@@ -1,11 +1,6 @@
-import { activeLayer } from 'src/store/glyphLayer'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
-import type {
-  FontData,
-  FontSource,
-  GlyphData,
-  GlyphLayerData,
-} from 'src/store/types'
+import { activeLayer } from '@/domain/glyphLayer'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
+import type { FontData, FontSource, GlyphData, GlyphLayerData } from '@/domain'
 
 export interface MasterFromBinaryResult {
   glyphs: GlyphData[]

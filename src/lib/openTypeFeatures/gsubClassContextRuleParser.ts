@@ -1,4 +1,4 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
 import {
   attachLookupRecords,
   makeClassId,
@@ -9,14 +9,14 @@ import {
   readSubstLookupRecords,
   resolveGlyphNames,
   type GsubContextSubtableParseResult,
-} from 'src/lib/openTypeFeatures/gsubContextRuleParser'
-import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+} from '@/lib/openTypeFeatures/gsubContextRuleParser'
+import type { LayoutLookupInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import type {
   ContextInput,
   ContextualRule,
   GlyphClass,
   GlyphSelector,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 const readClassDefGlyphIds = (
   subtableReader: BinaryReader,

@@ -8,7 +8,7 @@ import {
   chordLengthParameterize,
   computeMaxError,
   fitCubic,
-} from 'src/font/fontra-ported/fit-cubic'
+} from '@/font/fontra-ported/fit-cubic'
 
 interface Pt {
   x: number

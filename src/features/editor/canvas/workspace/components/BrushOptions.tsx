@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type {
   BrushSettings,
   BrushStyle,
-} from 'src/features/editor/tools/vectorBrush'
+} from '@/features/editor/tools/vectorBrush'
 
 interface BrushOptionsProps {
   settings: BrushSettings

@@ -1,5 +1,5 @@
 import { unzipSync } from 'fflate'
-import { detectSourceFormats } from 'src/lib/fontFormats/formatAdapter/detectSourceFormat'
+import { detectSourceFormats } from '@/lib/fontFormats/formatAdapter/detectSourceFormat'
 import {
   importUfoWorkspaceEntries,
   isDesignspaceFile,
@@ -9,8 +9,8 @@ import {
   type ImportedUfoWorkspace,
   type UfoImportSourceOptions,
   type UfoWorkspaceEntry,
-} from 'src/lib/fontFormats/adapters/ufo'
-import type { UfoGithubSource } from 'src/lib/fontFormats/ufoTypes'
+} from '@/lib/fontFormats/adapters/ufo'
+import type { UfoGithubSource } from '@/lib/fontFormats/ufoTypes'
 
 interface ParsedGitHubInput {
   owner: string

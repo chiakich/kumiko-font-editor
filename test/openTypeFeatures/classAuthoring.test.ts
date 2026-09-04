@@ -5,10 +5,10 @@ import {
   deleteGlyphClass,
   sanitizeGlyphClassName,
   updateGlyphClass,
-} from 'src/features/common/projectControl/fontSettings/features/utils/classAuthoring'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+} from '@/features/common/openTypeFeatures/utils/classAuthoring'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 const stateWithClassReference = (): OpenTypeFeaturesState => {
   const created = createGlyphClass(createEmptyOpenTypeFeaturesState(), 'kana')!

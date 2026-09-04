@@ -1,17 +1,14 @@
 // 導出 Canvas 相關模組
 
-export {
-  CanvasController,
-  withSavedState,
-} from 'src/sceneView/CanvasController'
-export type { Rect, Viewport } from 'src/sceneView/CanvasController'
+export { CanvasController, withSavedState } from '@/sceneView/CanvasController'
+export type { Rect, Viewport } from '@/sceneView/CanvasController'
 export {
   SceneView,
   VisualizationLayer,
   registerVisualizationLayerDefinition,
   glyphSelector,
   visualizationLayerDefinitions,
-} from 'src/sceneView/SceneView'
+} from '@/sceneView/SceneView'
 export type {
   ComponentData,
   SceneModel,
@@ -21,7 +18,7 @@ export type {
   Point,
   StructureGuideModel,
   VisualizationLayerDefinition,
-} from 'src/sceneView/SceneView'
+} from '@/sceneView/SceneView'
 
 // Import layers to register them
-import 'src/sceneView/layers'
+import '@/sceneView/layers'

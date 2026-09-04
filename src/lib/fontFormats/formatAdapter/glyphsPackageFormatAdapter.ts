@@ -1,12 +1,12 @@
 import {
   listGlyphsPackagePaths,
   materializeGlyphsPackage,
-} from 'src/lib/fontFormats/glyphsPackageMaterialize'
+} from '@/lib/fontFormats/glyphsPackageMaterialize'
 import type {
   EntityId,
   FormatAdapter,
   FormatDetection,
-} from 'src/lib/fontFormats/formatAdapter/types'
+} from '@/lib/fontFormats/formatAdapter/types'
 
 export interface GlyphsPackageLayout {
   // The .glyphspackage directory, relative to the repo root.

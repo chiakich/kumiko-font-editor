@@ -1,4 +1,4 @@
-import type { HarfBuzzRuntimeStatus } from 'src/lib/openTypeFeatures/harfbuzzTypes'
+import type { HarfBuzzRuntimeStatus } from '@/lib/openTypeFeatures/harfbuzzTypes'
 
 export interface HarfBuzzRuntimeCapability {
   packageName: 'harfbuzzjs'

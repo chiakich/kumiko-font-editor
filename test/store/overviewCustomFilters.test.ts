@@ -2,13 +2,14 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   createDefaultOverviewCustomFilters,
   type OverviewCustomFilter,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 import {
   loadAppOverviewCustomFilters,
   saveAppOverviewCustomFilters,
-} from 'src/lib/preferences/appPreferences'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
-import { useStore, type FontData } from 'src/store'
+} from '@/lib/preferences/appPreferences'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 
 const fontData: FontData = {
   glyphOrder: ['A'],

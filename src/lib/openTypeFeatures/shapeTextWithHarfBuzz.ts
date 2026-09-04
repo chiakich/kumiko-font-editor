@@ -1,12 +1,12 @@
-import { createHarfBuzzRuntimeStatus } from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
-import { getGlyphCatalog } from 'src/lib/openTypeFeatures/harfbuzzGlyphCatalog'
-import type { HarfBuzzBufferGlyph } from 'src/lib/openTypeFeatures/harfbuzzRuntime'
+import { createHarfBuzzRuntimeStatus } from '@/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
+import { getGlyphCatalog } from '@/lib/openTypeFeatures/harfbuzzGlyphCatalog'
+import type { HarfBuzzBufferGlyph } from '@/lib/openTypeFeatures/harfbuzzRuntime'
 import type {
   HarfBuzzRuntimeStatus,
   ShapeTextOptions,
   ShapeTextResult,
   ShapedGlyph,
-} from 'src/lib/openTypeFeatures/harfbuzzTypes'
+} from '@/lib/openTypeFeatures/harfbuzzTypes'
 
 const makeFailure = (
   message: string,
@@ -60,7 +60,7 @@ export const shapeTextWithHarfBuzz = async (
 
   try {
     const { loadHarfBuzzRuntime } =
-      await import('src/lib/openTypeFeatures/harfbuzzRuntime')
+      await import('@/lib/openTypeFeatures/harfbuzzRuntime')
     const hb = await loadHarfBuzzRuntime()
     const catalog = options.glyphTokens?.size
       ? await getGlyphCatalog(fontBuffer)

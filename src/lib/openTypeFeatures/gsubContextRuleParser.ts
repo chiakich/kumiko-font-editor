@@ -1,12 +1,12 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
-import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
+import type { LayoutLookupInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import type {
   ContextInput,
   ContextualRule,
   GlyphClass,
   GlyphSelector,
   SourceProvenance,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface GsubContextSubtableParseResult {
   rules: ContextualRule[]

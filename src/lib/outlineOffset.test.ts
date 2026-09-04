@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { PathData, PathNode } from 'src/store/types'
-import { offsetGlyphPaths } from 'src/lib/outlineOffset'
+import type { PathData, PathNode } from '@/domain'
+import { offsetGlyphPaths } from '@/lib/outlineOffset'
 
 let nodeSeq = 0
 

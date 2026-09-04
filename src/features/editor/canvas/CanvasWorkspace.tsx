@@ -7,34 +7,35 @@ import {
   VisualizationLayer,
   visualizationLayerDefinitions,
   type SceneModel,
-} from 'src/sceneView'
-import { SceneController } from 'src/features/editor/tools'
+} from '@/sceneView'
+import { SceneController } from '@/features/editor/tools'
 import {
   DEFAULT_BRUSH_SETTINGS,
   normalizeBrushSettings,
   type BrushSettings,
-} from 'src/features/editor/tools/vectorBrush'
-import { useStore, useTemporalStore, getGlyphLayer } from 'src/store'
-import { CanvasContextMenu } from 'src/features/editor/canvas/workspace/components/CanvasContextMenu'
-import { CanvasWorkspaceOverlay } from 'src/features/editor/canvas/workspace/components/CanvasWorkspaceOverlay'
-import { HiddenTextInput } from 'src/features/editor/canvas/workspace/components/HiddenTextInput'
+} from '@/features/editor/tools/vectorBrush'
+import { getGlyphLayer } from '@/domain'
+import { useStore, useTemporalStore } from '@/store'
+import { CanvasContextMenu } from '@/features/editor/canvas/workspace/components/CanvasContextMenu'
+import { CanvasWorkspaceOverlay } from '@/features/editor/canvas/workspace/components/CanvasWorkspaceOverlay'
+import { HiddenTextInput } from '@/features/editor/canvas/workspace/components/HiddenTextInput'
 import {
   buildPositionedGlyphs,
   getGlyphFrameAtPoint,
   type LayerGeometryCacheEntry,
-} from 'src/features/editor/canvas/workspace/layout/positionedGlyphs'
-import { useCanvasTextInput } from 'src/features/editor/canvas/workspace/hooks/useCanvasTextInput'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
-import { useCanvasClipboard } from 'src/features/editor/canvas/hooks/useCanvasClipboard'
-import { useCanvasKeyboardShortcuts } from 'src/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
-import { useReferenceFontRestoration } from 'src/features/editor/canvas/workspace/hooks/useReferenceFontRestoration'
-import { useCanvasSceneModelSync } from 'src/features/editor/canvas/workspace/hooks/useCanvasSceneModelSync'
-import { useOverviewSections } from 'src/features/fontOverview/hooks/useOverviewSections'
-import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import { getGlyphDisplayCharacter } from 'src/lib/glyph/glyphOverview'
-import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
-import type { GlyphData } from 'src/store'
+} from '@/features/editor/canvas/workspace/layout/positionedGlyphs'
+import { useCanvasTextInput } from '@/features/editor/canvas/workspace/hooks/useCanvasTextInput'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
+import { useCanvasClipboard } from '@/features/editor/canvas/hooks/useCanvasClipboard'
+import { useCanvasKeyboardShortcuts } from '@/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
+import { useReferenceFontRestoration } from '@/features/editor/canvas/workspace/hooks/useReferenceFontRestoration'
+import { useCanvasSceneModelSync } from '@/features/editor/canvas/workspace/hooks/useCanvasSceneModelSync'
+import { useOverviewSections } from '@/features/common/overviewSections/useOverviewSections'
+import { isInterpolatedGlyphLocation } from '@/font/designspaceLocation'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
+import { getGlyphDisplayCharacter } from '@/lib/glyph/glyphOverview'
+import { loadProjectGlyphGeometryClosure } from '@/lib/project/projectRepository'
+import type { GlyphData } from '@/domain'
 
 export function CanvasWorkspace() {
   const { i18n } = useTranslation()

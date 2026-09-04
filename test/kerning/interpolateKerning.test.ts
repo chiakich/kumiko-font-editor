@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { interpolateKerningPairsAtLocation } from 'src/lib/kerning/interpolateKerning'
-import type { FontData, KerningPair } from 'src/store/types'
+import { interpolateKerningPairsAtLocation } from '@/lib/kerning/interpolateKerning'
+import type { FontData, KerningPair } from '@/domain'
 
 const pair = (left: string, right: string, value: number): KerningPair => ({
   id: `p_${left}_${right}_${value}`,

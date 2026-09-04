@@ -9,8 +9,8 @@ import {
 } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
-import { useStore } from 'src/store'
+import { isInterpolatedGlyphLocation } from '@/font/designspaceLocation'
+import { useStore } from '@/store'
 import {
   formatAxisDisplayValue,
   getAxisPercent,
@@ -19,7 +19,7 @@ import {
   getAxisValue,
   isAxisMarkerActive,
   snapDesignspaceLocation,
-} from 'src/features/editor/canvas/workspace/utils/designspaceAxisSnapping'
+} from '@/features/editor/canvas/workspace/utils/designspaceAxisSnapping'
 
 export function DesignspaceLocationControl() {
   const { t } = useTranslation()

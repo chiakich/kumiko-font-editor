@@ -2,9 +2,9 @@
 import {
   saveDraftSnapshot,
   type SaveDraftSnapshotInput,
-} from 'src/lib/project/draftSave'
-import { saveProjectUiState } from 'src/lib/project/projectRepository'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
+} from '@/lib/project/draftSave'
+import { saveProjectUiState } from '@/lib/project/projectRepository'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
 
 interface SaveDraftSnapshotRequest {
   type: 'save-draft-snapshot'

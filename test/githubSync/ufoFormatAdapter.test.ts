@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
-import { entityKey } from 'src/lib/fontFormats/formatAdapter/types'
+import { createUfoFormatAdapter } from '@/lib/fontFormats/formatAdapter/ufoFormatAdapter'
+import { entityKey } from '@/lib/fontFormats/formatAdapter/types'
 
 const adapter = createUfoFormatAdapter({
   relativePath: 'Kumiko.ufo',

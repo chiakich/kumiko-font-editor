@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
-import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
+import { extractBinaryFeatures } from '@/lib/openTypeFeatures/extractBinaryFeatures'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { setRawFeatureTextSource } from '@/lib/openTypeFeatures/featureSourceSections'
+import { getRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
 import {
   makeBytes,
   makeSfnt,

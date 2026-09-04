@@ -17,17 +17,18 @@ import {
 } from 'iconoir-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { SteppedNumberInput } from 'src/features/common/transform/components/SteppedNumberInput'
+import { SteppedNumberInput } from '@/features/common/transform/components/SteppedNumberInput'
 import {
   buildKerningGroupMaps,
   describeKerningSelector,
   getMasterKerningPairs,
   type KerningGroupMaps,
-} from 'src/lib/kerning/resolveKerning'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
-import { useStore, type FontData, type KerningPair } from 'src/store'
-import { KerningCard } from 'src/features/editor/rightPanel/kerning/KerningPairInspector'
+} from '@/lib/kerning/resolveKerning'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
+import type { FontData, KerningPair } from '@/domain'
+import { useStore } from '@/store'
+import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 interface KerningPairListProps {
   fontData: FontData

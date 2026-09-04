@@ -1,18 +1,18 @@
-import { RAW_FEATURE_TEXT_SOURCE_ID } from 'src/lib/openTypeFeatures/featureSourceSections'
-import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
+import { RAW_FEATURE_TEXT_SOURCE_ID } from '@/lib/openTypeFeatures/featureSourceSections'
+import { toStableIdPart } from '@/lib/openTypeFeatures/ids'
 import {
   getLookupShape,
   parseLookupStatements,
   partitionLookupCandidates,
   type LookupDependencyCandidate,
-} from 'src/lib/openTypeFeatures/rawFeatureLookupParser'
-import { extractFeatureParamsFromBody } from 'src/lib/openTypeFeatures/rawFeatureParamsParser'
-import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
-import type { InlineGlyphClassRegistrar } from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
+} from '@/lib/openTypeFeatures/rawFeatureLookupParser'
+import { extractFeatureParamsFromBody } from '@/lib/openTypeFeatures/rawFeatureParamsParser'
+import { getRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
+import type { InlineGlyphClassRegistrar } from '@/lib/openTypeFeatures/rawFeatureSelectorParser'
 import {
   glyphsForGdefClassToken,
   parseGdefBlock,
-} from 'src/lib/openTypeFeatures/rawFeatureGdefParser'
+} from '@/lib/openTypeFeatures/rawFeatureGdefParser'
 import {
   blankRange,
   FEA_NAME_PATTERN,
@@ -23,7 +23,7 @@ import {
   splitGlyphList,
   splitStatements,
   stripComments,
-} from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
+} from '@/lib/openTypeFeatures/rawFeatureTextUtils'
 import type {
   FeatureDiagnostic,
   FeatureOrigin,
@@ -37,7 +37,7 @@ import type {
   MarkClass,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 type RawFeatureTextOrigin = 'manual-input' | 'ufo-import'
 

@@ -1,14 +1,14 @@
-import 'src/lib/git/nodeGlobals'
+import '@/lib/git/nodeGlobals'
 import git from 'isomorphic-git'
-import { createGitFs, type GitFs } from 'src/lib/git/gitFileSystem'
-import { createOpfsFileStore } from 'src/lib/git/opfsFileStore'
-import type { FileStore } from 'src/lib/git/fileStore'
+import { createGitFs, type GitFs } from '@/lib/git/gitFileSystem'
+import { createOpfsFileStore } from '@/lib/git/opfsFileStore'
+import type { FileStore } from '@/lib/git/fileStore'
 import {
   listUfoTreePaths,
   materializeUfoTree,
-} from 'src/lib/fontFormats/ufoMaterialize'
-import { buildRemovalPolicy } from 'src/lib/git/projectAdapters'
-import { buildKumikoUfoExportManifest } from 'src/lib/github/sync/kumikoUfoSync'
+} from '@/lib/fontFormats/ufoMaterialize'
+import { buildRemovalPolicy } from '@/lib/git/projectAdapters'
+import { buildKumikoUfoExportManifest } from '@/lib/github/sync/kumikoUfoSync'
 
 export const KUMIKO_GIT_ROOT = 'kumiko/projects'
 

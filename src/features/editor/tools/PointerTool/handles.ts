@@ -1,10 +1,10 @@
-import type { Point } from 'src/sceneView/SceneView'
-import type { HitTestResult } from 'src/features/editor/tools/SceneController'
+import type { Point } from '@/sceneView/SceneView'
+import type { HitTestResult } from '@/features/editor/tools/hitTestResult'
 import {
   findContourBounds,
   stepContourIndex,
-} from 'src/features/editor/tools/PointerTool/selection'
-import type { LinkedHandleDrag } from 'src/features/editor/tools/PointerTool/state'
+} from '@/features/editor/tools/PointerTool/selection'
+import type { LinkedHandleDrag } from '@/features/editor/tools/PointerTool/state'
 
 export const getLinkedHandleDrag = (
   path: {

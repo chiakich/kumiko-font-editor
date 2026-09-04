@@ -1,8 +1,9 @@
 import { toaster } from '@/components/ui/toaster'
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useStore, type GlyphData } from 'src/store'
-import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
+import type { GlyphData } from '@/domain'
+import { useStore } from '@/store'
+import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
 
 interface UseOverviewSelectionOptions {
   activeGlyphs: GlyphData[]
@@ -158,8 +159,8 @@ export function useOverviewSelection({
         })
       } catch (error) {
         toaster.create({
-          title: '刪除後儲存失敗',
-          description: '字符已從目前工作階段移除，但尚未寫入本機專案。',
+          title: t('editor.unusedGlyphDeleteSaveFailed'),
+          description: t('editor.unusedGlyphDeleteSaveFailedDescription'),
           type: 'error',
           duration: 3600,
           closable: true,

@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   buildGlyphsFeatureFieldsFromSnippets,
   buildRawFeatureSnippetsFromGlyphsDocument,
-} from 'src/lib/fontFormats/glyphsFeatures'
-import { buildFontDataFromGlyphsDocument } from 'src/lib/fontFormats/glyphsImport'
-import { createBaseGlyphsDocument } from 'src/lib/fontFormats/glyphsExport'
-import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
-import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
+} from '@/lib/fontFormats/glyphsFeatures'
+import { buildFontDataFromGlyphsDocument } from '@/lib/fontFormats/glyphsImport'
+import { createBaseGlyphsDocument } from '@/lib/fontFormats/glyphsExport'
+import { getRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
+import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
 
 const GLYPHS_DOCUMENT: GlyphsDocument = {
   familyName: 'Test',

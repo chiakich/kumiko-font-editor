@@ -1,6 +1,7 @@
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import { getGlyphLayer } from 'src/store/glyphLayer'
-import type { FontData, GlobalState, GlyphData } from 'src/store/types'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
+import { getGlyphLayer } from '@/domain/glyphLayer'
+import type { FontData, GlyphData } from '@/domain'
+import type { GlobalState } from '@/store/types'
 
 type TemporalTrackedState = Pick<GlobalState, 'fontData'>
 

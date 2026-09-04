@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
-import { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
-import { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+import { extractBinaryFeatures } from '@/lib/openTypeFeatures/extractBinaryFeatures'
+import { readSfntTableDirectory } from '@/lib/openTypeFeatures/binaryReader'
+import { parseLayoutTableInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import {
   makeDummyTable,
   makeMinimalGsubTable,

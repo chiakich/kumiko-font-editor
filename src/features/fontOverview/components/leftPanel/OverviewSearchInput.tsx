@@ -11,8 +11,8 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { NavArrowDown, Search, Xmark } from 'iconoir-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { OverviewSearchField } from 'src/lib/glyph/glyphOverview'
-import type { OverviewSearchOptionsState } from 'src/store'
+import type { OverviewSearchField } from '@/lib/glyph/glyphOverview'
+import type { OverviewSearchOptionsState } from '@/store'
 
 type SearchFieldGroupId = 'glyphName' | 'unicode' | 'note' | 'component' | 'ids'
 

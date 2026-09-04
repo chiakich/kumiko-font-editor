@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
-import { interpolateGlyphLayer } from 'src/font/glyphInterpolation'
-import { bakeGlyphStaticInstance } from 'src/font/staticInstance'
+import { isInterpolatedGlyphLocation } from '@/font/designspaceLocation'
+import { interpolateGlyphLayer } from '@/font/glyphInterpolation'
+import { bakeGlyphStaticInstance } from '@/font/staticInstance'
 import type {
   FontAxes,
   FontData,
@@ -9,7 +9,7 @@ import type {
   GlyphData,
   GlyphLayerData,
   PathData,
-} from 'src/store/types'
+} from '@/domain'
 
 const axes: FontAxes = {
   axes: [

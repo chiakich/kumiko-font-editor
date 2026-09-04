@@ -10,7 +10,7 @@ import {
   Field,
 } from '@chakra-ui/react'
 import { Checkbox } from '@/components/ui/checkbox'
-import { NumberField } from 'src/features/common/projectControl/fontSettings/components/fields'
+import { NumberField } from '@/features/common/projectControl/fontSettings/components/fields'
 import {
   makeId,
   parseInteger,
@@ -19,8 +19,8 @@ import {
   stringifyJson,
   type ExportDraft,
   type SourceDraft,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
-import type { FontAxis } from 'src/store'
+} from '@/features/common/projectControl/fontSettings/utils/model'
+import type { FontAxis } from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 interface FontExportsTabProps {

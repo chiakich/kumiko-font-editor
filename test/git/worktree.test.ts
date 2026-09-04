@@ -10,8 +10,8 @@ import {
   stageWorktreePaths,
   syncWorktreeFromProject,
   worktreeDirFor,
-} from 'src/lib/git/worktree'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
+} from '@/lib/git/worktree'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
 import {
   deleteKumikoGlyphRecordBatch,
   loadKumikoGlyphRecord,
@@ -19,9 +19,9 @@ import {
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
   saveKumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import { createMemoryFileStore } from './memoryFileStore'
-import type { FontData } from 'src/store'
+import type { FontData } from '@/domain'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)

@@ -1,16 +1,16 @@
-import { resolveKumikoSyncTarget } from 'src/lib/github/sync/kumikoUfoSync'
+import { resolveKumikoSyncTarget } from '@/lib/github/sync/kumikoUfoSync'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
-import { loadKumikoProjectRecord } from 'src/lib/project/kumikoProjectPersistence'
-import type { EntitySyncStatus } from 'src/lib/git/entitySync'
-import type { GlyphSyncStatus } from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'
+import { loadKumikoProjectRecord } from '@/lib/project/kumikoProjectPersistence'
+import type { EntitySyncStatus } from '@/lib/git/entitySync'
+import type { GlyphSyncStatus } from '@/lib/github/sync/types'
 
 type GitSyncReportBuilder =
-  (typeof import('src/lib/git/gitSync'))['buildGitSyncReport']
+  (typeof import('@/lib/git/gitSync'))['buildGitSyncReport']
 
-export { resolveKumikoSyncTarget as resolveSyncTarget } from 'src/lib/github/sync/kumikoUfoSync'
+export { resolveKumikoSyncTarget as resolveSyncTarget } from '@/lib/github/sync/kumikoUfoSync'
 
 // The entity statuses map one-to-one onto the report shape the UI already
 // renders, so switching transports does not change the conflict UI.
@@ -68,7 +68,7 @@ export const buildProjectSyncReport = async (input: {
   // Run in a worker because fetching and walking a CJK-scale project must not
   // block the editor.
   const { buildGitSyncReportInWorker } =
-    await import('src/lib/git/gitSyncWorkerClient')
+    await import('@/lib/git/gitSyncWorkerClient')
   const report = await buildGitSyncReportInWorker({
     projectId: input.projectId,
     repo: `${target.owner}/${target.repo}`,
@@ -93,7 +93,7 @@ export const applyRemoteSnapshot = async (input: {
 }): Promise<ApplyRemoteResult> => {
   // A pull parses every remote glif it touches, so it stays in the worker.
   const { applyGitRemoteChangesInWorker } =
-    await import('src/lib/git/gitSyncWorkerClient')
+    await import('@/lib/git/gitSyncWorkerClient')
   return applyGitRemoteChangesInWorker({
     ...input,
     remoteHeadSha: input.report.remoteHeadSha,

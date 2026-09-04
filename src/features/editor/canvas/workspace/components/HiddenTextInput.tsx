@@ -1,5 +1,5 @@
 import { Box } from '@chakra-ui/react'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
 
 interface HiddenTextInputProps {
   activeToolId: ToolId

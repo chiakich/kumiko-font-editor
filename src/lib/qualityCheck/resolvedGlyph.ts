@@ -1,10 +1,10 @@
-import type { FontData, GlyphComponentRef, PathData } from 'src/store'
-import { getGlyphLayer } from 'src/store/glyphLayer'
+import type { FontData, GlyphComponentRef, PathData } from '@/domain'
+import { getGlyphLayer } from '@/domain/glyphLayer'
 import {
   getStructureBodyBox,
   type StructureBodyBox,
-} from 'src/lib/qualityCheck/hanClassification'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/qualityCheck/hanClassification'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 /**
  * 把 store 的 GlyphData（含 layer/archive 等主執行緒狀態）解析成

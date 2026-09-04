@@ -1,13 +1,13 @@
-import { parseOpenStep } from 'src/lib/fontFormats/openstepParser'
+import { parseOpenStep } from '@/lib/fontFormats/openstepParser'
 import {
   applyLayerEdits,
   serializeOpenStepValue,
   type GlyphsFormatVersion,
-} from 'src/lib/fontFormats/glyphsExport'
-import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
-import type { GlyphData } from 'src/store'
-import { activeLayer } from 'src/store/glyphLayer'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/fontFormats/glyphsExport'
+import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
+import type { GlyphData } from '@/domain'
+import { activeLayer } from '@/domain/glyphLayer'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 interface GlyphBlockRange {
   start: number

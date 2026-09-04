@@ -7,7 +7,7 @@ import {
   canCommitAnchorBehavior,
   type AnchorBehaviorDraft,
   type AnchorBehaviorRow,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface AnchorBehaviorTableRowProps {

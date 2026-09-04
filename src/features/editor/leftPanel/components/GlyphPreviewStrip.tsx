@@ -1,8 +1,8 @@
 import { Box, Button, Text } from '@chakra-ui/react'
 import { forwardRef, useMemo, type HTMLAttributes } from 'react'
 import { VirtuosoGrid, type ListRange } from 'react-virtuoso'
-import type { GlyphData } from 'src/store'
-import { InlineGlyphPreview } from 'src/features/editor/leftPanel/components/InlineGlyphPreview'
+import type { GlyphData } from '@/domain'
+import { InlineGlyphPreview } from '@/features/editor/leftPanel/components/InlineGlyphPreview'
 import { useTranslation } from 'react-i18next'
 
 const StripList = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(

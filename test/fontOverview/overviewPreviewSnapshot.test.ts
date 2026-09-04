@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { createOverviewGlyphPreviewSnapshot } from 'src/features/fontOverview/utils/overviewPreviewSnapshot'
-import { normalizeGlyphToLayers } from 'src/store'
-import type { GlyphComponentRef, GlyphData } from 'src/store/types'
+import { createOverviewGlyphPreviewSnapshot } from '@/features/fontOverview/utils/overviewPreviewSnapshot'
+import { normalizeGlyphToLayers } from '@/domain'
+import type { GlyphComponentRef, GlyphData } from '@/domain'
 
 const makeGlyph = (
   id: string,

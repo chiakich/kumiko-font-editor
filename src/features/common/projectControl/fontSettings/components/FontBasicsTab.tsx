@@ -13,17 +13,17 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
   generalFontInfoFields,
   openTypeFontInfoSettings,
-} from 'src/lib/fontFormats/fontInfoSettings'
-import type { FontAxis } from 'src/store'
-import { NumberField } from 'src/features/common/projectControl/fontSettings/components/fields'
-import { LocalizedNamesEditor } from 'src/features/common/projectControl/fontSettings/components/LocalizedNamesEditor'
+} from '@/lib/fontFormats/fontInfoSettings'
+import type { FontAxis } from '@/domain'
+import { NumberField } from '@/features/common/projectControl/fontSettings/components/fields'
+import { LocalizedNamesEditor } from '@/features/common/projectControl/fontSettings/components/LocalizedNamesEditor'
 import {
   parseNumber,
   toArrayDraftValue,
   toDraftValue,
   type FontInfoDraft,
   type OpenTypeDraft,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
+} from '@/features/common/projectControl/fontSettings/utils/model'
 import { useTranslation } from 'react-i18next'
 
 const formatAxisValues = (values: number[] | undefined) =>

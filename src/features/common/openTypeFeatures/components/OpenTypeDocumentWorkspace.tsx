@@ -1,0 +1,303 @@
+import { Stack, Text, Separator } from '@chakra-ui/react'
+import { AutoFeatureSuggestions } from '@/features/common/openTypeFeatures/components/AutoFeatureSuggestions'
+import { ExportPolicyControl } from '@/features/common/openTypeFeatures/components/ExportPolicyControl'
+import { FeatureDiagnosticsList } from '@/features/common/openTypeFeatures/components/FeatureDiagnosticsList'
+import { GeneratedFeaPreview } from '@/features/common/openTypeFeatures/components/GeneratedFeaPreview'
+import { ImportExportOverview } from '@/features/common/openTypeFeatures/components/ImportExportOverview'
+import { WorkspaceHeader } from '@/features/common/openTypeFeatures/components/OpenTypeDocumentPrimitives'
+import {
+  FeatureDocument,
+  TableDocument,
+} from '@/features/common/openTypeFeatures/components/OpenTypeRecordDocuments'
+import {
+  GdefDocument,
+  GlyphClassDocument,
+  ImportedTablesDocument,
+  LanguageSystemDocument,
+  MarkClassDocument,
+  RawFeatureTextEditor,
+} from '@/features/common/openTypeFeatures/components/OpenTypeSourceDocuments'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/openTypeFeatures/components/openTypeWorkbenchSelection'
+import { UnsupportedLookupList } from '@/features/common/openTypeFeatures/components/UnsupportedLookupList'
+import type {
+  AutoFeatureSuggestion,
+  CompilerErrorLocation,
+  ExportPolicy,
+  FeatureDiagnostic,
+  FeatureRecord,
+  GeneratedFeaSourceMap,
+  OpenTypeFeaturesState,
+} from '@/lib/openTypeFeatures'
+import { useTranslation } from 'react-i18next'
+import type { FontData } from '@/domain'
+
+interface OpenTypeDocumentWorkspaceProps {
+  // Compiler failures from the live preview compile, in generated-FEA lines.
+  compileErrorLocations: CompilerErrorLocation[]
+  diagnostics: FeatureDiagnostic[]
+  // Present where the visual rule editor should offer the glyph picker.
+  fontData?: FontData | null
+  // Feature-state replacement, for the visual rule editor.
+  onStateChange?: (next: OpenTypeFeaturesState) => void
+  generatedFea: {
+    sourceMap: GeneratedFeaSourceMap
+    text: string
+  }
+  rawFeatureText: string
+  selection: OpenTypeWorkbenchSelection
+  state: OpenTypeFeaturesState
+  suggestions: AutoFeatureSuggestion[]
+  onAcceptSuggestion: (suggestion: AutoFeatureSuggestion) => void
+  onExportPolicyChange: (exportPolicy: ExportPolicy) => void
+  onIgnoreSuggestion: (suggestion: AutoFeatureSuggestion) => void
+  onRawFeatureTextChange: (value: string) => void
+  onScanSuggestions: () => void
+}
+
+export function OpenTypeDocumentWorkspace({
+  compileErrorLocations,
+  diagnostics,
+  fontData,
+  onStateChange,
+  generatedFea,
+  rawFeatureText,
+  selection,
+  state,
+  suggestions,
+  onAcceptSuggestion,
+  onExportPolicyChange,
+  onIgnoreSuggestion,
+  onRawFeatureTextChange,
+  onScanSuggestions,
+}: OpenTypeDocumentWorkspaceProps) {
+  const { t } = useTranslation()
+  const selectedFeature = getSelectedFeature(selection, state)
+
+  return (
+    <Stack gap={4}>
+      <WorkspaceHeader
+        badges={getSelectionBadges(selection, selectedFeature)}
+        description={getSelectionDescription(selection, t)}
+        title={getSelectionTitle(selection, selectedFeature, t)}
+      />
+      <SelectionView
+        compileErrorLocations={compileErrorLocations}
+        diagnostics={diagnostics}
+        fontData={fontData}
+        onStateChange={onStateChange}
+        generatedFea={generatedFea}
+        rawFeatureText={rawFeatureText}
+        selectedFeature={selectedFeature}
+        selection={selection}
+        state={state}
+        suggestions={suggestions}
+        onAcceptSuggestion={onAcceptSuggestion}
+        onExportPolicyChange={onExportPolicyChange}
+        onIgnoreSuggestion={onIgnoreSuggestion}
+        onRawFeatureTextChange={onRawFeatureTextChange}
+        onScanSuggestions={onScanSuggestions}
+      />
+    </Stack>
+  )
+}
+
+function SelectionView({
+  compileErrorLocations,
+  diagnostics,
+  fontData,
+  onStateChange,
+  generatedFea,
+  rawFeatureText,
+  selectedFeature,
+  selection,
+  state,
+  suggestions,
+  onAcceptSuggestion,
+  onExportPolicyChange,
+  onIgnoreSuggestion,
+  onRawFeatureTextChange,
+  onScanSuggestions,
+}: OpenTypeDocumentWorkspaceProps & {
+  selectedFeature: FeatureRecord | null
+}) {
+  const { t } = useTranslation()
+
+  if (selection.kind === 'source') {
+    return selection.view === 'raw-fea' ? (
+      <RawFeatureTextEditor
+        rawFeatureText={rawFeatureText}
+        onRawFeatureTextChange={onRawFeatureTextChange}
+      />
+    ) : (
+      <ImportedTablesDocument state={state} />
+    )
+  }
+
+  if (selection.kind === 'prefix') {
+    return (
+      {
+        languagesystems: <LanguageSystemDocument state={state} />,
+        'glyph-classes': (
+          <GlyphClassDocument glyphClasses={state.glyphClasses} />
+        ),
+        'mark-classes': <MarkClassDocument markClasses={state.markClasses} />,
+        gdef: <GdefDocument state={state} />,
+      }[selection.view] ?? null
+    )
+  }
+
+  if (selection.kind === 'feature') {
+    return selectedFeature ? (
+      <FeatureDocument
+        feature={selectedFeature}
+        generatedFea={generatedFea}
+        state={state}
+        fontData={fontData}
+        onStateChange={onStateChange}
+      />
+    ) : (
+      <Text fontSize="sm" color="mutedForeground">
+        {t('projectControl.noFeaturesYet')}
+      </Text>
+    )
+  }
+
+  if (selection.kind === 'table') {
+    return <TableDocument state={state} table={selection.table} />
+  }
+
+  return (
+    {
+      'generated-fea': (
+        <GeneratedFeaPreview
+          compileErrorLocations={compileErrorLocations}
+          feaText={generatedFea.text}
+          sourceMap={generatedFea.sourceMap}
+        />
+      ),
+      'export-policy': (
+        <Stack gap={5}>
+          <ImportExportOverview state={state} />
+          <Separator />
+          <ExportPolicyControl
+            diagnostics={diagnostics}
+            state={state}
+            onChange={onExportPolicyChange}
+          />
+          <Separator />
+          <UnsupportedLookupList
+            unsupportedLookups={state.unsupportedLookups}
+          />
+        </Stack>
+      ),
+      diagnostics: <FeatureDiagnosticsList diagnostics={diagnostics} />,
+      suggestions: (
+        <AutoFeatureSuggestions
+          suggestions={suggestions}
+          onAccept={onAcceptSuggestion}
+          onIgnore={onIgnoreSuggestion}
+          onScan={onScanSuggestions}
+        />
+      ),
+    }[selection.view] ?? null
+  )
+}
+
+function getSelectedFeature(
+  selection: OpenTypeWorkbenchSelection,
+  state: OpenTypeFeaturesState
+) {
+  return selection.kind === 'feature'
+    ? (state.features.find((feature) => feature.id === selection.featureId) ??
+        null)
+    : null
+}
+
+function getSelectionTitle(
+  selection: OpenTypeWorkbenchSelection,
+  selectedFeature: FeatureRecord | null,
+  t: (key: string) => string
+) {
+  if (selection.kind === 'source') {
+    return selection.view === 'raw-fea'
+      ? t('projectControl.featuresFea')
+      : t('projectControl.importedTables')
+  }
+
+  if (selection.kind === 'prefix') {
+    return {
+      languagesystems: t('projectControl.languageSystems'),
+      'glyph-classes': t('projectControl.glyphClasses'),
+      'mark-classes': t('projectControl.markClasses'),
+      gdef: t('projectControl.gdef'),
+    }[selection.view]
+  }
+
+  if (selection.kind === 'feature') {
+    return selectedFeature?.tag ?? t('projectControl.features')
+  }
+
+  if (selection.kind === 'table') {
+    return selection.table
+  }
+
+  return {
+    'generated-fea': t('projectControl.generatedFea'),
+    'export-policy': t('projectControl.exportPolicy'),
+    diagnostics: t('projectControl.diagnostics'),
+    suggestions: t('projectControl.suggestions'),
+  }[selection.view]
+}
+
+function getSelectionDescription(
+  selection: OpenTypeWorkbenchSelection,
+  t: (key: string) => string
+) {
+  if (selection.kind === 'source') {
+    return selection.view === 'raw-fea'
+      ? t('projectControl.openTypeDescriptionRawFea')
+      : t('projectControl.openTypeDescriptionImportedTables')
+  }
+
+  if (selection.kind === 'prefix') {
+    return {
+      languagesystems: t('projectControl.openTypeDescriptionLanguageSystems'),
+      'glyph-classes': t('projectControl.openTypeDescriptionGlyphClasses'),
+      'mark-classes': t('projectControl.openTypeDescriptionMarkClasses'),
+      gdef: t('projectControl.openTypeDescriptionGdef'),
+    }[selection.view]
+  }
+
+  if (selection.kind === 'feature') {
+    return t('projectControl.openTypeDescriptionFeature')
+  }
+
+  if (selection.kind === 'table') {
+    return t('projectControl.openTypeDescriptionTable')
+  }
+
+  return {
+    'generated-fea': t('projectControl.openTypeDescriptionGeneratedFea'),
+    'export-policy': t('projectControl.openTypeDescriptionExportPolicy'),
+    diagnostics: t('projectControl.openTypeDescriptionDiagnostics'),
+    suggestions: t('projectControl.openTypeDescriptionSuggestions'),
+  }[selection.view]
+}
+
+function getSelectionBadges(
+  selection: OpenTypeWorkbenchSelection,
+  selectedFeature: FeatureRecord | null
+) {
+  if (selection.kind === 'feature' && selectedFeature) {
+    return [
+      selectedFeature.origin,
+      ...(selectedFeature.isActive ? [] : ['inactive']),
+    ]
+  }
+
+  if (selection.kind === 'table') {
+    return ['OpenType']
+  }
+
+  return []
+}

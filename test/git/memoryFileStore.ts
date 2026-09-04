@@ -3,7 +3,7 @@ import {
   normalizeStorePath,
   type FileStore,
   type FileStoreEntry,
-} from 'src/lib/git/fileStore'
+} from '@/lib/git/fileStore'
 
 // In-memory FileStore so the git stack can be exercised without OPFS. Paths are
 // flat keys; directories are tracked separately so empty dirs behave.

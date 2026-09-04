@@ -6,15 +6,15 @@ const fetchGitHubCompareStatus = vi.fn()
 // The commit and its bookkeeping both run in the worker (see gitSyncWorker);
 // what this file covers is which repo and branch the UI asks for, and how the
 // result is presented back.
-vi.mock('src/lib/git/gitSyncWorkerClient', () => ({
+vi.mock('@/lib/git/gitSyncWorkerClient', () => ({
   commitAndPushProjectInWorker: (input: unknown) => commitAndPushProject(input),
 }))
-vi.mock('src/lib/github/githubAuth', () => ({
+vi.mock('@/lib/github/githubAuth', () => ({
   fetchGitHubCompareStatus: (input: unknown) => fetchGitHubCompareStatus(input),
 }))
 
 const { commitThroughGit } =
-  await import('src/features/common/glyphInspector/utils/gitCommitSubmission')
+  await import('@/features/common/glyphInspector/utils/gitCommitSubmission')
 
 const forkStatus = {
   viewerLogin: 'contributor',

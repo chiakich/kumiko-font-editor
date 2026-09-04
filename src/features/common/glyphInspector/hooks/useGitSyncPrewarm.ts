@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { buildProjectSyncReport } from 'src/lib/github/sync'
-import { fetchCachedGitHubForkStatus } from 'src/lib/github/githubQueries'
-import { githubSyncReportQueryKey } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
+import { buildProjectSyncReport } from '@/lib/github/sync'
+import { fetchCachedGitHubForkStatus } from '@/lib/github/githubQueries'
+import { githubSyncReportQueryKey } from '@/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 
 // One warm-up per project per session. The send panel triggers the same
 // queries again when it needs fresh data; what this buys is the one-time

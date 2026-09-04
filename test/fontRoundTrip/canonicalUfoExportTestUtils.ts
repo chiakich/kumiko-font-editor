@@ -3,15 +3,15 @@ import {
   isUfoBackgroundLayer,
   serializeGlifRecord,
   serializeXmlPlist,
-} from 'src/lib/fontFormats/ufoFormat'
+} from '@/lib/fontFormats/ufoFormat'
 import {
   buildKumikoUfoExportManifest,
   loadKumikoUfoExportExtraGlyphBatch,
   loadKumikoUfoExportGlyphBatch,
-} from 'src/lib/github/sync/kumikoUfoSync'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
-import type { KumikoProjectDraft } from 'src/lib/project/projectTypes'
-import type { FontData } from 'src/store'
+} from '@/lib/github/sync/kumikoUfoSync'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
+import type { KumikoProjectDraft } from '@/lib/project/projectTypes'
+import type { FontData } from '@/domain'
 
 const joinRepoPath = (...parts: string[]) =>
   parts

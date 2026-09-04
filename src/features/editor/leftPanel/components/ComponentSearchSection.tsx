@@ -1,7 +1,7 @@
 import { Button, chakra, HStack, Spinner, Text, VStack } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { GlyphwikiPartBox } from 'src/lib/glyph/glyphwikiComposition'
+import type { GlyphwikiPartBox } from '@/lib/glyph/glyphwikiComposition'
 
 interface ComponentSearchSectionProps {
   components: string[]

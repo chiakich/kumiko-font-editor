@@ -18,15 +18,15 @@ import {
   SlidingTabList,
   SlidingTabsContentGroup,
   SlidingTabsRoot,
-} from 'src/features/common/SlidingTabList'
-import type { GlyphsExportWarning } from 'src/lib/fontFormats/glyphsExport'
+} from '@/features/common/SlidingTabList'
+import type { GlyphsExportWarning } from '@/lib/fontFormats/glyphsExport'
 import type {
   ExportPolicy,
   OpenTypeExportWarning,
-} from 'src/lib/openTypeFeatures'
-import { requiresDropUnsupportedConfirmation } from 'src/lib/openTypeFeatures/exportPolicy'
-import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
-import type { FontExportInstance } from 'src/store'
+} from '@/lib/openTypeFeatures'
+import { requiresDropUnsupportedConfirmation } from '@/lib/openTypeFeatures/exportPolicy'
+import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
+import type { FontExportInstance } from '@/domain'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 

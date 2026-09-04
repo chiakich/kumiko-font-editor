@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildFeatureSpecimenGlyphs } from 'src/features/common/projectControl/fontSettings/features/utils/featureSpecimen'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import { buildFeatureSpecimenGlyphs } from '@/features/common/openTypeFeatures/utils/featureSpecimen'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 const state = {
   features: [

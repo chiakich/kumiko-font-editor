@@ -15,14 +15,14 @@ import {
   SlidingTabList,
   SlidingTabsContentGroup,
   SlidingTabsRoot,
-} from 'src/features/common/SlidingTabList'
+} from '@/features/common/SlidingTabList'
 import {
   GlyphPackageSelectionSummary,
   GlyphPackagePicker,
   type GlyphPackageSelection,
-} from 'src/features/fontOverview/components/GlyphPackagePicker'
-import { glyphNameToDisplayCharacter } from 'src/features/fontOverview/utils/glyphPackageDisplay'
-import type { GlyphData } from 'src/store'
+} from '@/features/fontOverview/components/GlyphPackagePicker'
+import { glyphNameToDisplayCharacter } from '@/features/fontOverview/utils/glyphPackageDisplay'
+import type { GlyphData } from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 const emptyPackageSelection: GlyphPackageSelection = {

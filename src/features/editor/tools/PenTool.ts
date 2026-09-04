@@ -3,17 +3,17 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
-import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
-import type { PathHitInfo } from 'src/sceneView/SceneView'
+} from '@/features/editor/tools/BaseTool'
+import { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'
+import type { PathHitInfo } from '@/sceneView/SceneView'
 import {
-  useStore,
   activeLayer,
   getGlyphLayer,
   isOffCurveNode,
   type PathData,
   type PathNode,
-} from 'src/store'
+} from '@/domain'
+import { useStore } from '@/store'
 
 type NodeRole = 'corner' | 'smooth' | 'offcurve'
 type OnCurvePathNode = Extract<PathNode, { kind: 'oncurve' }>

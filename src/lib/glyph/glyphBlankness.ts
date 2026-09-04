@@ -1,7 +1,7 @@
-import { activeLayer } from 'src/store/glyphLayer'
-import type { GlyphData } from 'src/store/types'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+import { activeLayer } from '@/domain/glyphLayer'
+import type { GlyphData } from '@/domain'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 const knownBlankGlyphNames = new Set([
   'cr',

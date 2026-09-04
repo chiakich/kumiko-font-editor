@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getLayoutTableSummaries } from 'src/features/common/projectControl/fontSettings/features/components/openTypeOutlineModel'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import { getLayoutTableSummaries } from '@/features/common/openTypeFeatures/components/openTypeOutlineModel'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 describe('OpenType outline model', () => {
   it('handles legacy feature state without source sections', () => {

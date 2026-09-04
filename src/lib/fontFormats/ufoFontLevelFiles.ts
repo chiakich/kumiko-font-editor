@@ -1,6 +1,6 @@
-import { serializeXmlPlist } from 'src/lib/fontFormats/adapters/ufo'
-import type { UfoMetadataRecord } from 'src/lib/fontFormats/ufoTypes'
-import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
+import { serializeXmlPlist } from '@/lib/fontFormats/adapters/ufo'
+import type { UfoMetadataRecord } from '@/lib/fontFormats/ufoTypes'
+import { UFO_FONT_LEVEL_FILE_NAMES } from '@/lib/fontFormats/ufoFileNames'
 
 export interface UfoFontLevelFile {
   /** Path relative to the UFO directory. */

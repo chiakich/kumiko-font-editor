@@ -1,9 +1,9 @@
 import {
   glyphSelector,
   registerVisualizationLayerDefinition,
-} from 'src/sceneView/SceneView'
-import type { CanvasController } from 'src/sceneView/CanvasController'
-import type { PositionedGlyph, SceneModel } from 'src/sceneView/SceneView'
+} from '@/sceneView/SceneView'
+import type { CanvasController } from '@/sceneView/CanvasController'
+import type { PositionedGlyph, SceneModel } from '@/sceneView/SceneView'
 
 function screenLength(canvasController: CanvasController, value: number) {
   return value / canvasController.magnification

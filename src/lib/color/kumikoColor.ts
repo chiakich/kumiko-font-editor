@@ -1,5 +1,5 @@
-import type { KumikoColor } from 'src/store'
-import type { ResolvedColorMode } from 'src/lib/preferences/colorMode'
+import type { KumikoColor } from '@/domain'
+import type { ResolvedColorMode } from '@/lib/preferences/colorMode'
 
 const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 

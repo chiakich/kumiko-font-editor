@@ -2,7 +2,7 @@ import { Badge, Box, Button, HStack, Stack, Tag, Text } from '@chakra-ui/react'
 import type {
   QualityIssue,
   QualityIssueSeverity,
-} from 'src/lib/qualityCheck/qualityLint'
+} from '@/lib/qualityCheck/qualityLint'
 
 const severityMeta: Record<
   QualityIssueSeverity,

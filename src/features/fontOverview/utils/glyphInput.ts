@@ -1,4 +1,4 @@
-import type { GlyphNameInfo } from 'src/lib/glyph/glyphNameInfo'
+import type { GlyphNameInfo } from '@/lib/glyph/glyphNameInfo'
 
 export interface GlyphAdditionCandidate {
   id: string

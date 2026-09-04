@@ -2,18 +2,18 @@ import {
   isUfoBackgroundLayer,
   serializeGlifRecord,
   serializeXmlPlist,
-} from 'src/lib/fontFormats/adapters/ufo'
-import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
-import { hashString } from 'src/lib/hash'
-import { listSyncDirtyKumikoGlyphIds } from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/fontFormats/adapters/ufo'
+import { buildUfoFontLevelFiles } from '@/lib/fontFormats/ufoFontLevelFiles'
+import { hashString } from '@/lib/hash'
+import { listSyncDirtyKumikoGlyphIds } from '@/lib/project/kumikoProjectPersistence'
 import {
   buildKumikoUfoExportManifest,
   type KumikoUfoExportManifest,
   loadKumikoUfoExportExtraGlyphBatch,
   loadKumikoUfoExportGlyphBatch,
   type KumikoUfoExportStateUpdate,
-} from 'src/lib/github/sync/kumikoUfoSync'
-import type { EntityId } from 'src/lib/fontFormats/formatAdapter/types'
+} from '@/lib/github/sync/ufoExportManifest'
+import type { EntityId } from '@/lib/fontFormats/formatAdapter/types'
 
 export interface MaterializedFile {
   // Repo-relative path, identical to what the source tree holds on disk.

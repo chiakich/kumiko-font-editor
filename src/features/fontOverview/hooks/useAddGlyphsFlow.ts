@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next'
 import {
   isCjkDefaultFullWidthCodePoint,
   parseGlyphAdditionInput,
-} from 'src/features/fontOverview/utils/glyphInput'
+} from '@/features/fontOverview/utils/glyphInput'
 import {
   getExistingGlyphLookupKeys,
   hasGlyphCandidate,
-} from 'src/features/fontOverview/utils/glyphLookup'
-import { getGlyphNameInfoMap } from 'src/lib/glyph/glyphNameInfo'
-import { useStore, type FontData, type GlyphData } from 'src/store'
+} from '@/features/fontOverview/utils/glyphLookup'
+import { getGlyphNameInfoMap } from '@/lib/glyph/glyphNameInfo'
+import type { FontData, GlyphData } from '@/domain'
+import { useStore } from '@/store'
 
 interface UseAddGlyphsFlowOptions {
   fontData: FontData | null

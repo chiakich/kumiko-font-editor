@@ -1,9 +1,9 @@
 import { Grid, GridItem, useBreakpointValue } from '@chakra-ui/react'
-import { CanvasWorkspace } from 'src/features/editor/canvas/CanvasWorkspace'
-import { EditorViewTransitionLanding } from 'src/features/editor/EditorViewTransitionLanding'
-import { GlyphInsightProvider } from 'src/features/editor/insight/GlyphInsightProvider'
-import { LeftPanel } from 'src/features/editor/leftPanel/LeftPanel'
-import { EditorRightPanel } from 'src/features/editor/rightPanel/EditorRightPanel'
+import { CanvasWorkspace } from '@/features/editor/canvas/CanvasWorkspace'
+import { EditorViewTransitionLanding } from '@/features/editor/EditorViewTransitionLanding'
+import { GlyphInsightProvider } from '@/features/editor/insight/GlyphInsightProvider'
+import { LeftPanel } from '@/features/editor/leftPanel/LeftPanel'
+import { EditorRightPanel } from '@/features/editor/rightPanel/EditorRightPanel'
 
 export function EditorLayout() {
   const isDesktop = useBreakpointValue({ base: false, lg: true })

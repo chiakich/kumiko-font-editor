@@ -7,7 +7,7 @@ import type {
   KumikoGlyphStoreRecord,
   KumikoProjectRecord,
   KumikoProjectSourceFormat,
-} from 'src/lib/project/kumikoProjectTypes'
+} from '@/lib/project/kumikoProjectTypes'
 import type {
   FontData,
   GlyphAnchor,
@@ -19,18 +19,18 @@ import type {
   GlyphSourceData,
   PathData,
   PathSegmentType,
-} from 'src/store'
-import { hashString } from 'src/lib/hash'
-import { normalizeRawFeatureSnippets } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
-import { deterministicStringify } from 'src/store/deterministicStringify'
-import { normalizeUnicodeHex } from 'src/lib/project/unicode'
+} from '@/domain'
+import { hashString } from '@/lib/hash'
+import { normalizeRawFeatureSnippets } from '@/lib/openTypeFeatures/rawFeatureSnippets'
+import { deterministicStringify } from '@/domain/deterministicStringify'
+import { normalizeUnicodeHex } from '@/lib/project/unicode'
 import {
   composeComponentMatrix,
   componentMatrixToRefFields,
   type ComponentMatrix,
   getComponentMatrix,
   withComponentMatrix,
-} from 'src/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 
 const getGlyphUnicodes = (glyph: GlyphData) => {
   const values = glyph.unicodes ?? []

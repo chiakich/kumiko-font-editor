@@ -1,7 +1,7 @@
-import 'src/lib/git/nodeGlobals'
+import '@/lib/git/nodeGlobals'
 import git from 'isomorphic-git'
 import http from 'isomorphic-git/http/web'
-import type { GitWorktree } from 'src/lib/git/worktree'
+import type { GitWorktree } from '@/lib/git/worktree'
 
 // Everything git-over-HTTP goes through our own origin: the credential stays in
 // the httpOnly session cookie and is injected server side.

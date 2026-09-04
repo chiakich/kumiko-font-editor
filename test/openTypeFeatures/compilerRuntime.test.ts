@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest'
 import {
   mapCompilerErrorsToDiagnostics,
   parseCompilerErrorLocations,
-} from 'src/lib/openTypeFeatures/compilerErrorMapping'
+} from '@/lib/openTypeFeatures/compilerErrorMapping'
 import {
   canInstalledDependenciesCompileGeneratedFeaOffline,
   getInstalledCompilerDependencyCapabilities,
   getOpenTypeCompilerRuntimeRequirement,
-} from 'src/lib/openTypeFeatures/compilerRuntimeCapabilities'
+} from '@/lib/openTypeFeatures/compilerRuntimeCapabilities'
 import {
   createCompilerRuntimeStatus,
   makeCompilerErrorResponse,
   makeRuntimeNotConfiguredResponse,
-} from 'src/lib/openTypeFeatures/compilerRuntimePlan'
+} from '@/lib/openTypeFeatures/compilerRuntimePlan'
 
 describe('OpenType compiler diagnostics', () => {
   it('parses fontTools-style FEA error locations', () => {

@@ -9,8 +9,8 @@ import {
   Textarea,
 } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
-import type { QualitySummary } from 'src/lib/qualityCheck/qualityLint'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
+import type { QualitySummary } from '@/lib/qualityCheck/qualityLint'
 
 export type WorkbenchState =
   | 'ready'

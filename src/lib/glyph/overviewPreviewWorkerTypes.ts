@@ -1,0 +1,42 @@
+import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
+import type { GlyphData } from '@/domain'
+
+export interface OverviewPreviewWorkerRequest {
+  cacheKey: string
+  glyphId: string
+}
+
+export interface BuildOverviewPreviewsPayload {
+  activeMasterId: string | null
+  glyphs: Record<string, GlyphData>
+  requests: OverviewPreviewWorkerRequest[]
+  unitsPerEm?: number
+}
+
+export interface BuildOverviewPreviewsMessage {
+  type: 'build-overview-previews'
+  requestId: number
+  payload: BuildOverviewPreviewsPayload
+}
+
+export interface OverviewPreviewWorkerResult {
+  cacheKey: string
+  glyphId: string
+  preview: GlyphPreviewData | null
+}
+
+export interface BuildOverviewPreviewsSuccessMessage {
+  type: 'build-overview-previews-success'
+  requestId: number
+  results: OverviewPreviewWorkerResult[]
+}
+
+export interface BuildOverviewPreviewsErrorMessage {
+  type: 'build-overview-previews-error'
+  requestId: number
+  message: string
+}
+
+export type OverviewPreviewWorkerIncomingMessage =
+  | BuildOverviewPreviewsSuccessMessage
+  | BuildOverviewPreviewsErrorMessage

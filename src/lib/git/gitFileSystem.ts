@@ -2,7 +2,7 @@ import {
   dirNameOf,
   normalizeStorePath,
   type FileStore,
-} from 'src/lib/git/fileStore'
+} from '@/lib/git/fileStore'
 
 // isomorphic-git inspects `err.code`, so failures have to look like Node's.
 export class GitFsError extends Error {

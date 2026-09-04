@@ -1,11 +1,7 @@
 import { Box } from '@chakra-ui/react'
 import { useCallback, useMemo, type ReactNode } from 'react'
-import {
-  getGlyphLayer,
-  isOffCurveNode,
-  type FontData,
-  type SelectedSegmentState,
-} from 'src/store'
+import { getGlyphLayer, isOffCurveNode, type FontData } from '@/domain'
+import type { SelectedSegmentState } from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface CanvasContextMenuProps {

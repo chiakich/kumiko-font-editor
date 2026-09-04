@@ -3,7 +3,7 @@ import type {
   GlyphSelector,
   LookupFlagIR,
   ValueRecord,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface FeaDocument {
   kind: 'Document'

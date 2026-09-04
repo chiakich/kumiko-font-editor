@@ -1,14 +1,14 @@
-import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
-import { buildGlyphsFeatureFieldsFromSnippets } from 'src/lib/fontFormats/glyphsFeatures'
+import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
+import { buildGlyphsFeatureFieldsFromSnippets } from '@/lib/fontFormats/glyphsFeatures'
 import {
   getComponentMatrix,
   isIdentityComponentMatrix,
-} from 'src/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 import {
   getNodeSegmentType,
   getNodeType,
   isOffCurveNode,
-} from 'src/store/glyphGeometry'
+} from '@/domain/glyphGeometry'
 import type {
   FontData,
   GlyphData,
@@ -17,9 +17,9 @@ import type {
   GlyphLayerContent,
   GlyphSourceData,
   PathNode,
-} from 'src/store'
-import { nearestGlyphsLabelColorIndex } from 'src/lib/color/kumikoColor'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/domain'
+import { nearestGlyphsLabelColorIndex } from '@/lib/color/kumikoColor'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 // A pre-formatted OpenStep token emitted verbatim (no quoting, no re-indent).
 // Used for Glyphs 3 compact tuples like `(302,128,l)` and `pos = (250,700)`,

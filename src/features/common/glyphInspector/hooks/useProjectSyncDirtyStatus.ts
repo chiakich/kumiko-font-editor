@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getKumikoProjectDirtyState } from 'src/lib/project/kumikoProjectPersistence'
+import { getKumikoProjectDirtyState } from '@/lib/project/kumikoProjectPersistence'
 
 export const projectSyncDirtyStatusQueryKey = (projectId: string | null) => [
   'projectSyncDirtyStatus',

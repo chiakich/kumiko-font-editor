@@ -3,12 +3,12 @@ import {
   loadDefaultGlyphPackages,
   type DefaultGlyphPackage,
   type GlyphPackageGroup,
-} from 'src/features/fontOverview/data/defaultGlyphPackages'
+} from '@/features/fontOverview/data/defaultGlyphPackages'
 import {
   buildGlyphLookupMap,
   computeCharsetCoverage,
-} from 'src/lib/charsetCoverage'
-import type { GlyphData } from 'src/store'
+} from '@/lib/charsetCoverage'
+import type { GlyphData } from '@/domain'
 
 export interface GlyphPackageSelection {
   glyphNames: string[]

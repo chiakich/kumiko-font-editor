@@ -1,16 +1,16 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
 import {
   parseChainingContextSubstitutionFormat2,
   parseContextSubstitutionFormat2,
-} from 'src/lib/openTypeFeatures/gsubClassContextRuleParser'
+} from '@/lib/openTypeFeatures/gsubClassContextRuleParser'
 import {
   parseChainingContextSubstitutionFormat1,
   parseChainingContextSubstitutionFormat3,
   parseContextSubstitutionFormat1,
   parseContextSubstitutionFormat3,
-} from 'src/lib/openTypeFeatures/gsubContextRuleParser'
-import { parseReverseChainingSingleSubstitutionFormat1 } from 'src/lib/openTypeFeatures/gsubReverseContextRuleParser'
-import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+} from '@/lib/openTypeFeatures/gsubContextRuleParser'
+import { parseReverseChainingSingleSubstitutionFormat1 } from '@/lib/openTypeFeatures/gsubReverseContextRuleParser'
+import type { LayoutLookupInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import type {
   AlternateSubstitutionRule,
   FeatureDiagnostic,
@@ -20,7 +20,7 @@ import type {
   Rule,
   SingleSubstitutionRule,
   SourceProvenance,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface GsubRuleParseResult {
   rules: Rule[]

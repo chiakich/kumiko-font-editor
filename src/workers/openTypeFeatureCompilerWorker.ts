@@ -3,15 +3,15 @@
 import {
   createCompilerRuntimeStatus,
   makeCompilerErrorResponse,
-} from 'src/lib/openTypeFeatures/compilerRuntimePlan'
+} from '@/lib/openTypeFeatures/compilerRuntimePlan'
 import {
   compileWithFontToolsRuntime,
   getFontToolsRuntime,
-} from 'src/lib/openTypeFeatures/fontToolsPyodideRuntime'
+} from '@/lib/openTypeFeatures/fontToolsPyodideRuntime'
 import type {
   CompileRequestMessage,
   CompileSuccessMessage,
-} from 'src/lib/openTypeFeatures/compilerTypes'
+} from '@/lib/openTypeFeatures/compilerTypes'
 
 interface RuntimeCompileError {
   message?: string

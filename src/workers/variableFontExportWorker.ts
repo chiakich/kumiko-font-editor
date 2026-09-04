@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { buildVariableFontWithFontToolsRuntime } from 'src/lib/openTypeFeatures/fontToolsPyodideRuntime'
+import { buildVariableFontWithFontToolsRuntime } from '@/lib/openTypeFeatures/fontToolsPyodideRuntime'
 
 interface VariableFontBuildRequest {
   type: 'variable-font-build'

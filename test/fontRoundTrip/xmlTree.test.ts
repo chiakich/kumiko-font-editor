@@ -5,7 +5,7 @@ import {
   findDescendant,
   firstChildNamed,
   parseXmlTree,
-} from 'src/lib/fontFormats/xmlTree'
+} from '@/lib/fontFormats/xmlTree'
 
 // No DOMParser stub anywhere in this file on purpose: the parser must work
 // where there is no DOM, which is the whole reason it exists.

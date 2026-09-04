@@ -5,14 +5,14 @@ import { Window } from 'happy-dom'
 import {
   listGlyphsPackagePaths,
   materializeGlyphsPackage,
-} from 'src/lib/fontFormats/glyphsPackageMaterialize'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
+} from '@/lib/fontFormats/glyphsPackageMaterialize'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
 import {
   loadKumikoGlyphRecord,
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
-import type { FontData } from 'src/store'
+} from '@/lib/project/kumikoProjectPersistence'
+import type { FontData } from '@/domain'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)

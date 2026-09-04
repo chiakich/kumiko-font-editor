@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { wouldCreateComponentCycle } from 'src/store/glyphGeometry'
-import { normalizeGlyphToLayers } from 'src/store'
-import type { GlyphData } from 'src/store/types'
+import { wouldCreateComponentCycle } from '@/domain/glyphGeometry'
+import { normalizeGlyphToLayers } from '@/domain'
+import type { GlyphData } from '@/domain'
 
 const makeGlyph = (id: string, componentGlyphIds: string[] = []): GlyphData =>
   normalizeGlyphToLayers({

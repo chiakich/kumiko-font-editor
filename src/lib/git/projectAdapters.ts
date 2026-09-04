@@ -1,7 +1,7 @@
-import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
-import { listProjectUfoSources } from 'src/lib/github/sync/kumikoUfoSync'
-import { loadKumikoProjectRecord } from 'src/lib/project/kumikoProjectPersistence'
-import type { FormatAdapter } from 'src/lib/fontFormats/formatAdapter/types'
+import { createUfoFormatAdapter } from '@/lib/fontFormats/formatAdapter/ufoFormatAdapter'
+import { listProjectUfoSources } from '@/lib/github/sync/kumikoUfoSync'
+import { loadKumikoProjectRecord } from '@/lib/project/kumikoProjectPersistence'
+import type { FormatAdapter } from '@/lib/fontFormats/formatAdapter/types'
 
 // One adapter per UFO the project writes, so path questions are answered
 // against the project's real layout rather than a guessed one.

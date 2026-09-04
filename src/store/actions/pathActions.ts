@@ -7,12 +7,13 @@ import type { StateCreator } from 'zustand'
 import {
   buildBooleanOperationPaths,
   type PathBooleanOperation,
-} from 'src/lib/pathBooleanOperations'
+} from '@/lib/pathBooleanOperations'
 import {
   offsetGlyphPaths,
   type OutlineOffsetOptions,
-} from 'src/lib/outlineOffset'
-import type { GlobalState, PathData, PathNode } from 'src/store/types'
+} from '@/lib/outlineOffset'
+import type { PathData, PathNode } from '@/domain'
+import type { GlobalState } from '@/store/types'
 import {
   findPath,
   generateId,
@@ -21,14 +22,11 @@ import {
   lerp,
   orientOpenPathNodesForConnection,
   recomputeGlyphSidebearings,
-} from 'src/store/glyphGeometry'
-import { ensureLoadedActiveLayer } from 'src/store/glyphLayer'
-import {
-  pairNearestEndpoints,
-  performReconnect,
-} from 'src/store/reconnectNodes'
-import { syncFilteredGlyphList } from 'src/store/glyphSearch'
-import { markGlyphDirty } from 'src/store/dirtyState'
+} from '@/domain/glyphGeometry'
+import { ensureLoadedActiveLayer } from '@/domain/glyphLayer'
+import { pairNearestEndpoints, performReconnect } from '@/domain/reconnectNodes'
+import { syncFilteredGlyphList } from '@/store/glyphSearch'
+import { markGlyphDirty } from '@/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

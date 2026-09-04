@@ -1,17 +1,17 @@
-import 'src/lib/git/nodeGlobals'
+import '@/lib/git/nodeGlobals'
 import git from 'isomorphic-git'
 import {
   buildEntitySyncEntries,
   summarizeEntitySync,
   type EntitySyncInput,
   type EntitySyncReport,
-} from 'src/lib/git/entitySync'
+} from '@/lib/git/entitySync'
 import {
   fetchRemoteBranch,
   pushBranch,
   readBlobAtCommit,
   trackingRefFor,
-} from 'src/lib/git/remote'
+} from '@/lib/git/remote'
 import {
   commitWorktree,
   openGitWorktree,
@@ -21,25 +21,25 @@ import {
   checkoutWorktreeBranch,
   type GitCommitAuthor,
   type GitWorktree,
-} from 'src/lib/git/worktree'
-import { buildProjectAdapters } from 'src/lib/git/projectAdapters'
+} from '@/lib/git/worktree'
+import { buildProjectAdapters } from '@/lib/git/projectAdapters'
 import {
   listUfoTreePaths,
   materializeUfoTree,
-} from 'src/lib/fontFormats/ufoMaterialize'
+} from '@/lib/fontFormats/ufoMaterialize'
 import {
   applyKumikoRemoteSnapshot,
   buildKumikoUfoExportManifest,
   listProjectUfoSources,
   makeContents,
   type KumikoUfoExportManifest,
-} from 'src/lib/github/sync/kumikoUfoSync'
-import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
-import type { ParsedUfoFolder } from 'src/lib/fontFormats/ufoFormat'
+} from '@/lib/github/sync/kumikoUfoSync'
+import { UFO_FONT_LEVEL_FILE_NAMES } from '@/lib/fontFormats/ufoFileNames'
+import type { ParsedUfoFolder } from '@/lib/fontFormats/ufoFormat'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'
 import {
   listKumikoGlyphSyncMetadataForProject,
   listSyncDirtyKumikoGlyphIds,
@@ -48,13 +48,13 @@ import {
   saveKumikoProjectRecord,
   updateKumikoGlyphExportDirtyState,
   updateKumikoGlyphSyncDirtyState,
-} from 'src/lib/project/kumikoProjectPersistence'
-import type { FileStore } from 'src/lib/git/fileStore'
+} from '@/lib/project/kumikoProjectPersistence'
+import type { FileStore } from '@/lib/git/fileStore'
 import {
   baseTargetForProject,
   sameGitTarget,
   withUpdatedChangeDraft,
-} from 'src/lib/git/collaboration'
+} from '@/lib/git/collaboration'
 
 export interface GitSyncTarget {
   projectId: string

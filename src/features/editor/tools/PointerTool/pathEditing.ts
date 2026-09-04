@@ -1,6 +1,6 @@
-import type { Point } from 'src/sceneView/SceneView'
-import { findAttachedHandleIndices } from 'src/features/editor/tools/PointerTool/selection'
-import { getGridSnapStep } from 'src/features/editor/tools/PointerTool/snap'
+import type { Point } from '@/sceneView/SceneView'
+import { findAttachedHandleIndices } from '@/features/editor/tools/PointerTool/selection'
+import { getGridSnapStep } from '@/features/editor/tools/PointerTool/snap'
 
 export interface MutablePointPath {
   setPoint?(

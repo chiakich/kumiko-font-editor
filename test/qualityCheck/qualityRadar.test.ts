@@ -4,7 +4,7 @@ import {
   computeInkMoments,
   computeProjectionGaps,
   flattenContour,
-} from 'src/lib/qualityCheck/polygonGeometry'
+} from '@/lib/qualityCheck/polygonGeometry'
 import {
   buildRobustStat,
   computeRadarFromSamples,
@@ -12,11 +12,11 @@ import {
   RADAR_SUSPECT_SCORE,
   radarZScore,
   type RadarReferenceData,
-} from 'src/lib/qualityCheck/qualityRadar'
-import { analyzeFontPopulation } from 'src/lib/qualityCheck/populationAnalysisAdapter'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import type { FontData, GlyphData, PathData } from 'src/store'
-import { normalizeGlyphToLayers } from 'src/store'
+} from '@/lib/qualityCheck/qualityRadar'
+import { analyzeFontPopulation } from '@/lib/qualityCheck/populationAnalysisAdapter'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import type { FontData, GlyphData, PathData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const squarePolygon = (
   xMin: number,

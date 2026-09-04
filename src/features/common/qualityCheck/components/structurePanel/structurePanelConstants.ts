@@ -1,4 +1,4 @@
-import type { StructureSide } from 'src/lib/qualityCheck/structureMetrics'
+import type { StructureSide } from '@/lib/qualityCheck/structureMetrics'
 
 export const STRUCTURE_SIDES: StructureSide[] = [
   'left',

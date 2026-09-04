@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto'
 
 import { describe, expect, it } from 'vitest'
-import { saveImportedUfoWorkspaceAsProject } from 'src/features/home/utils/projectImport'
-import { loadProjectGlyphGeometry } from 'src/lib/project/projectRepository'
-import type { ImportedUfoWorkspace } from 'src/lib/fontFormats/ufoFormat'
+import { saveImportedUfoWorkspaceAsProject } from '@/features/home/utils/projectImport'
+import { loadProjectGlyphGeometry } from '@/lib/project/projectRepository'
+import type { ImportedUfoWorkspace } from '@/lib/fontFormats/ufoFormat'
 
 const importedWorkspace = (): ImportedUfoWorkspace => ({
   project: {

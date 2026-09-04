@@ -1,9 +1,9 @@
-import type { FontData } from 'src/store'
-import { normalizeGlyphToLayers } from 'src/store/glyphLayer'
+import type { FontData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain/glyphLayer'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
-} from 'src/lib/project/projectFormats'
+} from '@/lib/project/projectFormats'
 
 // With layers-as-truth all glyph content lives in GlyphData.layers, so there is
 // no hot↔layers reconciliation to do. This module now only holds the project

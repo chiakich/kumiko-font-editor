@@ -1,7 +1,7 @@
 import createHarfBuzz from 'harfbuzzjs/hb.js'
 import createHarfBuzzJsRuntime from 'harfbuzzjs/hbjs.js'
 import harfbuzzWasmUrl from 'harfbuzzjs/hb.wasm?url'
-import { resolveHarfBuzzWasmLocation } from 'src/lib/openTypeFeatures/harfbuzzWasmLocation'
+import { resolveHarfBuzzWasmLocation } from '@/lib/openTypeFeatures/harfbuzzWasmLocation'
 
 interface HarfBuzzBlob {
   destroy(): void

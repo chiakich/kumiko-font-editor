@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { gitCommitAuthorForGitHubViewer } from 'src/lib/github/githubAuth'
+import { gitCommitAuthorForGitHubViewer } from '@/lib/github/githubAuth'
 
 describe('gitCommitAuthorForGitHubViewer', () => {
   it('uses GitHub’s ID-based noreply address for account attribution', () => {

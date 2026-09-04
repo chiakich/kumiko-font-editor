@@ -13,9 +13,9 @@ import {
   mergeGitHubUpstream,
   type GitHubCompareStatusResponse,
   type GitHubForkStatus,
-} from 'src/lib/github/githubAuth'
-import { createGitHubCommitInBatches } from 'src/lib/github/githubCommitBatches'
-import { githubQueryKeys } from 'src/lib/github/githubQueryKeys'
+} from '@/lib/github/githubAuth'
+import { createGitHubCommitInBatches } from '@/lib/github/githubCommitBatches'
+import { githubQueryKeys } from '@/lib/github/githubQueryKeys'
 
 export const fetchCachedGitHubForkStatus = (
   queryClient: QueryClient,

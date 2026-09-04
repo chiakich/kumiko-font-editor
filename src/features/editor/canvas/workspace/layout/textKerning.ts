@@ -1,14 +1,14 @@
-import type { FontData, GlyphMetrics, PathData } from 'src/store'
+import type { FontData, GlyphMetrics, PathData } from '@/domain'
 import type {
   GlyphClass,
   GlyphSelector,
   OpenTypeFeaturesState,
   PairPositioningRule,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import {
   getMasterKerningPairs,
   resolveKerningPair,
-} from 'src/lib/kerning/resolveKerning'
+} from '@/lib/kerning/resolveKerning'
 
 export function getTextKerningValue(
   fontData: FontData,

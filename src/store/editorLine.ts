@@ -1,5 +1,6 @@
-import type { FontData, GlobalState } from 'src/store/types'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
+import type { FontData } from '@/domain'
+import type { GlobalState } from '@/store/types'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 
 const getGlyphCharacterById = (
   fontData: FontData | null | undefined,

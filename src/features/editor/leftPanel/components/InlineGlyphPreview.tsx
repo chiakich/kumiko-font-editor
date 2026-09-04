@@ -1,7 +1,8 @@
 import { chakra } from '@chakra-ui/react'
 import { useMemo } from 'react'
-import { buildGlyphPreviewData } from 'src/lib/glyph/glyphOverview'
-import { useStore, type GlyphData } from 'src/store'
+import { buildGlyphPreviewData } from '@/lib/glyph/glyphOverview'
+import type { GlyphData } from '@/domain'
+import { useStore } from '@/store'
 
 // Flip baseline tuned for a 1000-UPM design space; scaled by the font's UPM.
 const READONLY_FLIP_OFFSET = 680

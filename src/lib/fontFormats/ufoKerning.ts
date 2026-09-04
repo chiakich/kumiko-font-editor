@@ -1,6 +1,6 @@
-import type { FontData, KerningGroup, KerningPair } from 'src/store/types'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import { buildKerningGroupMaps } from 'src/lib/kerning/resolveKerning'
+import type { FontData, KerningGroup, KerningPair } from '@/domain'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
+import { buildKerningGroupMaps } from '@/lib/kerning/resolveKerning'
 
 const KERN1_PREFIX = 'public.kern1.'
 const KERN2_PREFIX = 'public.kern2.'

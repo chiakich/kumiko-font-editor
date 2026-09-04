@@ -24,22 +24,22 @@ import {
   validateFeatures,
   type AutoFeatureSuggestion,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import { prewarmOpenTypeFeatureCompiler } from 'src/lib/openTypeFeatures'
-import { useStore } from 'src/store'
-import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
-import { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
-import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+} from '@/lib/openTypeFeatures'
+import { prewarmOpenTypeFeatureCompiler } from '@/lib/openTypeFeatures'
+import { useStore } from '@/store'
+import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
+import { useShapingPreview } from '@/features/common/openTypeFeatures/hooks/useShapingPreview'
+import { setFeatureTagEnabled } from '@/features/common/openTypeFeatures/utils/featureEnablement'
 import {
   createFeature,
   VALID_FEATURE_TAG,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
-import { listWorkspaceFeatures } from 'src/features/featureWorkspace/workspaceFeatureModel'
-import { WorkspacePreviewHome } from 'src/features/featureWorkspace/WorkspacePreviewHome'
-import { KernPairView } from 'src/features/featureWorkspace/KernPairView'
-import { FeatureIndexView } from 'src/features/featureWorkspace/FeatureIndexView'
-import { FeatureDetailView } from 'src/features/featureWorkspace/FeatureDetailView'
-import { GlyphClassesView } from 'src/features/featureWorkspace/GlyphClassesView'
+} from '@/features/common/openTypeFeatures/utils/featureAuthoring'
+import { listWorkspaceFeatures } from '@/features/featureWorkspace/workspaceFeatureModel'
+import { WorkspacePreviewHome } from '@/features/featureWorkspace/WorkspacePreviewHome'
+import { KernPairView } from '@/features/featureWorkspace/KernPairView'
+import { FeatureIndexView } from '@/features/featureWorkspace/FeatureIndexView'
+import { FeatureDetailView } from '@/features/featureWorkspace/FeatureDetailView'
+import { GlyphClassesView } from '@/features/featureWorkspace/GlyphClassesView'
 
 type WorkspaceView =
   | { kind: 'home' }

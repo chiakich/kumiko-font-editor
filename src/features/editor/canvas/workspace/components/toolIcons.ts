@@ -9,7 +9,7 @@ import {
   Circle,
   Ruler,
 } from 'iconoir-react'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
 
 type ToolIcon = typeof CursorPointer
 

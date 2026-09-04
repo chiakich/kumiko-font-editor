@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
 
 import opentype from 'opentype.js'
-import { buildRadarReferenceDataFromOpenTypeFont } from 'src/lib/qualityCheck/openTypeReferenceResiduals'
-import { getEnclosureCharacterSet } from 'src/lib/qualityCheck/semanticStructure'
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
+import { buildRadarReferenceDataFromOpenTypeFont } from '@/lib/qualityCheck/openTypeReferenceResiduals'
+import { getEnclosureCharacterSet } from '@/lib/qualityCheck/semanticStructure'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
 
 interface BuildReferenceResidualMessage {
   type: 'build-reference-residual'

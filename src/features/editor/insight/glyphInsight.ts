@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import type { RadarGlyphEvaluation } from 'src/lib/qualityCheck/qualityRadar'
-import type { StructureBaseline } from 'src/lib/qualityCheck/structureMetrics'
-import type { StructureRuler } from 'src/lib/qualityCheck/structureRuler'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import type { RadarGlyphEvaluation } from '@/lib/qualityCheck/qualityRadar'
+import type { StructureBaseline } from '@/lib/qualityCheck/structureMetrics'
+import type { StructureRuler } from '@/lib/qualityCheck/structureRuler'
 
 /**
  * 編輯頁的單字品質洞察：母體基準（Worker、節流重算）是凍結的尺，

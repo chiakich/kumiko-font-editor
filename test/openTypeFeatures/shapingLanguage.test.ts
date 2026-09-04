@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { listShapingLanguageOptions } from 'src/features/common/projectControl/fontSettings/features/utils/shapingLanguage'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import { listShapingLanguageOptions } from '@/features/common/openTypeFeatures/utils/shapingLanguage'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 const state = (systems: Array<[string, string]>) =>
   ({

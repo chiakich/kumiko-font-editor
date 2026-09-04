@@ -1,9 +1,9 @@
-import type { GlyphData } from 'src/store'
+import type { GlyphData } from '@/domain'
 import {
   hasDrawableGlyphContent,
   isKnownBlankGlyph,
-} from 'src/lib/glyph/glyphBlankness'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/glyph/glyphBlankness'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 export interface CharsetCoverageInput {
   id: string

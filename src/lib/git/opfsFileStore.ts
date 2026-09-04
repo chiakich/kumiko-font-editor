@@ -4,7 +4,7 @@ import {
   normalizeStorePath,
   type FileStore,
   type FileStoreEntry,
-} from 'src/lib/git/fileStore'
+} from '@/lib/git/fileStore'
 
 const segmentsOf = (path: string) =>
   normalizeStorePath(path).split('/').filter(Boolean)

@@ -1,16 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { loadPyodide } from 'pyodide'
-import { buildExportSfntBuffer } from 'src/lib/fontFormats/fontBinaryFormat'
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import { synthesizeKerningFea } from 'src/lib/openTypeFeatures/synthesizeKerning'
-import { shapeTextWithHarfBuzz } from 'src/lib/openTypeFeatures/shapeTextWithHarfBuzz'
-import type { GlyphData } from 'src/store'
-import type {
-  Rule,
-  OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures/types'
+import { buildExportSfntBuffer } from '@/lib/fontFormats/fontBinaryFormat'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import { synthesizeKerningFea } from '@/lib/openTypeFeatures/synthesizeKerning'
+import { shapeTextWithHarfBuzz } from '@/lib/openTypeFeatures/shapeTextWithHarfBuzz'
+import type { GlyphData } from '@/domain'
+import type { Rule, OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
 
 // CJK-scale regression: the preview/export pipeline must survive a font with
 // thousands of glyphs, a large kerning set, and a large substitution feature.

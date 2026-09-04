@@ -3,12 +3,12 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
+} from '@/features/editor/tools/BaseTool'
 import {
   asyncEventIterator,
   constrainHorizontalVerticalDiagonal,
-} from 'src/features/editor/tools/toolPrimitives'
-import { glyphRulerSegments, type Vec } from 'src/font/powerRuler'
+} from '@/features/editor/tools/toolPrimitives'
+import { glyphRulerSegments, type Vec } from '@/font/powerRuler'
 
 // Snap distance (screen px) within which a click jumps to the contour normal.
 const SNAP_SCREEN_DISTANCE = 8

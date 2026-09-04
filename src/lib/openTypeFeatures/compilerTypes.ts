@@ -1,5 +1,5 @@
-import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures/types'
-import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
+import type { FeatureDiagnostic } from '@/lib/openTypeFeatures/types'
+import type { GeneratedFeaSourceMap } from '@/lib/openTypeFeatures/feaAst'
 
 export type OpenTypeCompilerBackend =
   | 'not-configured'

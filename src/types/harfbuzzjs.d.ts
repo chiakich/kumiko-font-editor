@@ -17,7 +17,7 @@ declare module 'harfbuzzjs/hb.js' {
 }
 
 declare module 'harfbuzzjs/hbjs.js' {
-  import type { HarfBuzzRuntime } from 'src/lib/openTypeFeatures/harfbuzzRuntime'
+  import type { HarfBuzzRuntime } from '@/lib/openTypeFeatures/harfbuzzRuntime'
   import type { HarfBuzzModule } from 'harfbuzzjs/hb.js'
 
   const createHarfBuzzJsRuntime: (module: HarfBuzzModule) => HarfBuzzRuntime

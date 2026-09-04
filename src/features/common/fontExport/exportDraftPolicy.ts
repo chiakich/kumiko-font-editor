@@ -1,4 +1,4 @@
-import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
+import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
 
 export const canUseCanonicalUfoZipExport = (
   sourceFormat: ProjectSourceFormat | null | undefined

@@ -6,9 +6,9 @@ vi.mock('paper', () => ({ default: {}, paper: {} }))
 
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { KernPairView } from 'src/features/featureWorkspace/KernPairView'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { useStore } from 'src/store'
+import { KernPairView } from '@/features/featureWorkspace/KernPairView'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { useStore } from '@/store'
 import { makeFontData } from '../openTypeFeatures/openTypeFeatureTestHelpers'
 import { renderWithProviders } from './renderWithProviders'
 

@@ -1,10 +1,10 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
 import type {
   FeatureDiagnostic,
   GdefState,
   GlyphClass,
   LigatureCaret,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 interface GdefParseResult {
   gdef: GdefState

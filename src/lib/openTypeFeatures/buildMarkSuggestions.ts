@@ -1,5 +1,5 @@
-import { makeRuleId } from 'src/lib/openTypeFeatures/ids'
-import { createLookupSuggestion } from 'src/lib/openTypeFeatures/autoFeatureLookup'
+import { makeRuleId } from '@/lib/openTypeFeatures/ids'
+import { createLookupSuggestion } from '@/lib/openTypeFeatures/autoFeatureLookup'
 import type {
   AnchorPoint,
   AutoFeatureSuggestion,
@@ -7,9 +7,9 @@ import type {
   MarkToBaseRule,
   MarkToMarkRule,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData, GlyphAnchor, GlyphData } from 'src/store/types'
-import { activeLayer } from 'src/store/glyphLayer'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData, GlyphAnchor, GlyphData } from '@/domain'
+import { activeLayer } from '@/domain/glyphLayer'
 
 interface NamedAnchor {
   glyph: string

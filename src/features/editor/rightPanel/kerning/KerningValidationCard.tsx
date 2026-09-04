@@ -6,9 +6,10 @@ import {
   getMasterKerningPairs,
   validateKerning,
   type KerningValidationIssueKind,
-} from 'src/lib/kerning/resolveKerning'
-import { useStore, type FontData } from 'src/store'
-import { KerningCard } from 'src/features/editor/rightPanel/kerning/KerningPairInspector'
+} from '@/lib/kerning/resolveKerning'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
+import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 const ISSUE_LABEL_KEYS: Record<KerningValidationIssueKind, string> = {
   'empty-group': 'editor.kerningIssueEmptyGroup',

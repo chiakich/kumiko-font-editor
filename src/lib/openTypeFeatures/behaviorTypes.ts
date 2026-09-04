@@ -1,4 +1,4 @@
-import type { PairPositioningRule, Rule } from 'src/lib/openTypeFeatures/types'
+import type { PairPositioningRule, Rule } from '@/lib/openTypeFeatures/types'
 
 export type CombinationBehaviorType =
   | 'standardLigature'

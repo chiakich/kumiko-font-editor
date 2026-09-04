@@ -3,9 +3,9 @@ import {
   addRuleToFeature,
   createFeature,
   deleteLookupRule,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+} from '@/features/common/openTypeFeatures/utils/featureAuthoring'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 
 describe('featureAuthoring', () => {
   it('creates a manual feature once and returns the existing one after', () => {

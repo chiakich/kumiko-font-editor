@@ -19,14 +19,14 @@ import {
   Substract,
   Union,
 } from 'iconoir-react'
-import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
-import { SteppedNumberInput } from 'src/features/common/transform/components/SteppedNumberInput'
-import { OriginPicker } from 'src/features/common/transform/components/TransformPanelSections'
+import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
+import { SteppedNumberInput } from '@/features/common/transform/components/SteppedNumberInput'
+import { OriginPicker } from '@/features/common/transform/components/TransformPanelSections'
 import type {
   AlignTarget,
   TransformField,
   TransformOrigin,
-} from 'src/features/common/transform/utils/transformGeometry'
+} from '@/features/common/transform/utils/transformGeometry'
 import { useTranslation } from 'react-i18next'
 
 interface BoundsFieldsProps {

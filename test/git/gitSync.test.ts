@@ -8,18 +8,18 @@ import {
   syncWorktreeFromProject,
   stageWorktreePaths,
   commitWorktree,
-} from 'src/lib/git/worktree'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
+} from '@/lib/git/worktree'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
 import {
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
   saveKumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import { createMemoryFileStore } from './memoryFileStore'
-import type { FileStore } from 'src/lib/git/fileStore'
-import type { FontData } from 'src/store'
+import type { FileStore } from '@/lib/git/fileStore'
+import type { FontData } from '@/domain'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)
@@ -28,8 +28,8 @@ vi.stubGlobal('self', { location: { origin: 'https://kumiko.test' } })
 
 const fetchRemoteBranch = vi.fn()
 
-vi.mock('src/lib/git/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('src/lib/git/remote')>()
+vi.mock('@/lib/git/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/git/remote')>()
   return {
     ...actual,
     fetchRemoteBranch: (input: unknown) => fetchRemoteBranch(input),
@@ -44,7 +44,7 @@ const {
   markGitCommitSynced,
   readRemoteUfoFolders,
   switchGitProjectBranch,
-} = await import('src/lib/git/gitSync')
+} = await import('@/lib/git/gitSync')
 
 const makeFontData = (width: number): FontData => ({
   glyphOrder: ['A'],

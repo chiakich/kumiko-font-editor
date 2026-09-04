@@ -4,12 +4,12 @@ import type {
   GlyphLayerData,
   PathData,
   PathNode,
-} from 'src/store'
+} from '@/domain'
 // Leaf modules rather than the src/store barrel: see the note in ufoFormat.
-import { getGlyphLayer } from 'src/store/glyphLayer'
-import { isOffCurveNode } from 'src/store/glyphGeometry'
-import { isHanGlyph } from 'src/lib/qualityCheck/hanClassification'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+import { getGlyphLayer } from '@/domain/glyphLayer'
+import { isOffCurveNode } from '@/domain/glyphGeometry'
+import { isHanGlyph } from '@/lib/qualityCheck/hanClassification'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 export type QualityScope = 'changed' | 'current' | 'selected' | 'font'
 export type QualityIssueSeverity = 'blocking' | 'warning' | 'info'

@@ -12,8 +12,8 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { GitBranch } from 'iconoir-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { GitHubForkStatus } from 'src/lib/github/githubAuth'
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
+import type { GitHubForkStatus } from '@/lib/github/githubAuth'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
 
 export interface ProjectVersionMenuProps {
   activeTarget: GitHubSyncTarget | null

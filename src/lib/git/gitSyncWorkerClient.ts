@@ -4,12 +4,13 @@ import type {
   GitSyncReport,
   GitSyncTarget,
   switchGitProjectBranch,
-} from 'src/lib/git/gitSync'
-import type { GitCommitAuthor } from 'src/lib/git/worktree'
+} from '@/lib/git/gitSync'
+import type { GitCommitAuthor } from '@/lib/git/worktree'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 type ApplyRemoteResult = Awaited<ReturnType<typeof applyGitRemoteChanges>>
 type SwitchBranchResult = Awaited<ReturnType<typeof switchGitProjectBranch>>
@@ -46,76 +47,30 @@ type WorkerResponse =
   | SwitchBranchResponse
   | ErrorResponse
 
-interface PendingRequest {
-  resolve: (value: never) => void
-  reject: (error: Error) => void
-}
-
-let workerInstance: Worker | null = null
-const pendingRequests = new Map<string, PendingRequest>()
-let requestCounter = 0
-
-const createRequestId = () => `git-sync-report-${(requestCounter += 1)}`
-
-const getWorker = () => {
-  if (!workerInstance) {
-    workerInstance = new Worker(
-      new URL('../../workers/gitSyncWorker.ts', import.meta.url),
-      { type: 'module' }
-    )
-    workerInstance.addEventListener(
-      'message',
-      (event: MessageEvent<WorkerResponse>) => {
-        const requestId = event.data?.payload?.requestId
-        const pending = requestId ? pendingRequests.get(requestId) : undefined
-        if (!requestId || !pending) {
-          return
-        }
-        pendingRequests.delete(requestId)
-        if (event.data.type === 'git-sync-report-success') {
-          pending.resolve(event.data.payload.report as never)
-          return
-        }
-        if (
-          event.data.type === 'git-commit-success' ||
-          event.data.type === 'git-apply-success' ||
-          event.data.type === 'git-switch-branch-success'
-        ) {
-          pending.resolve(event.data.payload.result as never)
-          return
-        }
-        pending.reject(new Error(event.data.payload.message))
-      }
-    )
-    workerInstance.addEventListener('error', (event) => {
-      const error = new Error(event.message || 'git 同步 worker 失敗。')
-      workerInstance?.terminate()
-      workerInstance = null
-      for (const pending of pendingRequests.values()) {
-        pending.reject(error)
-      }
-      pendingRequests.clear()
-    })
-  }
-  return workerInstance
-}
+const client = createWorkerRpcClient<WorkerResponse, string>({
+  createWorker: () =>
+    new Worker(new URL('../../workers/gitSyncWorker.ts', import.meta.url), {
+      type: 'module',
+    }),
+  createRequestId: (sequence) => `git-sync-request-${sequence}`,
+  getRequestId: (response) => response.payload?.requestId,
+  toOutcome: (response) => {
+    if (response.type === 'git-sync-report-success') {
+      return { status: 'success', value: response.payload.report }
+    }
+    if (response.type === 'git-sync-error') {
+      return { status: 'error', error: new Error(response.payload.message) }
+    }
+    return { status: 'success', value: response.payload.result }
+  },
+  workerErrorMessage: 'git sync worker failed.',
+})
 
 const request = <T>(type: string, payload: Record<string, unknown>) =>
-  new Promise<T>((resolve, reject) => {
-    const requestId = createRequestId()
-    pendingRequests.set(requestId, {
-      resolve: resolve as (value: never) => void,
-      reject,
-    })
-    try {
-      getWorker().postMessage({ type, payload: { requestId, ...payload } })
-    } catch (error) {
-      pendingRequests.delete(requestId)
-      reject(
-        error instanceof Error ? error : new Error('無法啟動 git 同步 worker。')
-      )
-    }
-  })
+  client.request<T>((requestId) => ({
+    type,
+    payload: { requestId, ...payload },
+  }))
 
 // The report hashes only dirty entities on its normal path, but fetching and
 // walking the remote tree can still be substantial for a CJK-scale font. Keep

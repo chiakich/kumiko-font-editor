@@ -6,9 +6,9 @@ import {
   filterGlyphsByOverviewSearch,
   getGlyphOverviewTree,
   type GlyphOverviewTreeNode,
-} from 'src/lib/glyph/glyphOverview'
-import type { GlyphData, GlyphHint } from 'src/store'
-import { normalizeGlyphToLayers } from 'src/store'
+} from '@/lib/glyph/glyphOverview'
+import type { GlyphData, GlyphHint } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const makeGlyph = (input: {
   anchors?: string[]

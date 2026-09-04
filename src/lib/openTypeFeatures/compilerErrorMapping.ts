@@ -1,6 +1,6 @@
-import { makeDiagnostic } from 'src/lib/openTypeFeatures/diagnostics'
-import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
-import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures/types'
+import { makeDiagnostic } from '@/lib/openTypeFeatures/diagnostics'
+import type { GeneratedFeaSourceMap } from '@/lib/openTypeFeatures/feaAst'
+import type { FeatureDiagnostic } from '@/lib/openTypeFeatures/types'
 
 type DiagnosticTarget = FeatureDiagnostic['target']
 

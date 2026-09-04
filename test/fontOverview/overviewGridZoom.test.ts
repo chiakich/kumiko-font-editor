@@ -5,7 +5,7 @@ import {
   MIN_OVERVIEW_GRID_SIZE_PX,
   overviewGridSizeUnitToPx,
   parseOverviewGridSizeInput,
-} from 'src/features/fontOverview/utils/overviewGridZoom'
+} from '@/features/fontOverview/utils/overviewGridZoom'
 
 describe('overview grid zoom', () => {
   it('parses bare numbers as px and explicit pt as pt', () => {

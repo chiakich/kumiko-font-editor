@@ -1,19 +1,19 @@
 import {
   createLookupSuggestion,
   makeSingleSubstitutionRule,
-} from 'src/lib/openTypeFeatures/autoFeatureLookup'
+} from '@/lib/openTypeFeatures/autoFeatureLookup'
 import {
   getGlyphBaseName,
   getGlyphSuffix,
   isLowercaseGlyph,
   isUppercaseGlyph,
-} from 'src/lib/openTypeFeatures/glyphNames'
+} from '@/lib/openTypeFeatures/glyphNames'
 import type {
   AutoFeatureSuggestion,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData, GlyphData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData, GlyphData } from '@/domain'
 
 const featureForSuffix = (suffix: string) => {
   if (/^\.ss\d\d$/.test(suffix)) return suffix.slice(1)

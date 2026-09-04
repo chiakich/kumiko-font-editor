@@ -9,15 +9,12 @@ import {
 } from '@chakra-ui/react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { NativeSelect } from '@/components/ui/native-select'
-import type {
-  DevelopmentStatusDefinition,
-  FontProjectSettings,
-} from 'src/store'
-import { NumberField } from 'src/features/common/projectControl/fontSettings/components/fields'
+import type { DevelopmentStatusDefinition, FontProjectSettings } from '@/domain'
+import { NumberField } from '@/features/common/projectControl/fontSettings/components/fields'
 import {
   parseInteger,
   parseNumber,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
+} from '@/features/common/projectControl/fontSettings/utils/model'
 import { useTranslation } from 'react-i18next'
 
 interface FontOtherTabProps {

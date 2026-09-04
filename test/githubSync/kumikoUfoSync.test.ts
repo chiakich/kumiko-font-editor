@@ -12,24 +12,24 @@ import {
   markKumikoGitHubCommitSynced,
   markKumikoUfoExportClean,
   prepareKumikoGitHubCommit,
-} from 'src/lib/github/sync/kumikoUfoSync'
-import { parseDesignspace } from 'src/lib/fontFormats/designspace'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
+} from '@/lib/github/sync/kumikoUfoSync'
+import { parseDesignspace } from '@/lib/fontFormats/designspace'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
 import {
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
   saveKumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
-import type { FontData } from 'src/store'
-import type { ProjectSyncReport } from 'src/lib/github/sync/types'
+} from '@/lib/project/kumikoProjectPersistence'
+import type { FontData } from '@/domain'
+import type { ProjectSyncReport } from '@/lib/github/sync/types'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)
 vi.stubGlobal('Node', window.Node)
 
-vi.mock('src/lib/github/githubImport', () => ({
+vi.mock('@/lib/github/githubImport', () => ({
   fetchGitHubArchiveSnapshot: vi.fn(async () => ({
     archiveRoot: 'owner-repo',
     resolvedRef: 'main',
@@ -66,7 +66,7 @@ vi.mock('src/lib/github/githubImport', () => ({
   })),
 }))
 
-vi.mock('src/lib/github/sync/remoteTree', () => ({
+vi.mock('@/lib/github/sync/remoteTree', () => ({
   fetchRemoteTree: vi.fn(async () => ({
     commitSha: 'remote-head',
     truncated: false,
@@ -502,7 +502,7 @@ describe('Kumiko GitHub UFO sync', () => {
   })
 
   it('reports remote font-level file changes', async () => {
-    const { fetchRemoteTree } = await import('src/lib/github/sync/remoteTree')
+    const { fetchRemoteTree } = await import('@/lib/github/sync/remoteTree')
     vi.mocked(fetchRemoteTree).mockResolvedValueOnce({
       commitSha: 'remote-head',
       truncated: false,
@@ -552,7 +552,7 @@ describe('Kumiko GitHub UFO sync', () => {
   })
 
   it('flags a font-level file as conflicted when both sides moved', async () => {
-    const { fetchRemoteTree } = await import('src/lib/github/sync/remoteTree')
+    const { fetchRemoteTree } = await import('@/lib/github/sync/remoteTree')
     vi.mocked(fetchRemoteTree).mockResolvedValueOnce({
       commitSha: 'remote-head',
       truncated: false,
@@ -659,7 +659,7 @@ describe('Kumiko GitHub UFO sync', () => {
   })
 
   it('adopts the remote baseline for masters recorded before the split', async () => {
-    const { fetchRemoteTree } = await import('src/lib/github/sync/remoteTree')
+    const { fetchRemoteTree } = await import('@/lib/github/sync/remoteTree')
     vi.mocked(fetchRemoteTree).mockResolvedValueOnce({
       commitSha: 'remote-head',
       truncated: false,
@@ -829,7 +829,7 @@ describe('Kumiko GitHub UFO sync', () => {
 
   it('applies remote font-level changes to canonical project fields', async () => {
     const { fetchGitHubArchiveSnapshot } =
-      await import('src/lib/github/githubImport')
+      await import('@/lib/github/githubImport')
     vi.mocked(fetchGitHubArchiveSnapshot).mockResolvedValueOnce({
       archiveRoot: 'owner-repo',
       resolvedRef: 'main',

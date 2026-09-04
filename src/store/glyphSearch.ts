@@ -1,12 +1,7 @@
-import type {
-  FontData,
-  GlobalState,
-  OverviewSearchOptionsState,
-} from 'src/store/types'
-import {
-  DEFAULT_OVERVIEW_SEARCH_FIELDS,
-  filterGlyphsByOverviewSearch,
-} from 'src/lib/glyph/glyphOverviewFilters'
+import type { FontData } from '@/domain'
+import type { GlobalState, OverviewSearchOptionsState } from '@/store/types'
+import { filterGlyphsByOverviewSearch } from '@/lib/glyph/overviewSearch'
+import { DEFAULT_OVERVIEW_SEARCH_FIELDS } from '@/lib/glyph/overviewTypes'
 
 export const DEFAULT_OVERVIEW_SEARCH_OPTIONS = {
   fields: DEFAULT_OVERVIEW_SEARCH_FIELDS,

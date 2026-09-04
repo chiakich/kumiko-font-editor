@@ -12,16 +12,16 @@ import { NativeSelect } from '@/components/ui/native-select'
 import { Plus } from 'iconoir-react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RuleTreeEditor } from 'src/features/fontOverview/components/OverviewCustomFilterModal/RuleTreeEditor'
+import { RuleTreeEditor } from '@/features/fontOverview/components/OverviewCustomFilterModal/RuleTreeEditor'
 import type {
   OverviewCustomFilterMode,
   OverviewCustomFilterRule,
   OverviewCustomFilterSort,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 import type {
   OverviewCustomFilterDraft,
   RuleConditionUpdater,
-} from 'src/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
+} from '@/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
 
 interface AdvancedFilterFieldsProps {
   addGroup: (groupId: string | null) => void

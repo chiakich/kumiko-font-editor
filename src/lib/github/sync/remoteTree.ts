@@ -1,4 +1,4 @@
-import type { RemoteTreeSnapshot } from 'src/lib/github/sync/types'
+import type { RemoteTreeSnapshot } from '@/lib/github/sync/types'
 
 interface RemoteTreeResponse {
   commitSha?: string

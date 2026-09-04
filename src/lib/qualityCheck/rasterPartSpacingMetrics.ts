@@ -1,11 +1,11 @@
 import type {
   PartSpacingMetrics,
   SemanticPartLayout,
-} from 'src/lib/qualityCheck/partSpacingMetrics'
+} from '@/lib/qualityCheck/partSpacingMetrics'
 import type {
   GeometryBounds,
   GeometryPoint,
-} from 'src/lib/qualityCheck/polygonGeometry'
+} from '@/lib/qualityCheck/polygonGeometry'
 
 const MASK_SIZE = 128
 const MIN_INTERFACE_SAMPLES = 12

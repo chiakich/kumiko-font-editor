@@ -1,13 +1,13 @@
 import {
   findSfntTable,
   readSfntTableDirectory,
-} from 'src/lib/openTypeFeatures/binaryReader'
+} from '@/lib/openTypeFeatures/binaryReader'
 import {
   parseFeatureVariations,
   parseFvarAxisTags,
-} from 'src/lib/openTypeFeatures/featureVariationsParser'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { createCompiledTableSourceSection } from 'src/lib/openTypeFeatures/featureSourceSections'
+} from '@/lib/openTypeFeatures/featureVariationsParser'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { createCompiledTableSourceSection } from '@/lib/openTypeFeatures/featureSourceSections'
 import {
   createLookupProvenance,
   parseLayoutTableInventory,
@@ -15,18 +15,18 @@ import {
   type LayoutLanguageInventory,
   type LayoutLookupInventory,
   type LayoutTableInventory,
-} from 'src/lib/openTypeFeatures/layoutTableInventory'
-import { parseNameTableStrings } from 'src/lib/openTypeFeatures/nameTableParser'
+} from '@/lib/openTypeFeatures/layoutTableInventory'
+import { parseNameTableStrings } from '@/lib/openTypeFeatures/nameTableParser'
 import {
   parseGsubLookupRules,
   type GsubRuleParseResult,
-} from 'src/lib/openTypeFeatures/gsubRuleParser'
+} from '@/lib/openTypeFeatures/gsubRuleParser'
 import {
   parseGposLookupRules,
   type GposRuleParseResult,
-} from 'src/lib/openTypeFeatures/gposRuleParser'
-import { parseGdefTable } from 'src/lib/openTypeFeatures/gdefParser'
-import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
+} from '@/lib/openTypeFeatures/gposRuleParser'
+import { parseGdefTable } from '@/lib/openTypeFeatures/gdefParser'
+import { toStableIdPart } from '@/lib/openTypeFeatures/ids'
 import type {
   FeatureDiagnostic,
   FeatureEntry,
@@ -45,7 +45,7 @@ import type {
   MarkClass,
   OpenTypeFeaturesState,
   UnsupportedLookup,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 interface ParsedLookupState {
   lookup: LayoutLookupInventory

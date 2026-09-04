@@ -3,9 +3,10 @@ import { memo, useMemo } from 'react'
 import {
   buildGlyphPreviewData,
   getGlyphDisplayCharacter,
-} from 'src/lib/glyph/glyphOverview'
-import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
-import { useStore, type GlyphData } from 'src/store'
+} from '@/lib/glyph/glyphOverview'
+import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
+import type { GlyphData } from '@/domain'
+import { useStore } from '@/store'
 
 interface GlyphPreviewProps {
   glyph: GlyphData

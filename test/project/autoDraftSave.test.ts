@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   AUTO_DRAFT_SAVE_DELAY_MS,
   shouldBlockBeforeUnload,
-} from 'src/hooks/useAutoDraftSave'
-import type { PersistenceQueueState } from 'src/store'
+} from '@/hooks/useAutoDraftSave'
+import type { PersistenceQueueState } from '@/store'
 
 const makeQueue = (
   update: Partial<PersistenceQueueState> = {}

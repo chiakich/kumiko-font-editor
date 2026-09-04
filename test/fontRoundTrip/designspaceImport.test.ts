@@ -8,7 +8,7 @@ import {
   designspaceToExportInstances,
   designspaceToFontAxes,
   serializeDesignspace,
-} from 'src/lib/fontFormats/designspace'
+} from '@/lib/fontFormats/designspace'
 import {
   buildMultiMasterFontData,
   importUfoWorkspaceEntries,
@@ -16,12 +16,12 @@ import {
   resolveSourceRefs,
   resolveDefaultSourceRef,
   type UfoWorkspaceEntry,
-} from 'src/lib/fontFormats/ufoFormat'
-import { getGlyphLayer } from 'src/store/glyphLayer'
+} from '@/lib/fontFormats/ufoFormat'
+import { getGlyphLayer } from '@/domain/glyphLayer'
 import type {
   UfoGlyphRecord,
   UfoMetadataRecord,
-} from 'src/lib/fontFormats/ufoTypes'
+} from '@/lib/fontFormats/ufoTypes'
 import { exportCanonicalFontDataAsUfoZip } from './canonicalUfoExportTestUtils'
 
 const testWindow = new Window()

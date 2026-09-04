@@ -12,26 +12,26 @@ import {
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { GitHubForkStatus, GitHubViewer } from 'src/lib/github/githubAuth'
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
-import type { QualitySummary } from 'src/lib/qualityCheck/qualityLint'
-import { GitHubSyncSectionContainer } from 'src/features/common/glyphInspector/components/GitHubSyncSection'
+import type { GitHubForkStatus, GitHubViewer } from '@/lib/github/githubAuth'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
+import type { QualitySummary } from '@/lib/qualityCheck/qualityLint'
+import { GitHubSyncSectionContainer } from '@/features/common/glyphInspector/components/GitHubSyncSection'
 import {
   ChangeReceipt,
   type ReceiptFilter,
   type ReceiptStamp,
-} from 'src/features/common/glyphInspector/components/ChangeReceipt'
+} from '@/features/common/glyphInspector/components/ChangeReceipt'
 import {
   FirstContributionAction,
   FirstContributionPanel,
   type FirstContributionStage,
-} from 'src/features/common/glyphInspector/components/gitFlow/FirstContributionPanel'
+} from '@/features/common/glyphInspector/components/gitFlow/FirstContributionPanel'
 import {
   SubmitWorkbench,
   type WorkbenchProposal,
   type WorkbenchState,
-} from 'src/features/common/glyphInspector/components/gitFlow/SubmitWorkbench'
-import type { ChangeReceipt as ChangeReceiptModel } from 'src/features/common/glyphInspector/utils/changeReceipt'
+} from '@/features/common/glyphInspector/components/gitFlow/SubmitWorkbench'
+import type { ChangeReceipt as ChangeReceiptModel } from '@/features/common/glyphInspector/utils/changeReceipt'
 
 export interface GitHubSubmitResult {
   branch: string

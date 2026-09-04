@@ -1,4 +1,4 @@
-import { splitRawFeatureTextIntoSnippets } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
+import { splitRawFeatureTextIntoSnippets } from '@/lib/openTypeFeatures/rawFeatureSnippets'
 import type {
   ClassifiedFeatureRecordRef,
   FeatureSourceOrigin,
@@ -6,7 +6,7 @@ import type {
   OpenTypeFeaturesState,
   OpenTypeTableTag,
   RawFeatureSnippet,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export const RAW_FEATURE_TEXT_SOURCE_ID = 'source_raw_feature_text'
 

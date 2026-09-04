@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 
-import { buildGlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
+import { buildGlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
 import type {
   BuildOverviewPreviewsErrorMessage,
   BuildOverviewPreviewsMessage,
   BuildOverviewPreviewsSuccessMessage,
-} from 'src/features/fontOverview/utils/overviewPreviewWorkerTypes'
+} from '@/lib/glyph/overviewPreviewWorkerTypes'
 
 const post = (
   message:

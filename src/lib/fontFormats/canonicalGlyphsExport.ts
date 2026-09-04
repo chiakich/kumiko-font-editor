@@ -2,27 +2,27 @@ import {
   serializeGlyphsFileFromGlyphBatchesToBlob,
   type GlyphsBatchSerializeResult,
   type GlyphsFormatVersion,
-} from 'src/lib/fontFormats/glyphsExport'
+} from '@/lib/fontFormats/glyphsExport'
 import {
   createGlyphsPackageDataFromGlyphBatches,
   type GlyphsPackageBatchResult,
-} from 'src/lib/fontFormats/glyphsPackage'
+} from '@/lib/fontFormats/glyphsPackage'
 import {
   kumikoGlyphRecordToGlyphData,
   kumikoRecordsToFontData,
-} from 'src/lib/project/kumikoFontDataAdapter'
+} from '@/lib/project/kumikoFontDataAdapter'
 import {
   listKumikoGlyphMetadataForProject,
   loadKumikoGlyphRecords,
   loadKumikoProjectRecord,
   loadKumikoUiValue,
   makeKumikoGlyphKey,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import {
   GLYPHS_PACKAGE_UI_KEY,
   PROJECT_METADATA_UI_KEY,
-} from 'src/lib/project/projectRepository'
-import type { FontData, GlyphData } from 'src/store'
+} from '@/lib/project/projectRepository'
+import type { FontData, GlyphData } from '@/domain'
 
 const GLYPHS_EXPORT_BATCH_SIZE = 128
 

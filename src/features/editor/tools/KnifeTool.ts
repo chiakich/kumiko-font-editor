@@ -3,18 +3,18 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
+} from '@/features/editor/tools/BaseTool'
 import {
   asyncEventIterator,
   constrainHorizontalVerticalDiagonal,
-} from 'src/features/editor/tools/toolPrimitives'
+} from '@/features/editor/tools/toolPrimitives'
 import {
-  useStore,
   activeLayer,
   isOnCurveNode,
   type PathData,
   type PathNode,
-} from 'src/store'
+} from '@/domain'
+import { useStore } from '@/store'
 
 type NodeRole = 'corner' | 'smooth' | 'offcurve'
 

@@ -1,4 +1,4 @@
-import type { GitHubForkStatus } from 'src/lib/github/githubAuth'
+import type { GitHubForkStatus } from '@/lib/github/githubAuth'
 
 export const isMissingGitHubTokenError = (message: string) =>
   /登入 GitHub/.test(message) ||

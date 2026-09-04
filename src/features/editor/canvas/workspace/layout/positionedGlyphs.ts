@@ -1,10 +1,10 @@
-import { VarPackedPath } from 'src/font/VarPackedPath'
+import { VarPackedPath } from '@/font/VarPackedPath'
 import {
   findSourceIdAtLocation,
   getGlyphMasterLayerForSource,
   isInterpolatedGlyphLocation,
-} from 'src/font/designspaceLocation'
-import { interpolateGlyphLayer } from 'src/font/glyphInterpolation'
+} from '@/font/designspaceLocation'
+import { interpolateGlyphLayer } from '@/font/glyphInterpolation'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
@@ -13,20 +13,16 @@ import {
   type FontData,
   type GlyphLayerData,
   type PathData,
-} from 'src/store'
-import type {
-  ComponentData,
-  GuidelineData,
-  PositionedGlyph,
-} from 'src/sceneView'
-import { getComponentMatrix } from 'src/lib/components/componentTransform'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+} from '@/domain'
+import type { ComponentData, GuidelineData, PositionedGlyph } from '@/sceneView'
+import { getComponentMatrix } from '@/domain/componentTransform'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
 import {
   getGlyphInkBounds,
   getTextKerningValue,
-} from 'src/features/editor/canvas/workspace/layout/textKerning'
-import { shapeGlyphRuns } from 'src/features/editor/canvas/workspace/layout/textShaping'
+} from '@/features/editor/canvas/workspace/layout/textKerning'
+import { shapeGlyphRuns } from '@/features/editor/canvas/workspace/layout/textShaping'
 
 export interface LayerGeometryCacheEntry {
   glyphId: string

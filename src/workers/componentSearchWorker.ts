@@ -1,8 +1,8 @@
 import {
   canonicalizeComponent,
   getGlyphwikiVariantMap,
-} from 'src/lib/glyph/glyphwikiVariants'
-import { unicodeHexToCharacter } from 'src/lib/project/unicode'
+} from '@/lib/glyph/glyphwikiVariants'
+import { unicodeHexToCharacter } from '@/lib/project/unicode'
 
 interface ProjectGlyphSummary {
   id: string

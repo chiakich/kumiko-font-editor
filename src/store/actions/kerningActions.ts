@@ -1,16 +1,17 @@
 import type { StateCreator } from 'zustand'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
 import {
   buildKerningGroupMaps,
   findKerningPairIndex,
   normalizeKerningSelector,
-} from 'src/lib/kerning/resolveKerning'
+} from '@/lib/kerning/resolveKerning'
 import {
   filterAllKerningPairs,
   listAllKerningPairs,
-} from 'src/lib/kerning/kerningPairSets'
-import type { GlobalState, KerningGroup, KerningPair } from 'src/store/types'
-import { markProjectDirty } from 'src/store/dirtyState'
+} from '@/lib/kerning/kerningPairSets'
+import type { KerningGroup, KerningPair } from '@/domain'
+import type { GlobalState } from '@/store/types'
+import { markProjectDirty } from '@/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

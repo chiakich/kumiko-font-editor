@@ -1,11 +1,11 @@
-import { compileFontWithFeatures } from 'src/lib/openTypeFeatures/compileFontWithFeatures'
-import { needsOpenTypeFeatureCompilationForBinaryExport } from 'src/lib/openTypeFeatures/exportPolicy'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+import { compileFontWithFeatures } from '@/lib/openTypeFeatures/openTypeFeatureCompilerWorkerClient'
+import { needsOpenTypeFeatureCompilationForBinaryExport } from '@/lib/openTypeFeatures/exportPolicy'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 import {
   synthesizeKerningFea,
   type SynthesizeKerningInput,
-} from 'src/lib/openTypeFeatures/synthesizeKerning'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/synthesizeKerning'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
 
 const DEFAULT_AFFECTED_TABLES: Array<'GSUB' | 'GPOS' | 'GDEF'> = [
   'GSUB',

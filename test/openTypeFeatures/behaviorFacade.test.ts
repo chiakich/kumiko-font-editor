@@ -17,9 +17,9 @@ import {
   upsertSpacingBehavior,
   generateFea,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import type { FontData, GlyphData } from 'src/store'
-import { getGlyphLayer, normalizeGlyphToLayers } from 'src/store'
+} from '@/lib/openTypeFeatures'
+import type { FontData, GlyphData } from '@/domain'
+import { getGlyphLayer, normalizeGlyphToLayers } from '@/domain'
 
 describe('OpenType behavior facade', () => {
   it('derives glyph-local combination rows from ligature rules', () => {

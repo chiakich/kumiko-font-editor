@@ -20,16 +20,16 @@ import {
   firstDefaultGlyphPackageGroupId,
   type DefaultGlyphPackage,
   type GlyphPackageGroup,
-} from 'src/features/fontOverview/data/defaultGlyphPackages'
+} from '@/features/fontOverview/data/defaultGlyphPackages'
 import {
   useGlyphPackageSelection,
   type GlyphPackageSelection,
-} from 'src/features/fontOverview/hooks/useGlyphPackageSelection'
-import type { CharsetCoverage } from 'src/lib/charsetCoverage'
-import type { GlyphData } from 'src/store'
+} from '@/features/fontOverview/hooks/useGlyphPackageSelection'
+import type { CharsetCoverage } from '@/lib/charsetCoverage'
+import type { GlyphData } from '@/domain'
 import { useTranslation } from 'react-i18next'
 
-export type { GlyphPackageSelection } from 'src/features/fontOverview/hooks/useGlyphPackageSelection'
+export type { GlyphPackageSelection } from '@/features/fontOverview/hooks/useGlyphPackageSelection'
 
 interface GlyphPackagePickerProps {
   glyphMap: Record<string, GlyphData>

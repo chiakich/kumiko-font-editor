@@ -210,7 +210,9 @@
     "kerningIssueMissingGlyph": "字符不存在",
     "kerningIssueDuplicateMembership": "同側重複 membership",
     "kerningIssueMissingGroupReference": "引用不存在的群組",
-    "openInFeatureWorkspace": "在特性工作區開啟"
+    "openInFeatureWorkspace": "在特性工作區開啟",
+    "unusedGlyphDeleteSaveFailed": "刪除後儲存失敗",
+    "unusedGlyphDeleteSaveFailedDescription": "字符已從目前工作階段移除，但尚未寫入本機專案。"
   },
   "fontExport": {
     "close": "關閉",
@@ -1062,7 +1064,13 @@
     "glyphPickerVariantSuffix": "變體後綴",
     "glyphPickerCreateVariant": "建立變體",
     "glyphPickerVariantExists": "此名稱已存在",
-    "contextAppliesLookups": "套用 lookup:"
+    "contextAppliesLookups": "套用 lookup:",
+    "fontSettingsTabBasics": "字型",
+    "fontSettingsTabMasters": "主版",
+    "fontSettingsTabExports": "匯出",
+    "fontSettingsTabOpenType": "OpenType",
+    "fontSettingsTabOther": "其他",
+    "fontSettingsTabSupplemental": "補充"
   },
   "settings": {
     "appearance": "外觀主題",

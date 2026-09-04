@@ -4,17 +4,17 @@ import {
   applyRemoteSnapshot,
   buildProjectSyncReport,
   type SyncConflictResolution,
-} from 'src/lib/github/sync'
+} from '@/lib/github/sync'
 import {
   listSyncDirtyKumikoGlyphIds,
   loadKumikoUiValue,
-} from 'src/lib/project/kumikoProjectPersistence'
-import { loadProjectDraftMetadata } from 'src/lib/project/projectRepository'
+} from '@/lib/project/kumikoProjectPersistence'
+import { loadProjectDraftMetadata } from '@/lib/project/projectRepository'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
-} from 'src/lib/glyph/glyphEditTimes'
-import { useStore } from 'src/store'
+} from '@/lib/glyph/glyphEditTimes'
+import { useStore } from '@/store'
 
 export const githubSyncReportQueryKey = (projectId: string | null) => [
   'githubSyncReport',

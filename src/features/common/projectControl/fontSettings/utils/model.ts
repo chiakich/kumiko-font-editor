@@ -4,7 +4,7 @@ import {
   generalFontInfoFields,
   openTypeFontInfoSettings,
   type FontInfoGeneralKey,
-} from 'src/lib/fontFormats/fontInfoSettings'
+} from '@/lib/fontFormats/fontInfoSettings'
 import type {
   FontData,
   FontExportInstance,
@@ -12,7 +12,7 @@ import type {
   FontInfoCustomDataValue,
   FontProjectSettings,
   FontSource,
-} from 'src/store'
+} from '@/domain'
 
 export type FontInfoDraft = Record<FontInfoGeneralKey, string>
 export type OpenTypeDraft = Record<string, string>

@@ -5,8 +5,8 @@ import { useState } from 'react'
 import type {
   CombinationBehaviorDraft,
   CombinationBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { CombinationBehaviorTableRow } from 'src/features/editor/rightPanel/behaviors/CombinationBehaviorTableRow'
+} from '@/lib/openTypeFeatures'
+import { CombinationBehaviorTableRow } from '@/features/editor/rightPanel/behaviors/CombinationBehaviorTableRow'
 import { useTranslation } from 'react-i18next'
 
 interface CombinationBehaviorListProps {

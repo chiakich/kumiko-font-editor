@@ -1,14 +1,14 @@
 import { Box, Grid, GridItem, Stack } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { OpenTypeDocumentWorkspace } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentWorkspace'
-import { OpenTypeOutline } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeOutline'
-import { OpenTypeStatusBar } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeStatusBar'
-import { ShapingPreviewBar } from 'src/features/common/projectControl/fontSettings/features/components/ShapingPreviewBar'
-import { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
+import { OpenTypeDocumentWorkspace } from '@/features/common/openTypeFeatures/components/OpenTypeDocumentWorkspace'
+import { OpenTypeOutline } from '@/features/common/openTypeFeatures/components/OpenTypeOutline'
+import { OpenTypeStatusBar } from '@/features/common/openTypeFeatures/components/OpenTypeStatusBar'
+import { ShapingPreviewBar } from '@/features/common/openTypeFeatures/components/ShapingPreviewBar'
+import { useShapingPreview } from '@/features/common/openTypeFeatures/hooks/useShapingPreview'
 import {
   DEFAULT_OPEN_TYPE_SELECTION,
   type OpenTypeWorkbenchSelection,
-} from 'src/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
+} from '@/features/common/openTypeFeatures/components/openTypeWorkbenchSelection'
 import {
   applyAutoFeatureSuggestion,
   buildAutoFeatureSuggestions,
@@ -22,8 +22,8 @@ import {
   type AutoFeatureSuggestion,
   type ExportPolicy,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
+} from '@/lib/openTypeFeatures'
+import type { FontData } from '@/domain'
 
 interface FontFeaturesTabProps {
   fontData: FontData | null

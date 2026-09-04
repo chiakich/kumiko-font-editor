@@ -1,4 +1,4 @@
-import type { ProjectDraftSavedMessage } from 'src/lib/project/projectBroadcast'
+import type { ProjectDraftSavedMessage } from '@/lib/project/projectBroadcast'
 
 interface ProjectBroadcastConflictState {
   isDirty: boolean

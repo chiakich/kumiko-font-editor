@@ -1,12 +1,12 @@
 import { Box, Button, Flex, HStack } from '@chakra-ui/react'
 import { NavArrowLeft, NavArrowRight } from 'iconoir-react'
 import { useTranslation } from 'react-i18next'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
-import { AVAILABLE_TOOLS } from 'src/features/editor/canvas/workspace/types'
-import { HistoryButton } from 'src/features/editor/canvas/workspace/components/HistoryButton'
-import { ToolButton } from 'src/features/editor/canvas/workspace/components/ToolButton'
-import { BrushOptions } from 'src/features/editor/canvas/workspace/components/BrushOptions'
-import type { BrushSettings } from 'src/features/editor/tools/vectorBrush'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
+import { AVAILABLE_TOOLS } from '@/features/editor/canvas/workspace/types'
+import { HistoryButton } from '@/features/editor/canvas/workspace/components/HistoryButton'
+import { ToolButton } from '@/features/editor/canvas/workspace/components/ToolButton'
+import { BrushOptions } from '@/features/editor/canvas/workspace/components/BrushOptions'
+import type { BrushSettings } from '@/features/editor/tools/vectorBrush'
 
 interface CanvasWorkspaceOverlayProps {
   activeToolId: ToolId

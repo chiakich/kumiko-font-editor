@@ -13,7 +13,7 @@ import {
 import { RadioItem } from '@/components/ui/radio'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { DesignspaceCandidate } from 'src/lib/fontFormats/adapters/ufo'
+import type { DesignspaceCandidate } from '@/lib/fontFormats/adapters/ufo'
 
 interface DesignspaceImportChoiceModalProps {
   candidates: DesignspaceCandidate[]

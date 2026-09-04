@@ -1,4 +1,4 @@
-import type { GlobalState } from 'src/store/types'
+import type { GlobalState } from '@/store/types'
 
 const markPersistenceQueued = (state: GlobalState) => {
   state.isDirty = true

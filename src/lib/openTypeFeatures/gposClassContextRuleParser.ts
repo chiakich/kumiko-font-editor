@@ -1,18 +1,18 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
 import {
   makeImportedGlyphClass,
   readClassDefGlyphIds,
   readCoverageGlyphIds,
   resolveGlyphNames,
-} from 'src/lib/openTypeFeatures/gposBinaryStructures'
-import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+} from '@/lib/openTypeFeatures/gposBinaryStructures'
+import type { LayoutLookupInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import type {
   ContextInput,
   ContextualRule,
   GlyphClass,
   GlyphSelector,
   SourceProvenance,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 interface ParsedContextPositioningSubtable {
   rules: ContextualRule[]

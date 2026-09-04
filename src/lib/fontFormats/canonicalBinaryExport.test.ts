@@ -8,7 +8,7 @@ import type {
   FontExportInstance,
   GlyphData,
   PathNode,
-} from 'src/store'
+} from '@/domain'
 
 const on = (x: number, y: number, id: string): PathNode => ({
   id,

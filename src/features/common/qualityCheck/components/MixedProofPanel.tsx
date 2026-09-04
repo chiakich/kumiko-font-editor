@@ -1,16 +1,16 @@
 import { Box, Button, HStack, Input, Stack, Tag, Text } from '@chakra-ui/react'
 import { Switch } from '@/components/ui/switch'
 import { useMemo, useState } from 'react'
-import type { FontData, GlyphData } from 'src/store'
-import { ProofLineSvg } from 'src/features/common/qualityCheck/components/ProofLineSvg'
+import type { FontData, GlyphData } from '@/domain'
+import { ProofLineSvg } from '@/features/common/qualityCheck/components/ProofLineSvg'
 import {
   buildMixedProofText,
   buildMixedScriptMetrics,
   buildProofRun,
   getGlyphCharacter,
   mixedProofPresets,
-} from 'src/lib/qualityCheck/qualityProof'
-import type { QualityScope } from 'src/lib/qualityCheck/qualityLint'
+} from '@/lib/qualityCheck/qualityProof'
+import type { QualityScope } from '@/lib/qualityCheck/qualityLint'
 import { useTranslation } from 'react-i18next'
 
 interface MixedProofPanelProps {

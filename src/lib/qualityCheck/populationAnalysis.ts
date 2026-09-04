@@ -1,19 +1,19 @@
-import type { ResolvedFont } from 'src/lib/qualityCheck/resolvedGlyph'
-import { buildFontGeometrySamples } from 'src/lib/qualityCheck/glyphSampling'
+import type { ResolvedFont } from '@/lib/qualityCheck/resolvedGlyph'
+import { buildFontGeometrySamples } from '@/lib/qualityCheck/glyphSampling'
 import {
   buildStructureBaseline,
   type StructureBaseline,
-} from 'src/lib/qualityCheck/structureMetrics'
+} from '@/lib/qualityCheck/structureMetrics'
 import {
   buildStructureRuler,
   type StructureRuler,
-} from 'src/lib/qualityCheck/structureRuler'
+} from '@/lib/qualityCheck/structureRuler'
 import {
   computeRadarFromSamples,
   type RadarReferenceData,
   type RadarAnalysis,
-} from 'src/lib/qualityCheck/qualityRadar'
-import type { SemanticPartLayout } from 'src/lib/qualityCheck/partSpacingMetrics'
+} from '@/lib/qualityCheck/qualityRadar'
+import type { SemanticPartLayout } from '@/lib/qualityCheck/partSpacingMetrics'
 
 /**
  * 母體分析：整套字體唯一的重計算點。一次 flatten 取樣後，

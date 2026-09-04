@@ -2,90 +2,36 @@ import { useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { temporal, type TemporalState } from 'zundo'
-import type { GlobalState } from 'src/store/types'
+import type { GlobalState } from '@/store/types'
 import {
   DEFAULT_OVERVIEW_SEARCH_OPTIONS,
   IDS_DICTIONARY,
-} from 'src/store/glyphSearch'
-import { loadAppOverviewCustomFilters } from 'src/lib/preferences/appPreferences'
-import { buildUiActions } from 'src/store/actions/uiActions'
-import { buildGlyphActions } from 'src/store/actions/glyphActions'
-import { buildPathActions } from 'src/store/actions/pathActions'
-import { buildProjectActions } from 'src/store/actions/projectActions'
-import { buildBehaviorActions } from 'src/store/actions/behaviorActions'
-import { buildKerningActions } from 'src/store/actions/kerningActions'
+} from '@/store/glyphSearch'
+import { loadAppOverviewCustomFilters } from '@/lib/preferences/appPreferences'
+import { buildUiActions } from '@/store/actions/uiActions'
+import { buildGlyphActions } from '@/store/actions/glyphActions'
+import { buildPathActions } from '@/store/actions/pathActions'
+import { buildProjectActions } from '@/store/actions/projectActions'
+import { buildBehaviorActions } from '@/store/actions/behaviorActions'
+import { buildKerningActions } from '@/store/actions/kerningActions'
 import {
   areTemporalTrackedStatesEqual,
   partializeTemporalState,
-} from 'src/store/temporalSnapshot'
+} from '@/store/temporalSnapshot'
 
-export {
-  getGlyphLayer,
-  getActiveLayer,
-  activeLayer,
-  ensureActiveLayer,
-  setGlyphActiveLayer,
-  withActiveLayer,
-  getActiveLayerId,
-  normalizeGlyphToLayers,
-} from 'src/store/glyphLayer'
-export {
-  createOffCurveNode,
-  createOnCurveNode,
-  getEffectiveNodeType,
-  getNodeSegmentType,
-  getNodeType,
-  isOffCurveNode,
-  isOnCurveNode,
-  isPathEndpointNode,
-  setNodeSegmentType,
-  setNodeType,
-} from 'src/store/glyphGeometry'
-export { deterministicStringify } from 'src/store/deterministicStringify'
 export type {
-  FontData,
-  FontAxes,
-  FontAxis,
-  FontExportInstance,
-  FontInfo,
-  FontInfoCustomDataValue,
-  FontProjectSettings,
-  FontSource,
-  GlyphAnchor,
-  GlyphComponentRef,
-  GlyphCustomData,
-  GlyphData,
-  GlyphGuideline,
-  GlyphHint,
-  GlyphImage,
-  GlyphLayerData,
-  GlyphLayerContent,
-  GlyphMetrics,
-  GlyphSourceData,
-  GlyphVerticalMetrics,
-  KerningGroup,
-  KerningPair,
-  KumikoColor,
   GlobalState,
-  CrossAxisMapping,
-  DevelopmentStatusDefinition,
-  NodeType,
-  OnCurveNodeType,
   OpenTypeFeaturesState,
   OverviewCustomFilter,
   OverviewSearchOptionsState,
   OverviewGroupByState,
-  PathData,
-  PathNode,
-  PathNodeKind,
-  PathSegmentType,
   PersistenceQueueState,
   PersistenceStatus,
   SelectedNodeRef,
   SelectedSegmentState,
   ViewportState,
   WorkspaceView,
-} from 'src/store/types'
+} from '@/store/types'
 
 const initialState = {
   fontData: null,

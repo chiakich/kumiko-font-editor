@@ -4,16 +4,16 @@ import {
   extractGlyphsFontMasterFields,
   getGlyphsFormatVersion,
   type GlyphsDocument,
-} from 'src/lib/fontFormats/glyphsDocument'
-import { buildFontDataFromGlyphsDocument } from 'src/lib/fontFormats/glyphsImport'
+} from '@/lib/fontFormats/glyphsDocument'
+import { buildFontDataFromGlyphsDocument } from '@/lib/fontFormats/glyphsImport'
 import {
   readGlyphsPackageFromFiles,
   type GlyphsPackageData,
-} from 'src/lib/fontFormats/glyphsPackage'
-import { parseOpenStep } from 'src/lib/fontFormats/openstepParser'
-import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
-import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
-import type { FontData } from 'src/store'
+} from '@/lib/fontFormats/glyphsPackage'
+import { parseOpenStep } from '@/lib/fontFormats/openstepParser'
+import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
+import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
+import type { FontData } from '@/domain'
 
 export interface ImportedGlyphsProject {
   projectId: string

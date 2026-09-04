@@ -1,13 +1,13 @@
-import { RAW_FEATURE_TEXT_SOURCE_ID } from 'src/lib/openTypeFeatures/featureSourceSections'
+import { RAW_FEATURE_TEXT_SOURCE_ID } from '@/lib/openTypeFeatures/featureSourceSections'
 import type {
   FeatureOrigin,
   GdefState,
   GlyphClass,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 import {
   splitGlyphList,
   splitStatements,
-} from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
+} from '@/lib/openTypeFeatures/rawFeatureTextUtils'
 
 export const glyphsForGdefClassToken = (
   token: string,

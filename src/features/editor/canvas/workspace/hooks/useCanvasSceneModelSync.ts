@@ -1,22 +1,22 @@
 import { useEffect, useMemo, type RefObject } from 'react'
-import type { CanvasController, PositionedGlyph } from 'src/sceneView'
-import { SceneController } from 'src/features/editor/tools'
-import { useGlyphInsight } from 'src/features/editor/insight/glyphInsight'
-import { buildStructureGuideModel } from 'src/features/editor/insight/structureGuideModel'
-import { consumePendingEditorViewportRect } from 'src/features/editor/pendingEditorViewport'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
-import { VarPackedPath } from 'src/font/VarPackedPath'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
-import { buildReferenceCharPath } from 'src/lib/referenceFont/referenceFontStore'
-import { parsePointSelection } from 'src/lib/glyph/glyphSelection'
-import { buildSelectionTransformBounds } from 'src/features/editor/tools/PointerTool/transform'
+import type { CanvasController, PositionedGlyph } from '@/sceneView'
+import { SceneController } from '@/features/editor/tools'
+import { useGlyphInsight } from '@/features/editor/insight/glyphInsight'
+import { buildStructureGuideModel } from '@/features/editor/insight/structureGuideModel'
+import { consumePendingEditorViewportRect } from '@/features/common/viewTransition/pendingEditorViewport'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
+import { VarPackedPath } from '@/font/VarPackedPath'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
+import { buildReferenceCharPath } from '@/lib/referenceFont/referenceFontStore'
+import { parsePointSelection } from '@/lib/glyph/glyphSelection'
+import { buildSelectionTransformBounds } from '@/features/editor/tools/PointerTool/transform'
 import {
   getGlyphLayer,
   getNodeSegmentType,
   isOffCurveNode,
   type FontData,
   type PathData,
-} from 'src/store'
+} from '@/domain'
 
 const hexColorToRgba = (hexColor: string, opacity: number) => {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor)

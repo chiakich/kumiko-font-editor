@@ -1,1 +1,1 @@
-export { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
+export { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'

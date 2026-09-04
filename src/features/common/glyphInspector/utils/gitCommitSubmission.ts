@@ -1,6 +1,6 @@
-import { fetchGitHubCompareStatus } from 'src/lib/github/githubAuth'
-import type { GitHubForkStatus } from 'src/lib/github/githubAuth'
-import type { GitCommitAuthor } from 'src/lib/git/worktree'
+import { fetchGitHubCompareStatus } from '@/lib/github/githubAuth'
+import type { GitHubForkStatus } from '@/lib/github/githubAuth'
+import type { GitCommitAuthor } from '@/lib/git/worktree'
 
 export interface GitCommitSubmissionResult {
   headOwner: string
@@ -34,7 +34,7 @@ export const commitThroughGit = async (input: {
   }
 
   const { commitAndPushProjectInWorker } =
-    await import('src/lib/git/gitSyncWorkerClient')
+    await import('@/lib/git/gitSyncWorkerClient')
 
   const sourceRepo = input.forkStatus?.sourceRepo ?? null
   // Runs in the worker along with its bookkeeping: materializing, staging and

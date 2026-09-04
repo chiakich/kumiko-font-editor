@@ -1,6 +1,6 @@
-import { detectUfoSourceTrees } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
-import { detectGlyphsPackageSourceTrees } from 'src/lib/fontFormats/formatAdapter/glyphsPackageFormatAdapter'
-import type { FormatDetection } from 'src/lib/fontFormats/formatAdapter/types'
+import { detectUfoSourceTrees } from '@/lib/fontFormats/formatAdapter/ufoFormatAdapter'
+import { detectGlyphsPackageSourceTrees } from '@/lib/fontFormats/formatAdapter/glyphsPackageFormatAdapter'
+import type { FormatDetection } from '@/lib/fontFormats/formatAdapter/types'
 
 // One place that knows which source formats Kumiko can open. Import and sync
 // both ask here rather than testing extensions themselves.

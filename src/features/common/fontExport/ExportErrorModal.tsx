@@ -17,8 +17,8 @@ import { useMemo, type WheelEvent } from 'react'
 import {
   formatFontExportErrorReport,
   type FontExportErrorReport,
-} from 'src/features/common/fontExport/exportErrorReport'
-import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures'
+} from '@/features/common/fontExport/exportErrorReport'
+import type { FeatureDiagnostic } from '@/lib/openTypeFeatures'
 
 interface ExportErrorModalProps {
   report: FontExportErrorReport | null

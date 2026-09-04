@@ -12,23 +12,23 @@ import {
 import { Tooltip } from '@/components/ui/tooltip'
 import { useCallback, useEffect, useMemo, useRef, type MouseEvent } from 'react'
 import { Minus, Plus } from 'iconoir-react'
-import { MasterSwitcher } from 'src/features/common/masterSwitcher/MasterSwitcher'
+import { MasterSwitcher } from '@/features/fontOverview/components/MasterSwitcher'
 import {
   VirtuosoGrid,
   type GridStateSnapshot,
   type ListRange,
   type VirtuosoGridHandle,
 } from 'react-virtuoso'
-import { GlyphCard } from 'src/features/fontOverview/components/GlyphCard'
+import { GlyphCard } from '@/features/fontOverview/components/GlyphCard'
 import {
   OverviewGridItem,
   OverviewGridList,
-} from 'src/features/fontOverview/components/OverviewGridComponents'
-import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
-import { useGlyphColorLabelDisplayMode } from 'src/lib/preferences/appPreferences'
-import type { GlyphData } from 'src/store'
+} from '@/features/fontOverview/components/OverviewGridComponents'
+import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
+import { useGlyphColorLabelDisplayMode } from '@/lib/preferences/appPreferences'
+import type { GlyphData } from '@/domain'
 import { useTranslation } from 'react-i18next'
-import type { OverviewGridZoomLayout } from 'src/features/fontOverview/utils/overviewGridZoom'
+import type { OverviewGridZoomLayout } from '@/features/fontOverview/utils/overviewGridZoom'
 
 interface OverviewSection {
   id: string

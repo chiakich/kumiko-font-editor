@@ -1,12 +1,12 @@
 import type {
   GlyphsDocument,
   OpenStepValue,
-} from 'src/lib/fontFormats/glyphsDocument'
-import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
+} from '@/lib/fontFormats/glyphsDocument'
+import { toStableIdPart } from '@/lib/openTypeFeatures/ids'
 import type {
   OpenTypeFeaturesState,
   RawFeatureSnippet,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 type Raw = Record<string, OpenStepValue | undefined>
 

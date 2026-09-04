@@ -1,4 +1,4 @@
-import type { EventStream, ToolEvent } from 'src/features/editor/tools/BaseTool'
+import type { EventStream, ToolEvent } from '@/features/editor/tools/BaseTool'
 
 export interface ToolPoint {
   x: number

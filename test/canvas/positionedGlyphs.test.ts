@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildPositionedGlyphs,
   type LayerGeometryCacheEntry,
-} from 'src/features/editor/canvas/workspace/layout/positionedGlyphs'
-import { normalizeGlyphToLayers } from 'src/store'
-import type { FontAxes, FontData, FontSource, GlyphData } from 'src/store'
+} from '@/features/editor/canvas/workspace/layout/positionedGlyphs'
+import { normalizeGlyphToLayers } from '@/domain'
+import type { FontAxes, FontData, FontSource, GlyphData } from '@/domain'
 
 const makeGlyph = (id: string): GlyphData =>
   normalizeGlyphToLayers({

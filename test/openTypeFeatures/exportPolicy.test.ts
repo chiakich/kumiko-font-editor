@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { createCompilerRuntimeStatus } from 'src/lib/openTypeFeatures/compilerRuntimePlan'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { createCompilerRuntimeStatus } from '@/lib/openTypeFeatures/compilerRuntimePlan'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import {
   deriveOpenTypeExportImpactItems,
   deriveOpenTypeExportWarnings,
   needsOpenTypeFeatureCompilationForBinaryExport,
   requiresDropUnsupportedConfirmation,
-} from 'src/lib/openTypeFeatures/exportPolicy'
+} from '@/lib/openTypeFeatures/exportPolicy'
 import { makeStateWithRule } from './openTypeFeatureTestHelpers'
 
 describe('OpenType binary export compiler gate', () => {

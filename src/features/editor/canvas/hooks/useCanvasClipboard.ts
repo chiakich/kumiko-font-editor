@@ -1,12 +1,13 @@
 import { useCallback } from 'react'
-import type { FontData, SelectedSegmentState } from 'src/store'
-import { useStore } from 'src/store'
+import type { FontData } from '@/domain'
+import type { SelectedSegmentState } from '@/store'
+import { useStore } from '@/store'
 import {
   buildClipboardPayloadFromSelection,
   materializeClipboardPaths,
   parseClipboardPathsText,
   serializeClipboardPathsAsSvg,
-} from 'src/features/editor/canvas/utils/clipboardPaths'
+} from '@/features/editor/canvas/utils/clipboardPaths'
 
 interface UseCanvasClipboardOptions {
   activeEditorGlyphId: string | null

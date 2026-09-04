@@ -1,9 +1,9 @@
 import {
   loadProjectDraftMetadata,
   saveProjectDraft,
-} from 'src/lib/project/projectRepository'
-import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
-import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
+} from '@/lib/project/projectRepository'
+import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
+import type { FontData, GlyphData, GlyphLayerData } from '@/domain'
 
 export interface CreatedKumikoProject {
   id: string

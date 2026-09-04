@@ -1,12 +1,12 @@
 import { Button, Tabs } from '@chakra-ui/react'
 import { TabbedModal } from '@/components/shared/TabbedModal'
-import { useState } from 'react'
-import { FontBasicsTab } from 'src/features/common/projectControl/fontSettings/components/FontBasicsTab'
-import { FontExportsTab } from 'src/features/common/projectControl/fontSettings/components/FontExportsTab'
-import { FontFeaturesTab } from 'src/features/common/projectControl/fontSettings/components/FontFeaturesTab'
-import { FontOtherTab } from 'src/features/common/projectControl/fontSettings/components/FontOtherTab'
-import { FontSourcesTab } from 'src/features/common/projectControl/fontSettings/components/FontSourcesTab'
-import { FontSupplementalTab } from 'src/features/common/projectControl/fontSettings/components/FontSupplementalTab'
+import { useMemo, useState } from 'react'
+import { FontBasicsTab } from '@/features/common/projectControl/fontSettings/components/FontBasicsTab'
+import { FontExportsTab } from '@/features/common/projectControl/fontSettings/components/FontExportsTab'
+import { FontFeaturesTab } from '@/features/common/projectControl/fontSettings/components/FontFeaturesTab'
+import { FontOtherTab } from '@/features/common/projectControl/fontSettings/components/FontOtherTab'
+import { FontSourcesTab } from '@/features/common/projectControl/fontSettings/components/FontSourcesTab'
+import { FontSupplementalTab } from '@/features/common/projectControl/fontSettings/components/FontSupplementalTab'
 import {
   buildFontInfoFromDrafts,
   getInitialSettings,
@@ -19,18 +19,18 @@ import {
   toFontInfoDraft,
   toOpenTypeDraft,
   toSourceDrafts,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
-import { defaultFontAxes } from 'src/lib/fontFormats/fontInfoSettings'
+} from '@/features/common/projectControl/fontSettings/utils/model'
+import { defaultFontAxes } from '@/lib/fontFormats/fontInfoSettings'
 import {
   createEmptyOpenTypeFeaturesState,
   createFontFingerprint,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import type {
   CrossAxisMapping,
   FontAxis,
   FontData,
   FontProjectSettings,
-} from 'src/store'
+} from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 interface FontSettingsModalProps {
@@ -41,8 +41,6 @@ interface FontSettingsModalProps {
   onSave: (update: Partial<FontData>) => void
 }
 
-const tabLabels = ['字型', '主版', '匯出', 'OpenType', '其他', '補充']
-
 export function FontSettingsModal({
   fontData,
   isOpen,
@@ -51,6 +49,17 @@ export function FontSettingsModal({
   onSave,
 }: FontSettingsModalProps) {
   const { t } = useTranslation()
+  const tabLabels = useMemo(
+    () => [
+      t('projectControl.fontSettingsTabBasics'),
+      t('projectControl.fontSettingsTabMasters'),
+      t('projectControl.fontSettingsTabExports'),
+      t('projectControl.fontSettingsTabOpenType'),
+      t('projectControl.fontSettingsTabOther'),
+      t('projectControl.fontSettingsTabSupplemental'),
+    ],
+    [t]
+  )
 
   const fontInfo = fontData?.fontInfo
   const initialAxes = fontData?.axes ?? defaultFontAxes

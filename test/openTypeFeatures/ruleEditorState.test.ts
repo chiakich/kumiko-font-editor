@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import { updateLookupRule } from '@/features/common/openTypeFeatures/utils/ruleEditorState'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 import {
   getValueRecordFieldText,
   updateValueRecordField,
-} from 'src/features/common/projectControl/fontSettings/features/utils/valueRecordState'
+} from '@/features/common/openTypeFeatures/utils/valueRecordState'
 
 describe('rule editor state helpers', () => {
   it('marks edited auto substitution rules as manual user overrides', () => {

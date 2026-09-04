@@ -1,10 +1,9 @@
 import { Box, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { VarPackedPath } from 'src/font/VarPackedPath'
-import { getPathsBounds, type Rect } from 'src/lib/components/componentAssembly'
-import { getComponentMatrix } from 'src/lib/components/componentTransform'
+import { VarPackedPath } from '@/font/VarPackedPath'
+import { getPathsBounds, type Rect } from '@/lib/components/componentAssembly'
+import { getComponentMatrix } from '@/domain/componentTransform'
 import {
-  useStore,
   activeLayer,
   getNodeSegmentType,
   isOffCurveNode,
@@ -12,7 +11,8 @@ import {
   type GlyphComponentRef,
   type PathData,
   type PathNode,
-} from 'src/store'
+} from '@/domain'
+import { useStore } from '@/store'
 import { useTranslation } from 'react-i18next'
 
 const PREVIEW_PADDING_X = 80

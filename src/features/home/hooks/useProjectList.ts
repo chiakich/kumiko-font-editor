@@ -4,10 +4,10 @@ import {
   listProjectSummaries,
   loadProjectDraftMetadata,
   renameKumikoProject,
-} from 'src/lib/project/projectRepository'
-import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
-import type { FontData } from 'src/store'
+} from '@/lib/project/projectRepository'
+import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import type { FontData } from '@/domain'
 
 export interface LoadedKumikoProject {
   id: string

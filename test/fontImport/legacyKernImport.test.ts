@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { loadPyodide } from 'pyodide'
-import { parseLegacyKernPairs } from 'src/lib/fontFormats/legacyKernImport'
+import { parseLegacyKernPairs } from '@/lib/fontFormats/legacyKernImport'
 import {
   buildExportSfntBuffer,
   importBinaryFontFile,
-} from 'src/lib/fontFormats/fontBinaryFormat'
+} from '@/lib/fontFormats/fontBinaryFormat'
 import { makeGlyph } from '../openTypeFeatures/openTypeFeatureTestHelpers'
 
 describe('parseLegacyKernPairs', () => {

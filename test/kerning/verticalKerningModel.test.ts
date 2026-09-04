@@ -1,27 +1,27 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { useStore } from 'src/store'
+import { useStore } from '@/store'
 import {
   buildUfoLibFromFontData,
   KUMIKO_VERTICAL_KERNING_LIB_KEY,
-} from 'src/lib/fontFormats/fontInfoSettings'
+} from '@/lib/fontFormats/fontInfoSettings'
 import {
   parseUfoKerning,
   parseVerticalKerningLib,
   serializeUfoKerning,
-} from 'src/lib/fontFormats/ufoKerning'
-import { resolveUfoVerticalKerningPairs } from 'src/lib/github/sync/kumikoUfoSync'
+} from '@/lib/fontFormats/ufoKerning'
+import { resolveUfoVerticalKerningPairs } from '@/lib/github/sync/kumikoUfoSync'
 import {
   getMasterKerningPairs,
   hasKerningForOrientation,
-} from 'src/lib/kerning/resolveKerning'
+} from '@/lib/kerning/resolveKerning'
 import {
   dropMasterKerningEntries,
   filterAllKerningPairs,
   listAllKerningPairs,
   seedMasterKerningEntries,
-} from 'src/lib/kerning/kerningPairSets'
-import type { KumikoProjectRecord } from 'src/lib/project/kumikoProjectTypes'
-import type { FontData, KerningPair } from 'src/store/types'
+} from '@/lib/kerning/kerningPairSets'
+import type { KumikoProjectRecord } from '@/lib/project/kumikoProjectTypes'
+import type { FontData, KerningPair } from '@/domain'
 
 const pair = (value: number): KerningPair => ({
   id: `p_${value}`,

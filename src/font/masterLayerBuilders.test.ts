@@ -3,7 +3,7 @@ import {
   buildEmptyMasterLayer,
   buildCopiedMasterLayer,
 } from './masterLayerBuilders'
-import type { FontSource, GlyphLayerData, PathNode } from 'src/store'
+import type { FontSource, GlyphLayerData, PathNode } from '@/domain'
 
 const on = (x: number, y: number, id: string): PathNode => ({
   id,

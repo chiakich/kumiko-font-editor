@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useStore } from 'src/store'
+import { useStore } from '@/store'
 import {
   getGlyphCharacter,
   getStructureBodyBox,
   isHanGlyph,
-} from 'src/lib/qualityCheck/hanClassification'
+} from '@/lib/qualityCheck/hanClassification'
 import {
   buildGlyphGeometrySample,
   type GlyphGeometrySample,
-} from 'src/lib/qualityCheck/glyphSampling'
-import { evaluateSampleAgainstRadar } from 'src/lib/qualityCheck/qualityRadar'
-import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
-import { useQualityAnalysis } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
+} from '@/lib/qualityCheck/glyphSampling'
+import { evaluateSampleAgainstRadar } from '@/lib/qualityCheck/qualityRadar'
+import { resolveFontGlyphs } from '@/lib/qualityCheck/resolvedGlyph'
+import { useQualityAnalysis } from '@/features/common/qualityCheck/hooks/useQualityAnalysis'
 import {
   GlyphInsightContext,
   idleGlyphInsight,
   type GlyphInsightValue,
-} from 'src/features/editor/insight/glyphInsight'
+} from '@/features/editor/insight/glyphInsight'
 
 const POPULATION_REFRESH_MS = 2000
 const LIVE_SAMPLE_MS = 150

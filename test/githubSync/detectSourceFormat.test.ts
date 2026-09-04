@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   detectSourceFormats,
   hasSupportedSourceFormat,
-} from 'src/lib/fontFormats/formatAdapter/detectSourceFormat'
+} from '@/lib/fontFormats/formatAdapter/detectSourceFormat'
 
 describe('source format detection', () => {
   it('finds UFO trees at the repo root', () => {

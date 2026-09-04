@@ -1,4 +1,4 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
 import {
   glyphNameForId,
   makeImportedGlyphClass,
@@ -7,21 +7,21 @@ import {
   readClassDefGlyphIds,
   readCoverageGlyphNames,
   resolveGlyphNames,
-} from 'src/lib/openTypeFeatures/gposBinaryStructures'
+} from '@/lib/openTypeFeatures/gposBinaryStructures'
 import {
   parseChainingContextPositioningFormat2,
   parseContextPositioningFormat2,
-} from 'src/lib/openTypeFeatures/gposClassContextRuleParser'
+} from '@/lib/openTypeFeatures/gposClassContextRuleParser'
 import {
   parseChainingContextPositioningFormat1,
   parseContextPositioningFormat1,
   parseContextPositioningFormat3,
-} from 'src/lib/openTypeFeatures/gposContextRuleParser'
+} from '@/lib/openTypeFeatures/gposContextRuleParser'
 import {
   isEmptyValue,
   readValueRecord,
-} from 'src/lib/openTypeFeatures/gposValueRecordParser'
-import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+} from '@/lib/openTypeFeatures/gposValueRecordParser'
+import type { LayoutLookupInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import type {
   CursivePositioningRule,
   FeatureDiagnostic,
@@ -34,7 +34,7 @@ import type {
   Rule,
   SinglePositioningRule,
   SourceProvenance,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface GposRuleParseResult {
   rules: Rule[]

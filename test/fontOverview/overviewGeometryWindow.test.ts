@@ -3,8 +3,8 @@ import {
   collectOverviewGeometryGlyphIds,
   OVERVIEW_GEOMETRY_PRELOAD_MARGIN,
   OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY,
-} from 'src/features/fontOverview/utils/overviewGeometryWindow'
-import type { GlyphData } from 'src/store'
+} from '@/features/fontOverview/utils/overviewGeometryWindow'
+import type { GlyphData } from '@/domain'
 
 const makeGlyphs = (count: number): GlyphData[] =>
   Array.from({ length: count }, (_, index) => ({

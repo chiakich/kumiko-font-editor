@@ -1,11 +1,12 @@
 import { Button, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { useStore, type FontData } from 'src/store'
-import { KerningPairInspector } from 'src/features/editor/rightPanel/kerning/KerningPairInspector'
-import { KerningPairList } from 'src/features/editor/rightPanel/kerning/KerningPairList'
-import { KerningGroupManager } from 'src/features/editor/rightPanel/kerning/KerningGroupManager'
-import { KerningWordList } from 'src/features/editor/rightPanel/kerning/KerningWordList'
-import { KerningValidationCard } from 'src/features/editor/rightPanel/kerning/KerningValidationCard'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
+import { KerningPairInspector } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
+import { KerningPairList } from '@/features/editor/rightPanel/kerning/KerningPairList'
+import { KerningGroupManager } from '@/features/editor/rightPanel/kerning/KerningGroupManager'
+import { KerningWordList } from '@/features/editor/rightPanel/kerning/KerningWordList'
+import { KerningValidationCard } from '@/features/editor/rightPanel/kerning/KerningValidationCard'
 
 interface KerningPanelProps {
   fontData: FontData | null

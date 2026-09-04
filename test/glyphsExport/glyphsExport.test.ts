@@ -4,16 +4,16 @@ import { describe, expect, it } from 'vitest'
 import {
   createCanonicalGlyphsPackageData,
   serializeCanonicalGlyphsProjectToBlob,
-} from 'src/lib/fontFormats/canonicalGlyphsExport'
+} from '@/lib/fontFormats/canonicalGlyphsExport'
 import {
   getGlyphsExportWarnings,
   serializeGlyphsFileToBlob,
-} from 'src/lib/fontFormats/glyphsExport'
-import { createGlyphsPackageDataFromFontData } from 'src/lib/fontFormats/glyphsPackage'
-import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
-import type { FontData, GlyphData } from 'src/store'
-import { GLYPHS_LABEL_COLORS } from 'src/lib/color/kumikoColor'
+} from '@/lib/fontFormats/glyphsExport'
+import { createGlyphsPackageDataFromFontData } from '@/lib/fontFormats/glyphsPackage'
+import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
+import type { FontData, GlyphData } from '@/domain'
+import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
 
 const glyph = (id: string, name: string, unicode: string | null): GlyphData =>
   ({

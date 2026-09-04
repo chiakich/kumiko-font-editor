@@ -1,5 +1,6 @@
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
-import type { ReferenceResidualWorkerResponse } from 'src/workers/referenceResidualWorker'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
+import type { ReferenceResidualWorkerResponse } from '@/workers/referenceResidualWorker'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 export interface ReferenceResidualBuildResult {
   referenceData: RadarReferenceData
@@ -7,53 +8,34 @@ export interface ReferenceResidualBuildResult {
   entryCount: number
 }
 
-let workerInstance: Worker | null = null
-let nextRequestId = 0
-
-const getWorker = () => {
-  if (!workerInstance) {
-    workerInstance = new Worker(
+const client = createWorkerRpcClient<ReferenceResidualWorkerResponse>({
+  createWorker: () =>
+    new Worker(
       new URL('../../workers/referenceResidualWorker.ts', import.meta.url),
-      { type: 'module' }
-    )
-  }
-  return workerInstance
-}
+      {
+        type: 'module',
+      }
+    ),
+  getRequestId: (response) => response.payload.requestId,
+  toOutcome: (response) =>
+    response.type === 'reference-residual-success'
+      ? {
+          status: 'success',
+          value: {
+            referenceData: response.payload.referenceData,
+            sampleCount: response.payload.sampleCount,
+            entryCount: response.payload.entryCount,
+          } satisfies ReferenceResidualBuildResult,
+        }
+      : { status: 'error', error: new Error(response.payload.message) },
+  workerErrorMessage: 'Reference residual worker failed.',
+})
 
 export const buildReferenceResidualData = (
   fontName: string,
   fontBytes: ArrayBuffer
-): Promise<ReferenceResidualBuildResult> =>
-  new Promise((resolve, reject) => {
-    nextRequestId += 1
-    const requestId = nextRequestId
-    const worker = getWorker()
-
-    const handleMessage = (
-      event: MessageEvent<ReferenceResidualWorkerResponse>
-    ) => {
-      if (event.data.payload.requestId !== requestId) {
-        return
-      }
-      worker.removeEventListener('message', handleMessage)
-      if (event.data.type === 'reference-residual-success') {
-        resolve({
-          referenceData: event.data.payload.referenceData,
-          sampleCount: event.data.payload.sampleCount,
-          entryCount: event.data.payload.entryCount,
-        })
-      } else {
-        reject(new Error(event.data.payload.message))
-      }
-    }
-
-    worker.addEventListener('message', handleMessage)
-    worker.postMessage({
-      type: 'build-reference-residual',
-      payload: {
-        requestId,
-        fontName,
-        fontBytes,
-      },
-    })
-  })
+) =>
+  client.request<ReferenceResidualBuildResult>((requestId) => ({
+    type: 'build-reference-residual',
+    payload: { requestId, fontName, fontBytes },
+  }))

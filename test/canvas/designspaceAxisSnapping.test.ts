@@ -5,8 +5,8 @@ import {
   getAxisSourceMarkers,
   snapAxisValue,
   snapDesignspaceLocation,
-} from 'src/features/editor/canvas/workspace/utils/designspaceAxisSnapping'
-import type { FontAxis, FontSource } from 'src/store'
+} from '@/features/editor/canvas/workspace/utils/designspaceAxisSnapping'
+import type { FontAxis, FontSource } from '@/domain'
 
 const weightAxis: FontAxis = {
   name: 'Weight',

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildCurrentDraftFlushInput } from 'src/lib/project/currentDraftFlush'
-import type { FontData, PersistenceQueueState } from 'src/store'
+import { buildCurrentDraftFlushInput } from '@/store/currentDraftFlush'
+import type { FontData } from '@/domain'
+import type { PersistenceQueueState } from '@/store'
 
 const fontData = {
   glyphs: {},

@@ -4,13 +4,13 @@ export {
   BaseTool,
   type ToolEvent,
   type EventStream,
-} from 'src/features/editor/tools/BaseTool'
-export { PointerTool } from 'src/features/editor/tools/PointerTool'
-export { PenTool } from 'src/features/editor/tools/PenTool'
-export { BrushTool } from 'src/features/editor/tools/BrushTool'
-export { RectangleTool, EllipseTool } from 'src/features/editor/tools/ShapeTool'
-export { KnifeTool } from 'src/features/editor/tools/KnifeTool'
-export { PowerRulerTool } from 'src/features/editor/tools/PowerRulerTool'
-export { HandTool } from 'src/features/editor/tools/HandTool'
-export { TextTool } from 'src/features/editor/tools/TextTool'
-export { SceneController } from 'src/features/editor/tools/SceneController.ts'
+} from '@/features/editor/tools/BaseTool'
+export { PointerTool } from '@/features/editor/tools/PointerTool'
+export { PenTool } from '@/features/editor/tools/PenTool'
+export { BrushTool } from '@/features/editor/tools/BrushTool'
+export { RectangleTool, EllipseTool } from '@/features/editor/tools/ShapeTool'
+export { KnifeTool } from '@/features/editor/tools/KnifeTool'
+export { PowerRulerTool } from '@/features/editor/tools/PowerRulerTool'
+export { HandTool } from '@/features/editor/tools/HandTool'
+export { TextTool } from '@/features/editor/tools/TextTool'
+export { SceneController } from '@/features/editor/tools/SceneController.ts'

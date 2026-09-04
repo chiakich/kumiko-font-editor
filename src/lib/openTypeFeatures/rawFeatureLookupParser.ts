@@ -4,17 +4,17 @@ import type {
   LookupFlagIR,
   LookupRecord,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
-import { parsePositioningRules } from 'src/lib/openTypeFeatures/rawFeaturePositioningParser'
-import { parseSubstitutionRules } from 'src/lib/openTypeFeatures/rawFeatureSubstitutionParser'
+} from '@/lib/openTypeFeatures/types'
+import { parsePositioningRules } from '@/lib/openTypeFeatures/rawFeaturePositioningParser'
+import { parseSubstitutionRules } from '@/lib/openTypeFeatures/rawFeatureSubstitutionParser'
 import {
   selectorFromRawMarkedToken,
   splitCommaSeparatedContexts,
   splitGlyphPatternTokens,
   type InlineGlyphClassRegistrar,
   type RawSelectorContext,
-} from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
-import { splitStatements } from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
+} from '@/lib/openTypeFeatures/rawFeatureSelectorParser'
+import { splitStatements } from '@/lib/openTypeFeatures/rawFeatureTextUtils'
 
 export interface ParsedLookupStatements {
   rules: Rule[]

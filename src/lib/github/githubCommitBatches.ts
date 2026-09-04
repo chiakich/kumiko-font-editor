@@ -1,4 +1,4 @@
-import { createGitHubCommit } from 'src/lib/github/githubAuth'
+import { createGitHubCommit } from '@/lib/github/githubAuth'
 
 export interface GitHubCommitFile {
   path: string

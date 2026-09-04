@@ -3,9 +3,9 @@ import { useMemo, useSyncExternalStore } from 'react'
 import {
   getEditorViewTransitionLandingGlyphId,
   subscribeEditorViewTransitionLanding,
-} from 'src/features/editor/editorViewTransitionLandingStore'
-import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
-import { useStore } from 'src/store'
+} from '@/features/common/viewTransition/editorViewTransitionLandingStore'
+import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
+import { useStore } from '@/store'
 
 export function EditorViewTransitionLanding() {
   const fontData = useStore((state) => state.fontData)

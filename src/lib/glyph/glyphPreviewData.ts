@@ -1,8 +1,8 @@
-import { VarPackedPath } from 'src/font/VarPackedPath'
-import { getComponentMatrix } from 'src/lib/components/componentTransform'
-import { getNodeSegmentType, isOffCurveNode } from 'src/store/glyphGeometry'
-import { getActiveLayerId, getGlyphLayer } from 'src/store/glyphLayer'
-import type { GlyphData, GlyphLayerData } from 'src/store/types'
+import { VarPackedPath } from '@/font/VarPackedPath'
+import { getComponentMatrix } from '@/domain/componentTransform'
+import { getNodeSegmentType, isOffCurveNode } from '@/domain/glyphGeometry'
+import { getActiveLayerId, getGlyphLayer } from '@/domain/glyphLayer'
+import type { GlyphData, GlyphLayerData } from '@/domain'
 
 export interface GlyphPreviewShape {
   d: string

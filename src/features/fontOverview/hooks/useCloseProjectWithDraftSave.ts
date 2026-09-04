@@ -1,9 +1,9 @@
 import { toaster } from '@/components/ui/toaster'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
-import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
-import { useStore } from 'src/store'
+import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from '@/lib/project/projectUiState'
+import { useStore } from '@/store'
 
 export function useCloseProjectWithDraftSave() {
   const { t } = useTranslation()

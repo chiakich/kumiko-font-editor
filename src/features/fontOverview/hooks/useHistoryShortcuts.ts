@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
-import { useStore } from 'src/store'
+import { shouldIgnoreGlobalShortcut } from '@/features/common/keyboardShortcutTargets'
+import { useStore } from '@/store'
 
 /**
  * Wires Cmd/Ctrl+Z (undo) and Cmd/Ctrl+Shift+Z / Cmd/Ctrl+Y (redo) to the

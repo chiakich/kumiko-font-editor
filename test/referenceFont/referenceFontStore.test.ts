@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { loadReferenceFontFromBytes } from 'src/lib/referenceFont/referenceFontStore'
+import { loadReferenceFontFromBytes } from '@/lib/referenceFont/referenceFontStore'
 
 const readFixture = (path: string) => {
   const buffer = readFileSync(path)

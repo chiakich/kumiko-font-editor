@@ -14,4 +14,4 @@ export {
   type ImportedUfoWorkspace,
   type UfoImportSourceOptions,
   type UfoWorkspaceEntry,
-} from 'src/lib/fontFormats/ufoFormat'
+} from '@/lib/fontFormats/ufoFormat'

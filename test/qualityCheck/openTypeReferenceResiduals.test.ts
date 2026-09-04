@@ -1,6 +1,6 @@
 import opentype from 'opentype.js'
 import { describe, expect, it } from 'vitest'
-import { buildRadarReferenceDataFromOpenTypeFont } from 'src/lib/qualityCheck/openTypeReferenceResiduals'
+import { buildRadarReferenceDataFromOpenTypeFont } from '@/lib/qualityCheck/openTypeReferenceResiduals'
 
 const makeRectPath = (
   xMin: number,

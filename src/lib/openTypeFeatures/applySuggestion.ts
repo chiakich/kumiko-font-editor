@@ -1,11 +1,11 @@
-import { createFeatureRecordForSuggestion } from 'src/lib/openTypeFeatures/autoFeatureLookup'
+import { createFeatureRecordForSuggestion } from '@/lib/openTypeFeatures/autoFeatureLookup'
 import type {
   AutoFeatureSuggestion,
   FeatureEntry,
   GlyphClass,
   MarkClass,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 const getLocalizedEntries = (
   suggestion: AutoFeatureSuggestion

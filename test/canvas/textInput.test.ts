@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   buildGlyphIdByCharacter,
   buildTextInputCommitPlan,
-} from 'src/features/editor/canvas/workspace/layout/textInput'
-import type { FontData, GlyphData } from 'src/store'
+} from '@/features/editor/canvas/workspace/layout/textInput'
+import type { FontData, GlyphData } from '@/domain'
 
 const makeGlyph = (id: string, unicodes: string[] = []): GlyphData => ({
   id,

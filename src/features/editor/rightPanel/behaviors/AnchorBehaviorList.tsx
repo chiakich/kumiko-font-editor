@@ -5,8 +5,8 @@ import { useState } from 'react'
 import type {
   AnchorBehaviorDraft,
   AnchorBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { AnchorBehaviorTableRow } from 'src/features/editor/rightPanel/behaviors/AnchorBehaviorTableRow'
+} from '@/lib/openTypeFeatures'
+import { AnchorBehaviorTableRow } from '@/features/editor/rightPanel/behaviors/AnchorBehaviorTableRow'
 import { useTranslation } from 'react-i18next'
 
 interface AnchorBehaviorListProps {

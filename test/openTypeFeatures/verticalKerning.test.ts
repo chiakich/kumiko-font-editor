@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { loadPyodide } from 'pyodide'
-import { buildExportSfntBuffer } from 'src/lib/fontFormats/fontBinaryFormat'
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { synthesizeKerningFea } from 'src/lib/openTypeFeatures/synthesizeKerning'
-import { shapeTextWithHarfBuzz } from 'src/lib/openTypeFeatures/shapeTextWithHarfBuzz'
+import { buildExportSfntBuffer } from '@/lib/fontFormats/fontBinaryFormat'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { synthesizeKerningFea } from '@/lib/openTypeFeatures/synthesizeKerning'
+import { shapeTextWithHarfBuzz } from '@/lib/openTypeFeatures/shapeTextWithHarfBuzz'
 import { makeGlyph } from './openTypeFeatureTestHelpers'
-import type { KerningPair } from 'src/store/types'
+import type { KerningPair } from '@/domain'
 
 const pair = (
   left: string,

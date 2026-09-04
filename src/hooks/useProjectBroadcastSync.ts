@@ -1,23 +1,23 @@
 import { toaster } from '@/components/ui/toaster'
 import { useEffect } from 'react'
-import { sanitizeGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+import { sanitizeGlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import {
   listExportDirtyKumikoGlyphIds,
   loadKumikoUiValue,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import {
   loadProjectDraftMetadata,
   loadProjectGlyphGeometryClosure,
-} from 'src/lib/project/projectRepository'
+} from '@/lib/project/projectRepository'
 import {
   canMergeProjectBroadcastWhileDirty,
   projectBroadcastHasCanonicalChanges,
   shouldBlockProjectBroadcastReload,
-} from 'src/lib/project/projectBroadcastPolicy'
-import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
-import { subscribeToProjectBroadcasts } from 'src/lib/project/projectBroadcast'
-import { UFO_GLYPH_EDIT_TIMES_KEY } from 'src/lib/glyph/glyphEditTimes'
-import { useStore } from 'src/store'
+} from '@/lib/project/projectBroadcastPolicy'
+import { createProjectUiStateSnapshot } from '@/lib/project/projectUiState'
+import { subscribeToProjectBroadcasts } from '@/lib/project/projectBroadcast'
+import { UFO_GLYPH_EDIT_TIMES_KEY } from '@/lib/glyph/glyphEditTimes'
+import { useStore } from '@/store'
 
 const getOpenGlyphIds = () => {
   const state = useStore.getState()

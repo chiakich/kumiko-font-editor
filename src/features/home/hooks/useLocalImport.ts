@@ -3,10 +3,10 @@ import { toaster } from '@/components/ui/toaster'
 import {
   importLocalProjectFiles,
   listLocalUfoDesignspaceCandidates,
-} from 'src/features/home/utils/projectImport'
-import type { LoadedKumikoProject } from 'src/features/home/hooks/useProjectList'
-import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
-import type { DesignspaceCandidate } from 'src/lib/fontFormats/adapters/ufo'
+} from '@/features/home/utils/projectImport'
+import type { LoadedKumikoProject } from '@/features/home/hooks/useProjectList'
+import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
+import type { DesignspaceCandidate } from '@/lib/fontFormats/adapters/ufo'
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '未知錯誤'

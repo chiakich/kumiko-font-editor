@@ -4,7 +4,7 @@ import {
   barcodeForHash,
   type ChangeReceipt as ChangeReceiptModel,
   type ChangeReceiptLine,
-} from 'src/features/common/glyphInspector/utils/changeReceipt'
+} from '@/features/common/glyphInspector/utils/changeReceipt'
 
 export type ReceiptFilter = 'all' | 'conflict'
 

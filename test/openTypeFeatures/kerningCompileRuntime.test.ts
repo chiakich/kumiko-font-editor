@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { loadPyodide, type PyodideAPI } from 'pyodide'
 import opentype from 'opentype.js'
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { synthesizeKerningFea } from 'src/lib/openTypeFeatures/synthesizeKerning'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { synthesizeKerningFea } from '@/lib/openTypeFeatures/synthesizeKerning'
 
 const rectPath = (x: number, w: number, h = 700) => {
   const path = new opentype.Path()

@@ -1,8 +1,8 @@
-import type { GlyphData } from 'src/store'
+import type { GlyphData } from '@/domain'
 import {
   normalizeUnicodeHex,
   unicodeHexToCharacter,
-} from 'src/lib/project/unicode'
+} from '@/lib/project/unicode'
 
 export const getGlyphUnicodes = (glyph: Pick<GlyphData, 'unicodes'>) =>
   (glyph.unicodes ?? [])

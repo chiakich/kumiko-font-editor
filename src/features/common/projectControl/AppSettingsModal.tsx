@@ -5,17 +5,17 @@ import {
   saveGlyphColorLabelDisplayMode,
   useGlyphColorLabelDisplayMode,
   type GlyphColorLabelDisplayMode,
-} from 'src/lib/preferences/appPreferences'
+} from '@/lib/preferences/appPreferences'
 import {
   saveColorMode,
   useColorModePreference,
   type ColorModePreference,
-} from 'src/lib/preferences/colorMode'
+} from '@/lib/preferences/colorMode'
 import {
   languageNames,
   supportedLanguages,
   type SupportedLanguage,
-} from 'src/i18n'
+} from '@/i18n'
 import { useTranslation } from 'react-i18next'
 
 interface AppSettingsModalProps {

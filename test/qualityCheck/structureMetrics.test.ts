@@ -3,17 +3,17 @@ import {
   computeInkArea,
   flattenContour,
   getPolygonsBounds,
-} from 'src/lib/qualityCheck/polygonGeometry'
-import { flattenResolvedGlyph } from 'src/lib/qualityCheck/glyphInk'
+} from '@/lib/qualityCheck/polygonGeometry'
+import { flattenResolvedGlyph } from '@/lib/qualityCheck/glyphInk'
 import {
   getStructureBodyBox,
   isHanGlyph,
-} from 'src/lib/qualityCheck/hanClassification'
-import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
-import { buildGlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import { analyzeFontPopulation } from 'src/lib/qualityCheck/populationAnalysisAdapter'
-import type { FontData, GlyphData, PathData } from 'src/store/types'
-import { normalizeGlyphToLayers } from 'src/store'
+} from '@/lib/qualityCheck/hanClassification'
+import { resolveFontGlyphs } from '@/lib/qualityCheck/resolvedGlyph'
+import { buildGlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import { analyzeFontPopulation } from '@/lib/qualityCheck/populationAnalysisAdapter'
+import type { FontData, GlyphData, PathData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const makePath = (
   id: string,

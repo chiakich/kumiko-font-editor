@@ -14,32 +14,32 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { NativeSelect } from '@/components/ui/native-select'
 import { toaster } from '@/components/ui/toaster'
-import { useStore } from 'src/store'
-import type { FontAxis, FontData, FontSource } from 'src/store'
+import { useStore } from '@/store'
+import type { FontAxis, FontData, FontSource } from '@/domain'
 import {
   addMasterToProject,
   type AddMasterMethod,
-} from 'src/lib/project/addMasterFromBinary'
+} from '@/lib/project/addMasterFromBinary'
 import {
   parseMasterCandidates,
   type MasterCandidate,
-} from 'src/lib/project/masterImportSource'
+} from '@/lib/project/masterImportSource'
 import {
   buildImportedMasterLayer,
   createImportedGlyphIndex,
-} from 'src/font/masterFromBinary'
+} from '@/font/masterFromBinary'
 import {
   buildCopiedMasterLayer,
   buildEmptyMasterLayer,
-} from 'src/font/masterLayerBuilders'
-import { getGlyphMasterLayerForSource } from 'src/font/designspaceLocation'
-import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+} from '@/font/masterLayerBuilders'
+import { getGlyphMasterLayerForSource } from '@/font/designspaceLocation'
+import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import {
   makeId,
   parseNumber,
   type SourceDraft,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
+} from '@/features/common/projectControl/fontSettings/utils/model'
 import { useTranslation } from 'react-i18next'
 
 interface AddMasterModalProps {

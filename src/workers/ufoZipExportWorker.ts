@@ -3,11 +3,11 @@ import { Zip, ZipDeflate } from 'fflate'
 import {
   markKumikoUfoExportClean,
   type KumikoUfoExportStateUpdate,
-} from 'src/lib/github/sync/kumikoUfoSync'
+} from '@/lib/github/sync/kumikoUfoSync'
 import {
   materializeUfoTree,
   type MaterializedFile,
-} from 'src/lib/fontFormats/ufoMaterialize'
+} from '@/lib/fontFormats/ufoMaterialize'
 
 interface ZipExportRequest {
   type: 'zip-export'

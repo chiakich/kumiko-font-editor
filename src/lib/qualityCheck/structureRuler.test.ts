@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import type { StructureBodyBox } from 'src/lib/qualityCheck/hanClassification'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import type { StructureBodyBox } from '@/lib/qualityCheck/hanClassification'
 import {
   buildStructureRuler,
   isStructureRulerCharacter,
-} from 'src/lib/qualityCheck/structureRuler'
+} from '@/lib/qualityCheck/structureRuler'
 
 const bodyBox: StructureBodyBox = { top: 880, bottom: -120, unitsPerEm: 1000 }
 

@@ -3,7 +3,7 @@ import {
   compileManagedFontFeatures,
   createFontFingerprint,
   extractBinaryFeatures,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import type {
   FontData,
   FontInfo,
@@ -11,23 +11,23 @@ import type {
   PathData,
   PathNode,
   PathSegmentType,
-} from 'src/store'
+} from '@/domain'
 // Leaf module rather than the src/store barrel: see the note in ufoFormat.
 import {
   getNodeSegmentType,
   isOffCurveNode,
   isOnCurveNode,
-} from 'src/store/glyphGeometry'
-import { parseLegacyKernPairs } from 'src/lib/fontFormats/legacyKernImport'
-import { activeLayer } from 'src/store/glyphLayer'
+} from '@/domain/glyphGeometry'
+import { parseLegacyKernPairs } from '@/lib/fontFormats/legacyKernImport'
+import { activeLayer } from '@/domain/glyphLayer'
 import {
   getComponentMatrix,
   isIdentityComponentMatrix,
   type ComponentMatrix,
-} from 'src/lib/components/componentTransform'
-import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
-import { normalizeUnicodeHex } from 'src/lib/project/unicode'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/domain/componentTransform'
+import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
+import { normalizeUnicodeHex } from '@/lib/project/unicode'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 const WOFF2_WASM_URL = new URL(
   '../../node_modules/fonteditor-core/woff2/woff2.wasm',

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import {
   hasExportableFeatureText,
   selectUfoFeatureText,
-} from 'src/lib/openTypeFeatures/ufoFeatureText'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures/types'
-import type { FontData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/ufoFeatureText'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
+import type { FontData } from '@/domain'
 
 const makeFontData = (openTypeFeatures?: OpenTypeFeaturesState): FontData => ({
   glyphs: {},

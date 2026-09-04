@@ -5,8 +5,8 @@ import { useState } from 'react'
 import type {
   AlternateBehaviorDraft,
   AlternateBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { AlternateBehaviorTableRow } from 'src/features/editor/rightPanel/behaviors/AlternateBehaviorTableRow'
+} from '@/lib/openTypeFeatures'
+import { AlternateBehaviorTableRow } from '@/features/editor/rightPanel/behaviors/AlternateBehaviorTableRow'
 import { useTranslation } from 'react-i18next'
 
 interface AlternateBehaviorListProps {

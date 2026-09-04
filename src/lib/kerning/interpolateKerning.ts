@@ -1,9 +1,9 @@
-import { DiscreteVariationModel } from 'src/font/fontra-ported/discrete-variation-model'
+import { DiscreteVariationModel } from '@/font/fontra-ported/discrete-variation-model'
 import {
   mapAxesFromUserSpaceToSourceSpace,
   mapForward,
-} from 'src/font/fontra-ported/var-model'
-import { locationsMatch } from 'src/font/designspaceLocation'
+} from '@/font/fontra-ported/var-model'
+import { locationsMatch } from '@/font/designspaceLocation'
 import {
   buildKerningGroupMaps,
   getMasterKerningPairs,
@@ -11,9 +11,9 @@ import {
   type KerningGroupMaps,
   type KerningOrientation,
   type OrientedKerningSource,
-} from 'src/lib/kerning/resolveKerning'
-import type { FontData, KerningPair } from 'src/store/types'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
+} from '@/lib/kerning/resolveKerning'
+import type { FontData, KerningPair } from '@/domain'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
 
 // Group references arrive as id, name, or '@name' depending on the import
 // path; resolve them to the stable group id so the same pair matches across

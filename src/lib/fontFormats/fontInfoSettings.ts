@@ -8,7 +8,7 @@ import type {
   FontProjectSettings,
   FontSource,
   KerningPair,
-} from 'src/store'
+} from '@/domain'
 
 export const KUMIKO_AXES_LIB_KEY = 'com.kumiko.fontEditor.axes'
 export const KUMIKO_SOURCES_LIB_KEY = 'com.kumiko.fontEditor.sources'

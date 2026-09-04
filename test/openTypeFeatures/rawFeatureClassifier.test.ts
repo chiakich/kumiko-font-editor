@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
-import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
+import { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import { setRawFeatureTextSource } from '@/lib/openTypeFeatures/featureSourceSections'
+import { getRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
 
 describe('OpenType raw FEA classifier', () => {
   it('tracks raw .fea text as a formal feature source section', () => {

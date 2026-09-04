@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { canFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
-import type { FontData } from 'src/store'
+import { canFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
+import type { FontData } from '@/domain'
 
 const fontData = { glyphs: {}, glyphOrder: [] } satisfies FontData
 

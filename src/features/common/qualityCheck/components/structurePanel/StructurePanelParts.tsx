@@ -10,23 +10,23 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { NavArrowDown, NavArrowRight } from 'iconoir-react'
-import type { GlyphData } from 'src/store'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import { buildRadarAdvice } from 'src/lib/qualityCheck/radarAdvice'
+import type { GlyphData } from '@/domain'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import { buildRadarAdvice } from '@/lib/qualityCheck/radarAdvice'
 import {
   formatRadarReason,
   type RadarGlyphEvaluation,
   type RadarReason,
-} from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/qualityRadar'
 import {
   sideLabels,
   strokeTypeLabels,
   type SideDistribution,
   type StructureBaseline,
   type StructureSide,
-} from 'src/lib/qualityCheck/structureMetrics'
-import { STRUCTURE_SIDES } from 'src/features/common/qualityCheck/components/structurePanel/structurePanelConstants'
-import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
+} from '@/lib/qualityCheck/structureMetrics'
+import { STRUCTURE_SIDES } from '@/features/common/qualityCheck/components/structurePanel/structurePanelConstants'
+import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
 
 const FRAMING_FILL = 'var(--chakra-colors-pink-200)'
 const FRAMING_LINE = 'var(--chakra-colors-pink-500)'

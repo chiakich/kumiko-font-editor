@@ -1,11 +1,11 @@
-import { importBinaryFontFile } from 'src/lib/fontFormats/fontBinaryFormat'
+import { importBinaryFontFile } from '@/lib/fontFormats/fontBinaryFormat'
 import {
   importGlyphsFile,
   importGlyphsPackage,
-} from 'src/lib/fontFormats/adapters/glyphs'
-import { importUfoWorkspace } from 'src/lib/fontFormats/ufoFormat'
-import { getGlyphMasterLayerForSource } from 'src/font/designspaceLocation'
-import type { FontData, GlyphData } from 'src/store'
+} from '@/lib/fontFormats/adapters/glyphs'
+import { importUfoWorkspace } from '@/lib/fontFormats/ufoFormat'
+import { getGlyphMasterLayerForSource } from '@/font/designspaceLocation'
+import type { FontData, GlyphData } from '@/domain'
 
 const NORMALIZED_LAYER_ID = 'public.default'
 

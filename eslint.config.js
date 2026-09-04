@@ -5,6 +5,19 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
+// Layering rules; see docs/architecture.md "Enforced boundaries".
+const forbidImports = (files, patterns) => ({
+  files,
+  rules: { 'no-restricted-imports': ['error', { patterns }] },
+})
+
+const FEATURES = ['editor', 'fontOverview', 'home', 'featureWorkspace']
+
+const featuresImport = {
+  regex: '^@/features(/|$)',
+  message: 'Shared layers must not depend on src/features.',
+}
+
 export default defineConfig([
   globalIgnores(['dist', '.claude', 'vendor']),
   {
@@ -20,6 +33,99 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Tests reach sibling helpers and functions/ through ../, so the
+    // parent-relative ban is limited to src/.
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^src/',
+              message: 'Use the @/ alias instead of src/.',
+            },
+            {
+              regex: '^\\.\\./',
+              message: 'Use the @/ alias instead of parent-relative paths.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  forbidImports(
+    [
+      'src/domain/**',
+      'src/lib/**',
+      'src/font/**',
+      'src/store/**',
+      'src/hooks/**',
+      'src/design/**',
+      'src/components/**',
+    ],
+    [featuresImport]
+  ),
+  forbidImports(
+    ['src/lib/**', 'src/font/**'],
+    [
+      {
+        regex: '^@/store(/|$)',
+        message:
+          'lib and font must not depend on the store; keep the shared model in domain.',
+      },
+    ]
+  ),
+  forbidImports(
+    ['src/domain/**'],
+    [
+      {
+        regex: '^@/(store|sceneView|workers)(/|$)',
+        message: 'domain is the bottom layer; it must not import app layers.',
+      },
+      {
+        regex: '^@/lib(/|$)',
+        allowTypeImports: true,
+        message: 'domain may only take types from lib, never runtime code.',
+      },
+    ]
+  ),
+  forbidImports(
+    ['src/sceneView/**'],
+    [
+      featuresImport,
+      {
+        regex: '^@/store(/|$)',
+        message: 'sceneView must not read the store; pass data in.',
+      },
+      {
+        regex: '^(react|react-dom|@chakra-ui/|@emotion/)',
+        message: 'sceneView must stay free of React UI.',
+      },
+    ]
+  ),
+  forbidImports(['src/workers/**'], [featuresImport]),
+  forbidImports(
+    ['src/features/common/**'],
+    [
+      {
+        regex: `^@/features/(${FEATURES.join('|')})(/|$)`,
+        message: 'features/common must not depend on a specific feature.',
+      },
+    ]
+  ),
+  ...FEATURES.map((name) =>
+    forbidImports(
+      [`src/features/${name}/**`],
+      [
+        {
+          regex: `^@/features/(?!(${name}|common)(/|$))`,
+          message: `features/${name} may only import from itself and features/common.`,
+        },
+      ]
+    )
+  ),
   {
     // Code ported verbatim from fontra keeps its original dynamic typing;
     // see src/font/fontra-ported/README.md and docs/fontra-parity.md

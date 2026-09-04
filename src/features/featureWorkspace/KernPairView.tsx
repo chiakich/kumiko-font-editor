@@ -15,25 +15,21 @@ import { Virtuoso } from 'react-virtuoso'
 import {
   shapeTextWithHarfBuzz,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import {
-  useStore,
-  type FontData,
-  type KerningGroup,
-  type KerningPair,
-} from 'src/store'
+} from '@/lib/openTypeFeatures'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
+import type { FontData, KerningGroup, KerningPair } from '@/domain'
+import { useStore } from '@/store'
 import {
   getMasterKerningPairs,
   orientedKerning,
-} from 'src/lib/kerning/resolveKerning'
-import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
-import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
-import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
-import { EDITOR_RIGHT_PANEL_KERNING_TAB } from 'src/features/editor/rightPanel/rightPanelTabs'
-import { getShapingPreviewFontBuffer } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
-import { PREVIEW_GLYPH_PLACEHOLDER } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
-import type { ShapingPreviewRun } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
+} from '@/lib/kerning/resolveKerning'
+import { ShapedRunSvg } from '@/features/common/openTypeFeatures/components/ShapedRunSvg'
+import { GlyphPickerPopover } from '@/features/common/openTypeFeatures/components/GlyphPickerPopover'
+import { useOpenSpacingPairInEditor } from '@/features/common/navigation/useOpenInEditor'
+import { EDITOR_RIGHT_PANEL_KERNING_TAB } from '@/features/common/navigation/editorRightPanelTabs'
+import { getShapingPreviewFontBuffer } from '@/features/common/openTypeFeatures/utils/shapingPreviewFont'
+import { PREVIEW_GLYPH_PLACEHOLDER } from '@/features/common/openTypeFeatures/utils/shapingPreviewTokens'
+import type { ShapingPreviewRun } from '@/features/common/openTypeFeatures/hooks/useShapingPreview'
 
 interface KernPairViewProps {
   fontData: FontData

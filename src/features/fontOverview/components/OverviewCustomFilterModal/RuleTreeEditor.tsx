@@ -20,13 +20,13 @@ import type {
   OverviewCustomFilterRuleField,
   OverviewCustomFilterRuleGroup,
   OverviewCustomFilterRuleOperator,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 import {
   GLYPHS_LABEL_COLOR_KEYS,
   GLYPHS_LABEL_COLORS,
   kumikoColorToDisplayCssRgba,
-} from 'src/lib/color/kumikoColor'
-import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
+} from '@/lib/color/kumikoColor'
+import { useResolvedColorMode } from '@/lib/preferences/colorMode'
 import {
   getOperatorsForField,
   isBooleanField,
@@ -36,7 +36,7 @@ import {
   operatorNeedsValue,
   RULE_FIELDS,
   type RuleConditionUpdater,
-} from 'src/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
+} from '@/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
 
 interface RuleTreeEditorProps {
   addGroup: (groupId: string | null) => void

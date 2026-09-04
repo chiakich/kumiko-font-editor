@@ -1,11 +1,12 @@
 import {
   saveDraftSnapshotInWorker,
   saveProjectUiStateInWorker,
-} from 'src/lib/project/draftSaveWorkerClient'
-import { publishProjectDraftSaved } from 'src/lib/project/projectBroadcast'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import type { FontData, PersistenceStatus } from 'src/store'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
+} from '@/lib/project/draftSaveWorkerClient'
+import { publishProjectDraftSaved } from '@/lib/project/projectBroadcast'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import type { FontData } from '@/domain'
+import type { PersistenceStatus } from '@/lib/project/persistenceStatus'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
 
 export interface FlushPendingDraftInput {
   projectId: string

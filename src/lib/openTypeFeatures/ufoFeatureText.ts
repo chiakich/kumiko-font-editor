@@ -1,13 +1,13 @@
-import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import { hasManagedFeatureEdits } from 'src/lib/openTypeFeatures/exportPolicy'
+import { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import { hasManagedFeatureEdits } from '@/lib/openTypeFeatures/exportPolicy'
 import {
   readRawFeatureVerbatimText,
   setRawFeatureTextSource,
-} from 'src/lib/openTypeFeatures/featureSourceSections'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures/types'
-import type { FontData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/featureSourceSections'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
+import type { FontData } from '@/domain'
 
 export const hasExportableFeatureText = (
   state: OpenTypeFeaturesState | null | undefined

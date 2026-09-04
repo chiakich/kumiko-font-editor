@@ -4,4 +4,4 @@ export {
   type GitHubCommitFileInput,
   type GitHubCommitRequestInput,
   type GitHubPreparedCommit,
-} from 'src/lib/github/sync/kumikoUfoSync'
+} from '@/lib/github/sync/kumikoUfoSync'

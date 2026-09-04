@@ -4,14 +4,14 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
-import type { PathHitInfo, Point } from 'src/sceneView/SceneView'
+} from '@/features/editor/tools/BaseTool'
+import type { PathHitInfo, Point } from '@/sceneView/SceneView'
 import {
   getIndexedPointSelectionInRect,
   pointSelectionKey,
-} from 'src/lib/glyph/glyphSelection'
-import type { HitTestResult } from 'src/features/editor/tools/SceneController'
-import { useStore } from 'src/store'
+} from '@/lib/glyph/glyphSelection'
+import type { HitTestResult } from '@/features/editor/tools/hitTestResult'
+import { useStore } from '@/store'
 import {
   applyPointerSelectionMode,
   buildPointSelectionFromSelection,
@@ -22,25 +22,25 @@ import {
   isOpenContourEndpoint,
   isSameSegment,
   type PointerSelectionMode,
-} from 'src/features/editor/tools/PointerTool/selection'
+} from '@/features/editor/tools/PointerTool/selection'
 import {
   capturePointSnapshot,
   createInitialPointerDragState,
   type DragMode,
   type PointerDragState,
-} from 'src/features/editor/tools/PointerTool/state'
-import { getSnappedDelta } from 'src/features/editor/tools/PointerTool/snap'
+} from '@/features/editor/tools/PointerTool/state'
+import { getSnappedDelta } from '@/features/editor/tools/PointerTool/snap'
 import {
   buildSelectionTransformBounds,
   getTransformCursor,
   getTransformHandleAtPoint,
   getTransformScaleUpdate,
-} from 'src/features/editor/tools/PointerTool/transform'
-import { asyncEventIterator } from 'src/features/editor/tools/PointerTool/events'
+} from '@/features/editor/tools/PointerTool/transform'
+import { asyncEventIterator } from '@/features/editor/tools/PointerTool/events'
 import {
   getLinkedHandleDrag,
   getLinkedSmoothHandlePosition,
-} from 'src/features/editor/tools/PointerTool/handles'
+} from '@/features/editor/tools/PointerTool/handles'
 import {
   deformDraggedSegment,
   expandPointIndicesForMove,
@@ -48,8 +48,8 @@ import {
   invalidateGlyphPathCache,
   toggleSmoothFlag,
   updatePointPosition,
-} from 'src/features/editor/tools/PointerTool/pathEditing'
-import { commitMovedPoints } from 'src/features/editor/tools/PointerTool/commit'
+} from '@/features/editor/tools/PointerTool/pathEditing'
+import { commitMovedPoints } from '@/features/editor/tools/PointerTool/commit'
 
 export class PointerTool extends BaseTool {
   identifier = 'pointer-tool'

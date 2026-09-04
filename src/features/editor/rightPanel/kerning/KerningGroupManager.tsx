@@ -19,9 +19,10 @@ import {
 } from 'iconoir-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { findDuplicateMembershipGlyphs } from 'src/lib/kerning/resolveKerning'
-import { useStore, type FontData, type KerningGroup } from 'src/store'
-import { KerningCard } from 'src/features/editor/rightPanel/kerning/KerningPairInspector'
+import { findDuplicateMembershipGlyphs } from '@/lib/kerning/resolveKerning'
+import type { FontData, KerningGroup } from '@/domain'
+import { useStore } from '@/store'
+import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 interface KerningGroupManagerProps {
   fontData: FontData

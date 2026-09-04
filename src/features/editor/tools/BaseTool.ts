@@ -1,7 +1,7 @@
 // 編輯工具
 
-import type { CanvasController } from 'src/sceneView/CanvasController'
-import type { SceneModel } from 'src/sceneView/SceneView'
+import type { CanvasController } from '@/sceneView/CanvasController'
+import type { SceneModel } from '@/sceneView/SceneView'
 
 export interface ToolEvent {
   x: number

@@ -1,11 +1,11 @@
 import paper from 'paper'
-import type { PathData, PathNode } from 'src/store/types'
-import { isOffCurveNode, isOnCurveNode } from 'src/store/glyphGeometry'
+import type { PathData, PathNode } from '@/domain'
+import { isOffCurveNode, isOnCurveNode } from '@/domain/glyphGeometry'
 import {
   collectPaperPaths,
   paperPathToPathData,
   pathToPaperPath,
-} from 'src/lib/pathBooleanOperations'
+} from '@/lib/pathBooleanOperations'
 
 export interface OutlineOffsetOptions {
   // When on, rebuild a contour through paper.js ONLY if it self-intersects or

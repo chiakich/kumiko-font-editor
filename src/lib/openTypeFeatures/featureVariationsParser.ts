@@ -2,37 +2,14 @@ import {
   BinaryReader,
   findSfntTable,
   readSfntTableDirectory,
-} from 'src/lib/openTypeFeatures/binaryReader'
-import type { LayoutFeatureInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
-
-// Read-only summary of a GSUB/GPOS FeatureVariations table: which axis
-// regions swap which features for how many lookups. Kumiko does not
-// reconstruct these into editable rules yet — the summary keeps the data
-// visible instead of a bare "present" flag.
-export interface FeatureVariationCondition {
-  axisIndex: number
-  // Resolved from fvar when available.
-  axisTag: string | null
-  // F2Dot14 normalized axis values (-1..1).
-  min: number
-  max: number
-}
-
-export interface FeatureVariationSubstitution {
-  featureIndex: number
-  featureTag: string | null
-  alternateLookupCount: number
-}
-
-export interface FeatureVariationRecordSummary {
-  conditions: FeatureVariationCondition[]
-  substitutions: FeatureVariationSubstitution[]
-}
-
-export interface FeatureVariationsSummary {
-  table: 'GSUB' | 'GPOS'
-  records: FeatureVariationRecordSummary[]
-}
+} from '@/lib/openTypeFeatures/binaryReader'
+import type { LayoutFeatureInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
+import type {
+  FeatureVariationCondition,
+  FeatureVariationRecordSummary,
+  FeatureVariationsSummary,
+  FeatureVariationSubstitution,
+} from '@/lib/openTypeFeatures/types'
 
 const F2DOT14 = 16384
 

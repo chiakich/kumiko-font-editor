@@ -1,8 +1,8 @@
-import type { FontData } from 'src/store'
+import type { FontData } from '@/domain'
 import type {
   LookupRecord,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 export interface TextGlyphRun {
   glyphId: string

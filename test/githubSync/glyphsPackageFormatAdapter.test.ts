@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createGlyphsPackageFormatAdapter } from 'src/lib/fontFormats/formatAdapter/glyphsPackageFormatAdapter'
-import { entityKey } from 'src/lib/fontFormats/formatAdapter/types'
+import { createGlyphsPackageFormatAdapter } from '@/lib/fontFormats/formatAdapter/glyphsPackageFormatAdapter'
+import { entityKey } from '@/lib/fontFormats/formatAdapter/types'
 
 const adapter = createGlyphsPackageFormatAdapter({
   root: 'Family.glyphspackage',
