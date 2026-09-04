@@ -23,7 +23,7 @@ export { buildMarkSuggestions } from '@/lib/openTypeFeatures/buildMarkSuggestion
 export {
   compileFontWithFeatures,
   prewarmOpenTypeFeatureCompiler,
-} from '@/lib/openTypeFeatures/compileFontWithFeatures'
+} from '@/lib/openTypeFeatures/openTypeFeatureCompilerWorkerClient'
 export { compileManagedFontFeatures } from '@/lib/openTypeFeatures/compileManagedFontFeatures'
 export {
   AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS,

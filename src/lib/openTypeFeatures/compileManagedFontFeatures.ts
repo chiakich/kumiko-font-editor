@@ -1,4 +1,4 @@
-import { compileFontWithFeatures } from '@/lib/openTypeFeatures/compileFontWithFeatures'
+import { compileFontWithFeatures } from '@/lib/openTypeFeatures/openTypeFeatureCompilerWorkerClient'
 import { needsOpenTypeFeatureCompilationForBinaryExport } from '@/lib/openTypeFeatures/exportPolicy'
 import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 import {

@@ -6,7 +6,7 @@ import {
 } from '@/lib/glyph/glyphPreviewData'
 import type { GlyphData } from '@/store'
 import { createOverviewGlyphPreviewSnapshot } from '@/features/fontOverview/utils/overviewPreviewSnapshot'
-import { buildOverviewGlyphPreviews } from '@/features/fontOverview/utils/overviewPreviewWorkerClient'
+import { buildOverviewGlyphPreviews } from '@/features/fontOverview/utils/overviewGlyphPreviewWorkerClient'
 import type {
   OverviewPreviewWorkerRequest,
   OverviewPreviewWorkerResult,

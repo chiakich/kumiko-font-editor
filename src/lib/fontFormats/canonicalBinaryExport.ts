@@ -7,7 +7,7 @@ import {
   exportGlyphListAsBinary,
   type BinaryFontExportFormat,
 } from '@/lib/fontFormats/fontBinaryFormat'
-import { buildVariableFontWithFontTools } from '@/lib/fontFormats/fontToolsVariableFontExport'
+import { buildVariableFontWithFontTools } from '@/lib/fontFormats/variableFontExportWorkerClient'
 import {
   serializeDesignspace,
   type DesignspaceAxisLabelOut,

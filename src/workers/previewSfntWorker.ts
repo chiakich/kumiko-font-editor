@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { buildExportSfntBuffer } from '@/lib/fontFormats/fontBinaryFormat'
-import type { BuildSfntRequestMessage } from '@/lib/fontFormats/buildSfntInWorker'
+import type { BuildSfntRequestMessage } from '@/lib/fontFormats/previewSfntWorkerClient'
 
 // Serializing thousands of glyph outlines through opentype.js is the slow,
 // synchronous half of a preview compile; this worker keeps it off the UI

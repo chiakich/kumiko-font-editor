@@ -6,7 +6,7 @@ import {
   exportCanonicalProjectInstanceAsBinary,
   exportCanonicalProjectAsVariableOtf,
 } from '@/lib/fontFormats/canonicalBinaryExport'
-import { exportUfoAsZipBlob } from '@/lib/fontFormats/ufoZipExportClient'
+import { exportUfoAsZipBlob } from '@/lib/fontFormats/ufoZipExportWorkerClient'
 import {
   createEmptyOpenTypeFeaturesState,
   createCompilerRuntimeStatus,

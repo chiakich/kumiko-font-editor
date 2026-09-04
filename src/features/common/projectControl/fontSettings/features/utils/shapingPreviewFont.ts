@@ -1,4 +1,4 @@
-import { buildSfntInWorker } from '@/lib/fontFormats/buildSfntInWorker'
+import { buildSfntInWorker } from '@/lib/fontFormats/previewSfntWorkerClient'
 import { getBinaryExportGlyphList } from '@/lib/fontFormats/fontBinaryFormat'
 import { compileManagedFontFeatures } from '@/lib/openTypeFeatures/compileManagedFontFeatures'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
