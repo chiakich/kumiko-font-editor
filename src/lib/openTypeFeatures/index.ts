@@ -92,36 +92,48 @@ export {
   ALTERNATE_BEHAVIOR_TYPES,
   COMBINATION_BEHAVIOR_TYPE_LABELS,
   COMBINATION_BEHAVIOR_TYPES,
-  canCommitAnchorBehavior,
-  canCommitAlternateBehavior,
+} from '@/lib/openTypeFeatures/behaviorTypes'
+export {
   canCommitCombinationBehavior,
-  canCommitContextualBehavior,
-  canCommitSpacingBehavior,
-  deleteAnchorBehavior,
-  deleteAlternateBehavior,
   deleteCombinationBehavior,
-  deleteContextualBehavior,
-  deleteSpacingBehavior,
-  deriveGlyphAnchorBehaviors,
-  deriveGlyphAlternateBehaviors,
   deriveGlyphCombinationBehaviors,
-  deriveGlyphContextualBehaviors,
+  parseCombinationInput,
+  resolveCombinationFeatureTag,
+  suggestCombinationOutput,
+  upsertCombinationBehavior,
+} from '@/lib/openTypeFeatures/behaviors/combinationBehaviors'
+export {
+  canCommitAlternateBehavior,
+  deleteAlternateBehavior,
+  deriveGlyphAlternateBehaviors,
+  resolveAlternateFeatureTag,
+  suggestAlternateGlyphName,
+  upsertAlternateBehavior,
+} from '@/lib/openTypeFeatures/behaviors/alternateBehaviors'
+export {
+  canCommitSpacingBehavior,
+  deleteSpacingBehavior,
   deriveGlyphSpacingBehaviors,
+  splitSpacingClassMember,
+  upsertSpacingBehavior,
+} from '@/lib/openTypeFeatures/behaviors/spacingBehaviors'
+export {
+  canCommitContextualBehavior,
+  deleteContextualBehavior,
+  deriveGlyphContextualBehaviors,
+  upsertContextualBehavior,
+} from '@/lib/openTypeFeatures/behaviors/contextualBehaviors'
+export {
+  canCommitAnchorBehavior,
+  deleteAnchorBehavior,
+  deriveGlyphAnchorBehaviors,
+  upsertAnchorBehavior,
+} from '@/lib/openTypeFeatures/behaviors/anchorBehaviors'
+export {
   isGlyphReferencedByOpenTypeBehaviors,
   makeCompositeGlyphFromComponents,
   makeEditableGlyphCopy,
-  parseCombinationInput,
-  resolveAlternateFeatureTag,
-  resolveCombinationFeatureTag,
-  suggestAlternateGlyphName,
-  suggestCombinationOutput,
-  splitSpacingClassMember,
-  upsertAnchorBehavior,
-  upsertAlternateBehavior,
-  upsertCombinationBehavior,
-  upsertContextualBehavior,
-  upsertSpacingBehavior,
-} from '@/lib/openTypeFeatures/behaviorFacade'
+} from '@/lib/openTypeFeatures/behaviors/glyphBehaviorEdits'
 export {
   deriveOpenTypeExportImpactItems,
   deriveOpenTypeExportWarnings,
@@ -140,5 +152,5 @@ export type * from '@/lib/openTypeFeatures/compilerTypes'
 export type * from '@/lib/openTypeFeatures/exportPolicy'
 export type * from '@/lib/openTypeFeatures/importExportSummary'
 export type * from '@/lib/openTypeFeatures/sourceSectionRecords'
-export type * from '@/lib/openTypeFeatures/behaviorFacade'
+export type * from '@/lib/openTypeFeatures/behaviorTypes'
 export type * from '@/lib/openTypeFeatures/types'
