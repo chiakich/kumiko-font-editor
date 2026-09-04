@@ -3,16 +3,13 @@ import type {
   BuildOverviewPreviewsPayload,
   OverviewPreviewWorkerIncomingMessage,
   OverviewPreviewWorkerResult,
-} from '@/features/fontOverview/utils/overviewPreviewWorkerTypes'
+} from '@/lib/glyph/overviewPreviewWorkerTypes'
 import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 const client = createWorkerRpcClient<OverviewPreviewWorkerIncomingMessage>({
   createWorker: () =>
     new Worker(
-      new URL(
-        '../../../workers/overviewGlyphPreviewWorker.ts',
-        import.meta.url
-      ),
+      new URL('../../workers/overviewGlyphPreviewWorker.ts', import.meta.url),
       { type: 'module' }
     ),
   getRequestId: (response) => response.requestId,

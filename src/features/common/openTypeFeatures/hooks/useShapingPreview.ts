@@ -6,21 +6,21 @@ import {
   type ShapeTextResult,
 } from '@/lib/openTypeFeatures'
 import type { FontData } from '@/domain'
-import { getShapingPreviewFontBuffer } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
+import { getShapingPreviewFontBuffer } from '@/features/common/openTypeFeatures/utils/shapingPreviewFont'
 import {
   buildDisabledFeatureList,
   buildShapingFeatureList,
   listPreviewFeatureToggles,
   type PreviewDirection,
-} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
+} from '@/features/common/openTypeFeatures/utils/shapingPreviewModel'
 import {
   buildPlaceholderText,
   parsePreviewSegments,
-} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
+} from '@/features/common/openTypeFeatures/utils/shapingPreviewTokens'
 import {
   listShapingLanguageOptions,
   type ShapingLanguageOption,
-} from '@/features/common/projectControl/fontSettings/features/utils/shapingLanguage'
+} from '@/features/common/openTypeFeatures/utils/shapingLanguage'
 
 export type ShapingPreviewFontStatus =
   | { state: 'idle' }

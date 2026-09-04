@@ -6,12 +6,12 @@ vi.mock('paper', () => ({ default: {}, paper: {} }))
 
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FeatureRuleEditor } from '@/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
+import { FeatureRuleEditor } from '@/features/common/openTypeFeatures/components/FeatureRuleEditor'
 import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import {
   addRuleToFeature,
   createFeature,
-} from '@/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
+} from '@/features/common/openTypeFeatures/utils/featureAuthoring'
 import { renderWithProviders } from './renderWithProviders'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 

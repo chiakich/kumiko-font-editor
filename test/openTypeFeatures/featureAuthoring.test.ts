@@ -3,7 +3,7 @@ import {
   addRuleToFeature,
   createFeature,
   deleteLookupRule,
-} from '@/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
+} from '@/features/common/openTypeFeatures/utils/featureAuthoring'
 import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 

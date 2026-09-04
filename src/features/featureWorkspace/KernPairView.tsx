@@ -23,13 +23,13 @@ import {
   getMasterKerningPairs,
   orientedKerning,
 } from '@/lib/kerning/resolveKerning'
-import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
-import { GlyphPickerPopover } from '@/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
-import { useOpenSpacingPairInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
-import { EDITOR_RIGHT_PANEL_KERNING_TAB } from '@/features/editor/rightPanel/rightPanelTabs'
-import { getShapingPreviewFontBuffer } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
-import { PREVIEW_GLYPH_PLACEHOLDER } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
-import type { ShapingPreviewRun } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
+import { ShapedRunSvg } from '@/features/common/openTypeFeatures/components/ShapedRunSvg'
+import { GlyphPickerPopover } from '@/features/common/openTypeFeatures/components/GlyphPickerPopover'
+import { useOpenSpacingPairInEditor } from '@/features/common/navigation/useOpenInEditor'
+import { EDITOR_RIGHT_PANEL_KERNING_TAB } from '@/features/common/navigation/editorRightPanelTabs'
+import { getShapingPreviewFontBuffer } from '@/features/common/openTypeFeatures/utils/shapingPreviewFont'
+import { PREVIEW_GLYPH_PLACEHOLDER } from '@/features/common/openTypeFeatures/utils/shapingPreviewTokens'
+import type { ShapingPreviewRun } from '@/features/common/openTypeFeatures/hooks/useShapingPreview'
 
 interface KernPairViewProps {
   fontData: FontData

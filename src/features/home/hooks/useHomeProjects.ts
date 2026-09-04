@@ -15,7 +15,7 @@ import {
   useProjectList,
 } from '@/features/home/hooks/useProjectList'
 import { createNewBlankProject } from '@/features/home/utils/createNewProject'
-import { requestAddGlyphModalForNewProject } from '@/features/home/utils/newProjectIntent'
+import { requestAddGlyphModalForNewProject } from '@/features/common/navigation/newProjectIntent'
 import { useTranslation } from 'react-i18next'
 
 export function useHomeProjects() {

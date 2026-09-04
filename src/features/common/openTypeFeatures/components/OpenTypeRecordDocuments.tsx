@@ -1,7 +1,7 @@
-import { FeaCodeEditor } from '@/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
-import { FeatureRuleEditor } from '@/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
-import { RuleTableView } from '@/features/common/projectControl/fontSettings/features/components/RuleTableView'
-import { SubstitutionGridView } from '@/features/common/projectControl/fontSettings/features/components/SubstitutionGridView'
+import { FeaCodeEditor } from '@/features/common/openTypeFeatures/components/FeaCodeEditor'
+import { FeatureRuleEditor } from '@/features/common/openTypeFeatures/components/FeatureRuleEditor'
+import { RuleTableView } from '@/features/common/openTypeFeatures/components/RuleTableView'
+import { SubstitutionGridView } from '@/features/common/openTypeFeatures/components/SubstitutionGridView'
 import {
   Badge,
   Button,
@@ -15,7 +15,7 @@ import { useState } from 'react'
 import {
   Metric,
   SourceSectionsDocument,
-} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
+} from '@/features/common/openTypeFeatures/components/OpenTypeDocumentPrimitives'
 import {
   deriveOpenTypeSourceSectionRecords,
   findOpenTypeSourceSectionsForRecord,

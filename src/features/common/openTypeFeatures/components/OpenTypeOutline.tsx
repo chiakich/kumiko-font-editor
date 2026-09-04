@@ -14,8 +14,8 @@ import {
   isBuildSelected,
   isPrefixSelected,
   isSourceSelected,
-} from '@/features/common/projectControl/fontSettings/features/components/openTypeOutlineModel'
-import type { OpenTypeWorkbenchSelection } from '@/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
+} from '@/features/common/openTypeFeatures/components/openTypeOutlineModel'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/openTypeFeatures/components/openTypeWorkbenchSelection'
 import { useTranslation } from 'react-i18next'
 
 interface OpenTypeOutlineProps {

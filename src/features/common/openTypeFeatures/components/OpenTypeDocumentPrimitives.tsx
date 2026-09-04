@@ -1,5 +1,5 @@
 import { HStack, Stack, Text } from '@chakra-ui/react'
-import { SourceReferenceSummary } from '@/features/common/projectControl/fontSettings/features/components/SourceReferenceSummary'
+import { SourceReferenceSummary } from '@/features/common/openTypeFeatures/components/SourceReferenceSummary'
 import type { SourceSectionRecordGroup } from '@/lib/openTypeFeatures'
 
 export function WorkspaceHeader({

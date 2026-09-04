@@ -1,5 +1,5 @@
 import { Text, Field } from '@chakra-ui/react'
-import { FeaCodeEditor } from '@/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
+import { FeaCodeEditor } from '@/features/common/openTypeFeatures/components/FeaCodeEditor'
 import type {
   CompilerErrorLocation,
   GeneratedFeaSourceMap,

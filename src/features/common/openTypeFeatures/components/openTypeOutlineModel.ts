@@ -4,7 +4,7 @@ import type {
   OpenTypeFeaturesState,
   OpenTypeTableTag,
 } from '@/lib/openTypeFeatures'
-import type { OpenTypeWorkbenchSelection } from '@/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/openTypeFeatures/components/openTypeWorkbenchSelection'
 
 export function isSourceSelected(
   selected: OpenTypeWorkbenchSelection,

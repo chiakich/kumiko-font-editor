@@ -6,7 +6,7 @@ vi.mock('paper', () => ({ default: {}, paper: {} }))
 
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { GlyphPickerPopover } from '@/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
+import { GlyphPickerPopover } from '@/features/common/openTypeFeatures/components/GlyphPickerPopover'
 import type { FontData, GlyphData } from '@/domain'
 import { useStore } from '@/store'
 import { renderWithProviders } from './renderWithProviders'

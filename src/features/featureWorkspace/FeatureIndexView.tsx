@@ -21,9 +21,9 @@ import {
 import type { FontData } from '@/domain'
 import { useStore } from '@/store'
 import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
-import { AutoFeatureSuggestions } from '@/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
-import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
-import { setFeatureTagEnabled } from '@/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+import { AutoFeatureSuggestions } from '@/features/common/openTypeFeatures/components/AutoFeatureSuggestions'
+import { ShapedRunSvg } from '@/features/common/openTypeFeatures/components/ShapedRunSvg'
+import { setFeatureTagEnabled } from '@/features/common/openTypeFeatures/utils/featureEnablement'
 import { listWorkspaceFeatures } from '@/features/featureWorkspace/workspaceFeatureModel'
 import { useFeatureSpecimens } from '@/features/featureWorkspace/useFeatureSpecimens'
 

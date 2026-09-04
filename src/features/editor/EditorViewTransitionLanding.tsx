@@ -3,7 +3,7 @@ import { useMemo, useSyncExternalStore } from 'react'
 import {
   getEditorViewTransitionLandingGlyphId,
   subscribeEditorViewTransitionLanding,
-} from '@/features/editor/editorViewTransitionLandingStore'
+} from '@/features/common/viewTransition/editorViewTransitionLandingStore'
 import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
 import { useStore } from '@/store'
 

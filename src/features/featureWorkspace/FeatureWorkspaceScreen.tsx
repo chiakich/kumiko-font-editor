@@ -28,12 +28,12 @@ import {
 import { prewarmOpenTypeFeatureCompiler } from '@/lib/openTypeFeatures'
 import { useStore } from '@/store'
 import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
-import { useShapingPreview } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
-import { setFeatureTagEnabled } from '@/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+import { useShapingPreview } from '@/features/common/openTypeFeatures/hooks/useShapingPreview'
+import { setFeatureTagEnabled } from '@/features/common/openTypeFeatures/utils/featureEnablement'
 import {
   createFeature,
   VALID_FEATURE_TAG,
-} from '@/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
+} from '@/features/common/openTypeFeatures/utils/featureAuthoring'
 import { listWorkspaceFeatures } from '@/features/featureWorkspace/workspaceFeatureModel'
 import { WorkspacePreviewHome } from '@/features/featureWorkspace/WorkspacePreviewHome'
 import { KernPairView } from '@/features/featureWorkspace/KernPairView'

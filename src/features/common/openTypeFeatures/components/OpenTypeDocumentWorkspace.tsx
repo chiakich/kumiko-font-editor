@@ -1,14 +1,14 @@
 import { Stack, Text, Separator } from '@chakra-ui/react'
-import { AutoFeatureSuggestions } from '@/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
-import { ExportPolicyControl } from '@/features/common/projectControl/fontSettings/features/components/ExportPolicyControl'
-import { FeatureDiagnosticsList } from '@/features/common/projectControl/fontSettings/features/components/FeatureDiagnosticsList'
-import { GeneratedFeaPreview } from '@/features/common/projectControl/fontSettings/features/components/GeneratedFeaPreview'
-import { ImportExportOverview } from '@/features/common/projectControl/fontSettings/features/components/ImportExportOverview'
-import { WorkspaceHeader } from '@/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
+import { AutoFeatureSuggestions } from '@/features/common/openTypeFeatures/components/AutoFeatureSuggestions'
+import { ExportPolicyControl } from '@/features/common/openTypeFeatures/components/ExportPolicyControl'
+import { FeatureDiagnosticsList } from '@/features/common/openTypeFeatures/components/FeatureDiagnosticsList'
+import { GeneratedFeaPreview } from '@/features/common/openTypeFeatures/components/GeneratedFeaPreview'
+import { ImportExportOverview } from '@/features/common/openTypeFeatures/components/ImportExportOverview'
+import { WorkspaceHeader } from '@/features/common/openTypeFeatures/components/OpenTypeDocumentPrimitives'
 import {
   FeatureDocument,
   TableDocument,
-} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeRecordDocuments'
+} from '@/features/common/openTypeFeatures/components/OpenTypeRecordDocuments'
 import {
   GdefDocument,
   GlyphClassDocument,
@@ -16,9 +16,9 @@ import {
   LanguageSystemDocument,
   MarkClassDocument,
   RawFeatureTextEditor,
-} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeSourceDocuments'
-import type { OpenTypeWorkbenchSelection } from '@/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
-import { UnsupportedLookupList } from '@/features/common/projectControl/fontSettings/features/components/UnsupportedLookupList'
+} from '@/features/common/openTypeFeatures/components/OpenTypeSourceDocuments'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/openTypeFeatures/components/openTypeWorkbenchSelection'
+import { UnsupportedLookupList } from '@/features/common/openTypeFeatures/components/UnsupportedLookupList'
 import type {
   AutoFeatureSuggestion,
   CompilerErrorLocation,

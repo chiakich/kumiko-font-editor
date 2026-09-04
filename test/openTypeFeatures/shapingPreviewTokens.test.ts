@@ -3,7 +3,7 @@ import {
   buildPlaceholderText,
   parsePreviewSegments,
   PREVIEW_GLYPH_PLACEHOLDER,
-} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
+} from '@/features/common/openTypeFeatures/utils/shapingPreviewTokens'
 
 describe('preview glyph tokens', () => {
   it('parses /name tokens out of the text', () => {

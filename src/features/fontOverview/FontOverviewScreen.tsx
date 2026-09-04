@@ -20,9 +20,9 @@ import {
   buildGlyphPreviewData,
   buildGlyphPreviewFontRect,
 } from '@/lib/glyph/glyphOverview'
-import { setEditorViewTransitionLandingGlyphId } from '@/features/editor/editorViewTransitionLandingStore'
-import { setPendingEditorViewportRect } from '@/features/editor/pendingEditorViewport'
-import { preloadEditorLayout } from '@/features/editor/preloadEditorLayout'
+import { setEditorViewTransitionLandingGlyphId } from '@/features/common/viewTransition/editorViewTransitionLandingStore'
+import { setPendingEditorViewportRect } from '@/features/common/viewTransition/pendingEditorViewport'
+import { preloadEditorLayout } from '@/features/common/viewTransition/preloadEditorLayout'
 import { loadProjectGlyphGeometryClosure } from '@/lib/project/projectRepository'
 import { AddGlyphModal } from '@/features/fontOverview/components/AddGlyphModal'
 import { shouldIgnoreGlobalShortcut } from '@/features/common/keyboardShortcutTargets'
@@ -38,9 +38,9 @@ import { useCloseProjectWithDraftSave } from '@/features/fontOverview/hooks/useC
 import { useHistoryShortcuts } from '@/features/fontOverview/hooks/useHistoryShortcuts'
 import { useOverviewGridPersistence } from '@/features/fontOverview/hooks/useOverviewGridPersistence'
 import { useOverviewGlyphPreviews } from '@/features/fontOverview/hooks/useOverviewGlyphPreviews'
-import { useOverviewSections } from '@/features/fontOverview/hooks/useOverviewSections'
+import { useOverviewSections } from '@/features/common/overviewSections/useOverviewSections'
 import { useOverviewSelection } from '@/features/fontOverview/hooks/useOverviewSelection'
-import { consumeAddGlyphModalForNewProject } from '@/features/home/utils/newProjectIntent'
+import { consumeAddGlyphModalForNewProject } from '@/features/common/navigation/newProjectIntent'
 import {
   collectOverviewGeometryGlyphIds,
   collectUnloadedOverviewGeometryGlyphIds,

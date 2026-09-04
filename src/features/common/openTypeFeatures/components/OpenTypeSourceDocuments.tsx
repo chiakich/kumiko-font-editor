@@ -1,9 +1,9 @@
 import { Badge, HStack, SimpleGrid, Stack, Text, Field } from '@chakra-ui/react'
-import { FeaCodeEditor } from '@/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
+import { FeaCodeEditor } from '@/features/common/openTypeFeatures/components/FeaCodeEditor'
 import {
   Metric,
   SourceSectionsDocument,
-} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
+} from '@/features/common/openTypeFeatures/components/OpenTypeDocumentPrimitives'
 import {
   deriveOpenTypeSourceSectionRecords,
   type GlyphClass,

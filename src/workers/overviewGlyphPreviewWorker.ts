@@ -5,7 +5,7 @@ import type {
   BuildOverviewPreviewsErrorMessage,
   BuildOverviewPreviewsMessage,
   BuildOverviewPreviewsSuccessMessage,
-} from '@/features/fontOverview/utils/overviewPreviewWorkerTypes'
+} from '@/lib/glyph/overviewPreviewWorkerTypes'
 
 const post = (
   message:

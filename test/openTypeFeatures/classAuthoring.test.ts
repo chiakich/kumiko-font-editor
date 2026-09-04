@@ -5,7 +5,7 @@ import {
   deleteGlyphClass,
   sanitizeGlyphClassName,
   updateGlyphClass,
-} from '@/features/common/projectControl/fontSettings/features/utils/classAuthoring'
+} from '@/features/common/openTypeFeatures/utils/classAuthoring'
 import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'

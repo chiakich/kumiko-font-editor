@@ -5,7 +5,7 @@ import { Virtuoso } from 'react-virtuoso'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 import type { FontData } from '@/domain'
 import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
-import { useOpenGlyphInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import { useOpenGlyphInEditor } from '@/features/common/navigation/useOpenInEditor'
 
 interface SubstitutionGridViewProps {
   state: OpenTypeFeaturesState

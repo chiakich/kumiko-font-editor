@@ -12,7 +12,7 @@ import { lintGutter, setDiagnostics } from '@codemirror/lint'
 import {
   feaLanguage,
   feaSyntaxHighlighting,
-} from '@/features/common/projectControl/fontSettings/features/utils/feaLanguage'
+} from '@/features/common/openTypeFeatures/utils/feaLanguage'
 
 export interface FeaEditorDiagnostic {
   // 1-based line in the shown text.

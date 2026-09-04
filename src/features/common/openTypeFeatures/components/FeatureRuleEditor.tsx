@@ -10,11 +10,11 @@ import {
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GlyphPickerPopover } from '@/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
+import { GlyphPickerPopover } from '@/features/common/openTypeFeatures/components/GlyphPickerPopover'
 import {
   selectorToText,
   textToSelector,
-} from '@/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
+} from '@/features/common/openTypeFeatures/utils/ruleSelectorText'
 import type {
   ContextualRule,
   FeatureRecord,
@@ -30,17 +30,17 @@ import type {
   ValueRecord,
 } from '@/lib/openTypeFeatures'
 import type { FontData } from '@/domain'
-import { updateLookupRule } from '@/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
+import { updateLookupRule } from '@/features/common/openTypeFeatures/utils/ruleEditorState'
 import {
   addRuleToFeature,
   deleteLookupRule,
   type CreatableRuleKind,
-} from '@/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
+} from '@/features/common/openTypeFeatures/utils/featureAuthoring'
 import {
   getValueRecordFieldText,
   updateValueRecordField,
   type ValueRecordField,
-} from '@/features/common/projectControl/fontSettings/features/utils/valueRecordState'
+} from '@/features/common/openTypeFeatures/utils/valueRecordState'
 
 interface FeatureRuleEditorProps {
   state: OpenTypeFeaturesState

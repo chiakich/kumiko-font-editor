@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getLayoutTableSummaries } from '@/features/common/projectControl/fontSettings/features/components/openTypeOutlineModel'
+import { getLayoutTableSummaries } from '@/features/common/openTypeFeatures/components/openTypeOutlineModel'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 describe('OpenType outline model', () => {

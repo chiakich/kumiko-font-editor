@@ -26,7 +26,7 @@ import {
   type SpacingBehaviorDraft,
   type SpacingBehaviorRow,
 } from '@/lib/openTypeFeatures'
-import { useOpenSpacingPairInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import { useOpenSpacingPairInEditor } from '@/features/common/navigation/useOpenInEditor'
 import { useStore } from '@/store'
 import { useTranslation } from 'react-i18next'
 

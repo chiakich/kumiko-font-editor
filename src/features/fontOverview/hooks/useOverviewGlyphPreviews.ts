@@ -6,11 +6,11 @@ import {
 } from '@/lib/glyph/glyphPreviewData'
 import type { GlyphData } from '@/domain'
 import { createOverviewGlyphPreviewSnapshot } from '@/features/fontOverview/utils/overviewPreviewSnapshot'
-import { buildOverviewGlyphPreviews } from '@/features/fontOverview/utils/overviewGlyphPreviewWorkerClient'
+import { buildOverviewGlyphPreviews } from '@/lib/glyph/overviewGlyphPreviewWorkerClient'
 import type {
   OverviewPreviewWorkerRequest,
   OverviewPreviewWorkerResult,
-} from '@/features/fontOverview/utils/overviewPreviewWorkerTypes'
+} from '@/lib/glyph/overviewPreviewWorkerTypes'
 
 interface CachedOverviewPreview {
   cacheKey: string

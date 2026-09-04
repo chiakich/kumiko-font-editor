@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { preloadEditorLayout } from '@/features/editor/preloadEditorLayout'
+import { preloadEditorLayout } from '@/features/common/viewTransition/preloadEditorLayout'
 import { OverviewReturnHeroOverlay } from '@/features/common/viewTransition/OverviewReturnHeroOverlay'
 import { useAutoDraftSave } from '@/hooks/useAutoDraftSave'
 import { useProjectBroadcastSync } from '@/hooks/useProjectBroadcastSync'

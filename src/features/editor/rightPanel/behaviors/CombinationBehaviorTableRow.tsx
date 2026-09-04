@@ -14,7 +14,7 @@ import {
   type CombinationBehaviorRow,
   type CombinationBehaviorType,
 } from '@/lib/openTypeFeatures'
-import { useOpenGlyphInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import { useOpenGlyphInEditor } from '@/features/common/navigation/useOpenInEditor'
 import { useTranslation } from 'react-i18next'
 
 interface CombinationBehaviorTableRowProps {

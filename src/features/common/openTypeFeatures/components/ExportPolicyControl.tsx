@@ -11,7 +11,7 @@ import {
   deriveOpenTypeExportImpactItems,
   deriveOpenTypeExportWarnings,
 } from '@/lib/openTypeFeatures'
-import { ExportImpactSummary } from '@/features/common/projectControl/fontSettings/features/components/ExportImpactSummary'
+import { ExportImpactSummary } from '@/features/common/openTypeFeatures/components/ExportImpactSummary'
 import type { TFunction } from 'i18next'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'

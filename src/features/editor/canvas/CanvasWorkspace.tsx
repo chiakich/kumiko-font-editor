@@ -30,7 +30,7 @@ import { useCanvasClipboard } from '@/features/editor/canvas/hooks/useCanvasClip
 import { useCanvasKeyboardShortcuts } from '@/features/editor/canvas/hooks/useCanvasKeyboardShortcuts'
 import { useReferenceFontRestoration } from '@/features/editor/canvas/workspace/hooks/useReferenceFontRestoration'
 import { useCanvasSceneModelSync } from '@/features/editor/canvas/workspace/hooks/useCanvasSceneModelSync'
-import { useOverviewSections } from '@/features/fontOverview/hooks/useOverviewSections'
+import { useOverviewSections } from '@/features/common/overviewSections/useOverviewSections'
 import { isInterpolatedGlyphLocation } from '@/font/designspaceLocation'
 import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import { getGlyphDisplayCharacter } from '@/lib/glyph/glyphOverview'

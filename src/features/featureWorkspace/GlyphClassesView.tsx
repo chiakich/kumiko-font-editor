@@ -10,14 +10,14 @@ import {
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GlyphPickerPopover } from '@/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
+import { GlyphPickerPopover } from '@/features/common/openTypeFeatures/components/GlyphPickerPopover'
 import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
 import {
   countGlyphClassReferences,
   createGlyphClass,
   deleteGlyphClass,
   updateGlyphClass,
-} from '@/features/common/projectControl/fontSettings/features/utils/classAuthoring'
+} from '@/features/common/openTypeFeatures/utils/classAuthoring'
 import type { GlyphClass, OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 import type { FontData } from '@/domain'
 

@@ -12,7 +12,7 @@ import {
 import { Tooltip } from '@/components/ui/tooltip'
 import { useCallback, useEffect, useMemo, useRef, type MouseEvent } from 'react'
 import { Minus, Plus } from 'iconoir-react'
-import { MasterSwitcher } from '@/features/common/masterSwitcher/MasterSwitcher'
+import { MasterSwitcher } from '@/features/fontOverview/components/MasterSwitcher'
 import {
   VirtuosoGrid,
   type GridStateSnapshot,
