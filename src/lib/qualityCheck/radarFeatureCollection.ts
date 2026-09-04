@@ -4,7 +4,7 @@ import {
   strokeTypeLabels,
   type StructureSide,
 } from '@/lib/qualityCheck/structureMetrics'
-import type { RadarFeatureValue } from '@/lib/qualityCheck/qualityRadar'
+import type { RadarFeatureValue } from '@/lib/qualityCheck/radarTypes'
 
 const STRUCTURE_SIDES: StructureSide[] = ['left', 'right', 'top', 'bottom']
 const BEARING_FLOOR_RATIO = 0.01

@@ -510,6 +510,35 @@ export interface GlyphNamingConvention {
   customLocalizedRegex?: string
 }
 
+// Read-only summary of a GSUB/GPOS FeatureVariations table: which axis
+// regions swap which features for how many lookups. Kumiko does not
+// reconstruct these into editable rules yet — the summary keeps the data
+// visible instead of a bare "present" flag.
+export interface FeatureVariationCondition {
+  axisIndex: number
+  // Resolved from fvar when available.
+  axisTag: string | null
+  // F2Dot14 normalized axis values (-1..1).
+  min: number
+  max: number
+}
+
+export interface FeatureVariationSubstitution {
+  featureIndex: number
+  featureTag: string | null
+  alternateLookupCount: number
+}
+
+export interface FeatureVariationRecordSummary {
+  conditions: FeatureVariationCondition[]
+  substitutions: FeatureVariationSubstitution[]
+}
+
+export interface FeatureVariationsSummary {
+  table: 'GSUB' | 'GPOS'
+  records: FeatureVariationRecordSummary[]
+}
+
 export interface OpenTypeFeaturesState {
   irVersion: string
   fontFingerprint: FontFingerprint | null
@@ -528,7 +557,7 @@ export interface OpenTypeFeaturesState {
   // Read-only summaries of imported FeatureVariations tables (rvrn and
   // friends). Not reconstructed into editable rules; kept for display and
   // preservation awareness.
-  featureVariations?: import('@/lib/openTypeFeatures/featureVariationsParser').FeatureVariationsSummary[]
+  featureVariations?: FeatureVariationsSummary[]
   /** Raw FEA source split into per-feature / per-prefix blocks. */
   rawFeatureSnippets?: RawFeatureSnippet[]
   /**

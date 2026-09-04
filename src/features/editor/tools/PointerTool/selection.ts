@@ -1,6 +1,6 @@
 import type { PathHitInfo, Point } from '@/sceneView/SceneView'
 import { pointSelectionKey } from '@/lib/glyph/glyphSelection'
-import type { HitTestResult } from '@/features/editor/tools/SceneController'
+import type { HitTestResult } from '@/features/editor/tools/hitTestResult'
 
 export type PointerSelectionMode = 'replace' | 'add' | 'toggle'
 

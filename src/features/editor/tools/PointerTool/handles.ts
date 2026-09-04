@@ -1,5 +1,5 @@
 import type { Point } from '@/sceneView/SceneView'
-import type { HitTestResult } from '@/features/editor/tools/SceneController'
+import type { HitTestResult } from '@/features/editor/tools/hitTestResult'
 import {
   findContourBounds,
   stepContourIndex,

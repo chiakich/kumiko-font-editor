@@ -9,6 +9,7 @@ import {
   pointSelectionKey,
 } from '@/lib/glyph/glyphSelection'
 import { PointerTool } from '@/features/editor/tools/PointerTool'
+import type { HitTestResult } from '@/features/editor/tools/hitTestResult'
 import { PenTool } from '@/features/editor/tools/PenTool'
 import { BrushTool } from '@/features/editor/tools/BrushTool'
 import { HandTool } from '@/features/editor/tools/HandTool'
@@ -50,16 +51,6 @@ export interface SceneControllerOptions {
   ) => void
   onClearPreviewGlyphMetrics?: (glyphId?: string) => void
 }
-
-export type HitTestResult =
-  | { type: 'point' | 'handle'; pointIndex: number; selection: Set<string> }
-  | {
-      type: 'line-segment' | 'curve-segment'
-      pathHit: PathHitInfo
-      selection: Set<string>
-    }
-  | { type: 'contour-interior'; contourIndex: number; selection: Set<string> }
-  | { type: 'empty'; selection: Set<string> }
 
 type IndexedPoint = Point & { index: number }
 export class SceneController {

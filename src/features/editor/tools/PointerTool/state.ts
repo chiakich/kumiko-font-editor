@@ -1,5 +1,5 @@
 import type { PathHitInfo, Point } from '@/sceneView/SceneView'
-import type { HitTestResult } from '@/features/editor/tools/SceneController'
+import type { HitTestResult } from '@/features/editor/tools/hitTestResult'
 import type { PointerSelectionMode } from '@/features/editor/tools/PointerTool/selection'
 import type { TransformHandleId } from '@/features/editor/tools/PointerTool/transform'
 

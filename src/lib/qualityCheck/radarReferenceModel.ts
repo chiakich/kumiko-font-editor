@@ -13,7 +13,7 @@ import type {
   RadarReferenceFeatureKey,
   RadarRobustStat,
   RadarStrata,
-} from '@/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/radarTypes'
 
 export const RADAR_REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
   'face:widthRatio',

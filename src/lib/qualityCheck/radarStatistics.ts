@@ -5,7 +5,7 @@ import type {
   RadarFeatureValue,
   RadarRobustStat,
   RadarStrata,
-} from '@/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/radarTypes'
 
 const MAD_TO_SIGMA = 1.4826
 const IQR_TO_SIGMA = 1 / 1.349

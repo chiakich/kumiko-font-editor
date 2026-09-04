@@ -1,7 +1,6 @@
 // 處理 Canvas 基礎渲染、縮放、平移和事件處理
 
-import type { SceneView } from '@/sceneView/SceneView'
-import type { SceneModel } from '@/sceneView/SceneView'
+import type { SceneModel } from '@/sceneView/types'
 
 const MIN_MAGNIFICATION = 0.005
 const MAX_MAGNIFICATION = 800
@@ -30,10 +29,15 @@ export interface Viewport {
   pan: { x: number; y: number }
 }
 
+// Structural stand-in for SceneView so the controller never imports it back.
+export interface SceneRenderer {
+  draw(canvasController: CanvasController, model: SceneModel): void
+}
+
 export class CanvasController {
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
-  sceneView: SceneView | null = null
+  sceneView: SceneRenderer | null = null
   sceneModel: SceneModel | null = null
 
   /**
