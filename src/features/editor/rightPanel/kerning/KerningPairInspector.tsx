@@ -1,6 +1,7 @@
 import {
   Badge,
   Box,
+  chakra,
   Button,
   HStack,
   IconButton,
@@ -21,7 +22,8 @@ import {
   type KerningPairPriority,
 } from 'src/lib/kerning/resolveKerning'
 import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
+import { buildPairSpacingLayout } from 'src/features/editor/rightPanel/kerning/pairSpacingLayout'
+import { getTextKerningValue } from 'src/features/editor/canvas/workspace/layout/textKerning'
 import { useStore, type FontData } from 'src/store'
 
 const STEP_OPTIONS = [1, 5, 10]
@@ -155,7 +157,11 @@ export function KerningPairInspector({ fontData }: KerningPairInspectorProps) {
           >
             <NavArrowLeft width={14} height={14} aria-hidden="true" />
           </IconButton>
-          <PairGlyphPreview fontData={fontData} glyphId={leftGlyphId} />
+          <PairSpacingPreview
+            fontData={fontData}
+            leftGlyphId={leftGlyphId}
+            rightGlyphId={rightGlyphId}
+          />
           <Text
             fontSize="sm"
             fontFamily="mono"
@@ -165,7 +171,6 @@ export function KerningPairInspector({ fontData }: KerningPairInspectorProps) {
           >
             {resolved.priority === 'none' ? '±0' : resolved.value}
           </Text>
-          <PairGlyphPreview fontData={fontData} glyphId={rightGlyphId} />
           <IconButton
             aria-label={t('editor.kerningNextPair')}
             size="xs"
@@ -286,31 +291,68 @@ export function KerningPairInspector({ fontData }: KerningPairInspectorProps) {
   )
 }
 
-function PairGlyphPreview({
+// The pair as the canvas lays it out: outlines and advances straight from the
+// project, offset by the same kerning the canvas resolves. No font compile —
+// the value being edited is already the only unknown.
+function PairSpacingPreview({
   fontData,
-  glyphId,
+  leftGlyphId,
+  rightGlyphId,
 }: {
   fontData: FontData
-  glyphId: string
+  leftGlyphId: string
+  rightGlyphId: string
 }) {
-  const glyph = fontData.glyphs[glyphId]
-  const char = glyph ? getGlyphUnicodeChar(glyph) : null
+  const activeMasterId = useStore((state) => state.activeMasterId)
+  // Resolve the spacing exactly as the canvas does, GPOS fallback included —
+  // the panel showing '±0' for a pair the canvas already kerns from an
+  // imported kern feature is the disagreement this preview exists to avoid.
+  const layout = useMemo(
+    () =>
+      buildPairSpacingLayout(
+        fontData,
+        leftGlyphId,
+        rightGlyphId,
+        activeMasterId,
+        getTextKerningValue(fontData, leftGlyphId, rightGlyphId, activeMasterId)
+      ),
+    [fontData, leftGlyphId, rightGlyphId, activeMasterId]
+  )
+
+  if (!layout) {
+    return null
+  }
 
   return (
-    <Stack gap={0} align="center" minW="56px">
-      <Text fontSize="2xl" lineHeight="1.2">
-        {char ?? '□'}
-      </Text>
-      <Text
-        fontSize="10px"
-        fontFamily="mono"
-        color="mutedForeground"
-        maxW="72px"
-        truncate
-      >
-        {glyphId}
-      </Text>
-    </Stack>
+    <chakra.svg
+      viewBox={layout.viewBox}
+      width="100%"
+      height="52px"
+      maxW="160px"
+      preserveAspectRatio="xMidYMid meet"
+      overflow="hidden"
+      color="foreground"
+    >
+      <g transform={`matrix(1 0 0 -1 0 ${layout.flipY})`}>
+        {layout.glyphs.map((entry) => (
+          <g
+            key={entry.key}
+            transform={`translate(${entry.offsetX} 0)`}
+            opacity={entry.isGhost ? 0.22 : 1}
+          >
+            {entry.shapes.map((shape, index) => (
+              <path
+                key={`${entry.key}-${index}`}
+                d={shape.d}
+                transform={shape.transform}
+                fill="currentColor"
+                stroke="none"
+              />
+            ))}
+          </g>
+        ))}
+      </g>
+    </chakra.svg>
   )
 }
 
