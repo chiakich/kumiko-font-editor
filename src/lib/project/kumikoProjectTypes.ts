@@ -1,5 +1,4 @@
 import type { GitHubSyncTarget } from '@/lib/github/sync/types'
-import type { GitHubProjectSource } from '@/lib/project/projectTypes'
 import type { Designspace } from '@/lib/fontFormats/designspace'
 import type {
   GlifFileStyle,
@@ -20,7 +19,7 @@ import type {
   KerningGroup,
   KerningPair,
 } from '@/domain'
-import type { OpenTypeFeaturesState } from '@/store'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
 import type { ComponentMatrix } from '@/domain/componentTransform'
 
 export type KumikoProjectSourceFormat =
@@ -266,3 +265,14 @@ export interface KumikoUiStateRecord {
 }
 
 export type KumikoGlyphPrimaryKey = [projectId: string, glyphId: string]
+
+export interface GitHubProjectSource {
+  owner: string
+  repo: string
+  ref: string
+  defaultBranch: string
+  repoUrl: string
+  zipballUrl: string
+  archiveRoot: string
+  commitSha?: string | null
+}

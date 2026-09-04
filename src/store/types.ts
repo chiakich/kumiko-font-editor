@@ -3,6 +3,7 @@ import type {
   ProjectSourceFormat,
 } from '@/lib/project/projectFormats'
 import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import type { PersistenceStatus } from '@/lib/project/persistenceStatus'
 import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
 import type { OutlineOffsetOptions } from '@/lib/outlineOffset'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
@@ -23,6 +24,7 @@ import type {
 export type { ProjectRoundTripFormat, ProjectSourceFormat }
 export type { OpenTypeFeaturesState }
 export type { OverviewCustomFilter }
+export type { PersistenceStatus }
 import type {
   FontData,
   FontInfo,
@@ -56,8 +58,6 @@ export interface ViewportState {
 
 export type WorkspaceView = 'overview' | 'editor' | 'features'
 export type OverviewGroupByState = 'none' | 'script' | 'block'
-export type PersistenceStatus = 'idle' | 'queued' | 'saving' | 'saved' | 'error'
-
 export interface OverviewSearchOptionsState {
   fields: OverviewSearchField[]
   matchCase: boolean

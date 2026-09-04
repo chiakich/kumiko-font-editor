@@ -1,21 +1,14 @@
 import type { FontData } from '@/domain'
 import type { GlyphsPackageData } from '@/lib/fontFormats/glyphsPackage'
-import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
+import type {
+  GitHubProjectSource,
+  KumikoProjectSourceData,
+} from '@/lib/project/kumikoProjectTypes'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
 } from '@/lib/project/projectFormats'
-
-export interface GitHubProjectSource {
-  owner: string
-  repo: string
-  ref: string
-  defaultBranch: string
-  repoUrl: string
-  zipballUrl: string
-  archiveRoot: string
-  commitSha?: string | null
-}
+export type { GitHubProjectSource }
 
 export type ProjectSourceType = 'local' | 'github'
 

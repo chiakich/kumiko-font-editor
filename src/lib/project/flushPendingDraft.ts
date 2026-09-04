@@ -5,7 +5,7 @@ import {
 import { publishProjectDraftSaved } from '@/lib/project/projectBroadcast'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import type { FontData } from '@/domain'
-import type { PersistenceStatus } from '@/store'
+import type { PersistenceStatus } from '@/lib/project/persistenceStatus'
 import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
 
 export interface FlushPendingDraftInput {

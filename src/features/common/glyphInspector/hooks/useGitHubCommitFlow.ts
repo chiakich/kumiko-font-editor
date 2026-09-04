@@ -19,7 +19,7 @@ import {
   useLogoutGitHubMutation,
   useMergeGitHubUpstreamMutation,
 } from '@/lib/github/githubQueries'
-import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
+import { buildCurrentDraftFlushInput } from '@/store/currentDraftFlush'
 import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
 import type { FontData } from '@/domain'
 import { useStore } from '@/store'

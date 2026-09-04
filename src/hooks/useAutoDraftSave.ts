@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
-import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
+import { buildCurrentDraftFlushInput } from '@/store/currentDraftFlush'
 import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
 import {
   useStore,

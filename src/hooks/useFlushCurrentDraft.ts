@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
+import { buildCurrentDraftFlushInput } from '@/store/currentDraftFlush'
 import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
 import type { FontData } from '@/domain'
 import { useStore, type PersistenceStatus } from '@/store'
