@@ -61,7 +61,7 @@ GITHUB_OAUTH_SCOPE=public_repo read:user user:email
 Run these before submitting changes:
 
 ```bash
-pnpm lint    # prettier --check . && eslint .
+pnpm lint    # prettier, eslint, layering budget, circular-dependency baseline
 pnpm build   # pnpm lint && tsc -b && vite build
 pnpm test    # vitest run
 ```
@@ -83,7 +83,11 @@ it automatically, or `pnpm lint` to check. Linting is enforced by ESLint
 (see `eslint.config.js`).
 
 When adding or moving code, follow the placement guidelines in
-[docs/architecture.md](docs/architecture.md#placement-guidelines).
+[docs/architecture.md](docs/architecture.md#placement-guidelines). Layering is
+enforced by `pnpm lint:boundaries` (a warning budget that may only shrink) and
+`pnpm lint:circular` (a circular-dependency baseline); see
+[Enforced boundaries](docs/architecture.md#enforced-boundaries) for how to
+lower them as you clean up.
 
 ## Data pipeline scripts
 

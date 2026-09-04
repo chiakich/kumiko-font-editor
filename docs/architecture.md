@@ -92,6 +92,16 @@ under `src/features/editor/tools/`.
 - Keep feature-internal helpers inside the feature folder. For example, canvas clipboard formats belong in `src/features/editor/canvas/`.
 - Put canvas rendering in `src/sceneView/`; put editor interaction tools in `src/features/editor/tools/`; React components should not be placed directly in `src/sceneView/`.
 - Keep global state in `src/store/`. If a feature only needs to shape data for UI, prefer a feature-local hook.
+- Import through the `@/` alias. Inside `src/`, parent-relative paths (`../`) and the old `src/` prefix are rejected by ESLint.
+- Pair every worker entry `src/workers/<name>Worker.ts` with a `<name>WorkerClient.ts` next to the domain code that owns it; callers import the client, never the worker.
+
+### Enforced boundaries
+
+The placement rules above are checked by tooling, in two tiers:
+
+- `eslint.config.js` fails on rules that have no violations left: shared layers (`lib`, `font`, `store`, `hooks`, `design`, `components`) never import from `src/features/`, and `src/sceneView/` never imports React, the store, or features.
+- `eslint.boundaries.config.js` runs as `pnpm lint:boundaries` with a warning budget (`--max-warnings`) for rules that are still being paid down: `lib` and `font` importing the store, workers importing features, and cross-feature imports (a feature may only import from itself and `features/common`). Lower the budget whenever you remove a violation; once a rule reaches zero, move it into `eslint.config.js` as an error.
+- `pnpm lint:circular` runs madge over the `src/main.tsx` graph and fails when the number of circular dependencies rises above the baseline in `scripts/check-circular-deps.mjs`. Lower the baseline when you break a cycle.
 
 ## Deeper notes
 
