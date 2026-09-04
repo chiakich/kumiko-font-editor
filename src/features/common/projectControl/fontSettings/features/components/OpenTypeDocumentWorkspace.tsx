@@ -1,14 +1,14 @@
 import { Stack, Text, Separator } from '@chakra-ui/react'
-import { AutoFeatureSuggestions } from 'src/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
-import { ExportPolicyControl } from 'src/features/common/projectControl/fontSettings/features/components/ExportPolicyControl'
-import { FeatureDiagnosticsList } from 'src/features/common/projectControl/fontSettings/features/components/FeatureDiagnosticsList'
-import { GeneratedFeaPreview } from 'src/features/common/projectControl/fontSettings/features/components/GeneratedFeaPreview'
-import { ImportExportOverview } from 'src/features/common/projectControl/fontSettings/features/components/ImportExportOverview'
-import { WorkspaceHeader } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
+import { AutoFeatureSuggestions } from '@/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
+import { ExportPolicyControl } from '@/features/common/projectControl/fontSettings/features/components/ExportPolicyControl'
+import { FeatureDiagnosticsList } from '@/features/common/projectControl/fontSettings/features/components/FeatureDiagnosticsList'
+import { GeneratedFeaPreview } from '@/features/common/projectControl/fontSettings/features/components/GeneratedFeaPreview'
+import { ImportExportOverview } from '@/features/common/projectControl/fontSettings/features/components/ImportExportOverview'
+import { WorkspaceHeader } from '@/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
 import {
   FeatureDocument,
   TableDocument,
-} from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeRecordDocuments'
+} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeRecordDocuments'
 import {
   GdefDocument,
   GlyphClassDocument,
@@ -16,9 +16,9 @@ import {
   LanguageSystemDocument,
   MarkClassDocument,
   RawFeatureTextEditor,
-} from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeSourceDocuments'
-import type { OpenTypeWorkbenchSelection } from 'src/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
-import { UnsupportedLookupList } from 'src/features/common/projectControl/fontSettings/features/components/UnsupportedLookupList'
+} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeSourceDocuments'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
+import { UnsupportedLookupList } from '@/features/common/projectControl/fontSettings/features/components/UnsupportedLookupList'
 import type {
   AutoFeatureSuggestion,
   CompilerErrorLocation,
@@ -27,9 +27,9 @@ import type {
   FeatureRecord,
   GeneratedFeaSourceMap,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
-import type { FontData } from 'src/store'
+import type { FontData } from '@/store'
 
 interface OpenTypeDocumentWorkspaceProps {
   // Compiler failures from the live preview compile, in generated-FEA lines.

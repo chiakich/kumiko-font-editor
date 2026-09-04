@@ -2,7 +2,7 @@ import {
   BinaryReader,
   findSfntTable,
   readSfntTableDirectory,
-} from 'src/lib/openTypeFeatures/binaryReader'
+} from '@/lib/openTypeFeatures/binaryReader'
 
 interface NameRecordCandidate {
   score: number

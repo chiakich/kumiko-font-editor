@@ -1,9 +1,9 @@
 import type {
   GlifFileStyle,
   UfoTextStyle,
-} from 'src/lib/fontFormats/ufoTextStyle'
-import type { GitHubProjectSource } from 'src/lib/project/projectTypes'
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
+} from '@/lib/fontFormats/ufoTextStyle'
+import type { GitHubProjectSource } from '@/lib/project/projectTypes'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
 
 export interface UfoProjectRecord {
   projectId: string

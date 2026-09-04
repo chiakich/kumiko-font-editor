@@ -9,13 +9,13 @@ import {
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
-import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
-import type { useShapingPreview } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
-import { useShapingTrace } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingTrace'
-import { findRulesForTraceStep } from 'src/features/common/projectControl/fontSettings/features/utils/traceRuleLookup'
-import { useOpenGlyphInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
+import type { FontData } from '@/store'
+import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
+import type { useShapingPreview } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
+import { useShapingTrace } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingTrace'
+import { findRulesForTraceStep } from '@/features/common/projectControl/fontSettings/features/utils/traceRuleLookup'
+import { useOpenGlyphInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
 
 interface WorkspacePreviewHomeProps {
   preview: ReturnType<typeof useShapingPreview>

@@ -17,14 +17,14 @@ import {
   type AutoFeatureSuggestion,
   type FeatureDiagnostic,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import { useStore, type FontData } from 'src/store'
-import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
-import { AutoFeatureSuggestions } from 'src/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
-import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
-import { setFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
-import { listWorkspaceFeatures } from 'src/features/featureWorkspace/workspaceFeatureModel'
-import { useFeatureSpecimens } from 'src/features/featureWorkspace/useFeatureSpecimens'
+} from '@/lib/openTypeFeatures'
+import { useStore, type FontData } from '@/store'
+import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
+import { AutoFeatureSuggestions } from '@/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
+import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
+import { setFeatureTagEnabled } from '@/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+import { listWorkspaceFeatures } from '@/features/featureWorkspace/workspaceFeatureModel'
+import { useFeatureSpecimens } from '@/features/featureWorkspace/useFeatureSpecimens'
 
 interface FeatureIndexViewProps {
   state: OpenTypeFeaturesState

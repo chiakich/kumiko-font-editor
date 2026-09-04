@@ -1,19 +1,19 @@
-import { featureStatKeys } from 'src/lib/qualityCheck/radarFeatureCollection'
+import { featureStatKeys } from '@/lib/qualityCheck/radarFeatureCollection'
 import {
   nearestWindow,
   type GlyphFeatureEntry,
-} from 'src/lib/qualityCheck/radarStatistics'
+} from '@/lib/qualityCheck/radarStatistics'
 import {
   fitReferenceStyleModel,
   type ReferenceStylePair,
-} from 'src/lib/qualityCheck/referenceStyleModel'
+} from '@/lib/qualityCheck/referenceStyleModel'
 import type {
   RadarFeatureValue,
   RadarReferenceData,
   RadarReferenceFeatureKey,
   RadarRobustStat,
   RadarStrata,
-} from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/qualityRadar'
 
 export const RADAR_REFERENCE_FEATURE_KEYS = new Set<RadarReferenceFeatureKey>([
   'face:widthRatio',

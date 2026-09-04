@@ -1,5 +1,5 @@
 import type opentype from 'opentype.js'
-import { isHanCodePoint } from 'src/lib/qualityCheck/hanClassification'
+import { isHanCodePoint } from '@/lib/qualityCheck/hanClassification'
 import {
   computeInkMoments,
   computeProjectionGaps,
@@ -8,16 +8,16 @@ import {
   type GeometryBounds,
   type GeometryPoint,
   type ProjectionGaps,
-} from 'src/lib/qualityCheck/polygonGeometry'
-import { buildRobustStat } from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/polygonGeometry'
+import { buildRobustStat } from '@/lib/qualityCheck/qualityRadar'
 import type {
   RadarReferenceData,
   RadarReferenceFeatureKey,
-} from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/qualityRadar'
 import {
   buildSidesFromPolygons,
   type StructureSides,
-} from 'src/lib/qualityCheck/structureMetrics'
+} from '@/lib/qualityCheck/structureMetrics'
 
 const SUPPORTED_REFERENCE_FEATURE_KEYS: RadarReferenceFeatureKey[] = [
   'face:widthRatio',

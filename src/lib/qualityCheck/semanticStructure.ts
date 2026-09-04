@@ -1,11 +1,11 @@
 import {
   getGlyphwikiCompositionMap,
   type GlyphwikiPartPlacement,
-} from 'src/lib/glyph/glyphwikiComposition'
+} from '@/lib/glyph/glyphwikiComposition'
 import {
   deriveSemanticPartLayout,
   type SemanticPartLayout,
-} from 'src/lib/qualityCheck/partSpacingMetrics'
+} from '@/lib/qualityCheck/partSpacingMetrics'
 
 /**
  * 語意結構分類：從 GlyphWiki 組成資料判斷「全包圍/門框」字。

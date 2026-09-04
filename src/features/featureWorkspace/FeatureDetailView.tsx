@@ -12,13 +12,13 @@ import type {
   FeatureRecord,
   GeneratedFeaSourceMap,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
-import { FeatureDocument } from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeRecordDocuments'
+} from '@/lib/openTypeFeatures'
+import type { FontData } from '@/store'
+import { FeatureDocument } from '@/features/common/projectControl/fontSettings/features/components/OpenTypeRecordDocuments'
 import {
   isFeatureTagEnabled,
   setFeatureTagEnabled,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+} from '@/features/common/projectControl/fontSettings/features/utils/featureEnablement'
 import {
   getStylisticSetName,
   getCharacterVariantLabel,
@@ -26,7 +26,7 @@ import {
   isStylisticSetTag,
   setCharacterVariantLabel,
   setStylisticSetName,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureParamsEdit'
+} from '@/features/common/projectControl/fontSettings/features/utils/featureParamsEdit'
 
 interface FeatureDetailViewProps {
   feature: FeatureRecord

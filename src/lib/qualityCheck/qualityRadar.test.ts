@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import { computeRadarFromSamples } from 'src/lib/qualityCheck/qualityRadar'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import { computeRadarFromSamples } from '@/lib/qualityCheck/qualityRadar'
 
 const bodyBox = { top: 880, bottom: -120, unitsPerEm: 1000 }
 

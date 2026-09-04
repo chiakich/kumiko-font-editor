@@ -1,11 +1,11 @@
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import { featureStatKeys } from 'src/lib/qualityCheck/radarFeatureCollection'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import { featureStatKeys } from '@/lib/qualityCheck/radarFeatureCollection'
 import type {
   RadarComplexityWindow,
   RadarFeatureValue,
   RadarRobustStat,
   RadarStrata,
-} from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/qualityRadar'
 
 const MAD_TO_SIGMA = 1.4826
 const IQR_TO_SIGMA = 1 / 1.349

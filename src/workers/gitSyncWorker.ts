@@ -8,12 +8,12 @@ import {
   type GitCommitAndPushResult,
   type GitSyncReport,
   type GitSyncTarget,
-} from 'src/lib/git/gitSync'
-import type { GitCommitAuthor } from 'src/lib/git/worktree'
+} from '@/lib/git/gitSync'
+import type { GitCommitAuthor } from '@/lib/git/worktree'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'
 
 interface BuildReportRequest {
   type: 'build-git-sync-report'

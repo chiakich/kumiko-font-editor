@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildEnclosureCharacterSet } from 'src/lib/qualityCheck/semanticStructure'
+import { buildEnclosureCharacterSet } from '@/lib/qualityCheck/semanticStructure'
 import {
   parseCompositionLine,
   type GlyphwikiPartPlacement,
-} from 'src/lib/glyph/glyphwikiComposition'
+} from '@/lib/glyph/glyphwikiComposition'
 
 const buildMap = (lines: string[]) => {
   const map = new Map<string, GlyphwikiPartPlacement[]>()

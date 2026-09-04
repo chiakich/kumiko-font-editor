@@ -23,9 +23,9 @@ import { useTranslation } from 'react-i18next'
 import {
   LayerColorContextMenu,
   LayerColorDot,
-} from 'src/features/editor/rightPanel/components/LayerListCard/LayerColorControls'
-import { ReferenceFontSettingsModal } from 'src/features/editor/rightPanel/components/ReferenceFontSettingsModal'
-import { useStore, type GlyphLayerData } from 'src/store'
+} from '@/features/editor/rightPanel/components/LayerListCard/LayerColorControls'
+import { ReferenceFontSettingsModal } from '@/features/editor/rightPanel/components/ReferenceFontSettingsModal'
+import { useStore, type GlyphLayerData } from '@/store'
 
 interface LayerListCardProps {
   glyphId: string

@@ -2,9 +2,9 @@ import type {
   CompileResponseMessage,
   CompileOptions,
   CompileResult,
-} from 'src/lib/openTypeFeatures/compilerTypes'
-import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+} from '@/lib/openTypeFeatures/compilerTypes'
+import type { GeneratedFeaSourceMap } from '@/lib/openTypeFeatures/feaAst'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 // The worker stays alive between compiles: loading Pyodide + fontTools inside
 // it dominates a compile by far, and the runtime cache lives in the worker's

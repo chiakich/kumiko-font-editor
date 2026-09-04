@@ -1,4 +1,4 @@
-import type { FontAxes, FontExportInstance } from 'src/store'
+import type { FontAxes, FontExportInstance } from '@/store'
 
 const escapeXmlAttr = (value: string) =>
   value

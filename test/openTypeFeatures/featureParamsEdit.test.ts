@@ -3,8 +3,8 @@ import {
   getStylisticSetName,
   isStylisticSetTag,
   setStylisticSetName,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureParamsEdit'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+} from '@/features/common/projectControl/fontSettings/features/utils/featureParamsEdit'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 const state = (featureParams?: unknown) =>
   ({
@@ -47,7 +47,7 @@ describe('stylistic set params editing', () => {
 describe('character variant label editing', () => {
   it('validates cv tags', async () => {
     const { isCharacterVariantTag } =
-      await import('src/features/common/projectControl/fontSettings/features/utils/featureParamsEdit')
+      await import('@/features/common/projectControl/fontSettings/features/utils/featureParamsEdit')
     expect(isCharacterVariantTag('cv01')).toBe(true)
     expect(isCharacterVariantTag('cv99')).toBe(true)
     expect(isCharacterVariantTag('cv00')).toBe(false)

@@ -1,7 +1,7 @@
-import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
-import { FeatureRuleEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
-import { RuleTableView } from 'src/features/common/projectControl/fontSettings/features/components/RuleTableView'
-import { SubstitutionGridView } from 'src/features/common/projectControl/fontSettings/features/components/SubstitutionGridView'
+import { FeaCodeEditor } from '@/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
+import { FeatureRuleEditor } from '@/features/common/projectControl/fontSettings/features/components/FeatureRuleEditor'
+import { RuleTableView } from '@/features/common/projectControl/fontSettings/features/components/RuleTableView'
+import { SubstitutionGridView } from '@/features/common/projectControl/fontSettings/features/components/SubstitutionGridView'
 import {
   Badge,
   Button,
@@ -15,7 +15,7 @@ import { useState } from 'react'
 import {
   Metric,
   SourceSectionsDocument,
-} from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
+} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
 import {
   deriveOpenTypeSourceSectionRecords,
   findOpenTypeSourceSectionsForRecord,
@@ -23,9 +23,9 @@ import {
   type GeneratedFeaSourceMap,
   type OpenTypeFeaturesState,
   type OpenTypeTableTag,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
-import type { FontData } from 'src/store'
+import type { FontData } from '@/store'
 
 export function FeatureDocument({
   feature,

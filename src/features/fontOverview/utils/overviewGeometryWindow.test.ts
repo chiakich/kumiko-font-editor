@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   collectOverviewGeometryGlyphIds,
   collectUnloadedOverviewGeometryGlyphIds,
-} from 'src/features/fontOverview/utils/overviewGeometryWindow'
-import type { GlyphData } from 'src/store'
+} from '@/features/fontOverview/utils/overviewGeometryWindow'
+import type { GlyphData } from '@/store'
 
 const makeGlyph = (
   id: string,

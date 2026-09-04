@@ -4,7 +4,7 @@ import type {
   LookupOrigin,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 export function updateLookupRule(
   state: OpenTypeFeaturesState,

@@ -1,12 +1,12 @@
-import { buildLigatureSuggestions } from 'src/lib/openTypeFeatures/buildLigatureSuggestions'
-import { buildLocalizedSuggestions } from 'src/lib/openTypeFeatures/buildLocalizedSuggestions'
-import { buildMarkSuggestions } from 'src/lib/openTypeFeatures/buildMarkSuggestions'
-import { buildSuffixSuggestions } from 'src/lib/openTypeFeatures/buildSuffixSuggestions'
+import { buildLigatureSuggestions } from '@/lib/openTypeFeatures/buildLigatureSuggestions'
+import { buildLocalizedSuggestions } from '@/lib/openTypeFeatures/buildLocalizedSuggestions'
+import { buildMarkSuggestions } from '@/lib/openTypeFeatures/buildMarkSuggestions'
+import { buildSuffixSuggestions } from '@/lib/openTypeFeatures/buildSuffixSuggestions'
 import type {
   AutoFeatureSuggestion,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData } from '@/store/types'
 
 const suggestionTouchesUserOverride = (
   suggestion: AutoFeatureSuggestion,

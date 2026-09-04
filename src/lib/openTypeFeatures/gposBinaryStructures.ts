@@ -1,5 +1,5 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
-import type { AnchorPoint, GlyphClass } from 'src/lib/openTypeFeatures/types'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
+import type { AnchorPoint, GlyphClass } from '@/lib/openTypeFeatures/types'
 
 export const toSignedInt16 = (value: number) =>
   value > 0x7fff ? value - 0x10000 : value

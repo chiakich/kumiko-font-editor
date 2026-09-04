@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import {
   buildGlyphPreviewData,
   type GlyphPreviewData,
-} from 'src/lib/glyph/glyphPreviewData'
-import type { GlyphData } from 'src/store'
-import { createOverviewGlyphPreviewSnapshot } from 'src/features/fontOverview/utils/overviewPreviewSnapshot'
-import { buildOverviewGlyphPreviews } from 'src/features/fontOverview/utils/overviewPreviewWorkerClient'
+} from '@/lib/glyph/glyphPreviewData'
+import type { GlyphData } from '@/store'
+import { createOverviewGlyphPreviewSnapshot } from '@/features/fontOverview/utils/overviewPreviewSnapshot'
+import { buildOverviewGlyphPreviews } from '@/features/fontOverview/utils/overviewPreviewWorkerClient'
 import type {
   OverviewPreviewWorkerRequest,
   OverviewPreviewWorkerResult,
-} from 'src/features/fontOverview/utils/overviewPreviewWorkerTypes'
+} from '@/features/fontOverview/utils/overviewPreviewWorkerTypes'
 
 interface CachedOverviewPreview {
   cacheKey: string

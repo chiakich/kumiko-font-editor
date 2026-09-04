@@ -3,15 +3,15 @@ import {
   importPreparedGitHubUfoRepo,
   prepareGitHubUfoImport,
   type PreparedGitHubUfoImport,
-} from 'src/lib/github/githubImport'
-import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
+} from '@/lib/github/githubImport'
+import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
 import {
   clearGitHubUrlParams,
   getGitHubRepoUrl,
-} from 'src/features/home/utils/githubRepoUrl'
-import type { PendingGitHubImport } from 'src/features/home/types'
-import { saveImportedUfoWorkspaceAsProject } from 'src/features/home/utils/projectImport'
-import type { LoadedKumikoProject } from 'src/features/home/hooks/useProjectList'
+} from '@/features/home/utils/githubRepoUrl'
+import type { PendingGitHubImport } from '@/features/home/types'
+import { saveImportedUfoWorkspaceAsProject } from '@/features/home/utils/projectImport'
+import type { LoadedKumikoProject } from '@/features/home/hooks/useProjectList'
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '未知錯誤'

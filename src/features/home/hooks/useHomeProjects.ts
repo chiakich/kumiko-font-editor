@@ -2,20 +2,20 @@ import { useCallback, useMemo, useState } from 'react'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
-} from 'src/lib/glyph/glyphEditTimes'
+} from '@/lib/glyph/glyphEditTimes'
 import {
   listExportDirtyKumikoGlyphIds,
   loadKumikoUiValue,
-} from 'src/lib/project/kumikoProjectPersistence'
-import { useStore } from 'src/store'
-import { useGitHubImport } from 'src/features/home/hooks/useGitHubImport'
-import { useLocalImport } from 'src/features/home/hooks/useLocalImport'
+} from '@/lib/project/kumikoProjectPersistence'
+import { useStore } from '@/store'
+import { useGitHubImport } from '@/features/home/hooks/useGitHubImport'
+import { useLocalImport } from '@/features/home/hooks/useLocalImport'
 import {
   type LoadedKumikoProject,
   useProjectList,
-} from 'src/features/home/hooks/useProjectList'
-import { createNewBlankProject } from 'src/features/home/utils/createNewProject'
-import { requestAddGlyphModalForNewProject } from 'src/features/home/utils/newProjectIntent'
+} from '@/features/home/hooks/useProjectList'
+import { createNewBlankProject } from '@/features/home/utils/createNewProject'
+import { requestAddGlyphModalForNewProject } from '@/features/home/utils/newProjectIntent'
 import { useTranslation } from 'react-i18next'
 
 export function useHomeProjects() {

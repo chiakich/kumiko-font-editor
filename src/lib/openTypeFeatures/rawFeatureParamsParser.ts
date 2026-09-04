@@ -1,8 +1,8 @@
-import { blankRange } from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
+import { blankRange } from '@/lib/openTypeFeatures/rawFeatureTextUtils'
 import type {
   FeatureParamName,
   FeatureParams,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface ExtractedFeatureParams {
   body: string

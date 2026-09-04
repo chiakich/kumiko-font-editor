@@ -7,7 +7,7 @@ import {
   loadProjectDraftMetadata,
   loadProjectGlyphGeometryClosure,
   loadProjectGlyphGeometry,
-} from 'src/lib/project/projectRepository'
+} from '@/lib/project/projectRepository'
 import {
   findKumikoGlyphRecordsByUnicode,
   getKumikoProjectDirtyState,
@@ -21,10 +21,10 @@ import {
   makeKumikoGlyphKey,
   patchKumikoGlyphMetadata,
   saveKumikoGlyphRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
-import { saveDraftSnapshot } from 'src/lib/project/draftSave'
-import { openDatabase } from 'src/lib/project/persistence'
-import type { FontData } from 'src/store'
+} from '@/lib/project/kumikoProjectPersistence'
+import { saveDraftSnapshot } from '@/lib/project/draftSave'
+import { openDatabase } from '@/lib/project/persistence'
+import type { FontData } from '@/store'
 
 const fontData: FontData = {
   glyphOrder: ['A'],

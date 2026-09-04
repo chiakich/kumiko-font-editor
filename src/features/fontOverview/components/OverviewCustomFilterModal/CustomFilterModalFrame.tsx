@@ -4,17 +4,17 @@ import { useTranslation } from 'react-i18next'
 import {
   SlidingTabList,
   SlidingTabsContentGroup,
-} from 'src/features/common/SlidingTabList'
-import { AdvancedFilterFields } from 'src/features/fontOverview/components/OverviewCustomFilterModal/AdvancedFilterFields'
-import { PresetFilterList } from 'src/features/fontOverview/components/OverviewCustomFilterModal/PresetFilterList'
+} from '@/features/common/SlidingTabList'
+import { AdvancedFilterFields } from '@/features/fontOverview/components/OverviewCustomFilterModal/AdvancedFilterFields'
+import { PresetFilterList } from '@/features/fontOverview/components/OverviewCustomFilterModal/PresetFilterList'
 import type {
   OverviewCustomFilterMode,
   OverviewCustomFilterPreset,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 import type {
   OverviewCustomFilterDraft,
   RuleConditionUpdater,
-} from 'src/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
+} from '@/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
 
 export function CustomFilterModalHeader({
   activeTabIndex,

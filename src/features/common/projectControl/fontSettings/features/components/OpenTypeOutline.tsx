@@ -4,7 +4,7 @@ import {
   hasRawFeatureText,
   type FeatureDiagnostic,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import {
   diagnosticsForFeature,
   diagnosticsForWorkflow,
@@ -14,8 +14,8 @@ import {
   isBuildSelected,
   isPrefixSelected,
   isSourceSelected,
-} from 'src/features/common/projectControl/fontSettings/features/components/openTypeOutlineModel'
-import type { OpenTypeWorkbenchSelection } from 'src/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
+} from '@/features/common/projectControl/fontSettings/features/components/openTypeOutlineModel'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
 import { useTranslation } from 'react-i18next'
 
 interface OpenTypeOutlineProps {

@@ -5,8 +5,8 @@ import { useState } from 'react'
 import type {
   ContextualBehaviorDraft,
   ContextualBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { ContextualBehaviorTableRow } from 'src/features/editor/rightPanel/behaviors/ContextualBehaviorTableRow'
+} from '@/lib/openTypeFeatures'
+import { ContextualBehaviorTableRow } from '@/features/editor/rightPanel/behaviors/ContextualBehaviorTableRow'
 import { useTranslation } from 'react-i18next'
 
 interface ContextualBehaviorListProps {

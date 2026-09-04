@@ -1,5 +1,5 @@
 import { Badge, Button, HStack, Stack, Text } from '@chakra-ui/react'
-import type { AutoFeatureSuggestion } from 'src/lib/openTypeFeatures'
+import type { AutoFeatureSuggestion } from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface AutoFeatureSuggestionsProps {

@@ -1,5 +1,5 @@
-import type { FontData } from 'src/store'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
+import type { FontData } from '@/store'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 
 interface GlyphAdditionCandidate {
   id: string

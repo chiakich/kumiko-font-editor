@@ -2,9 +2,9 @@ import 'fake-indexeddb/auto'
 
 import { describe, expect, it, vi } from 'vitest'
 import { Window } from 'happy-dom'
-import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
-import type { FontData } from 'src/store'
+import { materializeUfoTree } from '@/lib/fontFormats/ufoMaterialize'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
+import type { FontData } from '@/store'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 type Response =
   | { type: 'ok'; requestId: number; value: string }

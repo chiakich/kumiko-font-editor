@@ -11,9 +11,9 @@ import {
   pathToUfoContour,
   serializeGlifRecord,
   serializeXmlPlist,
-} from 'src/lib/fontFormats/ufoFormat'
-import { detectUfoTextStyle } from 'src/lib/fontFormats/ufoTextStyle'
-import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
+} from '@/lib/fontFormats/ufoFormat'
+import { detectUfoTextStyle } from '@/lib/fontFormats/ufoTextStyle'
+import type { UfoGlyphRecord } from '@/lib/fontFormats/ufoTypes'
 
 const testWindow = new Window()
 globalThis.DOMParser ??= testWindow.DOMParser as typeof globalThis.DOMParser

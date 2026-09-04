@@ -3,7 +3,7 @@ import {
   createDefaultOverviewCustomFilters,
   normalizeOverviewCustomFilters,
   type OverviewCustomFilter,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 
 const OVERVIEW_CUSTOM_FILTERS_STORAGE_KEY =
   'kumiko.app.overviewCustomFilters.v1'

@@ -11,40 +11,40 @@ import {
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import type { ListRange } from 'react-virtuoso'
-import { useStore, type GlyphData, type KumikoColor } from 'src/store'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import { areKumikoColorsEqual } from 'src/lib/color/kumikoColor'
+import { useStore, type GlyphData, type KumikoColor } from '@/store'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
+import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { areKumikoColorsEqual } from '@/lib/color/kumikoColor'
 import {
   buildGlyphPreviewData,
   buildGlyphPreviewFontRect,
-} from 'src/lib/glyph/glyphOverview'
-import { setEditorViewTransitionLandingGlyphId } from 'src/features/editor/editorViewTransitionLandingStore'
-import { setPendingEditorViewportRect } from 'src/features/editor/pendingEditorViewport'
-import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
-import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
-import { AddGlyphModal } from 'src/features/fontOverview/components/AddGlyphModal'
-import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
+} from '@/lib/glyph/glyphOverview'
+import { setEditorViewTransitionLandingGlyphId } from '@/features/editor/editorViewTransitionLandingStore'
+import { setPendingEditorViewportRect } from '@/features/editor/pendingEditorViewport'
+import { preloadEditorLayout } from '@/features/editor/preloadEditorLayout'
+import { loadProjectGlyphGeometryClosure } from '@/lib/project/projectRepository'
+import { AddGlyphModal } from '@/features/fontOverview/components/AddGlyphModal'
+import { shouldIgnoreGlobalShortcut } from '@/features/common/keyboardShortcutTargets'
 import {
   OverviewGlyphContextMenu,
   type OverviewGlyphContextMenuColor,
-} from 'src/features/fontOverview/components/OverviewGlyphContextMenu/OverviewGlyphContextMenu'
-import { OverviewContent } from 'src/features/fontOverview/components/OverviewContent'
-import { OverviewSidebar } from 'src/features/fontOverview/components/leftPanel/OverviewSidebar'
-import { OverviewRightPanel } from 'src/features/fontOverview/components/rightPanel/OverviewRightPanel'
-import { useAddGlyphsFlow } from 'src/features/fontOverview/hooks/useAddGlyphsFlow'
-import { useCloseProjectWithDraftSave } from 'src/features/fontOverview/hooks/useCloseProjectWithDraftSave'
-import { useHistoryShortcuts } from 'src/features/fontOverview/hooks/useHistoryShortcuts'
-import { useOverviewGridPersistence } from 'src/features/fontOverview/hooks/useOverviewGridPersistence'
-import { useOverviewGlyphPreviews } from 'src/features/fontOverview/hooks/useOverviewGlyphPreviews'
-import { useOverviewSections } from 'src/features/fontOverview/hooks/useOverviewSections'
-import { useOverviewSelection } from 'src/features/fontOverview/hooks/useOverviewSelection'
-import { consumeAddGlyphModalForNewProject } from 'src/features/home/utils/newProjectIntent'
+} from '@/features/fontOverview/components/OverviewGlyphContextMenu/OverviewGlyphContextMenu'
+import { OverviewContent } from '@/features/fontOverview/components/OverviewContent'
+import { OverviewSidebar } from '@/features/fontOverview/components/leftPanel/OverviewSidebar'
+import { OverviewRightPanel } from '@/features/fontOverview/components/rightPanel/OverviewRightPanel'
+import { useAddGlyphsFlow } from '@/features/fontOverview/hooks/useAddGlyphsFlow'
+import { useCloseProjectWithDraftSave } from '@/features/fontOverview/hooks/useCloseProjectWithDraftSave'
+import { useHistoryShortcuts } from '@/features/fontOverview/hooks/useHistoryShortcuts'
+import { useOverviewGridPersistence } from '@/features/fontOverview/hooks/useOverviewGridPersistence'
+import { useOverviewGlyphPreviews } from '@/features/fontOverview/hooks/useOverviewGlyphPreviews'
+import { useOverviewSections } from '@/features/fontOverview/hooks/useOverviewSections'
+import { useOverviewSelection } from '@/features/fontOverview/hooks/useOverviewSelection'
+import { consumeAddGlyphModalForNewProject } from '@/features/home/utils/newProjectIntent'
 import {
   collectOverviewGeometryGlyphIds,
   collectUnloadedOverviewGeometryGlyphIds,
   OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY,
-} from 'src/features/fontOverview/utils/overviewGeometryWindow'
+} from '@/features/fontOverview/utils/overviewGeometryWindow'
 import {
   buildOverviewGridZoomLayout,
   clampOverviewGridSizePx,
@@ -57,7 +57,7 @@ import {
   overviewGridSizePxToUnit,
   parseOverviewGridSizeInput,
   type OverviewGridSizeUnit,
-} from 'src/features/fontOverview/utils/overviewGridZoom'
+} from '@/features/fontOverview/utils/overviewGridZoom'
 
 const OVERVIEW_GRID_SIZE_INPUT_DEBOUNCE_MS = 250
 

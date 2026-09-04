@@ -13,7 +13,7 @@ import { NativeSelect } from '@/components/ui/native-select'
 import { XmarkCircle } from 'iconoir-react'
 import { Fragment } from 'react'
 
-import { getLanguageOptions } from 'src/features/common/projectControl/fontSettings/utils/languages'
+import { getLanguageOptions } from '@/features/common/projectControl/fontSettings/utils/languages'
 import { useTranslation } from 'react-i18next'
 
 const COMMON_LANGUAGES = getLanguageOptions()

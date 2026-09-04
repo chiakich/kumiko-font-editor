@@ -3,7 +3,7 @@ import {
   createEmptyOpenTypeFeaturesState,
   deriveOpenTypeImportExportSummary,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 describe('OpenType import/export summary', () => {
   it('counts imported, manual, generated, and unsupported layout state', () => {

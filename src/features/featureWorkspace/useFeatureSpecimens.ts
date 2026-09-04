@@ -2,16 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   shapeTextWithHarfBuzz,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
-import { getShapingPreviewFontBuffer } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
+} from '@/lib/openTypeFeatures'
+import type { FontData } from '@/store'
+import { getShapingPreviewFontBuffer } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
 import {
   buildDisabledFeatureList,
   listPreviewFeatureToggles,
-} from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
-import { buildFeatureSpecimenGlyphs } from 'src/features/common/projectControl/fontSettings/features/utils/featureSpecimen'
-import { PREVIEW_GLYPH_PLACEHOLDER } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
-import type { ShapingPreviewRun } from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
+} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
+import { buildFeatureSpecimenGlyphs } from '@/features/common/projectControl/fontSettings/features/utils/featureSpecimen'
+import { PREVIEW_GLYPH_PLACEHOLDER } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
+import type { ShapingPreviewRun } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 
 // First kerning pair whose two sides resolve to real glyphs.
 const sampleProjectKerningPair = (fontData: FontData): string[] => {

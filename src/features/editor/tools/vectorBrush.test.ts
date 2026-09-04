@@ -3,7 +3,7 @@ import {
   appendBrushSample,
   buildVectorBrushOutline,
   clampPressure,
-} from 'src/features/editor/tools/vectorBrush'
+} from '@/features/editor/tools/vectorBrush'
 
 describe('vector brush geometry', () => {
   it('interpolates sparse pointer samples without losing the final pressure', () => {

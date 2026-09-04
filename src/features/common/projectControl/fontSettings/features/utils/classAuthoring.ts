@@ -1,5 +1,5 @@
-import { getRuleClassReferences } from 'src/lib/openTypeFeatures/ruleReferences'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import { getRuleClassReferences } from '@/lib/openTypeFeatures/ruleReferences'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 // FEA class-name grammar (isValidGlyphClassName): '@' then a letter or
 // underscore, then letters/digits/underscore/dots. The IR stores class names

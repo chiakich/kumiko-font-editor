@@ -3,10 +3,10 @@ import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 import { loadPyodide } from 'pyodide'
 
-import { importBinaryFontFile } from 'src/lib/fontFormats/fontBinaryFormat'
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import { shapeTextWithHarfBuzz } from 'src/lib/openTypeFeatures/shapeTextWithHarfBuzz'
+import { importBinaryFontFile } from '@/lib/fontFormats/fontBinaryFormat'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import { shapeTextWithHarfBuzz } from '@/lib/openTypeFeatures/shapeTextWithHarfBuzz'
 
 const STRESS_FIXTURE_URL = new URL(
   '../fixtures/otf/KumikoOpenTypeStress.otf',

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import git from 'isomorphic-git'
-import { createGitFs } from 'src/lib/git/gitFileSystem'
+import { createGitFs } from '@/lib/git/gitFileSystem'
 import {
   fetchRemoteBranch,
   gitProxyUrlFor,
   readBlobAtCommit,
   trackingRefFor,
-} from 'src/lib/git/remote'
+} from '@/lib/git/remote'
 import { createMemoryFileStore } from './memoryFileStore'
 
 // the proxy url reads self.location so it works in a worker too

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ingestProjectData, clearProjectArchive } from './projectArchive'
-import { getGlyphLayer } from 'src/store/glyphLayer'
-import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
+import { getGlyphLayer } from '@/store/glyphLayer'
+import type { FontData, GlyphData, GlyphLayerData } from '@/store'
 
 // Characterization tests pinning the load-time content contract. With
 // layers-as-truth, ingestProjectData normalises each glyph (folding any legacy

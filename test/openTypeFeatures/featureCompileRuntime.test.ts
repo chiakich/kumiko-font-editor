@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { loadPyodide, type PyodideAPI } from 'pyodide'
 import opentype from 'opentype.js'
 
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { FONTTOOLS_VARIABLE_FONT_PYTHON } from 'src/lib/fontFormats/fontToolsVariableFontPython'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { FONTTOOLS_VARIABLE_FONT_PYTHON } from '@/lib/fontFormats/fontToolsVariableFontPython'
 
 // Exercises the real fontTools FEA compiler the worker runs
 // (FONTTOOLS_COMPILER_PYTHON + kumiko_compile_fea), driven through pyodide in

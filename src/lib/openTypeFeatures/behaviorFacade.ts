@@ -3,12 +3,12 @@ import {
   makeLookupId,
   makeRuleId,
   toStableIdPart,
-} from 'src/lib/openTypeFeatures/ids'
+} from '@/lib/openTypeFeatures/ids'
 import {
   isFourCharTag,
   isValidGlyphName,
-} from 'src/lib/openTypeFeatures/validationNames'
-import { getRuleGlyphReferences } from 'src/lib/openTypeFeatures/ruleReferences'
+} from '@/lib/openTypeFeatures/validationNames'
+import { getRuleGlyphReferences } from '@/lib/openTypeFeatures/ruleReferences'
 import type {
   AlternateSubstitutionRule,
   ContextualRule,
@@ -19,15 +19,15 @@ import type {
   PairPositioningRule,
   Rule,
   SingleSubstitutionRule,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData, GlyphData, GlyphLayerData } from 'src/store/types'
-import { getGlyphLayer, withActiveLayer } from 'src/store/glyphLayer'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData, GlyphData, GlyphLayerData } from '@/store/types'
+import { getGlyphLayer, withActiveLayer } from '@/store/glyphLayer'
 import {
   ALTERNATE_TYPE_TO_FEATURE_TAG,
   BEHAVIOR_TYPE_TO_FEATURE_TAG,
   FEATURE_TAG_TO_ALTERNATE_TYPE,
   FEATURE_TAG_TO_BEHAVIOR_TYPE,
-} from 'src/lib/openTypeFeatures/behaviorTypes'
+} from '@/lib/openTypeFeatures/behaviorTypes'
 import type {
   AlternateBehaviorDraft,
   AlternateBehaviorRow,
@@ -46,14 +46,14 @@ import type {
   SpacingBehaviorDraft,
   SpacingBehaviorRow,
   SpacingBehaviorStatus,
-} from 'src/lib/openTypeFeatures/behaviorTypes'
+} from '@/lib/openTypeFeatures/behaviorTypes'
 
 export {
   ALTERNATE_BEHAVIOR_TYPE_LABELS,
   ALTERNATE_BEHAVIOR_TYPES,
   COMBINATION_BEHAVIOR_TYPE_LABELS,
   COMBINATION_BEHAVIOR_TYPES,
-} from 'src/lib/openTypeFeatures/behaviorTypes'
+} from '@/lib/openTypeFeatures/behaviorTypes'
 export type {
   AlternateBehaviorDraft,
   AlternateBehaviorRow,
@@ -74,7 +74,7 @@ export type {
   SpacingBehaviorDraft,
   SpacingBehaviorRow,
   SpacingBehaviorStatus,
-} from 'src/lib/openTypeFeatures/behaviorTypes'
+} from '@/lib/openTypeFeatures/behaviorTypes'
 
 export function deriveGlyphCombinationBehaviors(
   fontData: FontData,

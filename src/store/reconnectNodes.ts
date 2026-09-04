@@ -1,6 +1,6 @@
-import type { GlyphLayerData, PathData, PathNode } from 'src/store/types'
-import { isOffCurveNode } from 'src/store/glyphGeometry'
-import { generateId } from 'src/store/glyphGeometry'
+import type { GlyphLayerData, PathData, PathNode } from '@/store/types'
+import { isOffCurveNode } from '@/store/glyphGeometry'
+import { generateId } from '@/store/glyphGeometry'
 
 /** Fixed nudge distance (font units) to avoid overlapping closing segments. */
 const EXTENSION_DISTANCE = 2

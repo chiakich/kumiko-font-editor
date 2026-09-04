@@ -1,4 +1,4 @@
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 export interface ShapingLanguageOption {
   id: string

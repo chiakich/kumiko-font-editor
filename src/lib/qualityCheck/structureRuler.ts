@@ -1,10 +1,10 @@
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import type { GeometryBounds } from 'src/lib/qualityCheck/polygonGeometry'
-import type { StructureBodyBox } from 'src/lib/qualityCheck/hanClassification'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import type { GeometryBounds } from '@/lib/qualityCheck/polygonGeometry'
+import type { StructureBodyBox } from '@/lib/qualityCheck/hanClassification'
 import {
   buildStructureBaseline,
   type StructureBaseline,
-} from 'src/lib/qualityCheck/structureMetrics'
+} from '@/lib/qualityCheck/structureMetrics'
 
 /**
  * 固定尺字組：從 3type 報告的「框架筆畫延伸性 / 對稱性」案例抽出

@@ -1,7 +1,7 @@
 import { Badge, Box, HStack, Heading, Text, VStack } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import type { InterpolationDiagnostics } from 'src/features/common/glyphInspector/hooks/useRightPanelModel'
-import type { GlyphCompatibilityIssue } from 'src/font/glyphCompatibility'
+import type { InterpolationDiagnostics } from '@/features/common/glyphInspector/hooks/useRightPanelModel'
+import type { GlyphCompatibilityIssue } from '@/font/glyphCompatibility'
 
 interface InterpolationDiagnosticsCardProps {
   diagnostics: InterpolationDiagnostics | null

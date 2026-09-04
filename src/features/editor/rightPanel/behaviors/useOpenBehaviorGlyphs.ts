@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useStore } from 'src/store'
+import { useStore } from '@/store'
 
 export function useOpenGlyphInEditor() {
   const addGlyphToEditor = useStore((state) => state.addGlyphToEditor)

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   buildUfoLibFromFontData,
   fontAxesFromLib,
-} from 'src/lib/fontFormats/fontInfoSettings'
-import type { FontData, GlyphData } from 'src/store'
+} from '@/lib/fontFormats/fontInfoSettings'
+import type { FontData, GlyphData } from '@/store'
 
 const makeGlyph = (id: string, production: string | null): GlyphData =>
   ({

@@ -2,7 +2,7 @@ import type {
   FeatureOrigin,
   GlyphSelector,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 import {
   glyphsFromRawClassToken,
   isInlineGlyphClassToken,
@@ -11,8 +11,8 @@ import {
   splitGlyphPatternTokens,
   type InlineGlyphClassRegistrar,
   type RawSelectorContext,
-} from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
-import { splitGlyphList } from 'src/lib/openTypeFeatures/rawFeatureTextUtils'
+} from '@/lib/openTypeFeatures/rawFeatureSelectorParser'
+import { splitGlyphList } from '@/lib/openTypeFeatures/rawFeatureTextUtils'
 
 const SUBSTITUTION_KEYWORD = '(?:sub|substitute)'
 const REVERSE_SUBSTITUTION_KEYWORD = 'rsub'

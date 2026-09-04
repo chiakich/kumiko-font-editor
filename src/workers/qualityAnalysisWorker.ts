@@ -1,8 +1,8 @@
-import { runPopulationAnalysis } from 'src/lib/qualityCheck/populationAnalysis'
-import { getDefaultRadarReferenceData } from 'src/lib/qualityCheck/radarReferenceData'
-import { getSemanticStructureData } from 'src/lib/qualityCheck/semanticStructure'
-import type { ResolvedFont } from 'src/lib/qualityCheck/resolvedGlyph'
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
+import { runPopulationAnalysis } from '@/lib/qualityCheck/populationAnalysis'
+import { getDefaultRadarReferenceData } from '@/lib/qualityCheck/radarReferenceData'
+import { getSemanticStructureData } from '@/lib/qualityCheck/semanticStructure'
+import type { ResolvedFont } from '@/lib/qualityCheck/resolvedGlyph'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
 
 /**
  * 母體幾何分析 Worker：接收主執行緒已解析好的純資料字形，

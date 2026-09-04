@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
+import { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import { setRawFeatureTextSource } from '@/lib/openTypeFeatures/featureSourceSections'
 
 describe('OpenType raw FEA GPOS classifier', () => {
   it('classifies raw contextual positioning rules', () => {

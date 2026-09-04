@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Window } from 'happy-dom'
-import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
-import type { UfoMetadataRecord } from 'src/lib/fontFormats/ufoTypes'
+import { buildUfoFontLevelFiles } from '@/lib/fontFormats/ufoFontLevelFiles'
+import type { UfoMetadataRecord } from '@/lib/fontFormats/ufoTypes'
 
 const makeMetadata = (
   overrides: Partial<UfoMetadataRecord> = {}
@@ -95,9 +95,8 @@ describe('buildUfoFontLevelFiles', () => {
 describe('UFO font-level import baselines', () => {
   it('records blob baselines for the font-level files the repo actually has', async () => {
     const { importUfoWorkspaceEntries } =
-      await import('src/lib/fontFormats/ufoFormat')
-    const { gitBlobShaFromText } =
-      await import('src/lib/github/sync/gitBlobSha')
+      await import('@/lib/fontFormats/ufoFormat')
+    const { gitBlobShaFromText } = await import('@/lib/github/sync/gitBlobSha')
     const fontinfo =
       '<?xml version="1.0"?><plist version="1.0"><dict><key>unitsPerEm</key><integer>1000</integer></dict></plist>'
     const imported = await importUfoWorkspaceEntries(

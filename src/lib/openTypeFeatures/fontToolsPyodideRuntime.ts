@@ -1,12 +1,12 @@
 import { loadPyodide, version as pyodideVersion } from 'pyodide'
 import type { PyodideAPI } from 'pyodide'
-import { makeDiagnostic } from 'src/lib/openTypeFeatures/diagnostics'
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { FONTTOOLS_VARIABLE_FONT_PYTHON } from 'src/lib/fontFormats/fontToolsVariableFontPython'
+import { makeDiagnostic } from '@/lib/openTypeFeatures/diagnostics'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { FONTTOOLS_VARIABLE_FONT_PYTHON } from '@/lib/fontFormats/fontToolsVariableFontPython'
 import type {
   CompileOptions,
   CompileResult,
-} from 'src/lib/openTypeFeatures/compilerTypes'
+} from '@/lib/openTypeFeatures/compilerTypes'
 
 const PYODIDE_INDEX_PATH = '/pyodide/'
 const PYODIDE_PACKAGE_BASE_URL = `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`

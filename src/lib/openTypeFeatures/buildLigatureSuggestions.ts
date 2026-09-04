@@ -1,18 +1,18 @@
 import {
   createLookupSuggestion,
   makeLigatureRule,
-} from 'src/lib/openTypeFeatures/autoFeatureLookup'
+} from '@/lib/openTypeFeatures/autoFeatureLookup'
 import {
   getGlyphSuffix,
   isCommonLigatureName,
   splitLigatureName,
-} from 'src/lib/openTypeFeatures/glyphNames'
+} from '@/lib/openTypeFeatures/glyphNames'
 import type {
   AutoFeatureSuggestion,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData } from '@/store/types'
 
 const getLigatureFeatureTag = (glyphName: string) => {
   const suffix = getGlyphSuffix(glyphName)

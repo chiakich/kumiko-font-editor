@@ -7,10 +7,10 @@ import {
   VStack,
   Separator,
 } from '@chakra-ui/react'
-import type { GlyphOverviewTreeNode } from 'src/lib/glyph/glyphOverview'
-import { OverviewSearchInput } from 'src/features/fontOverview/components/leftPanel/OverviewSearchInput'
-import { OverviewTreeNav } from 'src/features/fontOverview/components/leftPanel/OverviewTreeNav'
-import type { OverviewSearchOptionsState } from 'src/store'
+import type { GlyphOverviewTreeNode } from '@/lib/glyph/glyphOverview'
+import { OverviewSearchInput } from '@/features/fontOverview/components/leftPanel/OverviewSearchInput'
+import { OverviewTreeNav } from '@/features/fontOverview/components/leftPanel/OverviewTreeNav'
+import type { OverviewSearchOptionsState } from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface OverviewSidebarProps {

@@ -1,18 +1,18 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { buildOpenTypeGeometrySamples } from 'src/lib/qualityCheck/openTypeSampling'
-import { openTypePathToPolygons } from 'src/lib/qualityCheck/openTypeSampling'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
-import { computeInkFromPolygons } from 'src/lib/qualityCheck/glyphInk'
+import { buildOpenTypeGeometrySamples } from '@/lib/qualityCheck/openTypeSampling'
+import { openTypePathToPolygons } from '@/lib/qualityCheck/openTypeSampling'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
+import { computeInkFromPolygons } from '@/lib/qualityCheck/glyphInk'
 import {
   computePartSpacingMetrics,
   type SemanticPartLayout,
-} from 'src/lib/qualityCheck/partSpacingMetrics'
-import { computeRasterPartSpacingMetrics } from 'src/lib/qualityCheck/rasterPartSpacingMetrics'
-import type { PartSpacingSamplingMethod } from 'src/lib/qualityCheck/openTypeSampling'
-import { getPolygonsBounds } from 'src/lib/qualityCheck/polygonGeometry'
-import { buildSidesFromPolygons } from 'src/lib/qualityCheck/structureMetrics'
+} from '@/lib/qualityCheck/partSpacingMetrics'
+import { computeRasterPartSpacingMetrics } from '@/lib/qualityCheck/rasterPartSpacingMetrics'
+import type { PartSpacingSamplingMethod } from '@/lib/qualityCheck/openTypeSampling'
+import { getPolygonsBounds } from '@/lib/qualityCheck/polygonGeometry'
+import { buildSidesFromPolygons } from '@/lib/qualityCheck/structureMetrics'
 import {
   computeRadarFromSamples,
   evaluateSampleAgainstRadar,
@@ -20,11 +20,11 @@ import {
   RADAR_SUSPECT_SCORE,
   type RadarAnalysis,
   type RadarReferenceData,
-} from 'src/lib/qualityCheck/qualityRadar'
-import { buildEnclosureCharacterSet } from 'src/lib/qualityCheck/semanticStructure'
-import { buildSemanticPartLayoutMap } from 'src/lib/qualityCheck/semanticStructure'
-import { parseCompositionLine } from 'src/lib/glyph/glyphwikiComposition'
-import type { GlyphwikiPartPlacement } from 'src/lib/glyph/glyphwikiComposition'
+} from '@/lib/qualityCheck/qualityRadar'
+import { buildEnclosureCharacterSet } from '@/lib/qualityCheck/semanticStructure'
+import { buildSemanticPartLayoutMap } from '@/lib/qualityCheck/semanticStructure'
+import { parseCompositionLine } from '@/lib/glyph/glyphwikiComposition'
+import type { GlyphwikiPartPlacement } from '@/lib/glyph/glyphwikiComposition'
 import {
   cleanupCalibrationFontFaces,
   loadCalibrationFontFaces,

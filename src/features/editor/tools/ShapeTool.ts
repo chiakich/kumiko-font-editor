@@ -2,9 +2,9 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
-import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
-import { useStore, type PathData, type PathNode } from 'src/store'
+} from '@/features/editor/tools/BaseTool'
+import { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'
+import { useStore, type PathData, type PathNode } from '@/store'
 
 type ShapeKind = 'rect' | 'ellipse'
 type NodeRole = 'corner' | 'smooth' | 'offcurve'

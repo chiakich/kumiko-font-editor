@@ -1,28 +1,28 @@
-import { hashString } from 'src/lib/hash'
-import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
-import { buildUfoFontLevelFiles } from 'src/lib/fontFormats/ufoFontLevelFiles'
-import type { ParsedUfoFolder } from 'src/lib/fontFormats/ufoFormat'
+import { hashString } from '@/lib/hash'
+import { gitBlobShaFromText } from '@/lib/github/sync/gitBlobSha'
+import { buildUfoFontLevelFiles } from '@/lib/fontFormats/ufoFontLevelFiles'
+import type { ParsedUfoFolder } from '@/lib/fontFormats/ufoFormat'
 import {
   buildUfoFontLevelFontData,
   parseUfoMetadataFiles,
-} from 'src/lib/fontFormats/ufoFormat'
-import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
-import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
-import { createUfoFormatAdapter } from 'src/lib/fontFormats/formatAdapter/ufoFormatAdapter'
+} from '@/lib/fontFormats/ufoFormat'
+import { UFO_FONT_LEVEL_FILE_NAMES } from '@/lib/fontFormats/ufoFileNames'
+import { buildGlyphCommitMessage } from '@/lib/github/sync/commitMessage'
+import { createUfoFormatAdapter } from '@/lib/fontFormats/formatAdapter/ufoFormatAdapter'
 import {
   buildSyncReport,
   computeFontLevelSyncEntries,
   computeGlyphSyncEntries,
   joinRepoPath,
-} from 'src/lib/github/sync/computeSyncReport'
-import { fetchRemoteTree } from 'src/lib/github/sync/remoteTree'
-import { fetchGitHubArchiveSnapshot } from 'src/lib/github/githubImport'
+} from '@/lib/github/sync/computeSyncReport'
+import { fetchRemoteTree } from '@/lib/github/sync/remoteTree'
+import { fetchGitHubArchiveSnapshot } from '@/lib/github/githubImport'
 import type {
   GitHubSyncTarget,
   GlyphSyncEntry,
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'
 import {
   deleteKumikoGlyphRecordBatch,
   listKumikoGlyphExportScanForProject,
@@ -34,31 +34,31 @@ import {
   makeKumikoGlyphKey,
   saveKumikoGlyphRecordBatch,
   saveKumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import type {
   KumikoGlyphLayerRecord,
   KumikoGlyphMetadataRecord,
   KumikoGlyphRecord,
   KumikoGlyphSpecialLayerMetadata,
   KumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectTypes'
+} from '@/lib/project/kumikoProjectTypes'
 import {
   serializeDesignspace,
   type DesignspaceRule,
   type DesignspaceSourceOut,
-} from 'src/lib/fontFormats/designspace'
+} from '@/lib/fontFormats/designspace'
 import {
   buildUfoLibFromFontData,
   fontInfoToUfoFontInfo,
-} from 'src/lib/fontFormats/fontInfoSettings'
-import { selectUfoFeatureText } from 'src/lib/openTypeFeatures'
-import { userNameToFileName } from 'src/lib/fontFormats/ufoFileNames'
+} from '@/lib/fontFormats/fontInfoSettings'
+import { selectUfoFeatureText } from '@/lib/openTypeFeatures'
+import { userNameToFileName } from '@/lib/fontFormats/ufoFileNames'
 import {
   parseUfoKerning,
   parseVerticalKerningLib,
   serializeUfoKerning,
-} from 'src/lib/fontFormats/ufoKerning'
-import { KUMIKO_VERTICAL_KERNING_LIB_KEY } from 'src/lib/fontFormats/fontInfoSettings'
+} from '@/lib/fontFormats/ufoKerning'
+import { KUMIKO_VERTICAL_KERNING_LIB_KEY } from '@/lib/fontFormats/fontInfoSettings'
 import {
   buildBoundsResolver,
   buildWorkspaceFileMapFromEntries,
@@ -68,20 +68,20 @@ import {
   parseGlifText,
   serializeGlifRecord,
   serializeXmlPlist,
-} from 'src/lib/fontFormats/ufoFormat'
+} from '@/lib/fontFormats/ufoFormat'
 import type {
   UfoGlyphRecord,
   UfoLayerRecord,
   UfoMetadataRecord,
-} from 'src/lib/fontFormats/ufoTypes'
-import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
+} from '@/lib/fontFormats/ufoTypes'
+import { parseUfoColor, serializeUfoColor } from '@/lib/color/kumikoColor'
 import {
   getKumikoComponentRefMatrix,
   glyphDataToKumikoGlyphRecord,
   kumikoGlyphRecordToGlyphData,
   kumikoGlyphRecordToGlyphMetadata,
-} from 'src/lib/project/kumikoFontDataAdapter'
-import type { FontData, GlyphData, GlyphLayerData } from 'src/store'
+} from '@/lib/project/kumikoFontDataAdapter'
+import type { FontData, GlyphData, GlyphLayerData } from '@/store'
 
 export interface GitHubCommitFileInput {
   path: string

@@ -1,16 +1,16 @@
 import {
   UFO_FONT_LEVEL_FILE_NAMES,
   userNameToFileName,
-} from 'src/lib/fontFormats/ufoFileNames'
+} from '@/lib/fontFormats/ufoFileNames'
 import type {
   EntityId,
   FormatAdapter,
   FormatDetection,
-} from 'src/lib/fontFormats/formatAdapter/types'
+} from '@/lib/fontFormats/formatAdapter/types'
 import {
   listUfoTreePaths,
   materializeUfoTree,
-} from 'src/lib/fontFormats/ufoMaterialize'
+} from '@/lib/fontFormats/ufoMaterialize'
 
 export interface UfoLayout {
   // The .ufo directory, relative to the repo root.

@@ -1,5 +1,5 @@
-import type { GlyphData, PathData, PathNode, PathSegmentType } from 'src/store'
-import { activeLayer } from 'src/store'
+import type { GlyphData, PathData, PathNode, PathSegmentType } from '@/store'
+import { activeLayer } from '@/store'
 
 type LegacyNodeType = 'corner' | 'smooth' | 'offcurve' | 'qcurve'
 

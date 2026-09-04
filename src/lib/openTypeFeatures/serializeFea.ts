@@ -2,7 +2,7 @@ import type {
   FeaDocument,
   FeaNode,
   GeneratedFeaSourceMap,
-} from 'src/lib/openTypeFeatures/feaAst'
+} from '@/lib/openTypeFeatures/feaAst'
 import {
   formatAnchor,
   formatGlyphList,
@@ -11,7 +11,7 @@ import {
   formatMarkAttachment,
   formatNullableAnchor,
   formatValueRecord,
-} from 'src/lib/openTypeFeatures/feaFormat'
+} from '@/lib/openTypeFeatures/feaFormat'
 
 interface SerializeContext {
   lines: string[]

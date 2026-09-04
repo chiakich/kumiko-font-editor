@@ -1,7 +1,7 @@
 import type {
   FeatureDiagnostic,
   FeatureDiagnostic as Diagnostic,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 type DiagnosticTarget = FeatureDiagnostic['target']
 

@@ -1,5 +1,5 @@
-import type { GlyphData } from 'src/store'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
+import type { GlyphData } from '@/store'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 
 const IDS_OPERATOR_MIN = 0x2ff0
 const IDS_OPERATOR_MAX = 0x2ffb

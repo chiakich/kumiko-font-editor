@@ -1,16 +1,16 @@
 import { lazy, Suspense } from 'react'
-import { preloadEditorLayout } from 'src/features/editor/preloadEditorLayout'
-import { OverviewReturnHeroOverlay } from 'src/features/common/viewTransition/OverviewReturnHeroOverlay'
-import { useAutoDraftSave } from 'src/hooks/useAutoDraftSave'
-import { useProjectBroadcastSync } from 'src/hooks/useProjectBroadcastSync'
-import { useApplyColorMode } from 'src/lib/preferences/colorMode'
-import { useStore } from 'src/store'
+import { preloadEditorLayout } from '@/features/editor/preloadEditorLayout'
+import { OverviewReturnHeroOverlay } from '@/features/common/viewTransition/OverviewReturnHeroOverlay'
+import { useAutoDraftSave } from '@/hooks/useAutoDraftSave'
+import { useProjectBroadcastSync } from '@/hooks/useProjectBroadcastSync'
+import { useApplyColorMode } from '@/lib/preferences/colorMode'
+import { useStore } from '@/store'
 
 const Home = lazy(() =>
-  import('src/features/home/Home').then((module) => ({ default: module.Home }))
+  import('@/features/home/Home').then((module) => ({ default: module.Home }))
 )
 const FontOverviewScreen = lazy(() =>
-  import('src/features/fontOverview/FontOverviewScreen').then((module) => ({
+  import('@/features/fontOverview/FontOverviewScreen').then((module) => ({
     default: module.FontOverviewScreen,
   }))
 )
@@ -18,7 +18,7 @@ const EditorLayout = lazy(() =>
   preloadEditorLayout().then((module) => ({ default: module.EditorLayout }))
 )
 const FeatureWorkspaceScreen = lazy(() =>
-  import('src/features/featureWorkspace/FeatureWorkspaceScreen').then(
+  import('@/features/featureWorkspace/FeatureWorkspaceScreen').then(
     (module) => ({ default: module.FeatureWorkspaceScreen })
   )
 )

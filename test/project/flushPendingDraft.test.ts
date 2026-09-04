@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
-import type { FontData } from 'src/store'
+import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
+import type { FontData } from '@/store'
 
 const mocks = vi.hoisted(() => ({
   saveDraftSnapshotInWorker: vi.fn(),
@@ -8,12 +8,12 @@ const mocks = vi.hoisted(() => ({
   publishProjectDraftSaved: vi.fn(),
 }))
 
-vi.mock('src/lib/project/draftSaveWorkerClient', () => ({
+vi.mock('@/lib/project/draftSaveWorkerClient', () => ({
   saveDraftSnapshotInWorker: mocks.saveDraftSnapshotInWorker,
   saveProjectUiStateInWorker: mocks.saveProjectUiStateInWorker,
 }))
 
-vi.mock('src/lib/project/projectBroadcast', () => ({
+vi.mock('@/lib/project/projectBroadcast', () => ({
   publishProjectDraftSaved: mocks.publishProjectDraftSaved,
 }))
 

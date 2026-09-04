@@ -2,7 +2,7 @@ import { Badge, HStack, SimpleGrid, Stack, Text } from '@chakra-ui/react'
 import {
   deriveOpenTypeImportExportSummary,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface ImportExportOverviewProps {

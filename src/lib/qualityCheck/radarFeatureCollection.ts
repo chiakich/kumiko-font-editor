@@ -1,10 +1,10 @@
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
 import {
   sideLabels,
   strokeTypeLabels,
   type StructureSide,
-} from 'src/lib/qualityCheck/structureMetrics'
-import type { RadarFeatureValue } from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/structureMetrics'
+import type { RadarFeatureValue } from '@/lib/qualityCheck/qualityRadar'
 
 const STRUCTURE_SIDES: StructureSide[] = ['left', 'right', 'top', 'bottom']
 const BEARING_FLOOR_RATIO = 0.01

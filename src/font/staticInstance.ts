@@ -1,10 +1,10 @@
-import { interpolateGlyphLayer } from 'src/font/glyphInterpolation'
+import { interpolateGlyphLayer } from '@/font/glyphInterpolation'
 import {
   getActiveBracketLayerForSource,
   getGlyphMasterLayerForSource,
   locationsMatch,
-} from 'src/font/designspaceLocation'
-import { activeLayer } from 'src/store/glyphLayer'
+} from '@/font/designspaceLocation'
+import { activeLayer } from '@/store/glyphLayer'
 import type {
   FontAxis,
   FontData,
@@ -12,7 +12,7 @@ import type {
   FontSource,
   GlyphData,
   GlyphLayerData,
-} from 'src/store/types'
+} from '@/store/types'
 
 export const STATIC_INSTANCE_LAYER_ID = 'public.default'
 

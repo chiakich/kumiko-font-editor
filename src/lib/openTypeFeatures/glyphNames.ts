@@ -1,5 +1,5 @@
-import type { GlyphData } from 'src/store/types'
-import { getGlyphUnicodeChar } from 'src/lib/glyph/glyphUnicode'
+import type { GlyphData } from '@/store/types'
+import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 
 const COMMON_LIGATURES = new Set([
   'f_i',

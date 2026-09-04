@@ -3,8 +3,8 @@ import type {
   BuildOverviewPreviewsPayload,
   OverviewPreviewWorkerIncomingMessage,
   OverviewPreviewWorkerResult,
-} from 'src/features/fontOverview/utils/overviewPreviewWorkerTypes'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+} from '@/features/fontOverview/utils/overviewPreviewWorkerTypes'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 const client = createWorkerRpcClient<OverviewPreviewWorkerIncomingMessage>({
   createWorker: () =>

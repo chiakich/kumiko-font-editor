@@ -1,5 +1,5 @@
-import type { GlyphData } from 'src/store'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+import type { GlyphData } from '@/store'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 export const addGlyphLookupKeys = (keys: Set<string>, glyphName: string) => {
   keys.add(glyphName.toLowerCase())

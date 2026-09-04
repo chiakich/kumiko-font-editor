@@ -1,7 +1,7 @@
 import {
   extractGlyphsMetadata,
   type GlyphsDocument,
-} from 'src/lib/fontFormats/glyphsDocument'
+} from '@/lib/fontFormats/glyphsDocument'
 import {
   createBaseGlyphsDocument,
   createGlyphsDocumentFromFontData,
@@ -9,9 +9,9 @@ import {
   getGlyphExportWarnings,
   type GlyphsExportWarning,
   serializeOpenStepValue,
-} from 'src/lib/fontFormats/glyphsExport'
-import { parseOpenStep } from 'src/lib/fontFormats/openstepParser'
-import type { FontData, GlyphData } from 'src/store'
+} from '@/lib/fontFormats/glyphsExport'
+import { parseOpenStep } from '@/lib/fontFormats/openstepParser'
+import type { FontData, GlyphData } from '@/store'
 
 export interface GlyphsPackageData {
   packageName: string

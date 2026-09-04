@@ -4,8 +4,8 @@ import {
   buildShapingFeatureList,
   isFeatureOnByDefault,
   listPreviewFeatureToggles,
-} from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 const state = (partial: Partial<OpenTypeFeaturesState>) =>
   partial as OpenTypeFeaturesState

@@ -5,8 +5,8 @@ import { useState } from 'react'
 import type {
   SpacingBehaviorDraft,
   SpacingBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { SpacingBehaviorTableRow } from 'src/features/editor/rightPanel/behaviors/SpacingBehaviorTableRow'
+} from '@/lib/openTypeFeatures'
+import { SpacingBehaviorTableRow } from '@/features/editor/rightPanel/behaviors/SpacingBehaviorTableRow'
 import { useTranslation } from 'react-i18next'
 
 interface SpacingBehaviorListProps {

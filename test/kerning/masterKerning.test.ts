@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getMasterKerningPairs } from 'src/lib/kerning/resolveKerning'
-import { resolveUfoKerningPairs } from 'src/lib/github/sync/kumikoUfoSync'
-import type { KumikoProjectRecord } from 'src/lib/project/kumikoProjectTypes'
-import type { KerningPair } from 'src/store/types'
+import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
+import { resolveUfoKerningPairs } from '@/lib/github/sync/kumikoUfoSync'
+import type { KumikoProjectRecord } from '@/lib/project/kumikoProjectTypes'
+import type { KerningPair } from '@/store/types'
 
 const pair = (glyph: string, value: number): KerningPair => ({
   id: `p_${glyph}_${value}`,

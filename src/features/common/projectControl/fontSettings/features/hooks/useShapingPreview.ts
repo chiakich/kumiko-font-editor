@@ -4,23 +4,23 @@ import {
   shapeTextWithHarfBuzz,
   type OpenTypeFeaturesState,
   type ShapeTextResult,
-} from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
-import { getShapingPreviewFontBuffer } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
+} from '@/lib/openTypeFeatures'
+import type { FontData } from '@/store'
+import { getShapingPreviewFontBuffer } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewFont'
 import {
   buildDisabledFeatureList,
   buildShapingFeatureList,
   listPreviewFeatureToggles,
   type PreviewDirection,
-} from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
+} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
 import {
   buildPlaceholderText,
   parsePreviewSegments,
-} from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
+} from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewTokens'
 import {
   listShapingLanguageOptions,
   type ShapingLanguageOption,
-} from 'src/features/common/projectControl/fontSettings/features/utils/shapingLanguage'
+} from '@/features/common/projectControl/fontSettings/features/utils/shapingLanguage'
 
 export type ShapingPreviewFontStatus =
   | { state: 'idle' }

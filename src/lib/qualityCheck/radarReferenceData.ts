@@ -3,7 +3,7 @@ import {
   type RadarReferenceData,
   type RadarReferenceFeatureKey,
   type RadarReferenceResidualInput,
-} from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/qualityRadar'
 
 const DEFAULT_RADAR_REFERENCE_DATA_PATH =
   '/quality-reference/noto-sans-cjk-tc-regular-radar-residuals.json'

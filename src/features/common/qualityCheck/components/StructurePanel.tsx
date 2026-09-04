@@ -10,32 +10,32 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { useStore, type FontData, type GlyphData } from 'src/store'
-import type { QualityScope } from 'src/lib/qualityCheck/qualityLint'
-import { sideLabels } from 'src/lib/qualityCheck/structureMetrics'
+import { useStore, type FontData, type GlyphData } from '@/store'
+import type { QualityScope } from '@/lib/qualityCheck/qualityLint'
+import { sideLabels } from '@/lib/qualityCheck/structureMetrics'
 import {
   getGlyphCharacter,
   isHanGlyph,
-} from 'src/lib/qualityCheck/hanClassification'
-import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
+} from '@/lib/qualityCheck/hanClassification'
+import { resolveFontGlyphs } from '@/lib/qualityCheck/resolvedGlyph'
 import {
   buildGlyphGeometrySample,
   type GlyphGeometrySample,
-} from 'src/lib/qualityCheck/glyphSampling'
-import { useQualityAnalysis } from 'src/features/common/qualityCheck/hooks/useQualityAnalysis'
-import { usePreviewGlyphMap } from 'src/features/common/qualityCheck/hooks/usePreviewGlyphMap'
+} from '@/lib/qualityCheck/glyphSampling'
+import { useQualityAnalysis } from '@/features/common/qualityCheck/hooks/useQualityAnalysis'
+import { usePreviewGlyphMap } from '@/features/common/qualityCheck/hooks/usePreviewGlyphMap'
 import {
   radarDimensionLabels,
   type RadarGlyphEvaluation,
-} from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/qualityRadar'
 import {
   DistributionRow,
   GlyphSideTable,
   RadarScoreTile,
   StructureRangeSvg,
   SuspectRow,
-} from 'src/features/common/qualityCheck/components/structurePanel/StructurePanelParts'
-import { STRUCTURE_SIDES } from 'src/features/common/qualityCheck/components/structurePanel/structurePanelConstants'
+} from '@/features/common/qualityCheck/components/structurePanel/StructurePanelParts'
+import { STRUCTURE_SIDES } from '@/features/common/qualityCheck/components/structurePanel/structurePanelConstants'
 
 interface StructurePanelProps {
   fontData: FontData | null

@@ -4,7 +4,7 @@ import type {
   ListRange,
   VirtuosoGridHandle,
 } from 'react-virtuoso'
-import { useStore, type GlyphData } from 'src/store'
+import { useStore, type GlyphData } from '@/store'
 
 interface UseOverviewGridPersistenceOptions {
   activeGlyphs: GlyphData[]

@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useStore, getGlyphLayer, type FontData } from 'src/store'
+import { useStore, getGlyphLayer, type FontData } from '@/store'
 import {
   resolveFontGlyphs,
   resolveGlyph,
   type ResolvedFont,
   type ResolvedGlyph,
-} from 'src/lib/qualityCheck/resolvedGlyph'
-import type { PopulationAnalysis } from 'src/lib/qualityCheck/populationAnalysis'
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
-import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
+} from '@/lib/qualityCheck/resolvedGlyph'
+import type { PopulationAnalysis } from '@/lib/qualityCheck/populationAnalysis'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
+import { loadProjectGlyphGeometryClosure } from '@/lib/project/projectRepository'
 
 interface AnalysisSuccessMessage {
   type: 'analysis-success'

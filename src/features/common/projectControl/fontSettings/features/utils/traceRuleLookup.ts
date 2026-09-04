@@ -3,7 +3,7 @@ import type {
   OpenTypeFeaturesState,
   Rule,
   ShapingTraceStep,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 export interface TraceRuleMatch {
   featureId: string

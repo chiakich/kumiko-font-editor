@@ -5,12 +5,12 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('paper', () => ({ default: {}, paper: {} }))
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { GlyphClassesView } from 'src/features/featureWorkspace/GlyphClassesView'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { createGlyphClass } from 'src/features/common/projectControl/fontSettings/features/utils/classAuthoring'
+import { GlyphClassesView } from '@/features/featureWorkspace/GlyphClassesView'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { createGlyphClass } from '@/features/common/projectControl/fontSettings/features/utils/classAuthoring'
 import { makeFontData } from '../openTypeFeatures/openTypeFeatureTestHelpers'
 import { renderWithProviders } from './renderWithProviders'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 describe('GlyphClassesView', () => {
   it('creates a class through the new-class input', async () => {

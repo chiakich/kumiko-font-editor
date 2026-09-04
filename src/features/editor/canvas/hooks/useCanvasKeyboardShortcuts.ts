@@ -1,8 +1,8 @@
 import { useEffect, type RefObject } from 'react'
-import { shouldIgnoreGlobalShortcut } from 'src/features/common/keyboardShortcutTargets'
-import { getGlyphLayer, isOffCurveNode, type FontData } from 'src/store'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
-import type { GlyphLayerData, PathData } from 'src/store'
+import { shouldIgnoreGlobalShortcut } from '@/features/common/keyboardShortcutTargets'
+import { getGlyphLayer, isOffCurveNode, type FontData } from '@/store'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
+import type { GlyphLayerData, PathData } from '@/store'
 
 interface UseCanvasKeyboardShortcutsOptions {
   activeEditorGlyphId: string | null

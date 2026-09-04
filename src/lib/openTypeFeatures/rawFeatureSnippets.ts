@@ -1,8 +1,8 @@
-import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
+import { toStableIdPart } from '@/lib/openTypeFeatures/ids'
 import type {
   OpenTypeFeaturesState,
   RawFeatureSnippet,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 const FEATURE_BLOCK_PATTERN =
   /\bfeature\s+([A-Za-z0-9]{4})\s*\{[\s\S]*?\}\s*\1\s*;/g

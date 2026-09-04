@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   parseUfoKerning,
   serializeUfoKerning,
-} from 'src/lib/fontFormats/ufoKerning'
+} from '@/lib/fontFormats/ufoKerning'
 
 const UFO_GROUPS = {
   'public.kern1.A': ['A', 'Agrave'],

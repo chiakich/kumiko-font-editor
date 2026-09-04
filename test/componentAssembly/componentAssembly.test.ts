@@ -8,8 +8,8 @@ import {
   mapGlyphwikiBoxToFontUnits,
   scorePartFit,
   transformPaths,
-} from 'src/lib/components/componentAssembly'
-import type { PathData } from 'src/store'
+} from '@/lib/components/componentAssembly'
+import type { PathData } from '@/store'
 
 const makeRectPath = (
   xMin: number,

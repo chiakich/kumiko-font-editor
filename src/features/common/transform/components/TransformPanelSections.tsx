@@ -2,8 +2,8 @@ import { Box, Button, Grid, HStack, Stack, Text } from '@chakra-ui/react'
 import { Tooltip } from '@/components/ui/tooltip'
 import { Switch } from '@/components/ui/switch'
 import { Flip, Minus, Plus } from 'iconoir-react'
-import { TransformActionRow } from 'src/features/common/transform/components/TransformActionControls'
-import type { TransformOrigin } from 'src/features/common/transform/utils/transformGeometry'
+import { TransformActionRow } from '@/features/common/transform/components/TransformActionControls'
+import type { TransformOrigin } from '@/features/common/transform/utils/transformGeometry'
 import { useTranslation } from 'react-i18next'
 
 interface OriginPickerProps {

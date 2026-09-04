@@ -4,8 +4,8 @@ import {
   fontDataToKumikoGlyphRecords,
   fontDataToKumikoProjectRecord,
   kumikoRecordsToFontData,
-} from 'src/lib/project/kumikoFontDataAdapter'
-import type { FontData } from 'src/store'
+} from '@/lib/project/kumikoFontDataAdapter'
+import type { FontData } from '@/store'
 
 const fontData = {
   unitsPerEm: 1000,

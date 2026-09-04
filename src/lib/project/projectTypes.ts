@@ -1,10 +1,10 @@
-import type { FontData } from 'src/store'
-import type { GlyphsPackageData } from 'src/lib/fontFormats/glyphsPackage'
-import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
+import type { FontData } from '@/store'
+import type { GlyphsPackageData } from '@/lib/fontFormats/glyphsPackage'
+import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
-} from 'src/lib/project/projectFormats'
+} from '@/lib/project/projectFormats'
 
 export type ProjectSourceType = 'local' | 'github'
 

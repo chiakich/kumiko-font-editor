@@ -3,7 +3,7 @@ import type {
   FontData,
   GlyphData,
   GlyphLayerData,
-} from 'src/store/types'
+} from '@/store/types'
 
 const axisValue = (location: Record<string, number>, axis: FontAxis) =>
   location[axis.name] ?? axis.defaultValue

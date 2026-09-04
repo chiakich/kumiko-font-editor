@@ -8,17 +8,17 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import {
   exportFontAsBinary,
   importBinaryFontFile,
-} from 'src/lib/fontFormats/fontBinaryFormat'
+} from '@/lib/fontFormats/fontBinaryFormat'
 import {
   exportCanonicalProjectAsBinary,
   exportCanonicalProjectInstanceAsBinary,
   getVariableBuildExportInstances,
   makeVariableBuildMasterNames,
-} from 'src/lib/fontFormats/canonicalBinaryExport'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
-import type { FontAxes, FontData, GlyphData, GlyphLayerData } from 'src/store'
-import { getGlyphLayer } from 'src/store/glyphLayer'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/fontFormats/canonicalBinaryExport'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
+import type { FontAxes, FontData, GlyphData, GlyphLayerData } from '@/store'
+import { getGlyphLayer } from '@/store/glyphLayer'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 const layerOf = (g: GlyphData) => getGlyphLayer(g, null)!
 
 // Public Sans Regular (CFF/OTF, OFL) — see test/fixtures/otf/OFL.txt.

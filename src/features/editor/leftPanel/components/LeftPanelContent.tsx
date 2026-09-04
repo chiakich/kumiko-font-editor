@@ -1,14 +1,14 @@
 import { HStack, Stack, Text, VStack, Separator } from '@chakra-ui/react'
 import { useCallback, useEffect, useRef } from 'react'
 import type { ListRange } from 'react-virtuoso'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import { loadProjectGlyphGeometryClosure } from 'src/lib/project/projectRepository'
-import { useStore, type GlyphData } from 'src/store'
-import { ComponentSearchSection } from 'src/features/editor/leftPanel/components/ComponentSearchSection'
-import { GlyphPreviewCard } from 'src/features/editor/leftPanel/components/GlyphPreviewCard'
-import { GlyphPreviewStrip } from 'src/features/editor/leftPanel/components/GlyphPreviewStrip'
-import { LeftPanelHeader } from 'src/features/editor/leftPanel/components/LeftPanelHeader'
-import { useGlyphReferenceSearch } from 'src/features/editor/leftPanel/hooks/useGlyphReferenceSearch'
+import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { loadProjectGlyphGeometryClosure } from '@/lib/project/projectRepository'
+import { useStore, type GlyphData } from '@/store'
+import { ComponentSearchSection } from '@/features/editor/leftPanel/components/ComponentSearchSection'
+import { GlyphPreviewCard } from '@/features/editor/leftPanel/components/GlyphPreviewCard'
+import { GlyphPreviewStrip } from '@/features/editor/leftPanel/components/GlyphPreviewStrip'
+import { LeftPanelHeader } from '@/features/editor/leftPanel/components/LeftPanelHeader'
+import { useGlyphReferenceSearch } from '@/features/editor/leftPanel/hooks/useGlyphReferenceSearch'
 
 interface LeftPanelContentProps {
   glyphMap: Record<string, GlyphData>

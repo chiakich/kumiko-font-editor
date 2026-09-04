@@ -6,8 +6,8 @@ import {
   CustomFilterModalBody,
   CustomFilterModalFooter,
   CustomFilterModalHeader,
-} from 'src/features/fontOverview/components/OverviewCustomFilterModal/CustomFilterModalFrame'
-import { SlidingTabsRoot } from 'src/features/common/SlidingTabList'
+} from '@/features/fontOverview/components/OverviewCustomFilterModal/CustomFilterModalFrame'
+import { SlidingTabsRoot } from '@/features/common/SlidingTabList'
 import {
   addRuleTreeChild,
   createDefaultRule,
@@ -21,15 +21,15 @@ import {
   prepareRuleForSave,
   updateRuleTree,
   type OverviewCustomFilterDraft,
-} from 'src/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
-import { usePresetScrollMask } from 'src/features/fontOverview/components/OverviewCustomFilterModal/usePresetScrollMask'
+} from '@/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
+import { usePresetScrollMask } from '@/features/fontOverview/components/OverviewCustomFilterModal/usePresetScrollMask'
 import {
   createOverviewCustomFilterPresets,
   type OverviewCustomFilter,
   type OverviewCustomFilterMode,
   type OverviewCustomFilterPreset,
   type OverviewCustomFilterRuleCondition,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 
 interface OverviewCustomFilterModalProps {
   filter: OverviewCustomFilter | null

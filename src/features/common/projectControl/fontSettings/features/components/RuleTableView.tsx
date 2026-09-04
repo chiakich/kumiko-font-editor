@@ -6,13 +6,13 @@ import type {
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures'
-import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
+} from '@/lib/openTypeFeatures'
+import { updateLookupRule } from '@/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
 import {
   getValueRecordFieldText,
   updateValueRecordField,
-} from 'src/features/common/projectControl/fontSettings/features/utils/valueRecordState'
-import { selectorToText } from 'src/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
+} from '@/features/common/projectControl/fontSettings/features/utils/valueRecordState'
+import { selectorToText } from '@/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
 
 interface RuleTableViewProps {
   state: OpenTypeFeaturesState

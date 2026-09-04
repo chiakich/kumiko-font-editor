@@ -2,12 +2,12 @@ import {
   buildImportedMasterLayer,
   buildNewGlyphFromImported,
   createImportedGlyphIndex,
-} from 'src/font/masterFromBinary'
+} from '@/font/masterFromBinary'
 import {
   buildCopiedMasterLayer,
   buildEmptyMasterLayer,
-} from 'src/font/masterLayerBuilders'
-import { getGlyphMasterLayerForSource } from 'src/font/designspaceLocation'
+} from '@/font/masterLayerBuilders'
+import { getGlyphMasterLayerForSource } from '@/font/designspaceLocation'
 import {
   listKumikoGlyphMetadataForProject,
   loadKumikoGlyphRecords,
@@ -15,12 +15,12 @@ import {
   makeKumikoGlyphKey,
   saveKumikoGlyphRecordBatch,
   saveKumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import {
   glyphDataToKumikoGlyphRecord,
   kumikoGlyphRecordToGlyphData,
-} from 'src/lib/project/kumikoFontDataAdapter'
-import type { FontData, FontSource, GlyphData, GlyphLayerData } from 'src/store'
+} from '@/lib/project/kumikoFontDataAdapter'
+import type { FontData, FontSource, GlyphData, GlyphLayerData } from '@/store'
 
 const DEFAULT_BATCH_SIZE = 256
 

@@ -1,5 +1,5 @@
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
-import type { KumikoProjectRecord } from 'src/lib/project/kumikoProjectTypes'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
+import type { KumikoProjectRecord } from '@/lib/project/kumikoProjectTypes'
 
 export const sameGitTarget = (
   left: Pick<GitHubSyncTarget, 'owner' | 'repo' | 'ref'>,

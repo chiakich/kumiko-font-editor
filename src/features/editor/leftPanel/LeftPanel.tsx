@@ -1,7 +1,7 @@
 import { Box } from '@chakra-ui/react'
 import { useMemo } from 'react'
-import { useStore, type GlyphData } from 'src/store'
-import { LeftPanelContent } from 'src/features/editor/leftPanel/components/LeftPanelContent'
+import { useStore, type GlyphData } from '@/store'
+import { LeftPanelContent } from '@/features/editor/leftPanel/components/LeftPanelContent'
 
 const EMPTY_GLYPH_MAP: Record<string, GlyphData> = {}
 

@@ -1,4 +1,4 @@
-import { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
+import { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
 import {
   makeClassId,
   makeImportedGlyphClass,
@@ -6,13 +6,13 @@ import {
   makeRuleId,
   readCoverageGlyphIds,
   resolveGlyphNames,
-} from 'src/lib/openTypeFeatures/gsubContextRuleParser'
-import type { LayoutLookupInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+} from '@/lib/openTypeFeatures/gsubContextRuleParser'
+import type { LayoutLookupInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 import type {
   GlyphClass,
   GlyphSelector,
   ReverseChainingSingleSubstitutionRule,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 interface ParsedReverseContextSubtable {
   rules: ReverseChainingSingleSubstitutionRule[]

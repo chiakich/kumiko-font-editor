@@ -10,8 +10,8 @@ import {
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useStore, type FontData, type GlyphData } from 'src/store'
-import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
+import { useStore, type FontData, type GlyphData } from '@/store'
+import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
 
 interface GlyphPickerProps {
   fontData: FontData

@@ -10,11 +10,11 @@ import {
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GlyphPickerPopover } from 'src/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
+import { GlyphPickerPopover } from '@/features/common/projectControl/fontSettings/features/components/GlyphPickerPopover'
 import {
   selectorToText,
   textToSelector,
-} from 'src/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
+} from '@/features/common/projectControl/fontSettings/features/utils/ruleSelectorText'
 import type {
   ContextualRule,
   FeatureRecord,
@@ -28,19 +28,19 @@ import type {
   Rule,
   SingleSubstitutionRule,
   ValueRecord,
-} from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
-import { updateLookupRule } from 'src/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
+} from '@/lib/openTypeFeatures'
+import type { FontData } from '@/store'
+import { updateLookupRule } from '@/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
 import {
   addRuleToFeature,
   deleteLookupRule,
   type CreatableRuleKind,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
+} from '@/features/common/projectControl/fontSettings/features/utils/featureAuthoring'
 import {
   getValueRecordFieldText,
   updateValueRecordField,
   type ValueRecordField,
-} from 'src/features/common/projectControl/fontSettings/features/utils/valueRecordState'
+} from '@/features/common/projectControl/fontSettings/features/utils/valueRecordState'
 
 interface FeatureRuleEditorProps {
   state: OpenTypeFeaturesState

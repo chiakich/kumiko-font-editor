@@ -1,5 +1,5 @@
 import { Box, Button, Heading, HStack, Text } from '@chakra-ui/react'
-import { useReturnToOverview } from 'src/features/editor/leftPanel/hooks/useReturnToOverview'
+import { useReturnToOverview } from '@/features/editor/leftPanel/hooks/useReturnToOverview'
 import { useTranslation } from 'react-i18next'
 
 interface LeftPanelHeaderProps {

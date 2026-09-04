@@ -2,7 +2,7 @@ import type {
   LookupFlagIR,
   ValueRecord,
   GlyphSelector,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export const formatGlyphSelector = (selector: GlyphSelector) =>
   selector.kind === 'class' ? selector.classId : selector.glyph

@@ -4,8 +4,8 @@ import {
   getProjectBroadcastLocalGlyphOverlap,
   projectBroadcastHasCanonicalChanges,
   shouldBlockProjectBroadcastReload,
-} from 'src/lib/project/projectBroadcastPolicy'
-import type { ProjectDraftSavedMessage } from 'src/lib/project/projectBroadcast'
+} from '@/lib/project/projectBroadcastPolicy'
+import type { ProjectDraftSavedMessage } from '@/lib/project/projectBroadcast'
 
 const makeMessage = (
   update: Partial<ProjectDraftSavedMessage> = {}

@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest'
 import {
   importUfoWorkspaceEntries,
   type UfoWorkspaceEntry,
-} from 'src/lib/fontFormats/ufoFormat'
-import { fontDataToKumikoGlyphRecordBatches } from 'src/lib/project/kumikoFontDataAdapter'
+} from '@/lib/fontFormats/ufoFormat'
+import { fontDataToKumikoGlyphRecordBatches } from '@/lib/project/kumikoFontDataAdapter'
 
 const testWindow = new Window()
 globalThis.DOMParser ??= testWindow.DOMParser as typeof globalThis.DOMParser

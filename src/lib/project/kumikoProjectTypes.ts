@@ -1,10 +1,10 @@
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
-import type { GitHubProjectSource } from 'src/lib/project/projectTypes'
-import type { Designspace } from 'src/lib/fontFormats/designspace'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
+import type { GitHubProjectSource } from '@/lib/project/projectTypes'
+import type { Designspace } from '@/lib/fontFormats/designspace'
 import type {
   GlifFileStyle,
   UfoTextStyle,
-} from 'src/lib/fontFormats/ufoTextStyle'
+} from '@/lib/fontFormats/ufoTextStyle'
 import type {
   DevelopmentStatusDefinition,
   FontAxes,
@@ -20,8 +20,8 @@ import type {
   KerningGroup,
   KerningPair,
   OpenTypeFeaturesState,
-} from 'src/store'
-import type { ComponentMatrix } from 'src/lib/components/componentTransform'
+} from '@/store'
+import type { ComponentMatrix } from '@/lib/components/componentTransform'
 
 export type KumikoProjectSourceFormat =
   | 'glyphs'

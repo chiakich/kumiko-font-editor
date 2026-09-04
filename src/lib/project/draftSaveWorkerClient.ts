@@ -1,6 +1,6 @@
-import type { SaveDraftSnapshotInput } from 'src/lib/project/draftSave'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+import type { SaveDraftSnapshotInput } from '@/lib/project/draftSave'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 interface WorkerSuccessResponse {
   type: 'draft-save-success'

@@ -2,7 +2,7 @@ import type {
   GlyphSelector,
   Rule,
   ValueRecord,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export const getSelectorGlyphs = (selector: GlyphSelector) =>
   selector.kind === 'glyph' ? [selector.glyph] : []

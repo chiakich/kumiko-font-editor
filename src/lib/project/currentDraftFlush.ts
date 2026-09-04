@@ -1,7 +1,7 @@
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import type { FlushPendingDraftInput } from 'src/lib/project/flushPendingDraft'
-import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
-import type { FontData, GlobalState, PersistenceQueueState } from 'src/store'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import type { FlushPendingDraftInput } from '@/lib/project/flushPendingDraft'
+import { createProjectUiStateSnapshot } from '@/lib/project/projectUiState'
+import type { FontData, GlobalState, PersistenceQueueState } from '@/store'
 
 interface BuildCurrentDraftFlushInputOptions {
   activeMasterId: string | null

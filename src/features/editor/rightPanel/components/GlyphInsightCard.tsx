@@ -12,8 +12,8 @@ import { useMemo } from 'react'
 import {
   buildRadarAdvice,
   type RadarAdvice,
-} from 'src/lib/qualityCheck/radarAdvice'
-import { useGlyphInsight } from 'src/features/editor/insight/glyphInsight'
+} from '@/lib/qualityCheck/radarAdvice'
+import { useGlyphInsight } from '@/features/editor/insight/glyphInsight'
 
 const MAX_VISIBLE_ADVICES = 4
 

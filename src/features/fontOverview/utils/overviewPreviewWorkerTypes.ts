@@ -1,5 +1,5 @@
-import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
-import type { GlyphData } from 'src/store/types'
+import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
+import type { GlyphData } from '@/store/types'
 
 export interface OverviewPreviewWorkerRequest {
   cacheKey: string

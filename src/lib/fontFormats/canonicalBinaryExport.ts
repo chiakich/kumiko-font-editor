@@ -1,43 +1,43 @@
 import {
   hasKerningForOrientation,
   getMasterKerningPairs,
-} from 'src/lib/kerning/resolveKerning'
-import { interpolateKerningPairsAtLocation } from 'src/lib/kerning/interpolateKerning'
+} from '@/lib/kerning/resolveKerning'
+import { interpolateKerningPairsAtLocation } from '@/lib/kerning/interpolateKerning'
 import {
   exportGlyphListAsBinary,
   type BinaryFontExportFormat,
-} from 'src/lib/fontFormats/fontBinaryFormat'
-import { buildVariableFontWithFontTools } from 'src/lib/fontFormats/fontToolsVariableFontExport'
+} from '@/lib/fontFormats/fontBinaryFormat'
+import { buildVariableFontWithFontTools } from '@/lib/fontFormats/fontToolsVariableFontExport'
 import {
   serializeDesignspace,
   type DesignspaceAxisLabelOut,
   type DesignspaceRule,
-} from 'src/lib/fontFormats/designspace'
+} from '@/lib/fontFormats/designspace'
 import {
   getOrderedGlyphLayers,
   locationsMatch,
-} from 'src/font/designspaceLocation'
+} from '@/font/designspaceLocation'
 import {
   listKumikoGlyphMetadataForProject,
   loadKumikoGlyphRecords,
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import {
   kumikoGlyphRecordToGlyphData,
   kumikoRecordsToFontData,
-} from 'src/lib/project/kumikoFontDataAdapter'
+} from '@/lib/project/kumikoFontDataAdapter'
 import {
   bakeStaticInstanceGlyphs,
   formatStaticInstanceBakeError,
   type StaticInstanceBakeProblem,
-} from 'src/font/staticInstance'
+} from '@/font/staticInstance'
 import {
   compileManagedFontFeatures,
   needsOpenTypeFeatureCompilationForBinaryExport,
-} from 'src/lib/openTypeFeatures'
-import { checkGlyphInterpolationCompatibility } from 'src/font/glyphCompatibility'
-import { activeLayer } from 'src/store/glyphLayer'
+} from '@/lib/openTypeFeatures'
+import { checkGlyphInterpolationCompatibility } from '@/font/glyphCompatibility'
+import { activeLayer } from '@/store/glyphLayer'
 import type {
   FontAxes,
   FontAxis,
@@ -45,7 +45,7 @@ import type {
   FontSource,
   GlyphData,
   GlyphLayerData,
-} from 'src/store'
+} from '@/store'
 
 const BINARY_EXPORT_GLYPH_BATCH_SIZE = 256
 const POST_SCRIPT_SAFE_NAME_MAX_LENGTH = 60

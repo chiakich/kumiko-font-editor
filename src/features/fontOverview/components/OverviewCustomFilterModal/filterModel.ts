@@ -6,8 +6,8 @@ import type {
   OverviewCustomFilterRuleField,
   OverviewCustomFilterRuleGroup,
   OverviewCustomFilterRuleOperator,
-} from 'src/lib/glyph/glyphOverview'
-import { GLYPHS_LABEL_COLOR_KEYS } from 'src/lib/color/kumikoColor'
+} from '@/lib/glyph/glyphOverview'
+import { GLYPHS_LABEL_COLOR_KEYS } from '@/lib/color/kumikoColor'
 
 export type OverviewCustomFilterDraft = Omit<
   OverviewCustomFilter,

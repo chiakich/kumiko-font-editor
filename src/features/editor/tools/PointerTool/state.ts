@@ -1,7 +1,7 @@
-import type { PathHitInfo, Point } from 'src/sceneView/SceneView'
-import type { HitTestResult } from 'src/features/editor/tools/SceneController'
-import type { PointerSelectionMode } from 'src/features/editor/tools/PointerTool/selection'
-import type { TransformHandleId } from 'src/features/editor/tools/PointerTool/transform'
+import type { PathHitInfo, Point } from '@/sceneView/SceneView'
+import type { HitTestResult } from '@/features/editor/tools/SceneController'
+import type { PointerSelectionMode } from '@/features/editor/tools/PointerTool/selection'
+import type { TransformHandleId } from '@/features/editor/tools/PointerTool/transform'
 
 export type DragMode =
   | 'pending'

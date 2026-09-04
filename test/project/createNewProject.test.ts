@@ -1,11 +1,11 @@
 import 'fake-indexeddb/auto'
 
 import { describe, expect, it } from 'vitest'
-import { createNewBlankProject } from 'src/features/home/utils/createNewProject'
+import { createNewBlankProject } from '@/features/home/utils/createNewProject'
 import {
   loadProjectDraftMetadata,
   loadProjectGlyphGeometry,
-} from 'src/lib/project/projectRepository'
+} from '@/lib/project/projectRepository'
 
 describe('new blank project creation', () => {
   it('creates a saved project with required font info and .notdef', async () => {

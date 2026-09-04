@@ -1,4 +1,4 @@
-import type { FontAxis, FontSource } from 'src/store'
+import type { FontAxis, FontSource } from '@/store'
 
 export interface AxisSourceMarker {
   value: number

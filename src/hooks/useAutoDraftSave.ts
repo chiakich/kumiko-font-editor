@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
-import { buildCurrentDraftFlushInput } from 'src/lib/project/currentDraftFlush'
-import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
+import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
+import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
+import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
 import {
   useStore,
   type PersistenceQueueState,
   type PersistenceStatus,
-} from 'src/store'
+} from '@/store'
 
 export const AUTO_DRAFT_SAVE_DELAY_MS = 10_000
 

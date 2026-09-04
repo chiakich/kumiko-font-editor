@@ -3,7 +3,7 @@ import type {
   GlyphData,
   GlyphLayerContent,
   GlyphLayerData,
-} from 'src/store/types'
+} from '@/store/types'
 
 const copySuffix = (copyIndex: number) =>
   copyIndex === 1 ? '.copy' : `.copy${copyIndex}`

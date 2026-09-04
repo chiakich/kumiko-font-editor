@@ -1,8 +1,8 @@
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 import {
   unicodeHexToCharacter,
   unicodeHexToCodePoint,
-} from 'src/lib/project/unicode'
+} from '@/lib/project/unicode'
 
 /**
  * 漢字判定與字身框（body box）推導。這些是品質檢查各模組共用的

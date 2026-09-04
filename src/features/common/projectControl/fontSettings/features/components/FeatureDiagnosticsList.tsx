@@ -1,5 +1,5 @@
 import { Badge, Stack, Text } from '@chakra-ui/react'
-import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures'
+import type { FeatureDiagnostic } from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface FeatureDiagnosticsListProps {

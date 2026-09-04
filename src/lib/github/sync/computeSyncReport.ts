@@ -1,10 +1,10 @@
-import type { FormatAdapter } from 'src/lib/fontFormats/formatAdapter/types'
+import type { FormatAdapter } from '@/lib/fontFormats/formatAdapter/types'
 import type {
   GlyphSyncEntry,
   GlyphSyncStatus,
   ProjectSyncReport,
   RemoteTreeSnapshot,
-} from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'
 
 export interface SyncGlyphRecord {
   glyphName: string

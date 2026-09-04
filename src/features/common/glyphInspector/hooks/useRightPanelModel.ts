@@ -1,8 +1,8 @@
 import { toaster } from '@/components/ui/toaster'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getProjectArchiveMetadata } from 'src/lib/project/projectArchive'
-import { listGlyphLayers } from 'src/store/glyphLayerOps'
+import { getProjectArchiveMetadata } from '@/lib/project/projectArchive'
+import { listGlyphLayers } from '@/store/glyphLayerOps'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
@@ -10,19 +10,19 @@ import {
   useStore,
   type KumikoColor,
   type NodeType,
-} from 'src/store'
-import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
-import { useGitHubCommitFlow } from 'src/features/common/glyphInspector/hooks/useGitHubCommitFlow'
-import { useProjectSyncDirtyStatus } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
-import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
-import { isInterpolatedGlyphLocation } from 'src/font/designspaceLocation'
-import { interpolateGlyphLayer } from 'src/font/glyphInterpolation'
-import type { GlyphCompatibilityIssue } from 'src/font/glyphCompatibility'
-import { buildQualityReport } from 'src/lib/qualityCheck/qualityLint'
+} from '@/store'
+import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
+import { useGitHubCommitFlow } from '@/features/common/glyphInspector/hooks/useGitHubCommitFlow'
+import { useProjectSyncDirtyStatus } from '@/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
+import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
+import { isInterpolatedGlyphLocation } from '@/font/designspaceLocation'
+import { interpolateGlyphLayer } from '@/font/glyphInterpolation'
+import type { GlyphCompatibilityIssue } from '@/font/glyphCompatibility'
+import { buildQualityReport } from '@/lib/qualityCheck/qualityLint'
 import {
   parseNumberInput,
   parseSelectedNode,
-} from 'src/features/common/glyphInspector/utils/utils'
+} from '@/features/common/glyphInspector/utils/utils'
 
 export interface InterpolationDiagnostics {
   issues: GlyphCompatibilityIssue[]

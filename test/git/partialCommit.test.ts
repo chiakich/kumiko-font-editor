@@ -3,8 +3,8 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Window } from 'happy-dom'
 import git from 'isomorphic-git'
-import { openGitWorktree } from 'src/lib/git/worktree'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
+import { openGitWorktree } from '@/lib/git/worktree'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
 import {
   listSyncDirtyKumikoGlyphIds,
   loadKumikoGlyphRecord,
@@ -13,17 +13,17 @@ import {
   saveKumikoGlyphRecord,
   updateKumikoGlyphExportDirtyState,
   updateKumikoGlyphSyncDirtyState,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import { createMemoryFileStore } from './memoryFileStore'
-import type { FontData } from 'src/store'
+import type { FontData } from '@/store'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)
 vi.stubGlobal('Node', window.Node)
 vi.stubGlobal('self', { location: { origin: 'https://kumiko.test' } })
 
-vi.mock('src/lib/git/remote', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('src/lib/git/remote')>()
+vi.mock('@/lib/git/remote', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/git/remote')>()
   return {
     ...actual,
     fetchRemoteBranch: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('src/lib/git/remote', async (importOriginal) => {
 })
 
 const { commitAndPushProject, markGitCommitSynced } =
-  await import('src/lib/git/gitSync')
+  await import('@/lib/git/gitSync')
 
 const layer = (width: number) => ({
   id: 'public.default',

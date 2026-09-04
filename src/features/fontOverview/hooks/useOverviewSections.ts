@@ -4,9 +4,9 @@ import {
   flattenGlyphOverviewTree,
   getGlyphOverviewTree,
   type OverviewCustomFilter,
-} from 'src/lib/glyph/glyphOverview'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import type { GlyphData } from 'src/store'
+} from '@/lib/glyph/glyphOverview'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import type { GlyphData } from '@/store'
 
 interface UseOverviewSectionsOptions {
   filteredGlyphList: GlyphData[]

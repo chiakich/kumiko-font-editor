@@ -1,5 +1,5 @@
 import { Badge, HStack, Stack, Text } from '@chakra-ui/react'
-import type { UnsupportedLookup } from 'src/lib/openTypeFeatures'
+import type { UnsupportedLookup } from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface UnsupportedLookupListProps {

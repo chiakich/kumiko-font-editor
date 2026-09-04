@@ -3,12 +3,12 @@ import { memo, useCallback, type MouseEvent } from 'react'
 import {
   GlyphPreview,
   GlyphPreviewArtwork,
-} from 'src/features/common/glyphPreview/GlyphPreview'
-import { kumikoColorToDisplayCssRgba } from 'src/lib/color/kumikoColor'
-import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
-import type { GlyphPreviewData } from 'src/lib/glyph/glyphPreviewData'
-import type { GlyphColorLabelDisplayMode } from 'src/lib/preferences/appPreferences'
-import type { GlyphData } from 'src/store'
+} from '@/features/common/glyphPreview/GlyphPreview'
+import { kumikoColorToDisplayCssRgba } from '@/lib/color/kumikoColor'
+import { useResolvedColorMode } from '@/lib/preferences/colorMode'
+import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
+import type { GlyphColorLabelDisplayMode } from '@/lib/preferences/appPreferences'
+import type { GlyphData } from '@/store'
 
 interface GlyphCardProps {
   glyph: GlyphData

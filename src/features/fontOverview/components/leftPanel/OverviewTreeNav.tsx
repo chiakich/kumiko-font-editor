@@ -12,14 +12,14 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { NavArrowDown, NavArrowRight, Plus, Settings } from 'iconoir-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { OverviewCustomFilterModal } from 'src/features/fontOverview/components/OverviewCustomFilterModal'
+import { OverviewCustomFilterModal } from '@/features/fontOverview/components/OverviewCustomFilterModal'
 import {
   customOverviewFilterNodeIdToFilterId,
   type OverviewCustomFilterRule,
   type OverviewCustomFilterRuleGroup,
   type GlyphOverviewTreeNode,
-} from 'src/lib/glyph/glyphOverview'
-import { useStore } from 'src/store'
+} from '@/lib/glyph/glyphOverview'
+import { useStore } from '@/store'
 
 interface OverviewTreeNavProps {
   nodes: GlyphOverviewTreeNode[]

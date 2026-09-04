@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { useStore } from 'src/store'
-import type { FontData, KerningPair } from 'src/store/types'
+import { useStore } from '@/store'
+import type { FontData, KerningPair } from '@/store/types'
 
 const pair = (value: number): KerningPair => ({
   id: `p_${value}`,

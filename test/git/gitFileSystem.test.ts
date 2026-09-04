@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import git from 'isomorphic-git'
-import { createGitFs, GitFsError } from 'src/lib/git/gitFileSystem'
+import { createGitFs, GitFsError } from '@/lib/git/gitFileSystem'
 import { createMemoryFileStore } from './memoryFileStore'
 
 const makeFs = () => createGitFs(createMemoryFileStore())

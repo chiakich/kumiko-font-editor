@@ -1,4 +1,4 @@
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 export const isStylisticSetTag = (tag: string) =>
   /^ss(0[1-9]|1\d|20)$/.test(tag)

@@ -5,7 +5,7 @@ import {
   isOffCurveNode,
   type FontData,
   type SelectedSegmentState,
-} from 'src/store'
+} from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface CanvasContextMenuProps {

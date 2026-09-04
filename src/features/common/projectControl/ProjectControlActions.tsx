@@ -19,13 +19,13 @@ import {
   TextSquare,
   WarningTriangle,
 } from 'iconoir-react'
-import { AppSettingsModal } from 'src/features/common/projectControl/AppSettingsModal'
+import { AppSettingsModal } from '@/features/common/projectControl/AppSettingsModal'
 import {
   ProjectVersionMenu,
   type ProjectVersionMenuProps,
-} from 'src/features/common/projectControl/ProjectVersionMenu'
-import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
-import { useStore } from 'src/store'
+} from '@/features/common/projectControl/ProjectVersionMenu'
+import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
+import { useStore } from '@/store'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

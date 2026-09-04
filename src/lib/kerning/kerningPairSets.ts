@@ -1,4 +1,4 @@
-import type { FontData, KerningPair } from 'src/store/types'
+import type { FontData, KerningPair } from '@/store/types'
 
 type KerningPairSetsSource = Pick<
   FontData,

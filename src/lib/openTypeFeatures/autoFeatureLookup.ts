@@ -3,14 +3,14 @@ import {
   makeLookupId,
   makeRuleId,
   makeSuggestionId,
-} from 'src/lib/openTypeFeatures/ids'
+} from '@/lib/openTypeFeatures/ids'
 import type {
   AutoFeatureGeneratorName,
   AutoFeatureSuggestion,
   FeatureRecord,
   LookupRecord,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 const makeFeatureEntry = (featureTag: string, lookupId: string) => ({
   id: `entry_${featureTag}_DFLT_dflt`,

@@ -1,7 +1,7 @@
 import type {
   GlyphSelector,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 // "@Name" in a selector field means a class; anything else is a glyph name.
 // The mapping goes through class *names* because that is what people type,

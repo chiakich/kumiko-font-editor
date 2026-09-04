@@ -1,12 +1,12 @@
 import {
   BinaryReader,
   type SfntTableRecord,
-} from 'src/lib/openTypeFeatures/binaryReader'
+} from '@/lib/openTypeFeatures/binaryReader'
 import type {
   FeatureDiagnostic,
   OpenTypeTableTag,
   SourceProvenance,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface LayoutLanguageInventory {
   script: string

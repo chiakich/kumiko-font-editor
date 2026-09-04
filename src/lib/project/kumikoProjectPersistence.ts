@@ -3,14 +3,14 @@ import {
   KUMIKO_PROJECTS_STORE,
   KUMIKO_UI_STATE_STORE,
   openDatabase,
-} from 'src/lib/project/persistence'
-import { normalizeUnicodeHex } from 'src/lib/project/unicode'
+} from '@/lib/project/persistence'
+import { normalizeUnicodeHex } from '@/lib/project/unicode'
 import {
   createKumikoGlyphDigest,
   createKumikoProjectDigest,
   findGeometryBearingSourceDataKey,
   normalizeKumikoGlyphRecord,
-} from 'src/lib/project/kumikoFontDataAdapter'
+} from '@/lib/project/kumikoFontDataAdapter'
 import type {
   KumikoGlyphLayerPresence,
   KumikoGlyphPrimaryKey,
@@ -20,7 +20,7 @@ import type {
   KumikoGlyphSyncMetadata,
   KumikoProjectRecord,
   KumikoUiStateRecord,
-} from 'src/lib/project/kumikoProjectTypes'
+} from '@/lib/project/kumikoProjectTypes'
 
 const requestToPromise = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {

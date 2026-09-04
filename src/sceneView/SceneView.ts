@@ -3,7 +3,7 @@
 import {
   withSavedState,
   type CanvasController,
-} from 'src/sceneView/CanvasController'
+} from '@/sceneView/CanvasController'
 
 export interface SceneModel {
   glyph?: PositionedGlyph

@@ -2,21 +2,21 @@ import type opentype from 'opentype.js'
 import {
   isHanCodePoint,
   type StructureBodyBox,
-} from 'src/lib/qualityCheck/hanClassification'
+} from '@/lib/qualityCheck/hanClassification'
 import {
   flattenContour,
   getPolygonsBounds,
   type GeometryBounds,
   type GeometryPoint,
-} from 'src/lib/qualityCheck/polygonGeometry'
-import { computeInkFromPolygons } from 'src/lib/qualityCheck/glyphInk'
-import { buildSidesFromPolygons } from 'src/lib/qualityCheck/structureMetrics'
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
+} from '@/lib/qualityCheck/polygonGeometry'
+import { computeInkFromPolygons } from '@/lib/qualityCheck/glyphInk'
+import { buildSidesFromPolygons } from '@/lib/qualityCheck/structureMetrics'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
 import {
   computePartSpacingMetrics,
   type SemanticPartLayout,
-} from 'src/lib/qualityCheck/partSpacingMetrics'
-import { computeRasterPartSpacingMetrics } from 'src/lib/qualityCheck/rasterPartSpacingMetrics'
+} from '@/lib/qualityCheck/partSpacingMetrics'
+import { computeRasterPartSpacingMetrics } from '@/lib/qualityCheck/rasterPartSpacingMetrics'
 
 /**
  * 把 opentype.js 解析出的字體轉成與編輯器相同的 GlyphGeometrySample，

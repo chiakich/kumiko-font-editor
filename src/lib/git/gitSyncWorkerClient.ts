@@ -4,13 +4,13 @@ import type {
   GitSyncReport,
   GitSyncTarget,
   switchGitProjectBranch,
-} from 'src/lib/git/gitSync'
-import type { GitCommitAuthor } from 'src/lib/git/worktree'
+} from '@/lib/git/gitSync'
+import type { GitCommitAuthor } from '@/lib/git/worktree'
 import type {
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+} from '@/lib/github/sync/types'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 type ApplyRemoteResult = Awaited<ReturnType<typeof applyGitRemoteChanges>>
 type SwitchBranchResult = Awaited<ReturnType<typeof switchGitProjectBranch>>

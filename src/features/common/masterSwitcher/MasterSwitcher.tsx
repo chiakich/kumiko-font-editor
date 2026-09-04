@@ -1,6 +1,6 @@
 import { Box, Button, HStack, Menu, Text, Portal } from '@chakra-ui/react'
 import { useMemo } from 'react'
-import { useStore, type FontSource } from 'src/store'
+import { useStore, type FontSource } from '@/store'
 
 const locationLabel = (source: FontSource) =>
   Object.entries(source.location)

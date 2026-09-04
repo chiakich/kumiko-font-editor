@@ -11,8 +11,8 @@ import {
 } from '@chakra-ui/react'
 import { Switch } from '@/components/ui/switch'
 import { useMemo, useState } from 'react'
-import type { FontData, GlyphData } from 'src/store'
-import { ProofParagraphSvg } from 'src/features/common/qualityCheck/components/ProofLineSvg'
+import type { FontData, GlyphData } from '@/store'
+import { ProofParagraphSvg } from '@/features/common/qualityCheck/components/ProofLineSvg'
 import {
   GRAY_PROOF_CHARACTER_LIMIT,
   buildGrayProofText,
@@ -20,8 +20,8 @@ import {
   buildProofRun,
   getGlyphCharacter,
   grayArticlePresets,
-} from 'src/lib/qualityCheck/qualityProof'
-import type { QualityScope } from 'src/lib/qualityCheck/qualityLint'
+} from '@/lib/qualityCheck/qualityProof'
+import type { QualityScope } from '@/lib/qualityCheck/qualityLint'
 import { useTranslation } from 'react-i18next'
 
 interface GrayProofPanelProps {

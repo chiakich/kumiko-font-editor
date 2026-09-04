@@ -1,4 +1,4 @@
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
 
 export const createProjectUiStateSnapshot = (input: KumikoProjectUiState) => ({
   selectedGlyphId: input.selectedGlyphId ?? null,

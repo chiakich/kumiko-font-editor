@@ -528,7 +528,7 @@ export interface OpenTypeFeaturesState {
   // Read-only summaries of imported FeatureVariations tables (rvrn and
   // friends). Not reconstructed into editable rules; kept for display and
   // preservation awareness.
-  featureVariations?: import('src/lib/openTypeFeatures/featureVariationsParser').FeatureVariationsSummary[]
+  featureVariations?: import('@/lib/openTypeFeatures/featureVariationsParser').FeatureVariationsSummary[]
   /** Raw FEA source split into per-feature / per-prefix blocks. */
   rawFeatureSnippets?: RawFeatureSnippet[]
   /**

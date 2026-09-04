@@ -1,10 +1,10 @@
-import type { FontData } from 'src/store'
-import { resolveFontGlyphs } from 'src/lib/qualityCheck/resolvedGlyph'
+import type { FontData } from '@/store'
+import { resolveFontGlyphs } from '@/lib/qualityCheck/resolvedGlyph'
 import {
   runPopulationAnalysis,
   type PopulationAnalysis,
-} from 'src/lib/qualityCheck/populationAnalysis'
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/qualityCheck/populationAnalysis'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
 
 /**
  * Synchronously derive population analysis from live FontData. Keep this

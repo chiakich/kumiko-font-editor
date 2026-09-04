@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { applyAutoFeatureSuggestion } from 'src/lib/openTypeFeatures/applySuggestion'
-import { mapFeaLineToDiagnosticTarget } from 'src/lib/openTypeFeatures/compilerErrorMapping'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures/types'
+import { applyAutoFeatureSuggestion } from '@/lib/openTypeFeatures/applySuggestion'
+import { mapFeaLineToDiagnosticTarget } from '@/lib/openTypeFeatures/compilerErrorMapping'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
 import {
   findSuggestion,
   makeFontData,

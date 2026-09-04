@@ -3,7 +3,7 @@ import {
   parseClipboardPathsText,
   serializeClipboardPathsAsSvg,
   type ClipboardPathPayload,
-} from 'src/features/editor/canvas/utils/clipboardPaths'
+} from '@/features/editor/canvas/utils/clipboardPaths'
 
 describe('clipboard path SVG export', () => {
   it('serializes font-coordinate paths as upright SVG paths', () => {

@@ -1,6 +1,6 @@
 import { Badge, HStack, Stack, Text } from '@chakra-ui/react'
 import type { TFunction } from 'i18next'
-import type { OpenTypeExportImpactItem } from 'src/lib/openTypeFeatures'
+import type { OpenTypeExportImpactItem } from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface ExportImpactSummaryProps {

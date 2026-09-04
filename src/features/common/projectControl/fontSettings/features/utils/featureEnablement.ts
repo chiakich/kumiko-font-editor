@@ -1,4 +1,4 @@
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 // Whether a feature tag is enabled for export: the IR feature must be active
 // AND its raw snippet (when one carries the same tag) not disabled. The two

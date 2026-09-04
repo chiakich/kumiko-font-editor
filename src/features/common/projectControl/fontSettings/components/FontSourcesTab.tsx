@@ -9,14 +9,14 @@ import {
   Text,
   Field,
 } from '@chakra-ui/react'
-import type { FontAxis, FontData, FontSource } from 'src/store'
-import { NumberField } from 'src/features/common/projectControl/fontSettings/components/fields'
-import { AddMasterModal } from 'src/features/common/projectControl/fontSettings/components/AddMasterModal'
+import type { FontAxis, FontData, FontSource } from '@/store'
+import { NumberField } from '@/features/common/projectControl/fontSettings/components/fields'
+import { AddMasterModal } from '@/features/common/projectControl/fontSettings/components/AddMasterModal'
 import {
   parseNumber,
   stringifyJson,
   type SourceDraft,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
+} from '@/features/common/projectControl/fontSettings/utils/model'
 import { useTranslation } from 'react-i18next'
 
 interface FontSourcesTabProps {

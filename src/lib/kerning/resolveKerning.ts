@@ -1,5 +1,5 @@
-import type { FontData, KerningGroup, KerningPair } from 'src/store/types'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
+import type { FontData, KerningGroup, KerningPair } from '@/store/types'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
 
 // UFO lookup order: more specific pairs override class pairs.
 export type KerningPairPriority =

@@ -13,8 +13,8 @@ import {
   type CombinationBehaviorDraft,
   type CombinationBehaviorRow,
   type CombinationBehaviorType,
-} from 'src/lib/openTypeFeatures'
-import { useOpenGlyphInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+} from '@/lib/openTypeFeatures'
+import { useOpenGlyphInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
 import { useTranslation } from 'react-i18next'
 
 interface CombinationBehaviorTableRowProps {

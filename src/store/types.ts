@@ -1,16 +1,16 @@
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
-} from 'src/lib/project/projectFormats'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
-import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
-import type { OutlineOffsetOptions } from 'src/lib/outlineOffset'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
+} from '@/lib/project/projectFormats'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
+import type { OutlineOffsetOptions } from '@/lib/outlineOffset'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
 import type {
   OverviewCustomFilter,
   OverviewSearchField,
-} from 'src/lib/glyph/glyphOverview'
+} from '@/lib/glyph/glyphOverview'
 import type {
   AlternateBehaviorDraft,
   CombinationBehaviorDraft,
@@ -19,7 +19,7 @@ import type {
   GlyphSelector,
   OpenTypeFeaturesState,
   SpacingBehaviorDraft,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 export type { ProjectRoundTripFormat, ProjectSourceFormat }
 export type { OpenTypeFeaturesState }
 export type { OverviewCustomFilter }

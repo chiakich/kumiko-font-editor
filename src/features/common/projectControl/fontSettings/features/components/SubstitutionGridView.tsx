@@ -2,10 +2,10 @@ import { Box, HStack, Input, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
-import type { FontData } from 'src/store'
-import { GlyphPreview } from 'src/features/common/glyphPreview/GlyphPreview'
-import { useOpenGlyphInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
+import type { FontData } from '@/store'
+import { GlyphPreview } from '@/features/common/glyphPreview/GlyphPreview'
+import { useOpenGlyphInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
 
 interface SubstitutionGridViewProps {
   state: OpenTypeFeaturesState

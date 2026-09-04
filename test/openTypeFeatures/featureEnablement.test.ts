@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   isFeatureTagEnabled,
   setFeatureTagEnabled,
-} from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures'
+} from '@/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
 
 const state = (partial: Partial<OpenTypeFeaturesState>) =>
   ({

@@ -1,12 +1,12 @@
 import { Button, Tabs } from '@chakra-ui/react'
 import { TabbedModal } from '@/components/shared/TabbedModal'
 import { useMemo, useState } from 'react'
-import { FontBasicsTab } from 'src/features/common/projectControl/fontSettings/components/FontBasicsTab'
-import { FontExportsTab } from 'src/features/common/projectControl/fontSettings/components/FontExportsTab'
-import { FontFeaturesTab } from 'src/features/common/projectControl/fontSettings/components/FontFeaturesTab'
-import { FontOtherTab } from 'src/features/common/projectControl/fontSettings/components/FontOtherTab'
-import { FontSourcesTab } from 'src/features/common/projectControl/fontSettings/components/FontSourcesTab'
-import { FontSupplementalTab } from 'src/features/common/projectControl/fontSettings/components/FontSupplementalTab'
+import { FontBasicsTab } from '@/features/common/projectControl/fontSettings/components/FontBasicsTab'
+import { FontExportsTab } from '@/features/common/projectControl/fontSettings/components/FontExportsTab'
+import { FontFeaturesTab } from '@/features/common/projectControl/fontSettings/components/FontFeaturesTab'
+import { FontOtherTab } from '@/features/common/projectControl/fontSettings/components/FontOtherTab'
+import { FontSourcesTab } from '@/features/common/projectControl/fontSettings/components/FontSourcesTab'
+import { FontSupplementalTab } from '@/features/common/projectControl/fontSettings/components/FontSupplementalTab'
 import {
   buildFontInfoFromDrafts,
   getInitialSettings,
@@ -19,18 +19,18 @@ import {
   toFontInfoDraft,
   toOpenTypeDraft,
   toSourceDrafts,
-} from 'src/features/common/projectControl/fontSettings/utils/model'
-import { defaultFontAxes } from 'src/lib/fontFormats/fontInfoSettings'
+} from '@/features/common/projectControl/fontSettings/utils/model'
+import { defaultFontAxes } from '@/lib/fontFormats/fontInfoSettings'
 import {
   createEmptyOpenTypeFeaturesState,
   createFontFingerprint,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import type {
   CrossAxisMapping,
   FontAxis,
   FontData,
   FontProjectSettings,
-} from 'src/store'
+} from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface FontSettingsModalProps {

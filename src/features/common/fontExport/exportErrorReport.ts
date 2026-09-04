@@ -1,5 +1,5 @@
-import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures'
-import type { FontExportFormat } from 'src/features/common/fontExport/ExportFontModal'
+import type { FeatureDiagnostic } from '@/lib/openTypeFeatures'
+import type { FontExportFormat } from '@/features/common/fontExport/ExportFontModal'
 
 export interface FontExportErrorReport {
   id: string

@@ -1,4 +1,4 @@
-import type { OverviewReturnHeroRect } from 'src/features/common/viewTransition/overviewReturnHeroGeometry'
+import type { OverviewReturnHeroRect } from '@/features/common/viewTransition/overviewReturnHeroGeometry'
 
 export interface OverviewReturnHeroState {
   glyphId: string

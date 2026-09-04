@@ -1,15 +1,15 @@
 import { Badge, HStack, SimpleGrid, Stack, Text, Field } from '@chakra-ui/react'
-import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
+import { FeaCodeEditor } from '@/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
 import {
   Metric,
   SourceSectionsDocument,
-} from 'src/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
+} from '@/features/common/projectControl/fontSettings/features/components/OpenTypeDocumentPrimitives'
 import {
   deriveOpenTypeSourceSectionRecords,
   type GlyphClass,
   type MarkClass,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 export function RawFeatureTextEditor({

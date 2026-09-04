@@ -1,12 +1,12 @@
-import type { CompilerRuntimeStatus } from 'src/lib/openTypeFeatures/compilerTypes'
-import { hasRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
+import type { CompilerRuntimeStatus } from '@/lib/openTypeFeatures/compilerTypes'
+import { hasRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
 import type {
   ExportPolicy,
   FeatureDiagnostic,
   FeatureSourceSection,
   OpenTypeFeaturesState,
   UnsupportedLookup,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export type OpenTypeExportWarningSeverity = 'info' | 'warning' | 'error'
 

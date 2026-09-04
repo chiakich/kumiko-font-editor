@@ -1,25 +1,25 @@
-import { createFontFingerprint } from 'src/lib/openTypeFeatures/defaults'
-import { makeDiagnostic } from 'src/lib/openTypeFeatures/diagnostics'
+import { createFontFingerprint } from '@/lib/openTypeFeatures/defaults'
+import { makeDiagnostic } from '@/lib/openTypeFeatures/diagnostics'
 import {
   getNestedLookupReferences,
   getRuleClassReferences,
   getRuleGlyphReferences,
   getRuleValueRecords,
   hasValueRecordValue,
-} from 'src/lib/openTypeFeatures/ruleReferences'
+} from '@/lib/openTypeFeatures/ruleReferences'
 import type {
   FeatureDiagnostic,
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 import {
   isFourCharTag,
   isValidGlyphClassName,
   isValidGlyphName,
   isValidLookupName,
-} from 'src/lib/openTypeFeatures/validationNames'
-import type { FontData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/validationNames'
+import type { FontData } from '@/store/types'
 
 const sameFingerprint = (
   left: OpenTypeFeaturesState['fontFingerprint'],

@@ -1,17 +1,17 @@
 import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
-import { parseOpenStep } from 'src/lib/fontFormats/openstepParser'
-import { buildFontDataFromGlyphsDocument } from 'src/lib/fontFormats/glyphsImport'
-import { importGlyphsFile } from 'src/lib/fontFormats/adapters/glyphs'
-import { serializeGlyphsFileToBlob } from 'src/lib/fontFormats/glyphsExport'
+import { parseOpenStep } from '@/lib/fontFormats/openstepParser'
+import { buildFontDataFromGlyphsDocument } from '@/lib/fontFormats/glyphsImport'
+import { importGlyphsFile } from '@/lib/fontFormats/adapters/glyphs'
+import { serializeGlyphsFileToBlob } from '@/lib/fontFormats/glyphsExport'
 import {
   extractGlyphsMetadata,
   type GlyphsDocument,
-} from 'src/lib/fontFormats/glyphsDocument'
-import { glyphDataToKumikoGlyphRecord } from 'src/lib/project/kumikoFontDataAdapter'
-import { getGlyphLayer } from 'src/store/glyphLayer'
-import { getGlyphDisplayCharacter } from 'src/lib/glyph/glyphOverview'
-import { GLYPHS_LABEL_COLORS } from 'src/lib/color/kumikoColor'
+} from '@/lib/fontFormats/glyphsDocument'
+import { glyphDataToKumikoGlyphRecord } from '@/lib/project/kumikoFontDataAdapter'
+import { getGlyphLayer } from '@/store/glyphLayer'
+import { getGlyphDisplayCharacter } from '@/lib/glyph/glyphOverview'
+import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
 
 const G2 = `{
 familyName = "TestFamily";

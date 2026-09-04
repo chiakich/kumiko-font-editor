@@ -1,12 +1,12 @@
-import { hashString } from 'src/lib/hash'
+import { hashString } from '@/lib/hash'
 import type {
   AutoFeatureConfig,
   FontFingerprint,
   GlyphNamingConvention,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData } from 'src/store/types'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData } from '@/store/types'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 export const OPEN_TYPE_FEATURES_IR_VERSION = '1'
 

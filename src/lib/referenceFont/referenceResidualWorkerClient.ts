@@ -1,6 +1,6 @@
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
-import type { ReferenceResidualWorkerResponse } from 'src/workers/referenceResidualWorker'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
+import type { ReferenceResidualWorkerResponse } from '@/workers/referenceResidualWorker'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 export interface ReferenceResidualBuildResult {
   referenceData: RadarReferenceData

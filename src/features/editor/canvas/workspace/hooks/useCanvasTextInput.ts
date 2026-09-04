@@ -8,15 +8,15 @@ import {
   type RefObject,
   type SyntheticEvent,
 } from 'react'
-import type { PositionedGlyph } from 'src/sceneView'
-import type { FontData, ViewportState } from 'src/store'
-import type { ToolId } from 'src/features/editor/canvas/workspace/types'
+import type { PositionedGlyph } from '@/sceneView'
+import type { FontData, ViewportState } from '@/store'
+import type { ToolId } from '@/features/editor/canvas/workspace/types'
 import {
   buildTextInputCommitPlan,
   buildGlyphIdByCharacter,
   charIndexToCodeUnitIndex,
   codeUnitIndexToCharIndex,
-} from 'src/features/editor/canvas/workspace/layout/textInput'
+} from '@/features/editor/canvas/workspace/layout/textInput'
 
 interface CanvasTextInputOptions {
   activeToolId: ToolId

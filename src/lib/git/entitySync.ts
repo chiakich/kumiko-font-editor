@@ -1,7 +1,4 @@
-import {
-  entityKey,
-  type EntityId,
-} from 'src/lib/fontFormats/formatAdapter/types'
+import { entityKey, type EntityId } from '@/lib/fontFormats/formatAdapter/types'
 
 export type EntitySyncStatus =
   | 'unchanged'

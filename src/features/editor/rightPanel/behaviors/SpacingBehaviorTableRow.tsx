@@ -25,9 +25,9 @@ import {
   canCommitSpacingBehavior,
   type SpacingBehaviorDraft,
   type SpacingBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { useOpenSpacingPairInEditor } from 'src/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
-import { useStore } from 'src/store'
+} from '@/lib/openTypeFeatures'
+import { useOpenSpacingPairInEditor } from '@/features/editor/rightPanel/behaviors/useOpenBehaviorGlyphs'
+import { useStore } from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface SpacingBehaviorTableRowProps {

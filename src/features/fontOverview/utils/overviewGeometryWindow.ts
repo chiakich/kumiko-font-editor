@@ -1,8 +1,8 @@
-import type { GlyphData } from 'src/store'
+import type { GlyphData } from '@/store'
 import {
   getGlyphComponentGlyphIds,
   isGlyphGeometryLoaded,
-} from 'src/lib/glyph/glyphGeometryState'
+} from '@/lib/glyph/glyphGeometryState'
 
 export const OVERVIEW_GEOMETRY_PRELOAD_MARGIN = 48
 export const OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY = 480

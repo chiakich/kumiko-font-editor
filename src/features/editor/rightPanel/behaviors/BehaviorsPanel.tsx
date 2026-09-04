@@ -13,14 +13,14 @@ import {
   type CombinationBehaviorRow,
   type ContextualBehaviorRow,
   type SpacingBehaviorRow,
-} from 'src/lib/openTypeFeatures'
-import { useStore, type FontData, type GlyphData } from 'src/store'
-import { useFlushCurrentDraft } from 'src/hooks/useFlushCurrentDraft'
-import { CombinationBehaviorList } from 'src/features/editor/rightPanel/behaviors/CombinationBehaviorList'
-import { AlternateBehaviorList } from 'src/features/editor/rightPanel/behaviors/AlternateBehaviorList'
-import { SpacingBehaviorList } from 'src/features/editor/rightPanel/behaviors/SpacingBehaviorList'
-import { ContextualBehaviorList } from 'src/features/editor/rightPanel/behaviors/ContextualBehaviorList'
-import { AnchorBehaviorList } from 'src/features/editor/rightPanel/behaviors/AnchorBehaviorList'
+} from '@/lib/openTypeFeatures'
+import { useStore, type FontData, type GlyphData } from '@/store'
+import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
+import { CombinationBehaviorList } from '@/features/editor/rightPanel/behaviors/CombinationBehaviorList'
+import { AlternateBehaviorList } from '@/features/editor/rightPanel/behaviors/AlternateBehaviorList'
+import { SpacingBehaviorList } from '@/features/editor/rightPanel/behaviors/SpacingBehaviorList'
+import { ContextualBehaviorList } from '@/features/editor/rightPanel/behaviors/ContextualBehaviorList'
+import { AnchorBehaviorList } from '@/features/editor/rightPanel/behaviors/AnchorBehaviorList'
 import { useTranslation } from 'react-i18next'
 
 interface BehaviorsPanelProps {

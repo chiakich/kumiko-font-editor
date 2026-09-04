@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   GITHUB_COMMIT_BATCH_LIMITS,
   splitCommitFiles,
-} from 'src/lib/github/githubCommitBatches'
+} from '@/lib/github/githubCommitBatches'
 
 const file = (name: string, content: string) => ({
   path: `sources/Font.ufo/glyphs/${name}.glif`,

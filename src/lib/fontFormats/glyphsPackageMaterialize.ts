@@ -2,23 +2,23 @@ import {
   createBaseGlyphsDocument,
   createGlyphsRecordFromFontDataGlyph,
   serializeOpenStepValue,
-} from 'src/lib/fontFormats/glyphsExport'
-import { sanitizeGlyphsPackageFileName } from 'src/lib/fontFormats/glyphsPackage'
+} from '@/lib/fontFormats/glyphsExport'
+import { sanitizeGlyphsPackageFileName } from '@/lib/fontFormats/glyphsPackage'
 import {
   listKumikoGlyphMetadataForProject,
   listSyncDirtyKumikoGlyphIds,
   loadKumikoGlyphRecords,
   loadKumikoProjectRecord,
   makeKumikoGlyphKey,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import {
   kumikoGlyphRecordToGlyphData,
   kumikoRecordsToFontData,
-} from 'src/lib/project/kumikoFontDataAdapter'
+} from '@/lib/project/kumikoFontDataAdapter'
 import type {
   MaterializedFile,
   MaterializeOptions,
-} from 'src/lib/fontFormats/formatAdapter/types'
+} from '@/lib/fontFormats/formatAdapter/types'
 
 const GLYPH_LOAD_BATCH_SIZE = 128
 

@@ -1,18 +1,18 @@
 import {
   createLookupSuggestion,
   makeSingleSubstitutionRule,
-} from 'src/lib/openTypeFeatures/autoFeatureLookup'
+} from '@/lib/openTypeFeatures/autoFeatureLookup'
 import {
   getGlyphBaseName,
   getLocalizedLanguage,
-} from 'src/lib/openTypeFeatures/glyphNames'
+} from '@/lib/openTypeFeatures/glyphNames'
 import type {
   AutoFeatureSuggestion,
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData } from '@/store/types'
 
 export const buildLocalizedSuggestions = (
   fontData: FontData,

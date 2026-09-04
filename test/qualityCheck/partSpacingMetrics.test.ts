@@ -3,9 +3,9 @@ import {
   computePartSpacingMetrics,
   deriveSemanticPartLayout,
   type SemanticPartLayout,
-} from 'src/lib/qualityCheck/partSpacingMetrics'
-import type { GeometryPoint } from 'src/lib/qualityCheck/polygonGeometry'
-import { computeRasterPartSpacingMetrics } from 'src/lib/qualityCheck/rasterPartSpacingMetrics'
+} from '@/lib/qualityCheck/partSpacingMetrics'
+import type { GeometryPoint } from '@/lib/qualityCheck/polygonGeometry'
+import { computeRasterPartSpacingMetrics } from '@/lib/qualityCheck/rasterPartSpacingMetrics'
 
 const square = (
   xMin: number,

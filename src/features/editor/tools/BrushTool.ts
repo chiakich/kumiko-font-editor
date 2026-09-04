@@ -4,8 +4,8 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
-import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
+} from '@/features/editor/tools/BaseTool'
+import { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'
 import {
   appendBrushSample,
   buildVectorBrushOutline,
@@ -15,8 +15,8 @@ import {
   type BrushPoint,
   type BrushSample,
   type BrushSettings,
-} from 'src/features/editor/tools/vectorBrush'
-import { useStore, type PathData, type PathNode } from 'src/store'
+} from '@/features/editor/tools/vectorBrush'
+import { useStore, type PathData, type PathNode } from '@/store'
 
 export class BrushTool extends BaseTool {
   identifier = 'brush'

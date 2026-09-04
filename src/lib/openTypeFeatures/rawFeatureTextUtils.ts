@@ -1,5 +1,5 @@
-import { toStableIdPart } from 'src/lib/openTypeFeatures/ids'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures/types'
+import { toStableIdPart } from '@/lib/openTypeFeatures/ids'
+import type { GlyphSelector } from '@/lib/openTypeFeatures/types'
 
 export const FEA_NAME_PATTERN = '[A-Za-z_][A-Za-z0-9_.-]*'
 

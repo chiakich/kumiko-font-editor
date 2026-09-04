@@ -5,8 +5,8 @@ import {
   exportCanonicalProjectAsBinary,
   exportCanonicalProjectInstanceAsBinary,
   exportCanonicalProjectAsVariableOtf,
-} from 'src/lib/fontFormats/canonicalBinaryExport'
-import { exportUfoAsZipBlob } from 'src/lib/fontFormats/ufoZipExportClient'
+} from '@/lib/fontFormats/canonicalBinaryExport'
+import { exportUfoAsZipBlob } from '@/lib/fontFormats/ufoZipExportClient'
 import {
   createEmptyOpenTypeFeaturesState,
   createCompilerRuntimeStatus,
@@ -18,29 +18,29 @@ import {
   mergeFeatureDiagnostics,
   needsOpenTypeFeatureCompilationForBinaryExport,
   validateFeatures,
-} from 'src/lib/openTypeFeatures'
-import { getProjectArchiveSourceFormat } from 'src/lib/project/projectArchive'
-import { getGlyphsExportWarnings } from 'src/lib/fontFormats/glyphsExport'
+} from '@/lib/openTypeFeatures'
+import { getProjectArchiveSourceFormat } from '@/lib/project/projectArchive'
+import { getGlyphsExportWarnings } from '@/lib/fontFormats/glyphsExport'
 import {
   createCanonicalGlyphsPackageData,
   serializeCanonicalGlyphsProjectToBlob,
-} from 'src/lib/fontFormats/canonicalGlyphsExport'
-import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
-import { markKumikoProjectExportClean } from 'src/lib/project/kumikoProjectPersistence'
-import { createProjectUiStateSnapshot } from 'src/lib/project/projectUiState'
-import { canUseCanonicalUfoZipExport } from 'src/features/common/fontExport/exportDraftPolicy'
+} from '@/lib/fontFormats/canonicalGlyphsExport'
+import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
+import { markKumikoProjectExportClean } from '@/lib/project/kumikoProjectPersistence'
+import { createProjectUiStateSnapshot } from '@/lib/project/projectUiState'
+import { canUseCanonicalUfoZipExport } from '@/features/common/fontExport/exportDraftPolicy'
 import {
   createFontExportErrorReport,
   type FontExportErrorReport,
-} from 'src/features/common/fontExport/exportErrorReport'
-import { locationsMatch } from 'src/font/designspaceLocation'
-import { useStore } from 'src/store'
+} from '@/features/common/fontExport/exportErrorReport'
+import { locationsMatch } from '@/font/designspaceLocation'
+import { useStore } from '@/store'
 import type {
   FontExportFormat,
   FontExportOptions,
-} from 'src/features/common/fontExport/ExportFontModal'
-import type { BinaryFontExportFormat } from 'src/lib/fontFormats/fontBinaryFormat'
-import type { FontExportInstance } from 'src/store'
+} from '@/features/common/fontExport/ExportFontModal'
+import type { BinaryFontExportFormat } from '@/lib/fontFormats/fontBinaryFormat'
+import type { FontExportInstance } from '@/store'
 
 const triggerBlobDownload = (blob: Blob, fileName: string) => {
   const href = URL.createObjectURL(blob)

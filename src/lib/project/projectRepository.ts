@@ -10,19 +10,19 @@ import {
   replaceKumikoProjectDataInBatches,
   saveKumikoUiValue,
   renameKumikoProjectRecord,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 import {
   fontDataToKumikoGlyphRecordBatches,
   fontDataToKumikoProjectRecord,
   kumikoGlyphRecordToGlyphData,
   kumikoGlyphRecordToGlyphMetadata,
   kumikoRecordsToFontData,
-} from 'src/lib/project/kumikoFontDataAdapter'
-import { toProjectSummary } from 'src/lib/project/projectTypes'
+} from '@/lib/project/kumikoFontDataAdapter'
+import { toProjectSummary } from '@/lib/project/projectTypes'
 import type {
   KumikoProjectDraft,
   KumikoProjectSummary,
-} from 'src/lib/project/projectTypes'
+} from '@/lib/project/projectTypes'
 
 export const PROJECT_METADATA_UI_KEY = 'projectMetadata'
 export const GLYPHS_PACKAGE_UI_KEY = 'glyphsPackage'

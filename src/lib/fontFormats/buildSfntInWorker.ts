@@ -1,6 +1,6 @@
-import type { GlyphData } from 'src/store'
-import type { FontData } from 'src/store'
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+import type { GlyphData } from '@/store'
+import type { FontData } from '@/store'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 export interface BuildSfntPayload {
   fontData: Pick<

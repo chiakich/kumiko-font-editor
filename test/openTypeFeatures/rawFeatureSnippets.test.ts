@@ -4,9 +4,9 @@ import {
   joinRawFeatureSnippets,
   normalizeRawFeatureSnippets,
   splitRawFeatureTextIntoSnippets,
-} from 'src/lib/openTypeFeatures/rawFeatureSnippets'
-import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+} from '@/lib/openTypeFeatures/rawFeatureSnippets'
+import { setRawFeatureTextSource } from '@/lib/openTypeFeatures/featureSourceSections'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 
 const SAMPLE = [
   '@Lower = [a b c];',

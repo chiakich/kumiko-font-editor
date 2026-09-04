@@ -8,7 +8,7 @@ import {
   Portal,
 } from '@chakra-ui/react'
 import { DialogCloseButton } from '@/components/ui/dialog-close-button'
-import type { PendingGitHubImport } from 'src/features/home/types'
+import type { PendingGitHubImport } from '@/features/home/types'
 import { useTranslation } from 'react-i18next'
 
 interface PendingGitHubImportModalProps {

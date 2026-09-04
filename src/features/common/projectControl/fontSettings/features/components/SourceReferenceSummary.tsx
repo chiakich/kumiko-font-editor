@@ -3,7 +3,7 @@ import type {
   FeatureSourceSection,
   SourceSectionRecordGroup,
   SourceSectionRecordSummary,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface SourceReferenceSummaryProps {

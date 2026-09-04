@@ -1,6 +1,6 @@
-import type { BinaryReader } from 'src/lib/openTypeFeatures/binaryReader'
-import { toSignedInt16 } from 'src/lib/openTypeFeatures/gposBinaryStructures'
-import type { ValueRecord } from 'src/lib/openTypeFeatures/types'
+import type { BinaryReader } from '@/lib/openTypeFeatures/binaryReader'
+import { toSignedInt16 } from '@/lib/openTypeFeatures/gposBinaryStructures'
+import type { ValueRecord } from '@/lib/openTypeFeatures/types'
 
 interface ParsedValueRecord {
   value: ValueRecord

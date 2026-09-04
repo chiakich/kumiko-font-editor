@@ -7,24 +7,24 @@ export {
   createFontFingerprint,
   ensureOpenTypeFeaturesState,
   getGlyphOrder,
-} from 'src/lib/openTypeFeatures/defaults'
+} from '@/lib/openTypeFeatures/defaults'
 export {
   makeFeatureId,
   makeLookupId,
   makeRuleId,
   makeSuggestionId,
   toStableIdPart,
-} from 'src/lib/openTypeFeatures/ids'
-export { mergeFeatureDiagnostics } from 'src/lib/openTypeFeatures/diagnostics'
-export { buildFeaDocument } from 'src/lib/openTypeFeatures/buildFeaDocument'
-export { buildAutoFeatureSuggestions } from 'src/lib/openTypeFeatures/buildAutoFeatureSuggestions'
-export { buildKerningSuggestions } from 'src/lib/openTypeFeatures/buildKerningSuggestions'
-export { buildMarkSuggestions } from 'src/lib/openTypeFeatures/buildMarkSuggestions'
+} from '@/lib/openTypeFeatures/ids'
+export { mergeFeatureDiagnostics } from '@/lib/openTypeFeatures/diagnostics'
+export { buildFeaDocument } from '@/lib/openTypeFeatures/buildFeaDocument'
+export { buildAutoFeatureSuggestions } from '@/lib/openTypeFeatures/buildAutoFeatureSuggestions'
+export { buildKerningSuggestions } from '@/lib/openTypeFeatures/buildKerningSuggestions'
+export { buildMarkSuggestions } from '@/lib/openTypeFeatures/buildMarkSuggestions'
 export {
   compileFontWithFeatures,
   prewarmOpenTypeFeatureCompiler,
-} from 'src/lib/openTypeFeatures/compileFontWithFeatures'
-export { compileManagedFontFeatures } from 'src/lib/openTypeFeatures/compileManagedFontFeatures'
+} from '@/lib/openTypeFeatures/compileFontWithFeatures'
+export { compileManagedFontFeatures } from '@/lib/openTypeFeatures/compileManagedFontFeatures'
 export {
   AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS,
   DEFAULT_OPEN_TYPE_COMPILER_BACKEND,
@@ -32,61 +32,61 @@ export {
   makeCompilerErrorResponse,
   makeRuntimeNotConfiguredDiagnostic,
   makeRuntimeNotConfiguredResponse,
-} from 'src/lib/openTypeFeatures/compilerRuntimePlan'
+} from '@/lib/openTypeFeatures/compilerRuntimePlan'
 export {
   findFeaSourceMapEntryForLine,
   mapCompilerErrorsToDiagnostics,
   mapFeaLineToDiagnosticTarget,
   parseCompilerErrorLocations,
   type CompilerErrorLocation,
-} from 'src/lib/openTypeFeatures/compilerErrorMapping'
+} from '@/lib/openTypeFeatures/compilerErrorMapping'
 export {
   canInstalledDependenciesCompileGeneratedFeaOffline,
   getInstalledCompilerDependencyCapabilities,
   getOpenTypeCompilerRuntimeRequirement,
-} from 'src/lib/openTypeFeatures/compilerRuntimeCapabilities'
+} from '@/lib/openTypeFeatures/compilerRuntimeCapabilities'
 export {
   createHarfBuzzRuntimeStatus,
   getHarfBuzzRuntimeCapabilities,
-} from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
-export { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
-export { generateFea } from 'src/lib/openTypeFeatures/generateFea'
-export { resolveHarfBuzzWasmLocation } from 'src/lib/openTypeFeatures/harfbuzzWasmLocation'
+} from '@/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
+export { extractBinaryFeatures } from '@/lib/openTypeFeatures/extractBinaryFeatures'
+export { generateFea } from '@/lib/openTypeFeatures/generateFea'
+export { resolveHarfBuzzWasmLocation } from '@/lib/openTypeFeatures/harfbuzzWasmLocation'
 export {
   hasExportableFeatureText,
   selectUfoFeatureText,
-} from 'src/lib/openTypeFeatures/ufoFeatureText'
+} from '@/lib/openTypeFeatures/ufoFeatureText'
 export {
   RAW_FEATURE_TEXT_SOURCE_ID,
   createCompiledTableSourceSection,
   createRawFeatureTextSourceSection,
   setRawFeatureSnippetsSource,
   setRawFeatureTextSource,
-} from 'src/lib/openTypeFeatures/featureSourceSections'
-export { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
+} from '@/lib/openTypeFeatures/featureSourceSections'
+export { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
 export {
   getRawFeatureText,
   hasRawFeatureText,
   joinRawFeatureSnippets,
   normalizeRawFeatureSnippets,
   splitRawFeatureTextIntoSnippets,
-} from 'src/lib/openTypeFeatures/rawFeatureSnippets'
-export { parseLayoutTableInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
-export { parseGdefTable } from 'src/lib/openTypeFeatures/gdefParser'
-export { readSfntTableDirectory } from 'src/lib/openTypeFeatures/binaryReader'
-export { serializeFeaDocument } from 'src/lib/openTypeFeatures/serializeFea'
-export { shapeTextWithHarfBuzz } from 'src/lib/openTypeFeatures/shapeTextWithHarfBuzz'
+} from '@/lib/openTypeFeatures/rawFeatureSnippets'
+export { parseLayoutTableInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
+export { parseGdefTable } from '@/lib/openTypeFeatures/gdefParser'
+export { readSfntTableDirectory } from '@/lib/openTypeFeatures/binaryReader'
+export { serializeFeaDocument } from '@/lib/openTypeFeatures/serializeFea'
+export { shapeTextWithHarfBuzz } from '@/lib/openTypeFeatures/shapeTextWithHarfBuzz'
 export {
   traceTextShaping,
   type ShapeTraceResult,
   type ShapingTraceStep,
-} from 'src/lib/openTypeFeatures/traceShaping'
-export { getGlyphCatalog } from 'src/lib/openTypeFeatures/harfbuzzGlyphCatalog'
-export { validateFeatures } from 'src/lib/openTypeFeatures/validateFeatures'
+} from '@/lib/openTypeFeatures/traceShaping'
+export { getGlyphCatalog } from '@/lib/openTypeFeatures/harfbuzzGlyphCatalog'
+export { validateFeatures } from '@/lib/openTypeFeatures/validateFeatures'
 export {
   applyAutoFeatureSuggestion,
   ignoreAutoFeatureSuggestion,
-} from 'src/lib/openTypeFeatures/applySuggestion'
+} from '@/lib/openTypeFeatures/applySuggestion'
 export {
   ALTERNATE_BEHAVIOR_TYPE_LABELS,
   ALTERNATE_BEHAVIOR_TYPES,
@@ -121,24 +121,24 @@ export {
   upsertCombinationBehavior,
   upsertContextualBehavior,
   upsertSpacingBehavior,
-} from 'src/lib/openTypeFeatures/behaviorFacade'
+} from '@/lib/openTypeFeatures/behaviorFacade'
 export {
   deriveOpenTypeExportImpactItems,
   deriveOpenTypeExportWarnings,
   hasBlockingExportWarnings,
   hasManagedFeatureEdits,
   needsOpenTypeFeatureCompilationForBinaryExport,
-} from 'src/lib/openTypeFeatures/exportPolicy'
-export { deriveOpenTypeImportExportSummary } from 'src/lib/openTypeFeatures/importExportSummary'
+} from '@/lib/openTypeFeatures/exportPolicy'
+export { deriveOpenTypeImportExportSummary } from '@/lib/openTypeFeatures/importExportSummary'
 export {
   deriveOpenTypeSourceSectionRecords,
   findOpenTypeSourceSectionsForRecord,
-} from 'src/lib/openTypeFeatures/sourceSectionRecords'
-export type * from 'src/lib/openTypeFeatures/feaAst'
-export type * from 'src/lib/openTypeFeatures/harfbuzzTypes'
-export type * from 'src/lib/openTypeFeatures/compilerTypes'
-export type * from 'src/lib/openTypeFeatures/exportPolicy'
-export type * from 'src/lib/openTypeFeatures/importExportSummary'
-export type * from 'src/lib/openTypeFeatures/sourceSectionRecords'
-export type * from 'src/lib/openTypeFeatures/behaviorFacade'
-export type * from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/sourceSectionRecords'
+export type * from '@/lib/openTypeFeatures/feaAst'
+export type * from '@/lib/openTypeFeatures/harfbuzzTypes'
+export type * from '@/lib/openTypeFeatures/compilerTypes'
+export type * from '@/lib/openTypeFeatures/exportPolicy'
+export type * from '@/lib/openTypeFeatures/importExportSummary'
+export type * from '@/lib/openTypeFeatures/sourceSectionRecords'
+export type * from '@/lib/openTypeFeatures/behaviorFacade'
+export type * from '@/lib/openTypeFeatures/types'

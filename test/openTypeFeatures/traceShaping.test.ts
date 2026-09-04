@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { traceTextShaping } from 'src/lib/openTypeFeatures/traceShaping'
+import { traceTextShaping } from '@/lib/openTypeFeatures/traceShaping'
 
 const FIXTURE = new URL(
   '../../test_glyphs/FiraCode-Regular.otf',

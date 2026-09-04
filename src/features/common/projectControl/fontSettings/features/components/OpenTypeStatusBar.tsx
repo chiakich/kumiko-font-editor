@@ -2,7 +2,7 @@ import { Badge, HStack, Text } from '@chakra-ui/react'
 import type {
   FeatureDiagnostic,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface OpenTypeStatusBarProps {

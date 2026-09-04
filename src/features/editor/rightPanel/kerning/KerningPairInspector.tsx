@@ -13,18 +13,18 @@ import { NavArrowLeft, NavArrowRight } from 'iconoir-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { KeyboardEvent } from 'react'
-import { SteppedNumberInput } from 'src/features/common/transform/components/SteppedNumberInput'
+import { SteppedNumberInput } from '@/features/common/transform/components/SteppedNumberInput'
 import {
   getMasterKerningPairs,
   buildKerningGroupMaps,
   describeKerningSelector,
   resolveKerningPair,
   type KerningPairPriority,
-} from 'src/lib/kerning/resolveKerning'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import { buildPairSpacingLayout } from 'src/features/editor/rightPanel/kerning/pairSpacingLayout'
-import { getTextKerningValue } from 'src/features/editor/canvas/workspace/layout/textKerning'
-import { useStore, type FontData } from 'src/store'
+} from '@/lib/kerning/resolveKerning'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
+import { buildPairSpacingLayout } from '@/features/editor/rightPanel/kerning/pairSpacingLayout'
+import { getTextKerningValue } from '@/features/editor/canvas/workspace/layout/textKerning'
+import { useStore, type FontData } from '@/store'
 
 const STEP_OPTIONS = [1, 5, 10]
 

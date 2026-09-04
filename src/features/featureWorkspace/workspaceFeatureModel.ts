@@ -1,9 +1,9 @@
 import type {
   FeatureDiagnostic,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
-import { listPreviewFeatureToggles } from 'src/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
-import { isFeatureTagEnabled } from 'src/features/common/projectControl/fontSettings/features/utils/featureEnablement'
+} from '@/lib/openTypeFeatures'
+import { listPreviewFeatureToggles } from '@/features/common/projectControl/fontSettings/features/utils/shapingPreviewModel'
+import { isFeatureTagEnabled } from '@/features/common/projectControl/fontSettings/features/utils/featureEnablement'
 
 export interface WorkspaceFeatureRow {
   tag: string

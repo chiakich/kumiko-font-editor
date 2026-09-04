@@ -2,14 +2,14 @@ import type {
   FeatureOrigin,
   Rule,
   ValueRecord,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 import {
   glyphsFromRawSelectorToken,
   selectorFromRawToken,
   splitFirstGlyphPatternToken,
   type InlineGlyphClassRegistrar,
   type RawSelectorContext,
-} from 'src/lib/openTypeFeatures/rawFeatureSelectorParser'
+} from '@/lib/openTypeFeatures/rawFeatureSelectorParser'
 
 const POSITIONING_KEYWORD = '(?:pos|position)'
 const ENUMERATED_POSITIONING_KEYWORD = `(?:enum|enumerate)\\s+${POSITIONING_KEYWORD}`

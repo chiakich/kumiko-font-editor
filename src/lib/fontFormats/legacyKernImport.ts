@@ -1,4 +1,4 @@
-import type { KerningPair } from 'src/store/types'
+import type { KerningPair } from '@/store/types'
 
 // opentype.js parses the legacy `kern` table (format 0) into a flat
 // "leftIndex,rightIndex" -> value record. Converting it into project kerning

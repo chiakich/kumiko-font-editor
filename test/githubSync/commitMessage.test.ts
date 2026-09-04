@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildGlyphCommitMessage,
   describeGlyphForCommit,
-} from 'src/lib/github/sync/commitMessage'
+} from '@/lib/github/sync/commitMessage'
 
 describe('describeGlyphForCommit', () => {
   it('names a glyph by its character, not its unicode name', () => {

@@ -4,7 +4,7 @@ import {
   deriveOpenTypeSourceSectionRecords,
   findOpenTypeSourceSectionsForRecord,
   type OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 describe('OpenType source section record summaries', () => {
   it('resolves source record refs into display-ready summaries', () => {

@@ -1,7 +1,7 @@
 import {
   dropMasterKerningEntries,
   seedMasterKerningEntries,
-} from 'src/lib/kerning/kerningPairSets'
+} from '@/lib/kerning/kerningPairSets'
 /**
  * Project-level store actions: load, close, hydrate, and mark save state.
  */
@@ -13,33 +13,33 @@ import type {
   GlyphLayerData,
   GlobalState,
   KerningPair,
-} from 'src/store/types'
+} from '@/store/types'
 import {
   clearProjectArchive,
   getProjectArchiveFirstMasterId,
   ingestProjectData,
-} from 'src/lib/project/projectArchive'
+} from '@/lib/project/projectArchive'
 import type {
   ProjectSourceFormat,
   ProjectRoundTripFormat,
-} from 'src/lib/project/projectFormats'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
-import { findSourceIdAtLocation } from 'src/font/designspaceLocation'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import { getProjectGlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
+} from '@/lib/project/projectFormats'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import { findSourceIdAtLocation } from '@/font/designspaceLocation'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import { getProjectGlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
 import {
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
-} from 'src/store/editorLine'
-import { syncFilteredGlyphList } from 'src/store/glyphSearch'
-import { evictGlyphGeometry } from 'src/store/glyphGeometryEviction'
+} from '@/store/editorLine'
+import { syncFilteredGlyphList } from '@/store/glyphSearch'
+import { evictGlyphGeometry } from '@/store/glyphGeometryEviction'
 import {
   getGlyphLayer,
   getActiveLayerId,
   setGlyphActiveLayer,
-} from 'src/store/glyphLayer'
-import { markProjectDirty } from 'src/store/dirtyState'
+} from '@/store/glyphLayer'
+import { markProjectDirty } from '@/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

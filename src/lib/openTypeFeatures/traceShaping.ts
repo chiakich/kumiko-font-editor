@@ -1,12 +1,12 @@
-import { createHarfBuzzRuntimeStatus } from 'src/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
+import { createHarfBuzzRuntimeStatus } from '@/lib/openTypeFeatures/harfbuzzRuntimeCapabilities'
 import type {
   HarfBuzzTraceEntry,
   HarfBuzzTraceGlyph,
-} from 'src/lib/openTypeFeatures/harfbuzzRuntime'
+} from '@/lib/openTypeFeatures/harfbuzzRuntime'
 import type {
   HarfBuzzRuntimeStatus,
   ShapeTextOptions,
-} from 'src/lib/openTypeFeatures/harfbuzzTypes'
+} from '@/lib/openTypeFeatures/harfbuzzTypes'
 
 export interface ShapingTraceStep {
   featureTag: string
@@ -85,7 +85,7 @@ export const traceTextShaping = async (
   }
   try {
     const { loadHarfBuzzRuntime } =
-      await import('src/lib/openTypeFeatures/harfbuzzRuntime')
+      await import('@/lib/openTypeFeatures/harfbuzzRuntime')
     const hb = await loadHarfBuzzRuntime()
     const blob = hb.createBlob(fontBuffer)
     try {

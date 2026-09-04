@@ -1,7 +1,7 @@
-import type { GlyphData, OnCurveNodeType } from 'src/store'
+import type { GlyphData, OnCurveNodeType } from '@/store'
 // Leaf modules rather than the src/store barrel: see the note in ufoFormat.
-import { getEffectiveNodeType, getNodeType } from 'src/store/glyphGeometry'
-import { getActiveLayer } from 'src/store/glyphLayer'
+import { getEffectiveNodeType, getNodeType } from '@/store/glyphGeometry'
+import { getActiveLayer } from '@/store/glyphLayer'
 
 export interface GlyphSelectionNodeEntry {
   key: string

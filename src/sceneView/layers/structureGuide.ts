@@ -3,13 +3,13 @@
 import {
   registerVisualizationLayerDefinition,
   glyphSelector,
-} from 'src/sceneView/SceneView'
+} from '@/sceneView/SceneView'
 import type {
   PositionedGlyph,
   SceneModel,
   StructureGuideModel,
-} from 'src/sceneView/SceneView'
-import type { CanvasController } from 'src/sceneView/CanvasController'
+} from '@/sceneView/SceneView'
+import type { CanvasController } from '@/sceneView/CanvasController'
 
 type Side = keyof StructureGuideModel['sides']
 

@@ -1,8 +1,8 @@
 import {
   type GeometryBounds,
   type GeometryPoint,
-} from 'src/lib/qualityCheck/polygonGeometry'
-import type { StructureBodyBox } from 'src/lib/qualityCheck/hanClassification'
+} from '@/lib/qualityCheck/polygonGeometry'
+import type { StructureBodyBox } from '@/lib/qualityCheck/hanClassification'
 
 /**
  * 依 3type「中文字体解密组」研究報告 V1.2：

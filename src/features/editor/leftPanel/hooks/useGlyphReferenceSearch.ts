@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import { searchProjectGlyphsByComponent } from 'src/lib/components/componentSearchWorkerClient'
+import { searchProjectGlyphsByComponent } from '@/lib/components/componentSearchWorkerClient'
 import {
   getGlyphCharacter,
   getRelatedGlyphs,
   isCjkCharacter,
-} from 'src/lib/glyph/glyphRelations'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/glyph/glyphRelations'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 import {
   getGlyphwikiCompositionDeep,
   type GlyphwikiPartBox,
-} from 'src/lib/glyph/glyphwikiComposition'
+} from '@/lib/glyph/glyphwikiComposition'
 import {
   canonicalizeComponent,
   getGlyphwikiVariantMap,
-} from 'src/lib/glyph/glyphwikiVariants'
-import { scorePartFit } from 'src/lib/components/componentAssembly'
-import type { GlyphData } from 'src/store'
+} from '@/lib/glyph/glyphwikiVariants'
+import { scorePartFit } from '@/lib/components/componentAssembly'
+import type { GlyphData } from '@/store'
 
 interface SearchState {
   components: string[]

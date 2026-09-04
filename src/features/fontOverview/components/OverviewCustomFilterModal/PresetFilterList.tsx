@@ -1,8 +1,8 @@
 import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react'
 import { ArrowRight } from 'iconoir-react'
 import { useTranslation } from 'react-i18next'
-import type { OverviewCustomFilterPreset } from 'src/lib/glyph/glyphOverview'
-import { getPresetSummary } from 'src/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
+import type { OverviewCustomFilterPreset } from '@/lib/glyph/glyphOverview'
+import { getPresetSummary } from '@/features/fontOverview/components/OverviewCustomFilterModal/filterModel'
 
 interface PresetFilterListProps {
   onCreatePreset: (preset: OverviewCustomFilterPreset) => void

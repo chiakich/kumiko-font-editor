@@ -9,9 +9,9 @@ import {
   Tag,
   Text,
 } from '@chakra-ui/react'
-import SmoothNodeIcon from 'src/assets/icons/SmoothNodeIcon.svg?react'
-import CornerNodeIcon from 'src/assets/icons/CornerNodeIcon.svg?react'
-import type { NodeType, SelectedSegmentState } from 'src/store'
+import SmoothNodeIcon from '@/assets/icons/SmoothNodeIcon.svg?react'
+import CornerNodeIcon from '@/assets/icons/CornerNodeIcon.svg?react'
+import type { NodeType, SelectedSegmentState } from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface NodeInspectorCardProps {

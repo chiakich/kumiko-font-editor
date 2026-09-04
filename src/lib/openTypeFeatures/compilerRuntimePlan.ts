@@ -1,11 +1,11 @@
-import { makeDiagnostic } from 'src/lib/openTypeFeatures/diagnostics'
-import { mapCompilerErrorsToDiagnostics } from 'src/lib/openTypeFeatures/compilerErrorMapping'
+import { makeDiagnostic } from '@/lib/openTypeFeatures/diagnostics'
+import { mapCompilerErrorsToDiagnostics } from '@/lib/openTypeFeatures/compilerErrorMapping'
 import type {
   CompileErrorMessage,
   CompilerRuntimeStatus,
   OpenTypeCompilerBackend,
-} from 'src/lib/openTypeFeatures/compilerTypes'
-import type { GeneratedFeaSourceMap } from 'src/lib/openTypeFeatures/feaAst'
+} from '@/lib/openTypeFeatures/compilerTypes'
+import type { GeneratedFeaSourceMap } from '@/lib/openTypeFeatures/feaAst'
 
 export const AVAILABLE_OPEN_TYPE_COMPILER_BACKENDS: OpenTypeCompilerBackend[] =
   ['not-configured', 'pyodide-fonttools', 'wasm-fonttools']

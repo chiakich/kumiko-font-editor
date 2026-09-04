@@ -15,13 +15,13 @@ import {
   serializeGlifRecord,
   serializeXmlPlist,
   type UfoWorkspaceEntry,
-} from 'src/lib/fontFormats/ufoFormat'
-import type { UfoGlyphRecord } from 'src/lib/fontFormats/ufoTypes'
-import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
-import type { FontData, GlyphData } from 'src/store'
-import { getGlyphLayer } from 'src/store/glyphLayer'
-import { materializeUfoTree } from 'src/lib/fontFormats/ufoMaterialize'
-import { saveProjectDraft } from 'src/lib/project/projectRepository'
+} from '@/lib/fontFormats/ufoFormat'
+import type { UfoGlyphRecord } from '@/lib/fontFormats/ufoTypes'
+import { getRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
+import type { FontData, GlyphData } from '@/store'
+import { getGlyphLayer } from '@/store/glyphLayer'
+import { materializeUfoTree } from '@/lib/fontFormats/ufoMaterialize'
+import { saveProjectDraft } from '@/lib/project/projectRepository'
 import { exportCanonicalFontDataAsUfoZip } from './canonicalUfoExportTestUtils'
 const layerOf = (g: GlyphData) => getGlyphLayer(g, null)!
 

@@ -1,17 +1,17 @@
-export { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
+export { gitBlobShaFromText } from '@/lib/github/sync/gitBlobSha'
 export {
   buildSyncReport,
   computeFontLevelSyncEntries,
   computeGlyphSyncEntries,
   joinRepoPath,
-} from 'src/lib/github/sync/computeSyncReport'
-export { fetchRemoteTree } from 'src/lib/github/sync/remoteTree'
+} from '@/lib/github/sync/computeSyncReport'
+export { fetchRemoteTree } from '@/lib/github/sync/remoteTree'
 export {
   applyRemoteSnapshot,
   buildProjectSyncReport,
   resolveSyncTarget,
   type ApplyRemoteResult,
-} from 'src/lib/github/sync/syncEngine'
+} from '@/lib/github/sync/syncEngine'
 export type {
   GitHubSyncTarget,
   GlyphSyncEntry,
@@ -19,4 +19,4 @@ export type {
   ProjectSyncReport,
   RemoteTreeSnapshot,
   SyncConflictResolution,
-} from 'src/lib/github/sync/types'
+} from '@/lib/github/sync/types'

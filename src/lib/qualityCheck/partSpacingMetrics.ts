@@ -1,9 +1,9 @@
-import type { GlyphwikiPartPlacement } from 'src/lib/glyph/glyphwikiComposition'
+import type { GlyphwikiPartPlacement } from '@/lib/glyph/glyphwikiComposition'
 import {
   getPolygonsBounds,
   type GeometryBounds,
   type GeometryPoint,
-} from 'src/lib/qualityCheck/polygonGeometry'
+} from '@/lib/qualityCheck/polygonGeometry'
 
 export type PartSpacingAxis = 'horizontal' | 'vertical'
 

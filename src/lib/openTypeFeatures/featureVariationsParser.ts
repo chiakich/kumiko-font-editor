@@ -2,8 +2,8 @@ import {
   BinaryReader,
   findSfntTable,
   readSfntTableDirectory,
-} from 'src/lib/openTypeFeatures/binaryReader'
-import type { LayoutFeatureInventory } from 'src/lib/openTypeFeatures/layoutTableInventory'
+} from '@/lib/openTypeFeatures/binaryReader'
+import type { LayoutFeatureInventory } from '@/lib/openTypeFeatures/layoutTableInventory'
 
 // Read-only summary of a GSUB/GPOS FeatureVariations table: which axis
 // regions swap which features for how many lookups. Kumiko does not

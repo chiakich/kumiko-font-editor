@@ -3,7 +3,7 @@ import {
   traceTextShaping,
   type HarfBuzzDirection,
   type ShapingTraceStep,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 export interface ShapingTraceInputs {
   buffer: ArrayBuffer

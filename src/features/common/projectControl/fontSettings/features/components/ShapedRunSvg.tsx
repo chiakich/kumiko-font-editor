@@ -1,5 +1,5 @@
 import { Box } from '@chakra-ui/react'
-import type { ShapedGlyph } from 'src/lib/openTypeFeatures'
+import type { ShapedGlyph } from '@/lib/openTypeFeatures'
 
 export interface ShapedRunSvgProps {
   glyphs: readonly ShapedGlyph[]

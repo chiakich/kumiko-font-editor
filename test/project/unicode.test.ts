@@ -3,7 +3,7 @@ import {
   normalizeUnicodeHex,
   unicodeHexToCharacter,
   unicodeHexToCodePoint,
-} from 'src/lib/project/unicode'
+} from '@/lib/project/unicode'
 
 describe('unicode normalization', () => {
   it('normalizes numeric values as decimal code points', () => {

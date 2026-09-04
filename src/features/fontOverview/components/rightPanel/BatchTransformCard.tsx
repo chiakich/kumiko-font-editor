@@ -16,12 +16,12 @@ import {
   SkewIcon,
   TransformActionRow,
   type SkewAxis,
-} from 'src/features/common/transform/components/TransformActionControls'
+} from '@/features/common/transform/components/TransformActionControls'
 import {
   MirrorControls,
   OffsetControls,
   OriginPicker,
-} from 'src/features/common/transform/components/TransformPanelSections'
+} from '@/features/common/transform/components/TransformPanelSections'
 import {
   buildMirrorUpdates,
   buildRotatedUpdates,
@@ -34,8 +34,8 @@ import {
   type SelectionBounds,
   type SelectionNode,
   type TransformOrigin,
-} from 'src/features/common/transform/utils/transformGeometry'
-import { useStore, activeLayer } from 'src/store'
+} from '@/features/common/transform/utils/transformGeometry'
+import { useStore, activeLayer } from '@/store'
 
 interface BatchTransformCardProps {
   selectedGlyphIds: string[]

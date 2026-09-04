@@ -9,11 +9,11 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { ShapedRunSvg } from 'src/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
+import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
 import type {
   useShapingPreview,
   ShapingPreviewRun,
-} from 'src/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
+} from '@/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 
 interface ShapingPreviewBarProps {
   // Owned by the tab so compile diagnostics can also reach the code views.

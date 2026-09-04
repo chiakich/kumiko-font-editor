@@ -7,9 +7,9 @@ import {
   GLYPHS_LABEL_COLORS,
   areKumikoColorsEqual,
   kumikoColorToDisplayCssRgba,
-} from 'src/lib/color/kumikoColor'
-import { useResolvedColorMode } from 'src/lib/preferences/colorMode'
-import type { KumikoColor } from 'src/store'
+} from '@/lib/color/kumikoColor'
+import { useResolvedColorMode } from '@/lib/preferences/colorMode'
+import type { KumikoColor } from '@/store'
 
 export type OverviewGlyphContextMenuColor = KumikoColor | null | 'mixed'
 

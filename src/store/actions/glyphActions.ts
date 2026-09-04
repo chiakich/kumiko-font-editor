@@ -1,4 +1,4 @@
-import { listAllKerningPairs } from 'src/lib/kerning/kerningPairSets'
+import { listAllKerningPairs } from '@/lib/kerning/kerningPairSets'
 /**
  * Glyph-level store actions: add/delete glyphs, update node positions/types,
  * update glyph metrics.
@@ -12,17 +12,17 @@ import type {
   GlyphMetrics,
   KumikoColor,
   OnCurveNodeType,
-} from 'src/store/types'
-import { areKumikoColorsEqual } from 'src/lib/color/kumikoColor'
-import type { GlyphSelector } from 'src/lib/openTypeFeatures'
-import { findSourceIdAtLocation } from 'src/font/designspaceLocation'
+} from '@/store/types'
+import { areKumikoColorsEqual } from '@/lib/color/kumikoColor'
+import type { GlyphSelector } from '@/lib/openTypeFeatures'
+import { findSourceIdAtLocation } from '@/font/designspaceLocation'
 import {
   createBackupLayer,
   deleteBackupLayer,
   duplicateLayer,
   renameBackupLayer,
   promoteBackupToMaster,
-} from 'src/store/glyphLayerOps'
+} from '@/store/glyphLayerOps'
 import {
   findNode,
   findPath,
@@ -34,25 +34,25 @@ import {
   translateGlyphHorizontally,
   recomputeGlyphSidebearings,
   wouldCreateComponentCycle,
-} from 'src/store/glyphGeometry'
+} from '@/store/glyphGeometry'
 import {
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
-} from 'src/store/editorLine'
-import { syncFilteredGlyphList } from 'src/store/glyphSearch'
+} from '@/store/editorLine'
+import { syncFilteredGlyphList } from '@/store/glyphSearch'
 import {
   activeLayer,
   ensureLoadedActiveLayer,
   getGlyphLayer,
   setGlyphActiveLayer,
-} from 'src/store/glyphLayer'
+} from '@/store/glyphLayer'
 import {
   markGlyphAdded,
   markGlyphDeleted,
   markGlyphDirty,
   markUiStateDirty,
-} from 'src/store/dirtyState'
-import { createGlyphCopies, insertGlyphIdsAfter } from 'src/store/glyphCopy'
+} from '@/store/dirtyState'
+import { createGlyphCopies, insertGlyphIdsAfter } from '@/store/glyphCopy'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

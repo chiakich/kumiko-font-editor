@@ -4,9 +4,9 @@ import {
   buildGrayProofText,
   buildGrayStats,
   buildProofRun,
-} from 'src/lib/qualityCheck/qualityProof'
-import type { FontData, GlyphData, PathData } from 'src/store/types'
-import { normalizeGlyphToLayers } from 'src/store'
+} from '@/lib/qualityCheck/qualityProof'
+import type { FontData, GlyphData, PathData } from '@/store/types'
+import { normalizeGlyphToLayers } from '@/store'
 
 const makePath = (id: string, points: Array<[number, number]>): PathData => ({
   id,

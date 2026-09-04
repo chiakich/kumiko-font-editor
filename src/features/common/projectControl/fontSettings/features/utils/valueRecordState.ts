@@ -1,4 +1,4 @@
-import type { ValueRecord } from 'src/lib/openTypeFeatures'
+import type { ValueRecord } from '@/lib/openTypeFeatures'
 
 export type ValueRecordField = keyof ValueRecord
 

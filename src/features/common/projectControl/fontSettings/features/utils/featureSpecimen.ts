@@ -2,7 +2,7 @@ import type {
   GlyphSelector,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 const MAX_SPECIMEN_GLYPHS = 6
 

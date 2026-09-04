@@ -5,13 +5,13 @@ import type {
   FeatureDiagnostic,
   OpenTypeExportWarning,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import {
   createCompilerRuntimeStatus,
   deriveOpenTypeExportImpactItems,
   deriveOpenTypeExportWarnings,
-} from 'src/lib/openTypeFeatures'
-import { ExportImpactSummary } from 'src/features/common/projectControl/fontSettings/features/components/ExportImpactSummary'
+} from '@/lib/openTypeFeatures'
+import { ExportImpactSummary } from '@/features/common/projectControl/fontSettings/features/components/ExportImpactSummary'
 import type { TFunction } from 'i18next'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'

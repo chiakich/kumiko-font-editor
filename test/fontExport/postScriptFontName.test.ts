@@ -3,7 +3,7 @@ import opentype from 'opentype.js'
 import {
   buildExportSfntBuffer,
   toPostScriptFontName,
-} from 'src/lib/fontFormats/fontBinaryFormat'
+} from '@/lib/fontFormats/fontBinaryFormat'
 import { makeGlyph } from '../openTypeFeatures/openTypeFeatureTestHelpers'
 
 describe('toPostScriptFontName', () => {

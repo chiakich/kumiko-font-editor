@@ -7,7 +7,7 @@ import type {
   KerningPair,
   PathData,
   PathNode,
-} from 'src/store'
+} from '@/store'
 // From the defining module, not the src/store barrel: the barrel creates the
 // zustand store and pulls every action — including paper.js — into any bundle
 // that touches it, which is how a worker ended up shipping the path-boolean
@@ -16,27 +16,27 @@ import {
   getNodeSegmentType,
   getNodeType,
   isOffCurveNode,
-} from 'src/store/glyphGeometry'
+} from '@/store/glyphGeometry'
 import {
   designspaceDefaultLocation,
   designspaceToExportInstances,
   designspaceToFontAxes,
   parseDesignspace,
   type Designspace,
-} from 'src/lib/fontFormats/designspace'
-import type { ProjectSourceFormat } from 'src/lib/project/projectFormats'
-import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
-import { hashString } from 'src/lib/hash'
-import { normalizeUnicodeHex } from 'src/lib/project/unicode'
-import { parseUfoColor, serializeUfoColor } from 'src/lib/color/kumikoColor'
-import { gitBlobShaFromText } from 'src/lib/github/sync/gitBlobSha'
-import { UFO_FONT_LEVEL_FILE_NAMES } from 'src/lib/fontFormats/ufoFileNames'
+} from '@/lib/fontFormats/designspace'
+import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
+import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
+import { hashString } from '@/lib/hash'
+import { normalizeUnicodeHex } from '@/lib/project/unicode'
+import { parseUfoColor, serializeUfoColor } from '@/lib/color/kumikoColor'
+import { gitBlobShaFromText } from '@/lib/github/sync/gitBlobSha'
+import { UFO_FONT_LEVEL_FILE_NAMES } from '@/lib/fontFormats/ufoFileNames'
 import {
   childrenNamed,
   firstChildNamed,
   parseXmlTree,
   type XmlNode,
-} from 'src/lib/fontFormats/xmlTree'
+} from '@/lib/fontFormats/xmlTree'
 import {
   closeSelfClosing,
   detectGlifFileStyle,
@@ -45,7 +45,7 @@ import {
   UFOLIB_TEXT_STYLE,
   xmlDeclaration,
   type UfoTextStyle,
-} from 'src/lib/fontFormats/ufoTextStyle'
+} from '@/lib/fontFormats/ufoTextStyle'
 import {
   KUMIKO_VERTICAL_KERNING_LIB_KEY,
   defaultFontSource,
@@ -55,15 +55,15 @@ import {
   exportInstancesFromLib,
   statusDefinitionsFromLib,
   settingsFromLib,
-} from 'src/lib/fontFormats/fontInfoSettings'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+} from '@/lib/fontFormats/fontInfoSettings'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import {
   parseUfoKerning,
   parseVerticalKerningLib,
   type ParsedUfoKerning,
-} from 'src/lib/fontFormats/ufoKerning'
-import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
-import { setRawFeatureTextSource } from 'src/lib/openTypeFeatures/featureSourceSections'
+} from '@/lib/fontFormats/ufoKerning'
+import { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
+import { setRawFeatureTextSource } from '@/lib/openTypeFeatures/featureSourceSections'
 import type {
   UfoGithubSource,
   UfoGlyphAdvance,
@@ -75,7 +75,7 @@ import type {
   UfoLayerRecord,
   UfoMetadataRecord,
   UfoProjectRecord,
-} from 'src/lib/fontFormats/ufoTypes'
+} from '@/lib/fontFormats/ufoTypes'
 
 export interface ParsedUfoFolder {
   ufoId: string

@@ -1,7 +1,7 @@
 // 處理 Canvas 基礎渲染、縮放、平移和事件處理
 
-import type { SceneView } from 'src/sceneView/SceneView'
-import type { SceneModel } from 'src/sceneView/SceneView'
+import type { SceneView } from '@/sceneView/SceneView'
+import type { SceneModel } from '@/sceneView/SceneView'
 
 const MIN_MAGNIFICATION = 0.005
 const MAX_MAGNIFICATION = 800

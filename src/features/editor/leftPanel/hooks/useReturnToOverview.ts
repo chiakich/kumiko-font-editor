@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 import { flushSync } from 'react-dom'
-import { getEditorGlyphHeroSourceRect } from 'src/features/common/viewTransition/overviewReturnHeroGeometry'
-import { startOverviewReturnHeroOverlay } from 'src/features/common/viewTransition/overviewReturnHeroOverlayStore'
-import { useStore } from 'src/store'
+import { getEditorGlyphHeroSourceRect } from '@/features/common/viewTransition/overviewReturnHeroGeometry'
+import { startOverviewReturnHeroOverlay } from '@/features/common/viewTransition/overviewReturnHeroOverlayStore'
+import { useStore } from '@/store'
 
 export function useReturnToOverview() {
   const selectedGlyphId = useStore((state) => state.selectedGlyphId)

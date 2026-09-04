@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { useStore } from 'src/store'
-import type { FontData, GlyphData } from 'src/store'
+import { useStore } from '@/store'
+import type { FontData, GlyphData } from '@/store'
 
 const makeGlyph = (id: string): GlyphData =>
   ({

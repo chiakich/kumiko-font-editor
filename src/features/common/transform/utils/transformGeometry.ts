@@ -1,4 +1,4 @@
-import type { PathData } from 'src/store'
+import type { PathData } from '@/store'
 
 export type TransformField = 'x' | 'y' | 'width' | 'height'
 export interface TransformOrigin {

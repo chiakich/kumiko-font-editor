@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   createEmptyOpenTypeFeaturesState,
   upsertCombinationBehavior,
-} from 'src/lib/openTypeFeatures'
-import { shapeGlyphRuns } from 'src/features/editor/canvas/workspace/layout/textShaping'
-import type { FontData } from 'src/store'
+} from '@/lib/openTypeFeatures'
+import { shapeGlyphRuns } from '@/features/editor/canvas/workspace/layout/textShaping'
+import type { FontData } from '@/store'
 
 describe('text shaping layout', () => {
   it('maps combination behavior ligatures to display glyph runs', () => {

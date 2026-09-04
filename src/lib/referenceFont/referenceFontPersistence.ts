@@ -1,7 +1,7 @@
 import {
   loadKumikoUiValue,
   saveKumikoUiValue,
-} from 'src/lib/project/kumikoProjectPersistence'
+} from '@/lib/project/kumikoProjectPersistence'
 
 export interface ReferenceFontRecord {
   projectId: string

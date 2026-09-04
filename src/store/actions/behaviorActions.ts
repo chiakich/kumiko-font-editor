@@ -29,10 +29,10 @@ import {
   type CombinationBehaviorDraft,
   type ContextualBehaviorDraft,
   type SpacingBehaviorDraft,
-} from 'src/lib/openTypeFeatures'
-import { syncFilteredGlyphList } from 'src/store/glyphSearch'
-import type { GlobalState } from 'src/store/types'
-import { markGlyphDirty, markProjectDirty } from 'src/store/dirtyState'
+} from '@/lib/openTypeFeatures'
+import { syncFilteredGlyphList } from '@/store/glyphSearch'
+import type { GlobalState } from '@/store/types'
+import { markGlyphDirty, markProjectDirty } from '@/store/dirtyState'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

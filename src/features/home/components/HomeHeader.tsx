@@ -8,7 +8,7 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { Plus } from 'iconoir-react'
-import logoUrl from 'src/assets/logo.svg'
+import logoUrl from '@/assets/logo.svg'
 import { useTranslation } from 'react-i18next'
 
 interface HomeHeaderProps {

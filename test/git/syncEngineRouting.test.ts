@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const buildGitSyncReport = vi.fn()
 const loadKumikoProjectRecord = vi.fn()
 
-vi.mock('src/lib/github/sync/kumikoUfoSync', () => ({
+vi.mock('@/lib/github/sync/kumikoUfoSync', () => ({
   resolveKumikoSyncTarget: () => ({
     owner: 'owner',
     repo: 'repo',
@@ -16,20 +16,19 @@ vi.mock('src/lib/github/sync/kumikoUfoSync', () => ({
 }))
 // The report runs in a worker; the routing under test is which transport the
 // engine picks, so the worker client stands in for it.
-vi.mock('src/lib/git/gitSyncWorkerClient', () => ({
+vi.mock('@/lib/git/gitSyncWorkerClient', () => ({
   buildGitSyncReportInWorker: (target: unknown) =>
     buildGitSyncReport({ target }),
 }))
-vi.mock('src/lib/git/gitSync', () => ({
+vi.mock('@/lib/git/gitSync', () => ({
   buildGitSyncReport: (input: unknown) => buildGitSyncReport(input),
   applyGitRemoteChanges: vi.fn(),
 }))
-vi.mock('src/lib/project/kumikoProjectPersistence', () => ({
+vi.mock('@/lib/project/kumikoProjectPersistence', () => ({
   loadKumikoProjectRecord: (id: unknown) => loadKumikoProjectRecord(id),
 }))
 
-const { buildProjectSyncReport } =
-  await import('src/lib/github/sync/syncEngine')
+const { buildProjectSyncReport } = await import('@/lib/github/sync/syncEngine')
 
 beforeEach(() => {
   buildGitSyncReport.mockReset()

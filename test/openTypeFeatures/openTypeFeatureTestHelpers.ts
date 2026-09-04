@@ -1,13 +1,13 @@
 import { expect } from 'vitest'
-import { buildAutoFeatureSuggestions } from 'src/lib/openTypeFeatures/buildAutoFeatureSuggestions'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
+import { buildAutoFeatureSuggestions } from '@/lib/openTypeFeatures/buildAutoFeatureSuggestions'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
 import type {
   AutoFeatureSuggestion,
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData, GlyphData } from 'src/store/types'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData, GlyphData } from '@/store/types'
 
 export const makeGlyph = (name: string, unicode?: string): GlyphData => ({
   id: name,

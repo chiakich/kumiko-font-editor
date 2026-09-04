@@ -7,7 +7,7 @@ import {
   getHarfBuzzRuntimeCapabilities,
   resolveHarfBuzzWasmLocation,
   shapeTextWithHarfBuzz,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 describe('HarfBuzz shaping runtime', () => {
   it('reports available runtime capabilities', () => {

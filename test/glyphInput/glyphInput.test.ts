@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   isCjkDefaultFullWidthCodePoint,
   parseGlyphAdditionInput,
-} from 'src/features/fontOverview/utils/glyphInput'
+} from '@/features/fontOverview/utils/glyphInput'
 import {
   buildGlyphNameInfoMap,
   parseGlyphDataLine,
-} from 'src/lib/glyph/glyphNameInfo'
+} from '@/lib/glyph/glyphNameInfo'
 
 const infoMap = buildGlyphNameInfoMap(
   [

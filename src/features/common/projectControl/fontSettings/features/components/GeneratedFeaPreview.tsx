@@ -1,9 +1,9 @@
 import { Text, Field } from '@chakra-ui/react'
-import { FeaCodeEditor } from 'src/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
+import { FeaCodeEditor } from '@/features/common/projectControl/fontSettings/features/components/FeaCodeEditor'
 import type {
   CompilerErrorLocation,
   GeneratedFeaSourceMap,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface GeneratedFeaPreviewProps {

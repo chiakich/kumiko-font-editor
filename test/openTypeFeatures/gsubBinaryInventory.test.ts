@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
+import { extractBinaryFeatures } from '@/lib/openTypeFeatures/extractBinaryFeatures'
 import {
   makeAlternateSubstitutionSubtable,
   makeChainingContextSubstitutionFormat2Subtable,

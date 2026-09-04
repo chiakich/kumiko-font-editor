@@ -1,4 +1,4 @@
-import type { OpenTypeFeaturesState } from 'src/lib/openTypeFeatures/types'
+import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
 
 export interface OpenTypeImportExportSummary {
   importedFeatures: number

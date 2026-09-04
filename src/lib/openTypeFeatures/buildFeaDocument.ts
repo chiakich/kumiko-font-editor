@@ -1,6 +1,6 @@
-import type { FeaNode, MarkAttachment } from 'src/lib/openTypeFeatures/feaAst'
-import { escapeFeaNameString } from 'src/lib/openTypeFeatures/feaFormat'
-import { getRawFeatureText } from 'src/lib/openTypeFeatures/rawFeatureSnippets'
+import type { FeaNode, MarkAttachment } from '@/lib/openTypeFeatures/feaAst'
+import { escapeFeaNameString } from '@/lib/openTypeFeatures/feaFormat'
+import { getRawFeatureText } from '@/lib/openTypeFeatures/rawFeatureSnippets'
 import type {
   FeatureEntry,
   FeatureParamName,
@@ -11,8 +11,8 @@ import type {
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures/types'
-import { getNestedLookupReferences } from 'src/lib/openTypeFeatures/ruleReferences'
+} from '@/lib/openTypeFeatures/types'
+import { getNestedLookupReferences } from '@/lib/openTypeFeatures/ruleReferences'
 
 // Class names are stored with their '@' prefix by convention; heal any older
 // record that lacks it so the serialized FEA stays parseable.

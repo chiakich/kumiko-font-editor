@@ -1,7 +1,7 @@
 import type {
   HarfBuzzDirection,
   OpenTypeFeaturesState,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 export type PreviewDirection = Extract<HarfBuzzDirection, 'ltr' | 'ttb'>
 

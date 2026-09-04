@@ -3,7 +3,7 @@ export {
   buildGlyphPreviewFontRect,
   type GlyphPreviewData,
   type GlyphPreviewShape,
-} from 'src/lib/glyph/glyphPreviewData'
+} from '@/lib/glyph/glyphPreviewData'
 export {
   DEFAULT_OVERVIEW_SEARCH_FIELDS,
   createOverviewSearchMatcher,
@@ -38,4 +38,4 @@ export {
   type OverviewGroupBy,
   type OverviewSearchField,
   type OverviewSearchModel,
-} from 'src/lib/glyph/glyphOverviewFilters'
+} from '@/lib/glyph/glyphOverviewFilters'

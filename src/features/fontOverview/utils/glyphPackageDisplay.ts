@@ -1,4 +1,4 @@
-import { unicodeHexToCharacter } from 'src/lib/project/unicode'
+import { unicodeHexToCharacter } from '@/lib/project/unicode'
 
 export const glyphNameToDisplayCharacter = (glyphName: string) => {
   const unicodeMatch =

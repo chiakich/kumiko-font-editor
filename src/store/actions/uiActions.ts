@@ -3,22 +3,22 @@
  * overview panel, viewport, and preview glyph metrics.
  */
 import type { StateCreator } from 'zustand'
-import type { GlobalState, GlyphMetrics, PathData } from 'src/store/types'
-import type { RadarReferenceData } from 'src/lib/qualityCheck/qualityRadar'
+import type { GlobalState, GlyphMetrics, PathData } from '@/store/types'
+import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
 import {
   clampEditorActiveGlyphIndex,
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
   syncSelectedGlyphFromEditorLine,
-} from 'src/store/editorLine'
-import { syncFilteredGlyphList } from 'src/store/glyphSearch'
-import { setGlyphActiveLayer } from 'src/store/glyphLayer'
-import { markUiStateDirty } from 'src/store/dirtyState'
+} from '@/store/editorLine'
+import { syncFilteredGlyphList } from '@/store/glyphSearch'
+import { setGlyphActiveLayer } from '@/store/glyphLayer'
+import { markUiStateDirty } from '@/store/dirtyState'
 import {
   customOverviewFilterIdToNodeId,
   normalizeOverviewCustomFilters,
-} from 'src/lib/glyph/glyphOverview'
-import { saveAppOverviewCustomFilters } from 'src/lib/preferences/appPreferences'
+} from '@/lib/glyph/glyphOverview'
+import { saveAppOverviewCustomFilters } from '@/lib/preferences/appPreferences'
 
 type ImmerSet = Parameters<
   StateCreator<GlobalState, [['zustand/immer', never]], []>

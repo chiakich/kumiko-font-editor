@@ -1,4 +1,4 @@
-import type { FeatureDiagnostic } from 'src/lib/openTypeFeatures/types'
+import type { FeatureDiagnostic } from '@/lib/openTypeFeatures/types'
 
 export interface SfntTableRecord {
   tag: string

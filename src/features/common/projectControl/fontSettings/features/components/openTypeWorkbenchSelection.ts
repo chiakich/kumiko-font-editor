@@ -1,4 +1,4 @@
-import type { OpenTypeTableTag } from 'src/lib/openTypeFeatures'
+import type { OpenTypeTableTag } from '@/lib/openTypeFeatures'
 
 export type OpenTypeWorkbenchSelection =
   | { kind: 'source'; view: 'raw-fea' | 'imported-tables' }

@@ -16,9 +16,9 @@ import type {
   GlyphSyncEntry,
   ProjectSyncReport,
   SyncConflictResolution,
-} from 'src/lib/github/sync'
-import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
-import { useGitHubSyncStatus } from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
+} from '@/lib/github/sync'
+import { projectSyncDirtyStatusQueryKey } from '@/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
+import { useGitHubSyncStatus } from '@/features/common/glyphInspector/hooks/useGitHubSyncStatus'
 
 export interface GitHubSyncSectionProps {
   isLoading: boolean

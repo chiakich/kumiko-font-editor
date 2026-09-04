@@ -1,23 +1,23 @@
-import { importBinaryFontFile } from 'src/lib/fontFormats/adapters/binary'
+import { importBinaryFontFile } from '@/lib/fontFormats/adapters/binary'
 import {
   loadProjectDraftMetadata,
   saveProjectDraft,
-} from 'src/lib/project/projectRepository'
-import type { KumikoProjectSummary } from 'src/lib/project/projectTypes'
+} from '@/lib/project/projectRepository'
+import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
 import {
   buildWorkspaceEntriesFromFiles,
   importUfoWorkspace,
   listDesignspaceCandidates,
   type ImportedUfoWorkspace,
   type DesignspaceCandidate,
-} from 'src/lib/fontFormats/adapters/ufo'
+} from '@/lib/fontFormats/adapters/ufo'
 import {
   importGlyphsFile,
   importGlyphsPackage,
   type ImportedGlyphsProject,
-} from 'src/lib/fontFormats/adapters/glyphs'
-import type { FontData } from 'src/store'
-import type { KumikoProjectSourceData } from 'src/lib/project/kumikoProjectTypes'
+} from '@/lib/fontFormats/adapters/glyphs'
+import type { FontData } from '@/store'
+import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
 
 export interface ImportedKumikoProject {
   id: string

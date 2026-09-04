@@ -6,7 +6,7 @@ import {
   gitCommitAuthorForGitHubViewer,
   startGitHubOAuthLogin,
   type GitHubForkStatus,
-} from 'src/lib/github/githubAuth'
+} from '@/lib/github/githubAuth'
 import {
   applyCompareToForkStatus,
   fetchCachedGitHubCompareStatus,
@@ -18,47 +18,47 @@ import {
   useLoginGitHubMutation,
   useLogoutGitHubMutation,
   useMergeGitHubUpstreamMutation,
-} from 'src/lib/github/githubQueries'
-import { buildCurrentDraftFlushInput } from 'src/lib/project/currentDraftFlush'
-import { flushPendingDraft } from 'src/lib/project/flushPendingDraft'
-import { useStore, type FontData } from 'src/store'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+} from '@/lib/github/githubQueries'
+import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
+import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
+import { useStore, type FontData } from '@/store'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import {
   buildSuggestedGitHubBranchName,
   getErrorMessage,
   isExistingGitHubBranch,
   isMissingGitHubTokenError,
   resolveGitHubBranchSelection,
-} from 'src/features/common/glyphInspector/utils/githubCommitFlowUtils'
+} from '@/features/common/glyphInspector/utils/githubCommitFlowUtils'
 import type {
   GitHubCommitModalProps,
   GitHubSubmitResult,
-} from 'src/features/common/glyphInspector/components/GitHubCommitModal'
+} from '@/features/common/glyphInspector/components/GitHubCommitModal'
 import {
   buildChangeReceipt,
   collectSentGlyphChanges,
   resolveReceiptExclusions,
-} from 'src/features/common/glyphInspector/utils/changeReceipt'
+} from '@/features/common/glyphInspector/utils/changeReceipt'
 import {
   githubSyncReportQueryKey,
   useGitHubSyncStatus,
-} from 'src/features/common/glyphInspector/hooks/useGitHubSyncStatus'
-import { buildGlyphCommitMessage } from 'src/lib/github/sync/commitMessage'
-import { useGitSyncPrewarm } from 'src/features/common/glyphInspector/hooks/useGitSyncPrewarm'
-import { projectSyncDirtyStatusQueryKey } from 'src/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
-import { commitThroughGit } from 'src/features/common/glyphInspector/utils/gitCommitSubmission'
+} from '@/features/common/glyphInspector/hooks/useGitHubSyncStatus'
+import { buildGlyphCommitMessage } from '@/lib/github/sync/commitMessage'
+import { useGitSyncPrewarm } from '@/features/common/glyphInspector/hooks/useGitSyncPrewarm'
+import { projectSyncDirtyStatusQueryKey } from '@/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'
+import { commitThroughGit } from '@/features/common/glyphInspector/utils/gitCommitSubmission'
 import { useTranslation } from 'react-i18next'
 import {
   listSyncDirtyKumikoGlyphIds,
   loadKumikoProjectRecord,
   loadKumikoUiValue,
-} from 'src/lib/project/kumikoProjectPersistence'
-import { loadProjectDraftMetadata } from 'src/lib/project/projectRepository'
+} from '@/lib/project/kumikoProjectPersistence'
+import { loadProjectDraftMetadata } from '@/lib/project/projectRepository'
 import {
   sanitizeGlyphEditTimes,
   UFO_GLYPH_EDIT_TIMES_KEY,
-} from 'src/lib/glyph/glyphEditTimes'
-import type { GitHubSyncTarget } from 'src/lib/github/sync/types'
+} from '@/lib/glyph/glyphEditTimes'
+import type { GitHubSyncTarget } from '@/lib/github/sync/types'
 
 interface UseGitHubCommitFlowInput {
   projectId: string | null
@@ -372,7 +372,7 @@ export const useGitHubCommitFlow = ({
     try {
       setIsSwitchingGitBranch(true)
       const { switchGitProjectBranchInWorker } =
-        await import('src/lib/git/gitSyncWorkerClient')
+        await import('@/lib/git/gitSyncWorkerClient')
       await switchGitProjectBranchInWorker({
         projectId,
         repo: target.repo,

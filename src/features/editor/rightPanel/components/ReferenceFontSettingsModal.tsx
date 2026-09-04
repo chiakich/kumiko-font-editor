@@ -19,14 +19,14 @@ import {
   clearReferenceFont,
   getReferenceFontBytes,
   loadReferenceFontFromBytes,
-} from 'src/lib/referenceFont/referenceFontStore'
+} from '@/lib/referenceFont/referenceFontStore'
 import {
   deleteReferenceFont,
   loadReferenceFontRecord,
   saveReferenceFont,
-} from 'src/lib/referenceFont/referenceFontPersistence'
-import { buildReferenceResidualData } from 'src/lib/referenceFont/referenceResidualWorkerClient'
-import { useStore } from 'src/store'
+} from '@/lib/referenceFont/referenceFontPersistence'
+import { buildReferenceResidualData } from '@/lib/referenceFont/referenceResidualWorkerClient'
+import { useStore } from '@/store'
 
 interface ReferenceFontSettingsModalProps {
   isOpen: boolean

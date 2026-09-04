@@ -15,7 +15,7 @@ import {
   canCommitContextualBehavior,
   type ContextualBehaviorDraft,
   type ContextualBehaviorRow,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
 
 interface ContextualBehaviorTableRowProps {

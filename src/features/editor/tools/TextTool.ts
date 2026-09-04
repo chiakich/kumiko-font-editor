@@ -2,8 +2,8 @@ import {
   BaseTool,
   type EventStream,
   type ToolEvent,
-} from 'src/features/editor/tools/BaseTool'
-import { asyncEventIterator } from 'src/features/editor/tools/toolPrimitives'
+} from '@/features/editor/tools/BaseTool'
+import { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'
 
 export class TextTool extends BaseTool {
   identifier = 'text'

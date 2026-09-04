@@ -4,7 +4,7 @@ import type {
   FeatureSourceSection,
   OpenTypeFeaturesState,
   OpenTypeTableTag,
-} from 'src/lib/openTypeFeatures/types'
+} from '@/lib/openTypeFeatures/types'
 
 export interface SourceSectionRecordSummary {
   ref: ClassifiedFeatureRecordRef

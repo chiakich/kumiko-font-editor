@@ -1,4 +1,4 @@
 export {
   exportFontAsBinary,
   importBinaryFontFile,
-} from 'src/lib/fontFormats/fontBinaryFormat'
+} from '@/lib/fontFormats/fontBinaryFormat'

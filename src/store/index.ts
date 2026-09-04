@@ -2,22 +2,22 @@ import { useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { temporal, type TemporalState } from 'zundo'
-import type { GlobalState } from 'src/store/types'
+import type { GlobalState } from '@/store/types'
 import {
   DEFAULT_OVERVIEW_SEARCH_OPTIONS,
   IDS_DICTIONARY,
-} from 'src/store/glyphSearch'
-import { loadAppOverviewCustomFilters } from 'src/lib/preferences/appPreferences'
-import { buildUiActions } from 'src/store/actions/uiActions'
-import { buildGlyphActions } from 'src/store/actions/glyphActions'
-import { buildPathActions } from 'src/store/actions/pathActions'
-import { buildProjectActions } from 'src/store/actions/projectActions'
-import { buildBehaviorActions } from 'src/store/actions/behaviorActions'
-import { buildKerningActions } from 'src/store/actions/kerningActions'
+} from '@/store/glyphSearch'
+import { loadAppOverviewCustomFilters } from '@/lib/preferences/appPreferences'
+import { buildUiActions } from '@/store/actions/uiActions'
+import { buildGlyphActions } from '@/store/actions/glyphActions'
+import { buildPathActions } from '@/store/actions/pathActions'
+import { buildProjectActions } from '@/store/actions/projectActions'
+import { buildBehaviorActions } from '@/store/actions/behaviorActions'
+import { buildKerningActions } from '@/store/actions/kerningActions'
 import {
   areTemporalTrackedStatesEqual,
   partializeTemporalState,
-} from 'src/store/temporalSnapshot'
+} from '@/store/temporalSnapshot'
 
 export {
   getGlyphLayer,
@@ -28,7 +28,7 @@ export {
   withActiveLayer,
   getActiveLayerId,
   normalizeGlyphToLayers,
-} from 'src/store/glyphLayer'
+} from '@/store/glyphLayer'
 export {
   createOffCurveNode,
   createOnCurveNode,
@@ -40,8 +40,8 @@ export {
   isPathEndpointNode,
   setNodeSegmentType,
   setNodeType,
-} from 'src/store/glyphGeometry'
-export { deterministicStringify } from 'src/store/deterministicStringify'
+} from '@/store/glyphGeometry'
+export { deterministicStringify } from '@/store/deterministicStringify'
 export type {
   FontData,
   FontAxes,
@@ -85,7 +85,7 @@ export type {
   SelectedSegmentState,
   ViewportState,
   WorkspaceView,
-} from 'src/store/types'
+} from '@/store/types'
 
 const initialState = {
   fontData: null,

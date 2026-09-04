@@ -1,23 +1,23 @@
-import { DiscreteVariationModel } from 'src/font/fontra-ported/discrete-variation-model'
+import { DiscreteVariationModel } from '@/font/fontra-ported/discrete-variation-model'
 import {
   getActiveBracketLayerForSource,
   getOrderedGlyphLayers,
   locationsMatch,
-} from 'src/font/designspaceLocation'
+} from '@/font/designspaceLocation'
 import {
   makeDefaultLocation,
   mapAxesFromUserSpaceToSourceSpace,
   mapForward,
-} from 'src/font/fontra-ported/var-model'
+} from '@/font/fontra-ported/var-model'
 import {
   checkGlyphInterpolationCompatibility,
   type GlyphCompatibilityIssue,
-} from 'src/font/glyphCompatibility'
+} from '@/font/glyphCompatibility'
 import {
   componentMatrixToRefFields,
   getComponentMatrix,
   type ComponentMatrix,
-} from 'src/lib/components/componentTransform'
+} from '@/lib/components/componentTransform'
 import type {
   FontAxes,
   FontAxis,
@@ -29,7 +29,7 @@ import type {
   GlyphLayerData,
   GlyphMetrics,
   PathData,
-} from 'src/store/types'
+} from '@/store/types'
 
 interface SourceLayerEntry {
   sourceId: string

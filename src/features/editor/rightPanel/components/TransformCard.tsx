@@ -10,24 +10,24 @@ import {
 import { Tooltip } from '@/components/ui/tooltip'
 import { Refresh } from 'iconoir-react'
 import { useMemo, useState } from 'react'
-import { activeLayer, type GlyphData } from 'src/store'
-import type { PathBooleanOperation } from 'src/lib/pathBooleanOperations'
+import { activeLayer, type GlyphData } from '@/store'
+import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
 import {
   ScaleActionGroup,
   SkewIcon,
   TransformActionRow,
   type SkewAxis,
-} from 'src/features/common/transform/components/TransformActionControls'
+} from '@/features/common/transform/components/TransformActionControls'
 import {
   MirrorControls,
   OffsetControls,
-} from 'src/features/common/transform/components/TransformPanelSections'
-import { hasOffsetableContour } from 'src/lib/outlineOffset'
+} from '@/features/common/transform/components/TransformPanelSections'
+import { hasOffsetableContour } from '@/lib/outlineOffset'
 import {
   AlignControls,
   PathOpsControls,
   TransformFrameControls,
-} from 'src/features/editor/rightPanel/components/TransformPanelSections'
+} from '@/features/editor/rightPanel/components/TransformPanelSections'
 import {
   buildAlignUpdates,
   buildFieldCommitUpdates,
@@ -43,7 +43,7 @@ import {
   type NodePositionUpdate,
   type TransformField,
   type TransformOrigin,
-} from 'src/features/common/transform/utils/transformGeometry'
+} from '@/features/common/transform/utils/transformGeometry'
 import { useTranslation } from 'react-i18next'
 
 interface TransformCardProps {

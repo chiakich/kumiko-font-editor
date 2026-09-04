@@ -1,19 +1,19 @@
 import { Box, Button, Grid, GridItem, Stack, Text } from '@chakra-ui/react'
 import { NativeSelect } from '@/components/ui/native-select'
-import { GlyphColorLabelPicker } from 'src/features/common/glyphInspector/components/GlyphColorLabelPicker'
+import { GlyphColorLabelPicker } from '@/features/common/glyphInspector/components/GlyphColorLabelPicker'
 import {
   getGlyphBlockLabel,
   getGlyphDisplayCharacter,
   getGlyphOverviewStats,
   getGlyphScriptLabel,
-} from 'src/lib/glyph/glyphOverview'
-import { getPrimaryGlyphUnicode } from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/glyph/glyphOverview'
+import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 import type {
   GlyphData,
   GlyphLayerData,
   KumikoColor,
   WorkspaceView,
-} from 'src/store'
+} from '@/store'
 import { useTranslation } from 'react-i18next'
 import { PageSearch } from 'iconoir-react'
 

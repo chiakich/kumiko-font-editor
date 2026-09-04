@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { loadPyodide } from 'pyodide'
-import { buildExportSfntBuffer } from 'src/lib/fontFormats/fontBinaryFormat'
-import { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
-import { parseFvarAxisTags } from 'src/lib/openTypeFeatures/featureVariationsParser'
+import { buildExportSfntBuffer } from '@/lib/fontFormats/fontBinaryFormat'
+import { extractBinaryFeatures } from '@/lib/openTypeFeatures/extractBinaryFeatures'
+import { parseFvarAxisTags } from '@/lib/openTypeFeatures/featureVariationsParser'
 import { makeGlyph } from './openTypeFeatureTestHelpers'
 
 const ADD_VARIATIONS_PYTHON = `

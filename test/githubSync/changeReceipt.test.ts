@@ -6,9 +6,9 @@ import {
   fontFileKindFor,
   glyphLineKey,
   resolveReceiptExclusions,
-} from 'src/features/common/glyphInspector/utils/changeReceipt'
-import type { GlyphSyncEntry, ProjectSyncReport } from 'src/lib/github/sync'
-import type { FontData } from 'src/store'
+} from '@/features/common/glyphInspector/utils/changeReceipt'
+import type { GlyphSyncEntry, ProjectSyncReport } from '@/lib/github/sync'
+import type { FontData } from '@/store'
 
 const fontData = {
   glyphs: {

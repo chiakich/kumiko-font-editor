@@ -1,13 +1,13 @@
-import { makeRuleId } from 'src/lib/openTypeFeatures/ids'
-import { createLookupSuggestion } from 'src/lib/openTypeFeatures/autoFeatureLookup'
+import { makeRuleId } from '@/lib/openTypeFeatures/ids'
+import { createLookupSuggestion } from '@/lib/openTypeFeatures/autoFeatureLookup'
 import type {
   AutoFeatureSuggestion,
   GlyphClass,
   GlyphSelector,
   OpenTypeFeaturesState,
   PairPositioningRule,
-} from 'src/lib/openTypeFeatures/types'
-import type { FontData, KerningGroup, KerningPair } from 'src/store/types'
+} from '@/lib/openTypeFeatures/types'
+import type { FontData, KerningGroup, KerningPair } from '@/store/types'
 
 const ensureClassName = (name: string) =>
   name.startsWith('@') ? name : `@${name}`

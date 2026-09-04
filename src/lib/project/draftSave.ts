@@ -1,27 +1,27 @@
 import {
   getProjectArchiveMetadata,
   getProjectArchiveSourceFormat,
-} from 'src/lib/project/projectArchive'
-import { PROJECT_UI_STATE_KEY } from 'src/lib/project/projectRepository'
+} from '@/lib/project/projectArchive'
+import { PROJECT_UI_STATE_KEY } from '@/lib/project/projectRepository'
 import {
   fontDataToKumikoProjectRecord,
   glyphDataToKumikoGlyphRecord,
-} from 'src/lib/project/kumikoFontDataAdapter'
+} from '@/lib/project/kumikoFontDataAdapter'
 import {
   loadKumikoGlyphRecord,
   loadKumikoProjectRecord,
   loadKumikoUiValue,
   makeKumikoGlyphKey,
   patchKumikoProjectData,
-} from 'src/lib/project/kumikoProjectPersistence'
-import { isGlyphGeometryLoaded } from 'src/lib/glyph/glyphGeometryState'
-import type { FontData, GlyphData } from 'src/store'
-import type { KumikoProjectUiState } from 'src/lib/project/projectTypes'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
+} from '@/lib/project/kumikoProjectPersistence'
+import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import type { FontData, GlyphData } from '@/store'
+import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import {
   UFO_GLYPH_EDIT_TIMES_KEY,
   withProjectGlyphEditTimes,
-} from 'src/lib/glyph/glyphEditTimes'
+} from '@/lib/glyph/glyphEditTimes'
 
 const getGlyphOrder = (fontData: FontData) =>
   fontData.glyphOrder ?? Object.keys(fontData.glyphs)

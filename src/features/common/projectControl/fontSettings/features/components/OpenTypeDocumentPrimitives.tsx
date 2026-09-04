@@ -1,6 +1,6 @@
 import { HStack, Stack, Text } from '@chakra-ui/react'
-import { SourceReferenceSummary } from 'src/features/common/projectControl/fontSettings/features/components/SourceReferenceSummary'
-import type { SourceSectionRecordGroup } from 'src/lib/openTypeFeatures'
+import { SourceReferenceSummary } from '@/features/common/projectControl/fontSettings/features/components/SourceReferenceSummary'
+import type { SourceSectionRecordGroup } from '@/lib/openTypeFeatures'
 
 export function WorkspaceHeader({
   badges,

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildGlyphLookupMap,
   computeCharsetCoverage,
-} from 'src/lib/charsetCoverage'
-import type { GlyphData } from 'src/store'
-import { normalizeGlyphToLayers } from 'src/store'
+} from '@/lib/charsetCoverage'
+import type { GlyphData } from '@/store'
+import { normalizeGlyphToLayers } from '@/store'
 
 const makeGlyph = (input: {
   id: string

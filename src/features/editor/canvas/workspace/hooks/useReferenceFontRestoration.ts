@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { loadReferenceFontRecord } from 'src/lib/referenceFont/referenceFontPersistence'
+import { loadReferenceFontRecord } from '@/lib/referenceFont/referenceFontPersistence'
 import {
   clearReferenceFont,
   loadReferenceFontFromBytes,
-} from 'src/lib/referenceFont/referenceFontStore'
+} from '@/lib/referenceFont/referenceFontStore'
 
 interface ReferenceFontRestorationOptions {
   projectId: string | null

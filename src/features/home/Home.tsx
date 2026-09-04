@@ -1,11 +1,11 @@
 import { Box, Grid, VStack, Separator } from '@chakra-ui/react'
-import { DesignspaceImportChoiceModal } from 'src/features/home/components/DesignspaceImportChoiceModal'
-import { GitHubImportCard } from 'src/features/home/components/GitHubImportCard'
-import { HomeHeader } from 'src/features/home/components/HomeHeader'
-import { LocalImportCard } from 'src/features/home/components/LocalImportCard'
-import { PendingGitHubImportModal } from 'src/features/home/components/PendingGitHubImportModal'
-import { RecentProjectsList } from 'src/features/home/components/RecentProjectsList'
-import { useHomeProjects } from 'src/features/home/hooks/useHomeProjects'
+import { DesignspaceImportChoiceModal } from '@/features/home/components/DesignspaceImportChoiceModal'
+import { GitHubImportCard } from '@/features/home/components/GitHubImportCard'
+import { HomeHeader } from '@/features/home/components/HomeHeader'
+import { LocalImportCard } from '@/features/home/components/LocalImportCard'
+import { PendingGitHubImportModal } from '@/features/home/components/PendingGitHubImportModal'
+import { RecentProjectsList } from '@/features/home/components/RecentProjectsList'
+import { useHomeProjects } from '@/features/home/hooks/useHomeProjects'
 
 export function Home() {
   const {

@@ -3,9 +3,9 @@ import {
   matchesOverviewCustomFilter,
   normalizeOverviewCustomFilters,
   type OverviewCustomFilter,
-} from 'src/lib/glyph/glyphOverviewFilters'
-import { GLYPHS_LABEL_COLORS } from 'src/lib/color/kumikoColor'
-import type { GlyphData, GlyphLayerData } from 'src/store/types'
+} from '@/lib/glyph/glyphOverviewFilters'
+import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
+import type { GlyphData, GlyphLayerData } from '@/store/types'
 
 const makeLayer = (
   paths: GlyphLayerData['paths'] = [],

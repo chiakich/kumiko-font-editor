@@ -1,34 +1,34 @@
-import type { GlyphGeometrySample } from 'src/lib/qualityCheck/glyphSampling'
+import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
 import type {
   PartSpacingMetrics,
   SemanticPartLayout,
-} from 'src/lib/qualityCheck/partSpacingMetrics'
+} from '@/lib/qualityCheck/partSpacingMetrics'
 import {
   collectGlyphFeatures,
   featureStatKeys,
   isPlacementFeature,
-} from 'src/lib/qualityCheck/radarFeatureCollection'
+} from '@/lib/qualityCheck/radarFeatureCollection'
 import {
   buildStrata,
   glyphComplexity,
   nearestWindow,
   radarZScore,
-} from 'src/lib/qualityCheck/radarStatistics'
+} from '@/lib/qualityCheck/radarStatistics'
 import {
   buildReferenceStyleScales,
   referenceFeatureKeyOf,
   referenceResidualValue,
   shiftStat,
-} from 'src/lib/qualityCheck/radarReferenceModel'
+} from '@/lib/qualityCheck/radarReferenceModel'
 export {
   RADAR_REFERENCE_FEATURE_KEYS,
   referenceFeatureKeyOf,
-} from 'src/lib/qualityCheck/radarReferenceModel'
+} from '@/lib/qualityCheck/radarReferenceModel'
 export {
   buildRobustStat,
   glyphComplexity,
   radarZScore,
-} from 'src/lib/qualityCheck/radarStatistics'
+} from '@/lib/qualityCheck/radarStatistics'
 
 /**
  * Font Quality Radar：以同一套字體自身的統計分布為基準的

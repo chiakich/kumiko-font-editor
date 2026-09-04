@@ -1,15 +1,15 @@
-import { buildGlyphPreviewData } from 'src/lib/glyph/glyphOverview'
-import type { FontData, GlyphData } from 'src/store'
-import { computeGlyphInk } from 'src/lib/qualityCheck/glyphInk'
+import { buildGlyphPreviewData } from '@/lib/glyph/glyphOverview'
+import type { FontData, GlyphData } from '@/store'
+import { computeGlyphInk } from '@/lib/qualityCheck/glyphInk'
 import {
   resolveFontGlyphs,
   type ResolvedFont,
-} from 'src/lib/qualityCheck/resolvedGlyph'
+} from '@/lib/qualityCheck/resolvedGlyph'
 import {
   getGlyphCharacter as getCharacterOrName,
   getGlyphCodePoint,
   isHanCodePoint,
-} from 'src/lib/qualityCheck/hanClassification'
+} from '@/lib/qualityCheck/hanClassification'
 
 export interface ProofShape {
   d: string

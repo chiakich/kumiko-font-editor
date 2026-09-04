@@ -1,23 +1,23 @@
 // 場景控制器 - 管理編輯狀態和互動
 
 import { Bezier } from 'bezier-js'
-import type { CanvasController } from 'src/sceneView/CanvasController'
-import type { PathHitInfo, Point, SceneModel } from 'src/sceneView/SceneView'
+import type { CanvasController } from '@/sceneView/CanvasController'
+import type { PathHitInfo, Point, SceneModel } from '@/sceneView/SceneView'
 import {
   getOnCurveContourPointSelection,
   parsePointSelection,
   pointSelectionKey,
-} from 'src/lib/glyph/glyphSelection'
-import { PointerTool } from 'src/features/editor/tools/PointerTool'
-import { PenTool } from 'src/features/editor/tools/PenTool'
-import { BrushTool } from 'src/features/editor/tools/BrushTool'
-import { HandTool } from 'src/features/editor/tools/HandTool'
-import { TextTool } from 'src/features/editor/tools/TextTool'
-import { EllipseTool, RectangleTool } from 'src/features/editor/tools/ShapeTool'
-import { KnifeTool } from 'src/features/editor/tools/KnifeTool'
-import { PowerRulerTool } from 'src/features/editor/tools/PowerRulerTool'
-import type { BaseTool, ToolEvent } from 'src/features/editor/tools/BaseTool'
-import type { BrushSettings } from 'src/features/editor/tools/vectorBrush'
+} from '@/lib/glyph/glyphSelection'
+import { PointerTool } from '@/features/editor/tools/PointerTool'
+import { PenTool } from '@/features/editor/tools/PenTool'
+import { BrushTool } from '@/features/editor/tools/BrushTool'
+import { HandTool } from '@/features/editor/tools/HandTool'
+import { TextTool } from '@/features/editor/tools/TextTool'
+import { EllipseTool, RectangleTool } from '@/features/editor/tools/ShapeTool'
+import { KnifeTool } from '@/features/editor/tools/KnifeTool'
+import { PowerRulerTool } from '@/features/editor/tools/PowerRulerTool'
+import type { BaseTool, ToolEvent } from '@/features/editor/tools/BaseTool'
+import type { BrushSettings } from '@/features/editor/tools/vectorBrush'
 
 export interface SceneControllerOptions {
   canvasController: CanvasController

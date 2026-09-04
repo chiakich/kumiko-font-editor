@@ -4,7 +4,7 @@ import {
   composeNestedPartBox,
   parseCompositionLine,
   type GlyphwikiPartPlacement,
-} from 'src/lib/glyph/glyphwikiComposition'
+} from '@/lib/glyph/glyphwikiComposition'
 
 describe('parseCompositionLine', () => {
   it('parses a two-part composition with variants', () => {

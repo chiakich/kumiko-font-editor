@@ -5,7 +5,7 @@ import type {
   LookupRecord,
   OpenTypeFeaturesState,
   Rule,
-} from 'src/lib/openTypeFeatures'
+} from '@/lib/openTypeFeatures'
 
 // The rule kinds the visual editor can author from scratch. Everything else
 // still enters through FEA code or import.

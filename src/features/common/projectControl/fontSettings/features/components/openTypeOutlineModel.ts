@@ -3,8 +3,8 @@ import type {
   FeatureRecord,
   OpenTypeFeaturesState,
   OpenTypeTableTag,
-} from 'src/lib/openTypeFeatures'
-import type { OpenTypeWorkbenchSelection } from 'src/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
+} from '@/lib/openTypeFeatures'
+import type { OpenTypeWorkbenchSelection } from '@/features/common/projectControl/fontSettings/features/components/openTypeWorkbenchSelection'
 
 export function isSourceSelected(
   selected: OpenTypeWorkbenchSelection,

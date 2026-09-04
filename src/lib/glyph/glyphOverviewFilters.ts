@@ -1,20 +1,20 @@
-import { isEmptyGlyphToEdit } from 'src/lib/glyph/glyphBlankness'
-import { getGlyphComponentGlyphIds } from 'src/lib/glyph/glyphGeometryState'
+import { isEmptyGlyphToEdit } from '@/lib/glyph/glyphBlankness'
+import { getGlyphComponentGlyphIds } from '@/lib/glyph/glyphGeometryState'
 import {
   GLYPHS_LABEL_COLOR_KEYS,
   nearestGlyphsLabelColorIndex,
-} from 'src/lib/color/kumikoColor'
+} from '@/lib/color/kumikoColor'
 import {
   getGlyphUnicodes,
   getPrimaryGlyphUnicode,
-} from 'src/lib/glyph/glyphUnicode'
+} from '@/lib/glyph/glyphUnicode'
 import {
   unicodeHexToCharacter,
   unicodeHexToCodePoint,
-} from 'src/lib/project/unicode'
-import type { GlyphEditTimes } from 'src/lib/glyph/glyphEditTimes'
-import { activeLayer } from 'src/store/glyphLayer'
-import type { GlyphData } from 'src/store/types'
+} from '@/lib/project/unicode'
+import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
+import { activeLayer } from '@/store/glyphLayer'
+import type { GlyphData } from '@/store/types'
 
 export type OverviewGroupBy = 'none' | 'script' | 'block'
 export type GlyphOverviewTreeKind = 'all' | 'category' | 'language' | 'filter'

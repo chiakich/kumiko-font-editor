@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { extractBinaryFeatures } from 'src/lib/openTypeFeatures/extractBinaryFeatures'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+import { extractBinaryFeatures } from '@/lib/openTypeFeatures/extractBinaryFeatures'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 import {
   makeBytes,
   makeSfnt,

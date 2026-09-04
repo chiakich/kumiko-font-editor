@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
 
-import { importBinaryFontFile } from 'src/lib/fontFormats/fontBinaryFormat'
-import { FONTTOOLS_COMPILER_PYTHON } from 'src/lib/openTypeFeatures/fontToolsCompilerPython'
-import { generateFea } from 'src/lib/openTypeFeatures/generateFea'
+import { importBinaryFontFile } from '@/lib/fontFormats/fontBinaryFormat'
+import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompilerPython'
+import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 
 const FIRA_CODE_URL = new URL(
   '../../test_glyphs/FiraCode-Regular.otf',

@@ -6,8 +6,8 @@ import {
   resolveEntityStatus,
   summarizeEntitySync,
   type EntitySyncInput,
-} from 'src/lib/git/entitySync'
-import type { EntityId } from 'src/lib/fontFormats/formatAdapter/types'
+} from '@/lib/git/entitySync'
+import type { EntityId } from '@/lib/fontFormats/formatAdapter/types'
 
 const glyph = (name: string): EntityId => ({ kind: 'glyph', name })
 

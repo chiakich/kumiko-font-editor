@@ -1,4 +1,4 @@
-import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 interface ProjectGlyphSummary {
   id: string

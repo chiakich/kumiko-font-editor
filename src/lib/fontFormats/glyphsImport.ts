@@ -1,8 +1,8 @@
-import type { GlyphsDocument } from 'src/lib/fontFormats/glyphsDocument'
-import { buildRawFeatureSnippetsFromGlyphsDocument } from 'src/lib/fontFormats/glyphsFeatures'
-import { classifyRawFeatureTextSource } from 'src/lib/openTypeFeatures/classifyRawFeatureText'
-import { createEmptyOpenTypeFeaturesState } from 'src/lib/openTypeFeatures/defaults'
-import { setRawFeatureSnippetsSource } from 'src/lib/openTypeFeatures/featureSourceSections'
+import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
+import { buildRawFeatureSnippetsFromGlyphsDocument } from '@/lib/fontFormats/glyphsFeatures'
+import { classifyRawFeatureTextSource } from '@/lib/openTypeFeatures/classifyRawFeatureText'
+import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/defaults'
+import { setRawFeatureSnippetsSource } from '@/lib/openTypeFeatures/featureSourceSections'
 import type {
   FontAxes,
   FontAxis,
@@ -19,9 +19,9 @@ import type {
   PathData,
   PathNode,
   PathSegmentType,
-} from 'src/store'
-import { parseGlyphsLabelColor } from 'src/lib/color/kumikoColor'
-import { normalizeUnicodeHex } from 'src/lib/project/unicode'
+} from '@/store'
+import { parseGlyphsLabelColor } from '@/lib/color/kumikoColor'
+import { normalizeUnicodeHex } from '@/lib/project/unicode'
 
 // Build a multi-master FontData from a parsed .glyphs / .glyphspackage document
 // (the OpenStep structure produced by parseOpenStep / readGlyphsPackageFromFiles).
