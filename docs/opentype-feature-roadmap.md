@@ -332,14 +332,52 @@ fallback;認真支援直排要在匯出管線補 vhea/vmtx(可在 fontTools 後�
 - 極性已鎖:測試改為方向性斷言(`-80` → 下行 advance magnitude 減 80 =
   變緊,與橫排一致)。
 
+## 順手債清償(2026-09-04)
+
+三項全數清償:
+
+- **`createWorkerRpcClient`**(`src/lib/workers/createWorkerRpcClient.ts`):
+  requestId 產生 + pending map + 訊息路由 + worker 級錯誤 fail-all-and-rebuild
+  收攏成一份。實際有**七**份近似拷貝(doc 原本記六份,漏了 gitSync),全部
+  改接:compiler、sfnt、draftSave、componentSearch、gitSync、
+  referenceResidual、overviewPreview。差異以 options 表達:
+  `getRequestId`(requestId 在 top-level 或 `payload` 內)、`toOutcome`
+  (success/error 判別與結果取值,compiler 的 diagnostics 附掛也走這裡)、
+  `createRequestId`(數字序號或字串前綴)。requestOptions 收 `transfer`
+  (compiler 的 inputFontBuffer)與 `signal`/`onAbort`(componentSearch 的
+  cancel-search)。順帶統一了三件此前不一致的事:postMessage 拋錯一律
+  reject 而非留下 pending 項、worker 級錯誤一律 terminate + 重建(此前
+  componentSearch 與 referenceResidual 連 onerror 都沒有)、abort 後遲到的
+  回覆一律安全丟棄。剩下三個 worker(variableFontExport、ufoZipExport、
+  qualityAnalysis)是一次性/串流模式,不套用。測試:
+  `test/workers/createWorkerRpcClient.test.ts`(以 FakeWorker 覆蓋亂序回覆、
+  單一失敗不波及他人、未知 requestId、worker 級錯誤與重建、postMessage
+  拋錯、abort 與遲到回覆、fire-and-forget post)。
+- **i18n**:`FontSettingsModal` 的 `tabLabels` 硬編碼中文陣列改走
+  `projectControl.fontSettingsTab*`;「刪除後儲存失敗」toast 改走
+  `editor.unusedGlyphDeleteSaveFailed*`——該 toast 共有**三**處相同拷貝
+  (BehaviorsPanel、useOverviewSelection、useRightPanelModel),一併改掉。
+  en / zh-TW 兩份 locale 同步。
+- **kern 字對預覽**:`KerningPairInspector` 的 unicode `□` fallback 退場,
+  改為 `pairSpacingLayout.ts` 的本地排版——左右字形的輪廓
+  (`buildGlyphPreviewData`,跟隨 active master)與 advance
+  (`getGlyphLayer(...).metrics.width`)直接取自專案,右字形位移
+  `leftAdvance + kerning`,也就是畫布 `buildPositionedGlyphs` 的同一套算術。
+  字距值本身也直接呼叫畫布那支 `getTextKerningValue`(而非面板的
+  `resolveKerningPair` 結果),因此匯入字型只有 GPOS `kern`、沒有專案
+  kerningPairs 時,面板不會顯示「無字距」而畫布已經收緊。未套字距的位置以 22% 透明度疊在後面當 ghost,
+  一眼看得出 delta。同步、零編譯。
+  測試:`test/kerning/pairSpacingLayout.test.ts`(位移、正負極性、ghost
+  的有無與標記、viewBox 涵蓋兩種極端、per-master advance、缺字形回 null)。
+
+  **這裡刻意不共用工作區 `KernPairView` 的 HarfBuzz 管線。** 兩者要回答的
+  問題不同:工作區驗的是「編譯後的字型真的這樣排嗎」——class 字對、匯入的
+  GPOS kern、直排 vkrn 的 y-advance,那些非經 feaLib + HarfBuzz 不可知;
+  編輯器面板要的則是「畫布上這兩個字現在距離多少」,字距值正是使用者當下
+  在編輯的那一個數字,唯一的未知數已經在手上。走編譯管線的話,每按一次
+  方向鍵就重建 fontData → 觸發一次 feaLib 編譯,只為了畫兩個已知位置的
+  字形;debounce 只是在補這條繞路的痛,不是在解決它。
+
 ## 已知順手債
 
-- Worker RPC client(requestId + pending map + onerror 重建)已有六份近似
-  拷貝(compiler、sfnt、draftSave、componentSearch、gitSync、
-  referenceResidual、overviewPreview)——值得抽一個
-  `createWorkerRpcClient` 共用。
-
-- `FontSettingsModal.tsx:44` tab 標籤硬編碼中文陣列未走 i18n。
-- `BehaviorsPanel.tsx:120` toast 硬編碼中文。
-- Kerning 字對預覽用 unicode 字元 fallback（`□`），非 shaped glyph——預覽條
-  落地後可共用同一管線。
+- (無)
