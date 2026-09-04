@@ -5,12 +5,13 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-// Hard layering rules with zero violations today. Rules that still have
-// violations live in eslint.boundaries.config.js behind a warning budget.
+// Layering rules; see docs/architecture.md "Enforced boundaries".
 const forbidImports = (files, patterns) => ({
   files,
   rules: { 'no-restricted-imports': ['error', { patterns }] },
 })
+
+const FEATURES = ['editor', 'fontOverview', 'home', 'featureWorkspace']
 
 const featuresImport = {
   regex: '^@/features(/|$)',
@@ -103,6 +104,27 @@ export default defineConfig([
         message: 'sceneView must stay free of React UI.',
       },
     ]
+  ),
+  forbidImports(['src/workers/**'], [featuresImport]),
+  forbidImports(
+    ['src/features/common/**'],
+    [
+      {
+        regex: `^@/features/(${FEATURES.join('|')})(/|$)`,
+        message: 'features/common must not depend on a specific feature.',
+      },
+    ]
+  ),
+  ...FEATURES.map((name) =>
+    forbidImports(
+      [`src/features/${name}/**`],
+      [
+        {
+          regex: `^@/features/(?!(${name}|common)(/|$))`,
+          message: `features/${name} may only import from itself and features/common.`,
+        },
+      ]
+    )
   ),
   {
     // Code ported verbatim from fontra keeps its original dynamic typing;

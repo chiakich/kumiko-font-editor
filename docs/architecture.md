@@ -73,7 +73,10 @@ under `src/features/editor/tools/`.
 - `src/features/editor/leftPanel/`: glyph / component search, preview, and editor-line insertion UI for the left editor panel.
 - `src/features/editor/tools/`: editor interaction tools such as pointer, pen, brush, hand, text, and scene controller tools.
 - `src/features/fontOverview/`: full font overview, grouping, search, new glyph creation, and overview grid.
-- `src/features/common/`: feature-level UI and hooks shared across major features.
+- `src/features/featureWorkspace/`: the OpenType feature workspace screen (feature index, rule detail, glyph classes, kern pairs).
+- `src/features/common/`: feature-level UI and hooks shared across major features. A module belongs here only when two or more screens use it.
+- `src/features/common/openTypeFeatures/`: the OpenType feature authoring UI (document workspace, rule editor, shaping preview) shared by the font settings modal and the feature workspace screen.
+- `src/features/common/navigation/` and `viewTransition/`: cross-screen intents and hand-off state (open a glyph in the editor, pending editor viewport, view-transition landing glyph, new-project intent). Screens talk to each other only through these modules and the store, never by importing one another.
 - `src/features/common/glyphInspector/`: glyph inspector shared by the editor and overview, including glyph summary, node inspector, metrics, save, and GitHub commit flow.
 - `src/sceneView/`: low-level canvas controller, scene view, and rendering layers. It should not directly own React UI.
 - `src/domain/`: the font / glyph / path data model and pure functions over it. Bottom layer: no imports from `store`, `features`, `sceneView`, or `workers`, and only type imports from `lib`.
@@ -103,10 +106,9 @@ under `src/features/editor/tools/`.
 
 ### Enforced boundaries
 
-The placement rules above are checked by tooling, in two tiers:
+The placement rules above are checked by tooling:
 
-- `eslint.config.js` fails on rules that have no violations left: shared layers (`domain`, `lib`, `font`, `store`, `hooks`, `design`, `components`) never import from `src/features/`; `lib` and `font` never import the store; `src/domain/` never imports `store`, `sceneView`, or `workers` and takes only types from `lib`; and `src/sceneView/` never imports React, the store, or features.
-- `eslint.boundaries.config.js` runs as `pnpm lint:boundaries` with a warning budget (`--max-warnings`) for rules that are still being paid down: workers importing features, and cross-feature imports (a feature may only import from itself and `features/common`). Lower the budget whenever you remove a violation; once a rule reaches zero, move it into `eslint.config.js` as an error.
+- `eslint.config.js` fails the build on every layering rule: shared layers (`domain`, `lib`, `font`, `store`, `hooks`, `design`, `components`, `workers`) never import from `src/features/`; `lib` and `font` never import the store; `src/domain/` never imports `store`, `sceneView`, or `workers` and takes only types from `lib`; `src/sceneView/` never imports React, the store, or features; a feature imports only from itself and `features/common`; and `features/common` never imports a specific feature. When a shared module needs something from a feature, move that piece into `features/common` or the store instead of adding an exception.
 - `pnpm lint:circular` runs madge over the `src/main.tsx` graph and fails when the number of circular dependencies rises above the baseline in `scripts/check-circular-deps.mjs`. Lower the baseline when you break a cycle.
 
 ## Deeper notes
