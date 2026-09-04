@@ -1,7 +1,15 @@
+import { createWorkerRpcClient } from 'src/lib/workers/createWorkerRpcClient'
+
 interface ProjectGlyphSummary {
   id: string
   name: string
   unicode: string | null
+}
+
+interface SearchResult {
+  components: string[]
+  activeComponent: string | null
+  glyphIds: string[]
 }
 
 interface SearchSuccessMessage {
@@ -24,68 +32,30 @@ interface SearchErrorMessage {
 
 type WorkerResponseMessage = SearchSuccessMessage | SearchErrorMessage
 
-let workerInstance: Worker | null = null
-
-const getWorker = () => {
-  if (!workerInstance) {
-    workerInstance = new Worker(
+const client = createWorkerRpcClient<WorkerResponseMessage, string>({
+  createWorker: () =>
+    new Worker(
       new URL('../../workers/componentSearchWorker.ts', import.meta.url),
-      {
-        type: 'module',
-      }
-    )
-  }
+      { type: 'module' }
+    ),
+  createRequestId: (sequence) => `component-search-${sequence}`,
+  getRequestId: (response) => response.payload.requestId,
+  toOutcome: (response) =>
+    response.type === 'search-success'
+      ? { status: 'success', value: response.payload satisfies SearchResult }
+      : { status: 'error', error: new Error(response.payload.message) },
+  workerErrorMessage: 'Component search worker failed.',
+})
 
-  return workerInstance
-}
-
-export const searchProjectGlyphsByComponent = async (input: {
+export const searchProjectGlyphsByComponent = (input: {
   character: string
   selectedComponent?: string | null
   currentGlyphId?: string | null
   projectGlyphs: ProjectGlyphSummary[]
   signal?: AbortSignal
-}) => {
-  const worker = getWorker()
-  const requestId = `component-search-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-
-  return new Promise<{
-    components: string[]
-    activeComponent: string | null
-    glyphIds: string[]
-  }>((resolve, reject) => {
-    const handleMessage = (event: MessageEvent<WorkerResponseMessage>) => {
-      if (event.data.payload.requestId !== requestId) {
-        return
-      }
-
-      cleanup()
-      if (event.data.type === 'search-success') {
-        resolve(event.data.payload)
-        return
-      }
-
-      reject(new Error(event.data.payload.message))
-    }
-
-    const handleAbort = () => {
-      worker.postMessage({
-        type: 'cancel-search',
-        payload: { requestId },
-      })
-      cleanup()
-      reject(new DOMException('Search aborted', 'AbortError'))
-    }
-
-    const cleanup = () => {
-      worker.removeEventListener('message', handleMessage)
-      input.signal?.removeEventListener('abort', handleAbort)
-    }
-
-    worker.addEventListener('message', handleMessage)
-    input.signal?.addEventListener('abort', handleAbort, { once: true })
-
-    worker.postMessage({
+}) =>
+  client.request<SearchResult>(
+    (requestId) => ({
       type: 'search-components',
       payload: {
         requestId,
@@ -94,6 +64,12 @@ export const searchProjectGlyphsByComponent = async (input: {
         currentGlyphId: input.currentGlyphId,
         projectGlyphs: input.projectGlyphs,
       },
-    })
-  })
-}
+    }),
+    {
+      signal: input.signal,
+      abortReason: 'Search aborted',
+      onAbort: (requestId, worker) => {
+        worker.postMessage({ type: 'cancel-search', payload: { requestId } })
+      },
+    }
+  )
