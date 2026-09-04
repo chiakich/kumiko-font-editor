@@ -1,7 +1,7 @@
 import madge from 'madge'
 
 // Ratchet: the count may only go down. Lower BASELINE when you remove cycles.
-const BASELINE = 8
+const BASELINE = 0
 
 const result = await madge('src/main.tsx', {
   fileExtensions: ['ts', 'tsx'],
