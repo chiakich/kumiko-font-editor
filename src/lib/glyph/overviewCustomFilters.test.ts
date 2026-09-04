@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  matchesOverviewCustomFilter,
-  normalizeOverviewCustomFilters,
-  type OverviewCustomFilter,
-} from '@/lib/glyph/glyphOverviewFilters'
+import { normalizeOverviewCustomFilters } from '@/lib/glyph/overviewCustomFilterSchema'
+import { matchesOverviewCustomFilter } from '@/lib/glyph/overviewCustomFilters'
+import type { OverviewCustomFilter } from '@/lib/glyph/overviewTypes'
 import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
 import type { GlyphData, GlyphLayerData } from '@/domain'
 
