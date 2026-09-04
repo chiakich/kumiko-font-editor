@@ -1,6 +1,7 @@
 import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react'
 import { GlyphReadonlyReference } from '@/features/editor/leftPanel/components/GlyphReadonlyReference'
-import { useStore, type GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
+import { useStore } from '@/store'
 import { useTranslation } from 'react-i18next'
 
 interface GlyphPreviewCardProps {

@@ -2,7 +2,8 @@ import { Box, Stack, Text, Textarea } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 const DEFAULT_WORD_LIST = [

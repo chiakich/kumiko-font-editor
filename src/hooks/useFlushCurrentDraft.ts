@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
 import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
-import { useStore, type FontData, type PersistenceStatus } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore, type PersistenceStatus } from '@/store'
 
 interface FlushCurrentDraftOptions {
   allowErrorRetry?: boolean

@@ -9,12 +9,12 @@ import {
   constrainHorizontalVerticalDiagonal,
 } from '@/features/editor/tools/toolPrimitives'
 import {
-  useStore,
   activeLayer,
   isOnCurveNode,
   type PathData,
   type PathNode,
-} from '@/store'
+} from '@/domain'
+import { useStore } from '@/store'
 
 type NodeRole = 'corner' | 'smooth' | 'offcurve'
 

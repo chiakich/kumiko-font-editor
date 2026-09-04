@@ -22,7 +22,7 @@ import {
   type GlyphPackageSelection,
 } from '@/features/fontOverview/components/GlyphPackagePicker'
 import { glyphNameToDisplayCharacter } from '@/features/fontOverview/utils/glyphPackageDisplay'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 const emptyPackageSelection: GlyphPackageSelection = {

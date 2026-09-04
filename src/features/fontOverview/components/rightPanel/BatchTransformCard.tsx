@@ -35,7 +35,8 @@ import {
   type SelectionNode,
   type TransformOrigin,
 } from '@/features/common/transform/utils/transformGeometry'
-import { useStore, activeLayer } from '@/store'
+import { activeLayer } from '@/domain'
+import { useStore } from '@/store'
 
 interface BatchTransformCardProps {
   selectedGlyphIds: string[]

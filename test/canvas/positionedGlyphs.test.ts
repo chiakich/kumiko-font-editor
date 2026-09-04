@@ -3,8 +3,8 @@ import {
   buildPositionedGlyphs,
   type LayerGeometryCacheEntry,
 } from '@/features/editor/canvas/workspace/layout/positionedGlyphs'
-import { normalizeGlyphToLayers } from '@/store'
-import type { FontAxes, FontData, FontSource, GlyphData } from '@/store'
+import { normalizeGlyphToLayers } from '@/domain'
+import type { FontAxes, FontData, FontSource, GlyphData } from '@/domain'
 
 const makeGlyph = (id: string): GlyphData =>
   normalizeGlyphToLayers({

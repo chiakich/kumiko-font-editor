@@ -5,7 +5,7 @@ import {
   selectUfoFeatureText,
 } from '@/lib/openTypeFeatures/ufoFeatureText'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 
 const makeFontData = (openTypeFeatures?: OpenTypeFeaturesState): FontData => ({
   glyphs: {},

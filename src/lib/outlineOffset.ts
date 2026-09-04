@@ -1,6 +1,6 @@
 import paper from 'paper'
-import type { PathData, PathNode } from '@/store/types'
-import { isOffCurveNode, isOnCurveNode } from '@/store/glyphGeometry'
+import type { PathData, PathNode } from '@/domain'
+import { isOffCurveNode, isOnCurveNode } from '@/domain/glyphGeometry'
 import {
   collectPaperPaths,
   paperPathToPathData,

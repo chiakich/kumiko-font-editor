@@ -1,4 +1,4 @@
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 export const addGlyphLookupKeys = (keys: Set<string>, glyphName: string) => {

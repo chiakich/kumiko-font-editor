@@ -19,7 +19,7 @@ import {
   updateGlyphClass,
 } from '@/features/common/projectControl/fontSettings/features/utils/classAuthoring'
 import type { GlyphClass, OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 interface GlyphClassesViewProps {
   fontData: FontData

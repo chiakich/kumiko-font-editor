@@ -3,8 +3,8 @@ import {
   buildGlyphLookupMap,
   computeCharsetCoverage,
 } from '@/lib/charsetCoverage'
-import type { GlyphData } from '@/store'
-import { normalizeGlyphToLayers } from '@/store'
+import type { GlyphData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const makeGlyph = (input: {
   id: string

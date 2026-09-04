@@ -10,7 +10,7 @@ import {
 import { Tooltip } from '@/components/ui/tooltip'
 import { Refresh } from 'iconoir-react'
 import { useMemo, useState } from 'react'
-import { activeLayer, type GlyphData } from '@/store'
+import { activeLayer, type GlyphData } from '@/domain'
 import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
 import {
   ScaleActionGroup,

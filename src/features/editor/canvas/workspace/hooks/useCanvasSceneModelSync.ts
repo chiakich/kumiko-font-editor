@@ -16,7 +16,7 @@ import {
   isOffCurveNode,
   type FontData,
   type PathData,
-} from '@/store'
+} from '@/domain'
 
 const hexColorToRgba = (hexColor: string, opacity: number) => {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor)

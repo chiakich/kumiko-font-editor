@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildGlyphPreviewData } from '@/lib/glyph/glyphOverview'
-import { normalizeGlyphToLayers } from '@/store'
-import type { GlyphData } from '@/store'
+import { normalizeGlyphToLayers } from '@/domain'
+import type { GlyphData } from '@/domain'
 
 const makeGlyph = (
   id: string,

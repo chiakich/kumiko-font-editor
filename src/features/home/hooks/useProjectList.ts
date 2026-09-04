@@ -7,7 +7,7 @@ import {
 } from '@/lib/project/projectRepository'
 import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
 import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 export interface LoadedKumikoProject {
   id: string

@@ -14,8 +14,8 @@ import {
   makeKumikoGlyphKey,
   patchKumikoProjectData,
 } from '@/lib/project/kumikoProjectPersistence'
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
-import type { FontData, GlyphData } from '@/store'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
+import type { FontData, GlyphData } from '@/domain'
 import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import {

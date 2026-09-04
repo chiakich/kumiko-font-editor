@@ -10,7 +10,8 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
-import { useStore, type FontData, type GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
+import { useStore } from '@/store'
 import type { QualityScope } from '@/lib/qualityCheck/qualityLint'
 import { sideLabels } from '@/lib/qualityCheck/structureMetrics'
 import {

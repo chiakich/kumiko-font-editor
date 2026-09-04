@@ -8,12 +8,8 @@ import {
   getGlyphScriptLabel,
 } from '@/lib/glyph/glyphOverview'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
-import type {
-  GlyphData,
-  GlyphLayerData,
-  KumikoColor,
-  WorkspaceView,
-} from '@/store'
+import type { GlyphData, GlyphLayerData, KumikoColor } from '@/domain'
+import type { WorkspaceView } from '@/store'
 import { useTranslation } from 'react-i18next'
 import { PageSearch } from 'iconoir-react'
 

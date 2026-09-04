@@ -29,7 +29,7 @@ import type {
   OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 interface OpenTypeDocumentWorkspaceProps {
   // Compiler failures from the live preview compile, in generated-FEA lines.

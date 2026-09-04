@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { extractMasterGlyphs } from './masterImportSource'
-import { activeLayer } from '@/store/glyphLayer'
-import type { FontData, GlyphData, PathNode } from '@/store'
+import { activeLayer } from '@/domain/glyphLayer'
+import type { FontData, GlyphData, PathNode } from '@/domain'
 
 const on = (x: number, y: number, id: string): PathNode => ({
   id,

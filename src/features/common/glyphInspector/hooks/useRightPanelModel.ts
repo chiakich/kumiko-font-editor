@@ -2,15 +2,15 @@ import { toaster } from '@/components/ui/toaster'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getProjectArchiveMetadata } from '@/lib/project/projectArchive'
-import { listGlyphLayers } from '@/store/glyphLayerOps'
+import { listGlyphLayers } from '@/domain/glyphLayerOps'
 import {
   getEffectiveNodeType,
   getGlyphLayer,
   isPathEndpointNode,
-  useStore,
   type KumikoColor,
   type NodeType,
-} from '@/store'
+} from '@/domain'
+import { useStore } from '@/store'
 import type { PathBooleanOperation } from '@/lib/pathBooleanOperations'
 import { useGitHubCommitFlow } from '@/features/common/glyphInspector/hooks/useGitHubCommitFlow'
 import { useProjectSyncDirtyStatus } from '@/features/common/glyphInspector/hooks/useProjectSyncDirtyStatus'

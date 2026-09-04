@@ -1,5 +1,5 @@
 import { isEmptyGlyphToEdit } from '@/lib/glyph/glyphBlankness'
-import { getGlyphComponentGlyphIds } from '@/lib/glyph/glyphGeometryState'
+import { getGlyphComponentGlyphIds } from '@/domain/glyphGeometryState'
 import {
   GLYPHS_LABEL_COLOR_KEYS,
   nearestGlyphsLabelColorIndex,
@@ -13,8 +13,8 @@ import {
   unicodeHexToCodePoint,
 } from '@/lib/project/unicode'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
-import { activeLayer } from '@/store/glyphLayer'
-import type { GlyphData } from '@/store/types'
+import { activeLayer } from '@/domain/glyphLayer'
+import type { GlyphData } from '@/domain'
 
 export type OverviewGroupBy = 'none' | 'script' | 'block'
 export type GlyphOverviewTreeKind = 'all' | 'category' | 'language' | 'filter'

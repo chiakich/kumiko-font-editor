@@ -25,7 +25,7 @@ import {
   type OpenTypeTableTag,
 } from '@/lib/openTypeFeatures'
 import { useTranslation } from 'react-i18next'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 export function FeatureDocument({
   feature,

@@ -1,7 +1,7 @@
 // Geometry helpers for assembling CJK glyphs from parts of other glyphs,
 // guided by GlyphWiki part placement boxes.
 
-import type { FontData, PathData } from '@/store'
+import type { FontData, PathData } from '@/domain'
 import type { GlyphwikiPartBox } from '@/lib/glyph/glyphwikiComposition'
 
 export interface Rect {

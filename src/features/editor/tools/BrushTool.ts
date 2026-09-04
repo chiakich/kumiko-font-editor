@@ -16,7 +16,8 @@ import {
   type BrushSample,
   type BrushSettings,
 } from '@/features/editor/tools/vectorBrush'
-import { useStore, type PathData, type PathNode } from '@/store'
+import type { PathData, PathNode } from '@/domain'
+import { useStore } from '@/store'
 
 export class BrushTool extends BaseTool {
   identifier = 'brush'

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { synthesizeKerningFea } from '@/lib/openTypeFeatures/synthesizeKerning'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
-import type { KerningGroup, KerningPair } from '@/store/types'
+import type { KerningGroup, KerningPair } from '@/domain'
 
 const groups: KerningGroup[] = [
   {

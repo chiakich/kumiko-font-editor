@@ -1,5 +1,5 @@
-import type { GlyphData } from '@/store'
-import type { FontData } from '@/store'
+import type { GlyphData } from '@/domain'
+import type { FontData } from '@/domain'
 import { createWorkerRpcClient } from '@/lib/workers/createWorkerRpcClient'
 
 export interface BuildSfntPayload {

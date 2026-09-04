@@ -12,7 +12,7 @@ import {
 import { createGlyphsPackageDataFromFontData } from '@/lib/fontFormats/glyphsPackage'
 import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
 import { saveProjectDraft } from '@/lib/project/projectRepository'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
 
 const glyph = (id: string, name: string, unicode: string | null): GlyphData =>

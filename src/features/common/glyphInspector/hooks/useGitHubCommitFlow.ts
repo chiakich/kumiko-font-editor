@@ -21,7 +21,8 @@ import {
 } from '@/lib/github/githubQueries'
 import { buildCurrentDraftFlushInput } from '@/lib/project/currentDraftFlush'
 import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import {
   buildSuggestedGitHubBranchName,

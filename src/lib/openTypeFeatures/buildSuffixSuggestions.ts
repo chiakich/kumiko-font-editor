@@ -13,7 +13,7 @@ import type {
   OpenTypeFeaturesState,
   Rule,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData, GlyphData } from '@/store/types'
+import type { FontData, GlyphData } from '@/domain'
 
 const featureForSuffix = (suffix: string) => {
   if (/^\.ss\d\d$/.test(suffix)) return suffix.slice(1)

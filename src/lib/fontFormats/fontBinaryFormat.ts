@@ -11,20 +11,20 @@ import type {
   PathData,
   PathNode,
   PathSegmentType,
-} from '@/store'
+} from '@/domain'
 // Leaf module rather than the src/store barrel: see the note in ufoFormat.
 import {
   getNodeSegmentType,
   isOffCurveNode,
   isOnCurveNode,
-} from '@/store/glyphGeometry'
+} from '@/domain/glyphGeometry'
 import { parseLegacyKernPairs } from '@/lib/fontFormats/legacyKernImport'
-import { activeLayer } from '@/store/glyphLayer'
+import { activeLayer } from '@/domain/glyphLayer'
 import {
   getComponentMatrix,
   isIdentityComponentMatrix,
   type ComponentMatrix,
-} from '@/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
 import { normalizeUnicodeHex } from '@/lib/project/unicode'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'

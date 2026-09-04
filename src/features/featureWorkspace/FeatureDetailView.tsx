@@ -13,7 +13,7 @@ import type {
   GeneratedFeaSourceMap,
   OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import { FeatureDocument } from '@/features/common/projectControl/fontSettings/features/components/OpenTypeRecordDocuments'
 import {
   isFeatureTagEnabled,

@@ -19,9 +19,9 @@ import type {
   KumikoColor,
   KerningGroup,
   KerningPair,
-  OpenTypeFeaturesState,
-} from '@/store'
-import type { ComponentMatrix } from '@/lib/components/componentTransform'
+} from '@/domain'
+import type { OpenTypeFeaturesState } from '@/store'
+import type { ComponentMatrix } from '@/domain/componentTransform'
 
 export type KumikoProjectSourceFormat =
   | 'glyphs'

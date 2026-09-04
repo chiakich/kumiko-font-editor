@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { useStore } from '@/store'
 import { partializeTemporalState } from '@/store/temporalSnapshot'
-import type { FontData, GlyphData, GlyphLayerData } from '@/store'
+import type { FontData, GlyphData, GlyphLayerData } from '@/domain'
 
 const makeLayer = (id: string, width = 1000): GlyphLayerData => ({
   id,

@@ -19,7 +19,7 @@ import {
   isValidGlyphName,
   isValidLookupName,
 } from '@/lib/openTypeFeatures/validationNames'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 
 const sameFingerprint = (
   left: OpenTypeFeaturesState['fontFingerprint'],

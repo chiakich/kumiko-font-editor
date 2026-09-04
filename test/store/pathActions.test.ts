@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { useStore, getGlyphLayer } from '@/store'
-import type { FontData, GlyphData, PathData } from '@/store/types'
+import { getGlyphLayer } from '@/domain'
+import { useStore } from '@/store'
+import type { FontData, GlyphData, PathData } from '@/domain'
 
 const makeGlyph = (paths: PathData[]): GlyphData => ({
   id: 'glyph-a',

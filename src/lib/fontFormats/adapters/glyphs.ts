@@ -13,7 +13,7 @@ import {
 import { parseOpenStep } from '@/lib/fontFormats/openstepParser'
 import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
 import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 export interface ImportedGlyphsProject {
   projectId: string

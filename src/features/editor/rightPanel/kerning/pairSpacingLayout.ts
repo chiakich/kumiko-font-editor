@@ -1,7 +1,7 @@
 import { buildGlyphPreviewData } from '@/lib/glyph/glyphOverview'
 import type { GlyphPreviewShape } from '@/lib/glyph/glyphPreviewData'
-import { getGlyphLayer } from '@/store/glyphLayer'
-import type { FontData } from '@/store'
+import { getGlyphLayer } from '@/domain/glyphLayer'
+import type { FontData } from '@/domain'
 
 export interface PairSpacingGlyph {
   key: string

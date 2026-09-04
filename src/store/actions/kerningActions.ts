@@ -9,7 +9,8 @@ import {
   filterAllKerningPairs,
   listAllKerningPairs,
 } from '@/lib/kerning/kerningPairSets'
-import type { GlobalState, KerningGroup, KerningPair } from '@/store/types'
+import type { KerningGroup, KerningPair } from '@/domain'
+import type { GlobalState } from '@/store/types'
 import { markProjectDirty } from '@/store/dirtyState'
 
 type ImmerSet = Parameters<

@@ -22,7 +22,7 @@ import {
   GLYPHS_PACKAGE_UI_KEY,
   PROJECT_METADATA_UI_KEY,
 } from '@/lib/project/projectRepository'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 
 const GLYPHS_EXPORT_BATCH_SIZE = 128
 

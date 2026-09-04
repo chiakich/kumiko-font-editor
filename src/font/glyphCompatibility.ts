@@ -1,4 +1,4 @@
-import { getNodeSegmentType, isOffCurveNode } from '@/store/glyphGeometry'
+import { getNodeSegmentType, isOffCurveNode } from '@/domain/glyphGeometry'
 import type {
   GlyphAnchor,
   GlyphComponentRef,
@@ -6,7 +6,7 @@ import type {
   GlyphLayerData,
   PathData,
   PathNode,
-} from '@/store/types'
+} from '@/domain'
 
 export type GlyphCompatibilityIssueCode =
   | 'missing-layer'

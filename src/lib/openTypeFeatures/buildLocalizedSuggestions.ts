@@ -12,7 +12,7 @@ import type {
   OpenTypeFeaturesState,
   Rule,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 
 export const buildLocalizedSuggestions = (
   fontData: FontData,

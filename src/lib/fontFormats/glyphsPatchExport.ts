@@ -5,8 +5,8 @@ import {
   type GlyphsFormatVersion,
 } from '@/lib/fontFormats/glyphsExport'
 import type { GlyphsDocument } from '@/lib/fontFormats/glyphsDocument'
-import type { GlyphData } from '@/store'
-import { activeLayer } from '@/store/glyphLayer'
+import type { GlyphData } from '@/domain'
+import { activeLayer } from '@/domain/glyphLayer'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 interface GlyphBlockRange {

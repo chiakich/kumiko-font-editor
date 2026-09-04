@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildMasterFromBinaryFont } from './masterFromBinary'
 import { getGlyphMasterLayerForSource } from './designspaceLocation'
-import type { FontData, FontSource, GlyphData, PathNode } from '@/store'
+import type { FontData, FontSource, GlyphData, PathNode } from '@/domain'
 
 const node = (x: number, y: number, id: string): PathNode => ({
   id,

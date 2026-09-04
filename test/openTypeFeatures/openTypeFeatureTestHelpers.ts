@@ -7,7 +7,7 @@ import type {
   OpenTypeFeaturesState,
   Rule,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData, GlyphData } from '@/store/types'
+import type { FontData, GlyphData } from '@/domain'
 
 export const makeGlyph = (name: string, unicode?: string): GlyphData => ({
   id: name,

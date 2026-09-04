@@ -7,7 +7,8 @@ import {
   validateKerning,
   type KerningValidationIssueKind,
 } from '@/lib/kerning/resolveKerning'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 const ISSUE_LABEL_KEYS: Record<KerningValidationIssueKind, string> = {

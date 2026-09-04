@@ -7,7 +7,7 @@ import {
   setRawFeatureTextSource,
 } from '@/lib/openTypeFeatures/featureSourceSections'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 
 export const hasExportableFeatureText = (
   state: OpenTypeFeaturesState | null | undefined

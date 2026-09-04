@@ -1,8 +1,5 @@
-import type {
-  FontData,
-  GlobalState,
-  OverviewSearchOptionsState,
-} from '@/store/types'
+import type { FontData } from '@/domain'
+import type { GlobalState, OverviewSearchOptionsState } from '@/store/types'
 import {
   DEFAULT_OVERVIEW_SEARCH_FIELDS,
   filterGlyphsByOverviewSearch,

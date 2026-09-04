@@ -7,7 +7,7 @@ import type {
   KerningPair,
   PathData,
   PathNode,
-} from '@/store'
+} from '@/domain'
 // From the defining module, not the src/store barrel: the barrel creates the
 // zustand store and pulls every action — including paper.js — into any bundle
 // that touches it, which is how a worker ended up shipping the path-boolean
@@ -16,7 +16,7 @@ import {
   getNodeSegmentType,
   getNodeType,
   isOffCurveNode,
-} from '@/store/glyphGeometry'
+} from '@/domain/glyphGeometry'
 import {
   designspaceDefaultLocation,
   designspaceToExportInstances,

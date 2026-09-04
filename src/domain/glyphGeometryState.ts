@@ -1,4 +1,4 @@
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain/types'
 
 const LEGACY_GEOMETRY_KEYS = [
   'paths',

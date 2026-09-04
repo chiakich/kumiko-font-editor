@@ -26,7 +26,8 @@ import {
 } from '@/lib/kerning/resolveKerning'
 import type { GlyphSelector } from '@/lib/openTypeFeatures'
 import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
-import { useStore, type FontData, type KerningPair } from '@/store'
+import type { FontData, KerningPair } from '@/domain'
+import { useStore } from '@/store'
 import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 interface KerningPairListProps {

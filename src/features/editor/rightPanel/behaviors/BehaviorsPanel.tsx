@@ -14,7 +14,8 @@ import {
   type ContextualBehaviorRow,
   type SpacingBehaviorRow,
 } from '@/lib/openTypeFeatures'
-import { useStore, type FontData, type GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
+import { useStore } from '@/store'
 import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
 import { CombinationBehaviorList } from '@/features/editor/rightPanel/behaviors/CombinationBehaviorList'
 import { AlternateBehaviorList } from '@/features/editor/rightPanel/behaviors/AlternateBehaviorList'

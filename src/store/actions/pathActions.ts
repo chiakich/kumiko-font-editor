@@ -12,7 +12,8 @@ import {
   offsetGlyphPaths,
   type OutlineOffsetOptions,
 } from '@/lib/outlineOffset'
-import type { GlobalState, PathData, PathNode } from '@/store/types'
+import type { PathData, PathNode } from '@/domain'
+import type { GlobalState } from '@/store/types'
 import {
   findPath,
   generateId,
@@ -21,9 +22,9 @@ import {
   lerp,
   orientOpenPathNodesForConnection,
   recomputeGlyphSidebearings,
-} from '@/store/glyphGeometry'
-import { ensureLoadedActiveLayer } from '@/store/glyphLayer'
-import { pairNearestEndpoints, performReconnect } from '@/store/reconnectNodes'
+} from '@/domain/glyphGeometry'
+import { ensureLoadedActiveLayer } from '@/domain/glyphLayer'
+import { pairNearestEndpoints, performReconnect } from '@/domain/reconnectNodes'
 import { syncFilteredGlyphList } from '@/store/glyphSearch'
 import { markGlyphDirty } from '@/store/dirtyState'
 

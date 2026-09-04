@@ -1,4 +1,4 @@
-import type { GlyphData } from '@/store/types'
+import type { GlyphData } from '@/domain'
 import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 
 const COMMON_LIGATURES = new Set([

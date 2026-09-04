@@ -10,7 +10,8 @@ import {
   hasGlyphCandidate,
 } from '@/features/fontOverview/utils/glyphLookup'
 import { getGlyphNameInfoMap } from '@/lib/glyph/glyphNameInfo'
-import { useStore, type FontData, type GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
+import { useStore } from '@/store'
 
 interface UseAddGlyphsFlowOptions {
   fontData: FontData | null

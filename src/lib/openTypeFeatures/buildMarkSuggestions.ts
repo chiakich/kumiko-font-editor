@@ -8,8 +8,8 @@ import type {
   MarkToMarkRule,
   OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData, GlyphAnchor, GlyphData } from '@/store/types'
-import { activeLayer } from '@/store/glyphLayer'
+import type { FontData, GlyphAnchor, GlyphData } from '@/domain'
+import { activeLayer } from '@/domain/glyphLayer'
 
 interface NamedAnchor {
   glyph: string

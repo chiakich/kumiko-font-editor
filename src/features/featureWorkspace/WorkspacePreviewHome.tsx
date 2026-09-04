@@ -10,7 +10,7 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'
 import type { useShapingPreview } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingPreview'
 import { useShapingTrace } from '@/features/common/projectControl/fontSettings/features/hooks/useShapingTrace'

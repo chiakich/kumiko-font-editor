@@ -9,7 +9,7 @@ import {
   type GlyphsDocument,
 } from '@/lib/fontFormats/glyphsDocument'
 import { glyphDataToKumikoGlyphRecord } from '@/lib/project/kumikoFontDataAdapter'
-import { getGlyphLayer } from '@/store/glyphLayer'
+import { getGlyphLayer } from '@/domain/glyphLayer'
 import { getGlyphDisplayCharacter } from '@/lib/glyph/glyphOverview'
 import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
 

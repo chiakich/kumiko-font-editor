@@ -1,5 +1,5 @@
-import type { FontData, GlyphComponentRef, PathData } from '@/store'
-import { getGlyphLayer } from '@/store/glyphLayer'
+import type { FontData, GlyphComponentRef, PathData } from '@/domain'
+import { getGlyphLayer } from '@/domain/glyphLayer'
 import {
   getStructureBodyBox,
   type StructureBodyBox,

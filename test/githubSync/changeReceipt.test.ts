@@ -8,7 +8,7 @@ import {
   resolveReceiptExclusions,
 } from '@/features/common/glyphInspector/utils/changeReceipt'
 import type { GlyphSyncEntry, ProjectSyncReport } from '@/lib/github/sync'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 const fontData = {
   glyphs: {

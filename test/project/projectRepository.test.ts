@@ -24,7 +24,7 @@ import {
 } from '@/lib/project/kumikoProjectPersistence'
 import { saveDraftSnapshot } from '@/lib/project/draftSave'
 import { openDatabase } from '@/lib/project/persistence'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 const fontData: FontData = {
   glyphOrder: ['A'],

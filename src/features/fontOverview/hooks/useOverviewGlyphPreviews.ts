@@ -4,7 +4,7 @@ import {
   buildGlyphPreviewData,
   type GlyphPreviewData,
 } from '@/lib/glyph/glyphPreviewData'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import { createOverviewGlyphPreviewSnapshot } from '@/features/fontOverview/utils/overviewPreviewSnapshot'
 import { buildOverviewGlyphPreviews } from '@/features/fontOverview/utils/overviewGlyphPreviewWorkerClient'
 import type {

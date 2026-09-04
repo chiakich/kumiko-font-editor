@@ -6,7 +6,7 @@ import {
   type OverviewCustomFilter,
 } from '@/lib/glyph/glyphOverview'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 interface UseOverviewSectionsOptions {
   filteredGlyphList: GlyphData[]

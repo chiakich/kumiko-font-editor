@@ -1,4 +1,4 @@
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 
 interface GlyphAdditionCandidate {

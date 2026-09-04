@@ -1,5 +1,5 @@
-import type { FontData } from '@/store'
-import { normalizeGlyphToLayers } from '@/store/glyphLayer'
+import type { FontData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain/glyphLayer'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,

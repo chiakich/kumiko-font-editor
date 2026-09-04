@@ -20,7 +20,7 @@ import {
   type ExportDraft,
   type SourceDraft,
 } from '@/features/common/projectControl/fontSettings/utils/model'
-import type { FontAxis } from '@/store'
+import type { FontAxis } from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 interface FontExportsTabProps {

@@ -9,7 +9,8 @@ import {
   type SyntheticEvent,
 } from 'react'
 import type { PositionedGlyph } from '@/sceneView'
-import type { FontData, ViewportState } from '@/store'
+import type { FontData } from '@/domain'
+import type { ViewportState } from '@/store'
 import type { ToolId } from '@/features/editor/canvas/workspace/types'
 import {
   buildTextInputCommitPlan,

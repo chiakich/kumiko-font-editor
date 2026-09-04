@@ -14,7 +14,8 @@ import {
   normalizeBrushSettings,
   type BrushSettings,
 } from '@/features/editor/tools/vectorBrush'
-import { useStore, useTemporalStore, getGlyphLayer } from '@/store'
+import { getGlyphLayer } from '@/domain'
+import { useStore, useTemporalStore } from '@/store'
 import { CanvasContextMenu } from '@/features/editor/canvas/workspace/components/CanvasContextMenu'
 import { CanvasWorkspaceOverlay } from '@/features/editor/canvas/workspace/components/CanvasWorkspaceOverlay'
 import { HiddenTextInput } from '@/features/editor/canvas/workspace/components/HiddenTextInput'
@@ -31,10 +32,10 @@ import { useReferenceFontRestoration } from '@/features/editor/canvas/workspace/
 import { useCanvasSceneModelSync } from '@/features/editor/canvas/workspace/hooks/useCanvasSceneModelSync'
 import { useOverviewSections } from '@/features/fontOverview/hooks/useOverviewSections'
 import { isInterpolatedGlyphLocation } from '@/font/designspaceLocation'
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import { getGlyphDisplayCharacter } from '@/lib/glyph/glyphOverview'
 import { loadProjectGlyphGeometryClosure } from '@/lib/project/projectRepository'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 export function CanvasWorkspace() {
   const { i18n } = useTranslation()

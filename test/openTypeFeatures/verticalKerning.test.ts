@@ -5,7 +5,7 @@ import { FONTTOOLS_COMPILER_PYTHON } from '@/lib/openTypeFeatures/fontToolsCompi
 import { synthesizeKerningFea } from '@/lib/openTypeFeatures/synthesizeKerning'
 import { shapeTextWithHarfBuzz } from '@/lib/openTypeFeatures/shapeTextWithHarfBuzz'
 import { makeGlyph } from './openTypeFeatureTestHelpers'
-import type { KerningPair } from '@/store/types'
+import type { KerningPair } from '@/domain'
 
 const pair = (
   left: string,

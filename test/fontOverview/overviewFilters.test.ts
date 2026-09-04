@@ -7,8 +7,8 @@ import {
   getGlyphOverviewTree,
   type GlyphOverviewTreeNode,
 } from '@/lib/glyph/glyphOverview'
-import type { GlyphData, GlyphHint } from '@/store'
-import { normalizeGlyphToLayers } from '@/store'
+import type { GlyphData, GlyphHint } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const makeGlyph = (input: {
   anchors?: string[]

@@ -2,7 +2,7 @@
 // GlyphData.layers (keyed by id). The selected/active layer may be a backup;
 // master identity comes from the layer's type, matching Glyphs' layer UX.
 
-import type { GlyphData, GlyphLayerData } from '@/store/types'
+import type { GlyphData, GlyphLayerData } from '@/domain/types'
 
 interface LayerContent {
   paths: GlyphLayerData['paths']

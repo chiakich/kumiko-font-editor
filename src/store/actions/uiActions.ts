@@ -3,7 +3,8 @@
  * overview panel, viewport, and preview glyph metrics.
  */
 import type { StateCreator } from 'zustand'
-import type { GlobalState, GlyphMetrics, PathData } from '@/store/types'
+import type { GlyphMetrics, PathData } from '@/domain'
+import type { GlobalState } from '@/store/types'
 import type { RadarReferenceData } from '@/lib/qualityCheck/qualityRadar'
 import {
   clampEditorActiveGlyphIndex,
@@ -12,7 +13,7 @@ import {
   syncSelectedGlyphFromEditorLine,
 } from '@/store/editorLine'
 import { syncFilteredGlyphList } from '@/store/glyphSearch'
-import { setGlyphActiveLayer } from '@/store/glyphLayer'
+import { setGlyphActiveLayer } from '@/domain/glyphLayer'
 import { markUiStateDirty } from '@/store/dirtyState'
 import {
   customOverviewFilterIdToNodeId,

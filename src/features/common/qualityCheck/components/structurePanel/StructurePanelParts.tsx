@@ -10,7 +10,7 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { NavArrowDown, NavArrowRight } from 'iconoir-react'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
 import { buildRadarAdvice } from '@/lib/qualityCheck/radarAdvice'
 import {

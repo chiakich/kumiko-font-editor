@@ -4,7 +4,7 @@ import {
   OVERVIEW_GEOMETRY_PRELOAD_MARGIN,
   OVERVIEW_MAX_RESIDENT_GLYPH_GEOMETRY,
 } from '@/features/fontOverview/utils/overviewGeometryWindow'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 const makeGlyphs = (count: number): GlyphData[] =>
   Array.from({ length: count }, (_, index) => ({

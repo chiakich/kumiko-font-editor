@@ -7,13 +7,13 @@ import {
 import { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'
 import type { PathHitInfo } from '@/sceneView/SceneView'
 import {
-  useStore,
   activeLayer,
   getGlyphLayer,
   isOffCurveNode,
   type PathData,
   type PathNode,
-} from '@/store'
+} from '@/domain'
+import { useStore } from '@/store'
 
 type NodeRole = 'corner' | 'smooth' | 'offcurve'
 type OnCurvePathNode = Extract<PathNode, { kind: 'oncurve' }>

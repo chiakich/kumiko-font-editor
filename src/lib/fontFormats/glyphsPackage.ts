@@ -11,7 +11,7 @@ import {
   serializeOpenStepValue,
 } from '@/lib/fontFormats/glyphsExport'
 import { parseOpenStep } from '@/lib/fontFormats/openstepParser'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 
 export interface GlyphsPackageData {
   packageName: string

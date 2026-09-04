@@ -25,7 +25,8 @@ import {
   LayerColorDot,
 } from '@/features/editor/rightPanel/components/LayerListCard/LayerColorControls'
 import { ReferenceFontSettingsModal } from '@/features/editor/rightPanel/components/ReferenceFontSettingsModal'
-import { useStore, type GlyphLayerData } from '@/store'
+import type { GlyphLayerData } from '@/domain'
+import { useStore } from '@/store'
 
 interface LayerListCardProps {
   glyphId: string

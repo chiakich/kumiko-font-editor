@@ -9,7 +9,7 @@ import {
   kumikoColorToDisplayCssRgba,
 } from '@/lib/color/kumikoColor'
 import { useResolvedColorMode } from '@/lib/preferences/colorMode'
-import type { KumikoColor } from '@/store'
+import type { KumikoColor } from '@/domain'
 
 export type OverviewGlyphContextMenuColor = KumikoColor | null | 'mixed'
 

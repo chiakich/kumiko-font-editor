@@ -40,7 +40,7 @@ import type {
   FontExportOptions,
 } from '@/features/common/fontExport/ExportFontModal'
 import type { BinaryFontExportFormat } from '@/lib/fontFormats/fontBinaryFormat'
-import type { FontExportInstance } from '@/store'
+import type { FontExportInstance } from '@/domain'
 
 const triggerBlobDownload = (blob: Blob, fileName: string) => {
   const href = URL.createObjectURL(blob)

@@ -20,7 +20,7 @@ import {
   glyphDataToKumikoGlyphRecord,
   kumikoGlyphRecordToGlyphData,
 } from '@/lib/project/kumikoFontDataAdapter'
-import type { FontData, FontSource, GlyphData, GlyphLayerData } from '@/store'
+import type { FontData, FontSource, GlyphData, GlyphLayerData } from '@/domain'
 
 const DEFAULT_BATCH_SIZE = 256
 

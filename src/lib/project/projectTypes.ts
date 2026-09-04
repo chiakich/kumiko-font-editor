@@ -1,10 +1,21 @@
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import type { GlyphsPackageData } from '@/lib/fontFormats/glyphsPackage'
 import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
 import type {
   ProjectRoundTripFormat,
   ProjectSourceFormat,
 } from '@/lib/project/projectFormats'
+
+export interface GitHubProjectSource {
+  owner: string
+  repo: string
+  ref: string
+  defaultBranch: string
+  repoUrl: string
+  zipballUrl: string
+  archiveRoot: string
+  commitSha?: string | null
+}
 
 export type ProjectSourceType = 'local' | 'github'
 
@@ -16,17 +27,6 @@ export interface KumikoProjectUiState {
   overviewSectionId?: string | null
   overviewTopGlyphId?: string | null
   overviewGridState?: unknown | null
-}
-
-export interface GitHubProjectSource {
-  owner: string
-  repo: string
-  ref: string
-  defaultBranch: string
-  repoUrl: string
-  zipballUrl: string
-  archiveRoot: string
-  commitSha?: string | null
 }
 
 export interface KumikoProjectDraft {

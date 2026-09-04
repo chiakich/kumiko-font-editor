@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { GlyphLayerData, PathData, PathNode } from '@/store/types'
+import type { GlyphLayerData, PathData, PathNode } from '@/domain/types'
 import {
   pairEndpointsByContinuity,
   performReconnect,
   type ReconnectEndpoint,
-} from '@/store/reconnectNodes'
+} from '@/domain/reconnectNodes'
 
 let counter = 0
 const node = (x: number, y: number): PathNode => ({

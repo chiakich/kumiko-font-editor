@@ -1,5 +1,5 @@
 import { offsetGlyphPaths } from '@/lib/outlineOffset'
-import type { FontSource, GlyphLayerData } from '@/store/types'
+import type { FontSource, GlyphLayerData } from '@/domain'
 
 const masterLayerBase = (source: FontSource) => ({
   id: source.id,

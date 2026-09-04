@@ -14,7 +14,7 @@ import {
   generalFontInfoFields,
   openTypeFontInfoSettings,
 } from '@/lib/fontFormats/fontInfoSettings'
-import type { FontAxis } from '@/store'
+import type { FontAxis } from '@/domain'
 import { NumberField } from '@/features/common/projectControl/fontSettings/components/fields'
 import { LocalizedNamesEditor } from '@/features/common/projectControl/fontSettings/components/LocalizedNamesEditor'
 import {

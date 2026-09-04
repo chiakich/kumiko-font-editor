@@ -12,7 +12,7 @@ import {
   makeKumikoGlyphKey,
   saveKumikoGlyphRecord,
 } from '@/lib/project/kumikoProjectPersistence'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)

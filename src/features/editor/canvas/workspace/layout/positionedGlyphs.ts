@@ -13,9 +13,9 @@ import {
   type FontData,
   type GlyphLayerData,
   type PathData,
-} from '@/store'
+} from '@/domain'
 import type { ComponentData, GuidelineData, PositionedGlyph } from '@/sceneView'
-import { getComponentMatrix } from '@/lib/components/componentTransform'
+import { getComponentMatrix } from '@/domain/componentTransform'
 import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
 import type { ToolId } from '@/features/editor/canvas/workspace/types'
 import {

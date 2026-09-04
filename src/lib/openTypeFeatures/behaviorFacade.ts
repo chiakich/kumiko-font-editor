@@ -20,8 +20,8 @@ import type {
   Rule,
   SingleSubstitutionRule,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData, GlyphData, GlyphLayerData } from '@/store/types'
-import { getGlyphLayer, withActiveLayer } from '@/store/glyphLayer'
+import type { FontData, GlyphData, GlyphLayerData } from '@/domain'
+import { getGlyphLayer, withActiveLayer } from '@/domain/glyphLayer'
 import {
   ALTERNATE_TYPE_TO_FEATURE_TAG,
   BEHAVIOR_TYPE_TO_FEATURE_TAG,

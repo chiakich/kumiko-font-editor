@@ -18,7 +18,8 @@ import {
   type FeatureDiagnostic,
   type OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
 import { AutoFeatureSuggestions } from '@/features/common/projectControl/fontSettings/features/components/AutoFeatureSuggestions'
 import { ShapedRunSvg } from '@/features/common/projectControl/fontSettings/features/components/ShapedRunSvg'

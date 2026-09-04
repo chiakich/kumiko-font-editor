@@ -3,12 +3,12 @@ import { buildGlyphsFeatureFieldsFromSnippets } from '@/lib/fontFormats/glyphsFe
 import {
   getComponentMatrix,
   isIdentityComponentMatrix,
-} from '@/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 import {
   getNodeSegmentType,
   getNodeType,
   isOffCurveNode,
-} from '@/store/glyphGeometry'
+} from '@/domain/glyphGeometry'
 import type {
   FontData,
   GlyphData,
@@ -17,7 +17,7 @@ import type {
   GlyphLayerContent,
   GlyphSourceData,
   PathNode,
-} from '@/store'
+} from '@/domain'
 import { nearestGlyphsLabelColorIndex } from '@/lib/color/kumikoColor'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 

@@ -1,5 +1,5 @@
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
-import type { GlyphData } from '@/store/types'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
+import type { GlyphData } from '@/domain'
 
 export const DEFAULT_MAX_RESIDENT_GLYPH_GEOMETRY = 800
 

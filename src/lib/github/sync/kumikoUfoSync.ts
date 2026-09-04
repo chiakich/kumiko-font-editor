@@ -81,7 +81,7 @@ import {
   kumikoGlyphRecordToGlyphData,
   kumikoGlyphRecordToGlyphMetadata,
 } from '@/lib/project/kumikoFontDataAdapter'
-import type { FontData, GlyphData, GlyphLayerData } from '@/store'
+import type { FontData, GlyphData, GlyphLayerData } from '@/domain'
 
 export interface GitHubCommitFileInput {
   path: string

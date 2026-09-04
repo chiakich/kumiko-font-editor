@@ -21,7 +21,7 @@ import {
   seedMasterKerningEntries,
 } from '@/lib/kerning/kerningPairSets'
 import type { KumikoProjectRecord } from '@/lib/project/kumikoProjectTypes'
-import type { FontData, KerningPair } from '@/store/types'
+import type { FontData, KerningPair } from '@/domain'
 
 const pair = (value: number): KerningPair => ({
   id: `p_${value}`,

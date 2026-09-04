@@ -8,9 +8,9 @@ import type {
   PathData,
   PathNode,
   PathSegmentType,
-} from '@/store/types'
-import { activeLayer } from '@/store/glyphLayer'
-import { translateComponentRef } from '@/lib/components/componentTransform'
+} from '@/domain/types'
+import { activeLayer } from '@/domain/glyphLayer'
+import { translateComponentRef } from '@/domain/componentTransform'
 
 export const createOnCurveNode = (
   id: string,

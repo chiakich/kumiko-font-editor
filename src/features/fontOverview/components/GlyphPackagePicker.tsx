@@ -26,7 +26,7 @@ import {
   type GlyphPackageSelection,
 } from '@/features/fontOverview/hooks/useGlyphPackageSelection'
 import type { CharsetCoverage } from '@/lib/charsetCoverage'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 export type { GlyphPackageSelection } from '@/features/fontOverview/hooks/useGlyphPackageSelection'

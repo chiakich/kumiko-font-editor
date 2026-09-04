@@ -9,7 +9,7 @@ import type {
   GlyphData,
   GlyphLayerData,
   PathData,
-} from '@/store/types'
+} from '@/domain'
 
 const axes: FontAxes = {
   axes: [

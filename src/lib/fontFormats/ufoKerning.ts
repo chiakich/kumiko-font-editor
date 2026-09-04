@@ -1,4 +1,4 @@
-import type { FontData, KerningGroup, KerningPair } from '@/store/types'
+import type { FontData, KerningGroup, KerningPair } from '@/domain'
 import type { GlyphSelector } from '@/lib/openTypeFeatures'
 import { buildKerningGroupMaps } from '@/lib/kerning/resolveKerning'
 

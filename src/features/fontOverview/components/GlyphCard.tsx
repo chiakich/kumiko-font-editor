@@ -8,7 +8,7 @@ import { kumikoColorToDisplayCssRgba } from '@/lib/color/kumikoColor'
 import { useResolvedColorMode } from '@/lib/preferences/colorMode'
 import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
 import type { GlyphColorLabelDisplayMode } from '@/lib/preferences/appPreferences'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 interface GlyphCardProps {
   glyph: GlyphData

@@ -1,4 +1,4 @@
-import type { GlyphComponentRef } from '@/store/types'
+import type { GlyphComponentRef } from '@/domain/types'
 
 // Flat 2D affine matrix in DOMMatrix order: a point (x, y) maps to
 // (a*x + c*y + e, b*x + d*y + f).

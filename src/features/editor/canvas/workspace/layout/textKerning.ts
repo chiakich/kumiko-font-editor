@@ -1,4 +1,4 @@
-import type { FontData, GlyphMetrics, PathData } from '@/store'
+import type { FontData, GlyphMetrics, PathData } from '@/domain'
 import type {
   GlyphClass,
   GlyphSelector,

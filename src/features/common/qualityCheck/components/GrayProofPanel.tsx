@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { Switch } from '@/components/ui/switch'
 import { useMemo, useState } from 'react'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 import { ProofParagraphSvg } from '@/features/common/qualityCheck/components/ProofLineSvg'
 import {
   GRAY_PROOF_CHARACTER_LIMIT,

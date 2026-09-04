@@ -30,7 +30,7 @@ import type {
   FontAxis,
   FontData,
   FontProjectSettings,
-} from '@/store'
+} from '@/domain'
 import { useTranslation } from 'react-i18next'
 
 interface FontSettingsModalProps {

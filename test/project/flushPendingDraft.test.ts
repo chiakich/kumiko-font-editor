@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPendingDraft } from '@/lib/project/flushPendingDraft'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 const mocks = vi.hoisted(() => ({
   saveDraftSnapshotInWorker: vi.fn(),

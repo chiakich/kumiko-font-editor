@@ -1,9 +1,4 @@
-import type {
-  FontAxis,
-  FontData,
-  GlyphData,
-  GlyphLayerData,
-} from '@/store/types'
+import type { FontAxis, FontData, GlyphData, GlyphLayerData } from '@/domain'
 
 const axisValue = (location: Record<string, number>, axis: FontAxis) =>
   location[axis.name] ?? axis.defaultValue

@@ -37,7 +37,7 @@ import {
   needsOpenTypeFeatureCompilationForBinaryExport,
 } from '@/lib/openTypeFeatures'
 import { checkGlyphInterpolationCompatibility } from '@/font/glyphCompatibility'
-import { activeLayer } from '@/store/glyphLayer'
+import { activeLayer } from '@/domain/glyphLayer'
 import type {
   FontAxes,
   FontAxis,
@@ -45,7 +45,7 @@ import type {
   FontSource,
   GlyphData,
   GlyphLayerData,
-} from '@/store'
+} from '@/domain'
 
 const BINARY_EXPORT_GLYPH_BATCH_SIZE = 256
 const POST_SCRIPT_SAFE_NAME_MAX_LENGTH = 60

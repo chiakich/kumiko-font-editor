@@ -16,7 +16,7 @@ import {
   importGlyphsPackage,
   type ImportedGlyphsProject,
 } from '@/lib/fontFormats/adapters/glyphs'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import type { KumikoProjectSourceData } from '@/lib/project/kumikoProjectTypes'
 
 export interface ImportedKumikoProject {

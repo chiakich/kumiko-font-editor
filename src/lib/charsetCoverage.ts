@@ -1,4 +1,4 @@
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import {
   hasDrawableGlyphContent,
   isKnownBlankGlyph,

@@ -29,7 +29,7 @@ import type {
   SingleSubstitutionRule,
   ValueRecord,
 } from '@/lib/openTypeFeatures'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import { updateLookupRule } from '@/features/common/projectControl/fontSettings/features/utils/ruleEditorState'
 import {
   addRuleToFeature,

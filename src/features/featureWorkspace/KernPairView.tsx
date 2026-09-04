@@ -17,12 +17,8 @@ import {
   type OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures'
 import type { GlyphSelector } from '@/lib/openTypeFeatures'
-import {
-  useStore,
-  type FontData,
-  type KerningGroup,
-  type KerningPair,
-} from '@/store'
+import type { FontData, KerningGroup, KerningPair } from '@/domain'
+import { useStore } from '@/store'
 import {
   getMasterKerningPairs,
   orientedKerning,

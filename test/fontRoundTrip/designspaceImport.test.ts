@@ -17,7 +17,7 @@ import {
   resolveDefaultSourceRef,
   type UfoWorkspaceEntry,
 } from '@/lib/fontFormats/ufoFormat'
-import { getGlyphLayer } from '@/store/glyphLayer'
+import { getGlyphLayer } from '@/domain/glyphLayer'
 import type {
   UfoGlyphRecord,
   UfoMetadataRecord,

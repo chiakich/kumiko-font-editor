@@ -8,7 +8,8 @@ import {
   saveAppOverviewCustomFilters,
 } from '@/lib/preferences/appPreferences'
 import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 
 const fontData: FontData = {
   glyphOrder: ['A'],

@@ -1,7 +1,8 @@
 import { toaster } from '@/components/ui/toaster'
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useStore, type GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
+import { useStore } from '@/store'
 import { useFlushCurrentDraft } from '@/hooks/useFlushCurrentDraft'
 
 interface UseOverviewSelectionOptions {

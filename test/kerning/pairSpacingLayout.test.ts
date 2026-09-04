@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildPairSpacingLayout } from '@/features/editor/rightPanel/kerning/pairSpacingLayout'
-import type { FontData, GlyphData, GlyphLayerData } from '@/store'
+import type { FontData, GlyphData, GlyphLayerData } from '@/domain'
 
 const makeLayer = (id: string, width: number): GlyphLayerData => ({
   id,

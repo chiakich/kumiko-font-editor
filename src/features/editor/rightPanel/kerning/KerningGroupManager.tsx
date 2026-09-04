@@ -20,7 +20,8 @@ import {
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { findDuplicateMembershipGlyphs } from '@/lib/kerning/resolveKerning'
-import { useStore, type FontData, type KerningGroup } from '@/store'
+import type { FontData, KerningGroup } from '@/domain'
+import { useStore } from '@/store'
 import { KerningCard } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 
 interface KerningGroupManagerProps {

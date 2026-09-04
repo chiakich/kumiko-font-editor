@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildQualityReport } from '@/lib/qualityCheck/qualityLint'
-import type { FontData, GlyphData, PathData } from '@/store/types'
-import { normalizeGlyphToLayers } from '@/store'
+import type { FontData, GlyphData, PathData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const makePath = (
   id: string,

@@ -5,7 +5,7 @@ import {
   fontDataToKumikoProjectRecord,
   kumikoRecordsToFontData,
 } from '@/lib/project/kumikoFontDataAdapter'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 const fontData = {
   unitsPerEm: 1000,

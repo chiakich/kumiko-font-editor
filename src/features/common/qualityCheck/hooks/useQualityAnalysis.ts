@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useStore, getGlyphLayer, type FontData } from '@/store'
+import { getGlyphLayer, type FontData } from '@/domain'
+import { useStore } from '@/store'
 import {
   resolveFontGlyphs,
   resolveGlyph,

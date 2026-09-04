@@ -9,7 +9,7 @@ import {
   Text,
   Field,
 } from '@chakra-ui/react'
-import type { FontAxis, FontData, FontSource } from '@/store'
+import type { FontAxis, FontData, FontSource } from '@/domain'
 import { NumberField } from '@/features/common/projectControl/fontSettings/components/fields'
 import { AddMasterModal } from '@/features/common/projectControl/fontSettings/components/AddMasterModal'
 import {

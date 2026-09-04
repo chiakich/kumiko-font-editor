@@ -17,7 +17,7 @@ import {
   componentMatrixToRefFields,
   getComponentMatrix,
   type ComponentMatrix,
-} from '@/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 import type {
   FontAxes,
   FontAxis,
@@ -29,7 +29,7 @@ import type {
   GlyphLayerData,
   GlyphMetrics,
   PathData,
-} from '@/store/types'
+} from '@/domain'
 
 interface SourceLayerEntry {
   sourceId: string

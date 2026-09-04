@@ -2,7 +2,7 @@ import type { ResolvedGlyph } from '@/lib/qualityCheck/resolvedGlyph'
 import {
   getComponentMatrix,
   type ComponentMatrix,
-} from '@/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 import {
   computeInkMoments,
   computeProjectionGaps,

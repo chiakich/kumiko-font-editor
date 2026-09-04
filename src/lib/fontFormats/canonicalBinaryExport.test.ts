@@ -3,7 +3,12 @@ import {
   deriveStatAxisLabels,
   findIncompatibleMasterGlyphs,
 } from './canonicalBinaryExport'
-import type { FontAxis, FontExportInstance, GlyphData, PathNode } from '@/store'
+import type {
+  FontAxis,
+  FontExportInstance,
+  GlyphData,
+  PathNode,
+} from '@/domain'
 
 const on = (x: number, y: number, id: string): PathNode => ({
   id,

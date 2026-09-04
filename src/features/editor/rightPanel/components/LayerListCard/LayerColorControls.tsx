@@ -9,7 +9,7 @@ import {
   kumikoColorToDisplayCssRgba,
 } from '@/lib/color/kumikoColor'
 import { useResolvedColorMode } from '@/lib/preferences/colorMode'
-import type { GlyphLayerData, KumikoColor } from '@/store'
+import type { GlyphLayerData, KumikoColor } from '@/domain'
 
 export function LayerColorDot({ color }: { color?: KumikoColor | null }) {
   const colorMode = useResolvedColorMode()

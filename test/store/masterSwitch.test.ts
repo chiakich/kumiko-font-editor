@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { useStore } from '@/store'
-import type { FontData, GlyphData } from '@/store/types'
+import type { FontData, GlyphData } from '@/domain'
 
 const twoMasterGlyph = (): GlyphData => ({
   id: 'A',

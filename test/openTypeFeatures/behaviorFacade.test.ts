@@ -18,8 +18,8 @@ import {
   generateFea,
   type OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures'
-import type { FontData, GlyphData } from '@/store'
-import { getGlyphLayer, normalizeGlyphToLayers } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
+import { getGlyphLayer, normalizeGlyphToLayers } from '@/domain'
 
 describe('OpenType behavior facade', () => {
   it('derives glyph-local combination rows from ligature rules', () => {

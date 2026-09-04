@@ -1,6 +1,6 @@
 import paper from 'paper'
-import type { PathData, PathNode } from '@/store/types'
-import { isOnCurveNode } from '@/store/glyphGeometry'
+import type { PathData, PathNode } from '@/domain'
+import { isOnCurveNode } from '@/domain/glyphGeometry'
 
 export type PathBooleanOperation = 'union' | 'subtract' | 'intersect' | 'divide'
 

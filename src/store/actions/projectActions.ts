@@ -11,9 +11,9 @@ import type {
   FontSource,
   GlyphData,
   GlyphLayerData,
-  GlobalState,
   KerningPair,
-} from '@/store/types'
+} from '@/domain'
+import type { GlobalState } from '@/store/types'
 import {
   clearProjectArchive,
   getProjectArchiveFirstMasterId,
@@ -27,7 +27,7 @@ import type { KumikoProjectUiState } from '@/lib/project/projectTypes'
 import { findSourceIdAtLocation } from '@/font/designspaceLocation'
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
 import { getProjectGlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import {
   clampEditorCursorIndex,
   syncEditorTextFromGlyphIds,
@@ -38,7 +38,7 @@ import {
   getGlyphLayer,
   getActiveLayerId,
   setGlyphActiveLayer,
-} from '@/store/glyphLayer'
+} from '@/domain/glyphLayer'
 import { markProjectDirty } from '@/store/dirtyState'
 
 type ImmerSet = Parameters<

@@ -12,7 +12,7 @@ import type {
   FontInfoCustomDataValue,
   FontProjectSettings,
   FontSource,
-} from '@/store'
+} from '@/domain'
 
 export type FontInfoDraft = Record<FontInfoGeneralKey, string>
 export type OpenTypeDraft = Record<string, string>

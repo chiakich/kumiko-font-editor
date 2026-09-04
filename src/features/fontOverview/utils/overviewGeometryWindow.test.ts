@@ -3,7 +3,7 @@ import {
   collectOverviewGeometryGlyphIds,
   collectUnloadedOverviewGeometryGlyphIds,
 } from '@/features/fontOverview/utils/overviewGeometryWindow'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 const makeGlyph = (
   id: string,

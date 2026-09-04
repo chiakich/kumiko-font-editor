@@ -15,8 +15,8 @@ import {
 } from '@/lib/qualityCheck/qualityRadar'
 import { analyzeFontPopulation } from '@/lib/qualityCheck/populationAnalysisAdapter'
 import type { GlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
-import type { FontData, GlyphData, PathData } from '@/store'
-import { normalizeGlyphToLayers } from '@/store'
+import type { FontData, GlyphData, PathData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const squarePolygon = (
   xMin: number,

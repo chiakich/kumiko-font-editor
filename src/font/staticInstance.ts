@@ -4,7 +4,7 @@ import {
   getGlyphMasterLayerForSource,
   locationsMatch,
 } from '@/font/designspaceLocation'
-import { activeLayer } from '@/store/glyphLayer'
+import { activeLayer } from '@/domain/glyphLayer'
 import type {
   FontAxis,
   FontData,
@@ -12,7 +12,7 @@ import type {
   FontSource,
   GlyphData,
   GlyphLayerData,
-} from '@/store/types'
+} from '@/domain'
 
 export const STATIC_INSTANCE_LAYER_ID = 'public.default'
 

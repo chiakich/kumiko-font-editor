@@ -15,7 +15,7 @@ import { DialogCloseButton } from '@/components/ui/dialog-close-button'
 import { NativeSelect } from '@/components/ui/native-select'
 import { toaster } from '@/components/ui/toaster'
 import { useStore } from '@/store'
-import type { FontAxis, FontData, FontSource } from '@/store'
+import type { FontAxis, FontData, FontSource } from '@/domain'
 import {
   addMasterToProject,
   type AddMasterMethod,
@@ -34,7 +34,7 @@ import {
 } from '@/font/masterLayerBuilders'
 import { getGlyphMasterLayerForSource } from '@/font/designspaceLocation'
 import { getMasterKerningPairs } from '@/lib/kerning/resolveKerning'
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import {
   makeId,
   parseNumber,

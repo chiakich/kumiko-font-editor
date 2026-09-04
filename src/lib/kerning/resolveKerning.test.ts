@@ -7,7 +7,7 @@ import {
   resolveKerningPair,
   validateKerning,
 } from '@/lib/kerning/resolveKerning'
-import type { KerningGroup, KerningPair } from '@/store/types'
+import type { KerningGroup, KerningPair } from '@/domain'
 
 const groups: KerningGroup[] = [
   { id: 'g-left-A', side: 'left', name: 'A_left', glyphs: ['A', 'Agrave'] },

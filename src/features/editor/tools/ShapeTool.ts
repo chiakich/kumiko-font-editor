@@ -4,7 +4,8 @@ import {
   type ToolEvent,
 } from '@/features/editor/tools/BaseTool'
 import { asyncEventIterator } from '@/features/editor/tools/toolPrimitives'
-import { useStore, type PathData, type PathNode } from '@/store'
+import type { PathData, PathNode } from '@/domain'
+import { useStore } from '@/store'
 
 type ShapeKind = 'rect' | 'ellipse'
 type NodeRole = 'corner' | 'smooth' | 'offcurve'

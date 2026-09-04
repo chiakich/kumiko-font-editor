@@ -4,10 +4,10 @@ import type {
   GlyphLayerData,
   PathData,
   PathNode,
-} from '@/store'
+} from '@/domain'
 // Leaf modules rather than the src/store barrel: see the note in ufoFormat.
-import { getGlyphLayer } from '@/store/glyphLayer'
-import { isOffCurveNode } from '@/store/glyphGeometry'
+import { getGlyphLayer } from '@/domain/glyphLayer'
+import { isOffCurveNode } from '@/domain/glyphGeometry'
 import { isHanGlyph } from '@/lib/qualityCheck/hanClassification'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 

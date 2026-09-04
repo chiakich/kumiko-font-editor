@@ -2,7 +2,7 @@ import {
   getGlyphBlockLabel,
   getGlyphScriptLabel,
 } from '@/lib/glyph/glyphOverview'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 export const getOverviewGlyphMeta = (glyph: GlyphData) => ({
   script: getGlyphScriptLabel(glyph),

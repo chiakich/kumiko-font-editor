@@ -17,7 +17,7 @@ import {
   kumikoGlyphRecordToGlyphData,
 } from './kumikoFontDataAdapter'
 import { getGlyphMasterLayerForSource } from '@/font/designspaceLocation'
-import type { FontData, FontSource, GlyphData, PathNode } from '@/store'
+import type { FontData, FontSource, GlyphData, PathNode } from '@/domain'
 
 const node = (x: number, y: number, id: string): PathNode => ({
   id,

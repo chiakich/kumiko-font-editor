@@ -15,7 +15,7 @@ import {
   getGlyphwikiVariantMap,
 } from '@/lib/glyph/glyphwikiVariants'
 import { scorePartFit } from '@/lib/components/componentAssembly'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 interface SearchState {
   components: string[]

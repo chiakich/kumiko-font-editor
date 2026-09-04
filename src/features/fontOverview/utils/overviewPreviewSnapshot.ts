@@ -1,6 +1,6 @@
 import type { GlyphEditTimes } from '@/lib/glyph/glyphEditTimes'
-import { getGlyphLayer } from '@/store/glyphLayer'
-import type { GlyphData, GlyphLayerData } from '@/store/types'
+import { getGlyphLayer } from '@/domain/glyphLayer'
+import type { GlyphData, GlyphLayerData } from '@/domain'
 
 export interface OverviewGlyphPreviewSnapshot {
   cacheKey: string

@@ -9,7 +9,7 @@ import {
   scorePartFit,
   transformPaths,
 } from '@/lib/components/componentAssembly'
-import type { PathData } from '@/store'
+import type { PathData } from '@/domain'
 
 const makeRectPath = (
   xMin: number,

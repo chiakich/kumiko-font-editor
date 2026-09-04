@@ -1,10 +1,10 @@
-import { listGlyphLayers } from '@/store/glyphLayerOps'
+import { listGlyphLayers } from '@/domain/glyphLayerOps'
 import type {
   GlyphData,
   GlyphLayerData,
   GlyphLayerContent,
-} from '@/store/types'
-import { hasLegacyGlyphGeometry } from '@/lib/glyph/glyphGeometryState'
+} from '@/domain/types'
+import { hasLegacyGlyphGeometry } from '@/domain/glyphGeometryState'
 
 export const ACTIVE_LAYER_FALLBACK = 'public.default'
 

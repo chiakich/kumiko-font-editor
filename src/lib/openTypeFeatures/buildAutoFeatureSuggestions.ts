@@ -6,7 +6,7 @@ import type {
   AutoFeatureSuggestion,
   OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 
 const suggestionTouchesUserOverride = (
   suggestion: AutoFeatureSuggestion,

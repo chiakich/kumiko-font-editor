@@ -5,7 +5,7 @@ import type {
   GlyphNamingConvention,
   OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 
 export const OPEN_TYPE_FEATURES_IR_VERSION = '1'

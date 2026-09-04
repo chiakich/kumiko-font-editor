@@ -2,7 +2,7 @@ import { buildSfntInWorker } from '@/lib/fontFormats/previewSfntWorkerClient'
 import { getBinaryExportGlyphList } from '@/lib/fontFormats/fontBinaryFormat'
 import { compileManagedFontFeatures } from '@/lib/openTypeFeatures/compileManagedFontFeatures'
 import type { OpenTypeFeaturesState } from '@/lib/openTypeFeatures'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 // Store updates are immutable, so object identity is the change signal: a new
 // fontData or features object means the compiled preview font is stale.

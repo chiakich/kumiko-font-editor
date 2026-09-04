@@ -12,8 +12,8 @@ import {
 import { resolveFontGlyphs } from '@/lib/qualityCheck/resolvedGlyph'
 import { buildGlyphGeometrySample } from '@/lib/qualityCheck/glyphSampling'
 import { analyzeFontPopulation } from '@/lib/qualityCheck/populationAnalysisAdapter'
-import type { FontData, GlyphData, PathData } from '@/store/types'
-import { normalizeGlyphToLayers } from '@/store'
+import type { FontData, GlyphData, PathData } from '@/domain'
+import { normalizeGlyphToLayers } from '@/domain'
 
 const makePath = (
   id: string,

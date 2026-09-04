@@ -3,8 +3,8 @@ import {
   createGlyphCopies,
   createGlyphCopyId,
   insertGlyphIdsAfter,
-} from '@/store/glyphCopy'
-import type { GlyphData } from '@/store/types'
+} from '@/domain/glyphCopy'
+import type { GlyphData } from '@/domain/types'
 
 const makeGlyph = (
   id: string,

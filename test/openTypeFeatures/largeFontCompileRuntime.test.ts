@@ -6,7 +6,7 @@ import { createEmptyOpenTypeFeaturesState } from '@/lib/openTypeFeatures/default
 import { generateFea } from '@/lib/openTypeFeatures/generateFea'
 import { synthesizeKerningFea } from '@/lib/openTypeFeatures/synthesizeKerning'
 import { shapeTextWithHarfBuzz } from '@/lib/openTypeFeatures/shapeTextWithHarfBuzz'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import type { Rule, OpenTypeFeaturesState } from '@/lib/openTypeFeatures/types'
 
 // CJK-scale regression: the preview/export pipeline must survive a font with

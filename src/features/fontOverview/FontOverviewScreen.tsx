@@ -11,9 +11,10 @@ import {
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import type { ListRange } from 'react-virtuoso'
-import { useStore, type GlyphData, type KumikoColor } from '@/store'
+import type { GlyphData, KumikoColor } from '@/domain'
+import { useStore } from '@/store'
 import { getGlyphUnicodeChar } from '@/lib/glyph/glyphUnicode'
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import { areKumikoColorsEqual } from '@/lib/color/kumikoColor'
 import {
   buildGlyphPreviewData,

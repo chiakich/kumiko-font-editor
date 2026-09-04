@@ -1,6 +1,7 @@
 import { Button, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 import { KerningPairInspector } from '@/features/editor/rightPanel/kerning/KerningPairInspector'
 import { KerningPairList } from '@/features/editor/rightPanel/kerning/KerningPairList'
 import { KerningGroupManager } from '@/features/editor/rightPanel/kerning/KerningGroupManager'

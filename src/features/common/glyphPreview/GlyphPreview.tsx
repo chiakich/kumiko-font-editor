@@ -5,7 +5,8 @@ import {
   getGlyphDisplayCharacter,
 } from '@/lib/glyph/glyphOverview'
 import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
-import { useStore, type GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
+import { useStore } from '@/store'
 
 interface GlyphPreviewProps {
   glyph: GlyphData

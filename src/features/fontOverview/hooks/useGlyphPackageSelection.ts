@@ -8,7 +8,7 @@ import {
   buildGlyphLookupMap,
   computeCharsetCoverage,
 } from '@/lib/charsetCoverage'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 
 export interface GlyphPackageSelection {
   glyphNames: string[]

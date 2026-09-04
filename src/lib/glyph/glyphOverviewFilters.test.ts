@@ -5,7 +5,7 @@ import {
   type OverviewCustomFilter,
 } from '@/lib/glyph/glyphOverviewFilters'
 import { GLYPHS_LABEL_COLORS } from '@/lib/color/kumikoColor'
-import type { GlyphData, GlyphLayerData } from '@/store/types'
+import type { GlyphData, GlyphLayerData } from '@/domain'
 
 const makeLayer = (
   paths: GlyphLayerData['paths'] = [],

@@ -7,7 +7,7 @@ import type {
   OpenTypeFeaturesState,
   PairPositioningRule,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData, KerningGroup, KerningPair } from '@/store/types'
+import type { FontData, KerningGroup, KerningPair } from '@/domain'
 
 const ensureClassName = (name: string) =>
   name.startsWith('@') ? name : `@${name}`

@@ -4,8 +4,8 @@ import {
   isIdentityComponentMatrix,
   translateComponentRef,
   withComponentMatrix,
-} from '@/lib/components/componentTransform'
-import type { GlyphComponentRef } from '@/store/types'
+} from '@/domain/componentTransform'
+import type { GlyphComponentRef } from '@/domain'
 
 const ref = (overrides: Partial<GlyphComponentRef>): GlyphComponentRef =>
   ({

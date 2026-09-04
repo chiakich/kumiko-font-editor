@@ -4,7 +4,7 @@ import {
   upsertCombinationBehavior,
 } from '@/lib/openTypeFeatures'
 import { shapeGlyphRuns } from '@/features/editor/canvas/workspace/layout/textShaping'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 describe('text shaping layout', () => {
   it('maps combination behavior ligatures to display glyph runs', () => {

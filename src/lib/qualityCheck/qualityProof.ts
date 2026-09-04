@@ -1,5 +1,5 @@
 import { buildGlyphPreviewData } from '@/lib/glyph/glyphOverview'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 import { computeGlyphInk } from '@/lib/qualityCheck/glyphInk'
 import {
   resolveFontGlyphs,

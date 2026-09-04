@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { isGlyphGeometryLoaded } from '@/lib/glyph/glyphGeometryState'
+import { isGlyphGeometryLoaded } from '@/domain/glyphGeometryState'
 import { useStore } from '@/store'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 
 const makeGlyph = (id: string): GlyphData =>
   ({

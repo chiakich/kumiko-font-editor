@@ -16,8 +16,8 @@ import {
   makeVariableBuildMasterNames,
 } from '@/lib/fontFormats/canonicalBinaryExport'
 import { saveProjectDraft } from '@/lib/project/projectRepository'
-import type { FontAxes, FontData, GlyphData, GlyphLayerData } from '@/store'
-import { getGlyphLayer } from '@/store/glyphLayer'
+import type { FontAxes, FontData, GlyphData, GlyphLayerData } from '@/domain'
+import { getGlyphLayer } from '@/domain/glyphLayer'
 import { getPrimaryGlyphUnicode } from '@/lib/glyph/glyphUnicode'
 const layerOf = (g: GlyphData) => getGlyphLayer(g, null)!
 

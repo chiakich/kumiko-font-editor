@@ -2,7 +2,7 @@ import type {
   GlyphSelector,
   OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures/types'
-import type { KerningGroup, KerningPair } from '@/store/types'
+import type { KerningGroup, KerningPair } from '@/domain'
 
 // FEA identifier grammar (feaLib): names and glyph names may carry letters,
 // digits, underscore and dots, and must not start with a digit.

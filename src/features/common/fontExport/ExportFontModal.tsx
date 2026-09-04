@@ -26,7 +26,7 @@ import type {
 } from '@/lib/openTypeFeatures'
 import { requiresDropUnsupportedConfirmation } from '@/lib/openTypeFeatures/exportPolicy'
 import type { ProjectSourceFormat } from '@/lib/project/projectFormats'
-import type { FontExportInstance } from '@/store'
+import type { FontExportInstance } from '@/domain'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 

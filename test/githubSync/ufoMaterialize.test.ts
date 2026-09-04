@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { Window } from 'happy-dom'
 import { materializeUfoTree } from '@/lib/fontFormats/ufoMaterialize'
 import { saveProjectDraft } from '@/lib/project/projectRepository'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 const window = new Window()
 vi.stubGlobal('DOMParser', window.DOMParser)

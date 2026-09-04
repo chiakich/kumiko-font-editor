@@ -12,7 +12,7 @@ import {
   type KerningOrientation,
   type OrientedKerningSource,
 } from '@/lib/kerning/resolveKerning'
-import type { FontData, KerningPair } from '@/store/types'
+import type { FontData, KerningPair } from '@/domain'
 import type { GlyphSelector } from '@/lib/openTypeFeatures'
 
 // Group references arrive as id, name, or '@name' depending on the import

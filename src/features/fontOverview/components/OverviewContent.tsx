@@ -26,7 +26,7 @@ import {
 } from '@/features/fontOverview/components/OverviewGridComponents'
 import type { GlyphPreviewData } from '@/lib/glyph/glyphPreviewData'
 import { useGlyphColorLabelDisplayMode } from '@/lib/preferences/appPreferences'
-import type { GlyphData } from '@/store'
+import type { GlyphData } from '@/domain'
 import { useTranslation } from 'react-i18next'
 import type { OverviewGridZoomLayout } from '@/features/fontOverview/utils/overviewGridZoom'
 

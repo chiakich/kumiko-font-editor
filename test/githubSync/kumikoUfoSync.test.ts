@@ -22,7 +22,7 @@ import {
   saveKumikoGlyphRecord,
   saveKumikoProjectRecord,
 } from '@/lib/project/kumikoProjectPersistence'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import type { ProjectSyncReport } from '@/lib/github/sync/types'
 
 const window = new Window()

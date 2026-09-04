@@ -1,4 +1,4 @@
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 import { resolveFontGlyphs } from '@/lib/qualityCheck/resolvedGlyph'
 import {
   runPopulationAnalysis,

@@ -1,5 +1,5 @@
 import type { ProjectSyncReport } from '@/lib/github/sync'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 
 export type ChangeReceiptStatus = 'modified' | 'added' | 'deleted' | 'conflict'
 

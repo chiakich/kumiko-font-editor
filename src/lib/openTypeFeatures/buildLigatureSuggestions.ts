@@ -12,7 +12,7 @@ import type {
   OpenTypeFeaturesState,
   Rule,
 } from '@/lib/openTypeFeatures/types'
-import type { FontData } from '@/store/types'
+import type { FontData } from '@/domain'
 
 const getLigatureFeatureTag = (glyphName: string) => {
   const suffix = getGlyphSuffix(glyphName)

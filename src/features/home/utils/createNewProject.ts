@@ -3,7 +3,7 @@ import {
   saveProjectDraft,
 } from '@/lib/project/projectRepository'
 import type { KumikoProjectSummary } from '@/lib/project/projectTypes'
-import type { FontData, GlyphData, GlyphLayerData } from '@/store'
+import type { FontData, GlyphData, GlyphLayerData } from '@/domain'
 
 export interface CreatedKumikoProject {
   id: string

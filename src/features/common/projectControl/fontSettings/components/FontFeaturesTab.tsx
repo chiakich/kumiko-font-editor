@@ -23,7 +23,7 @@ import {
   type ExportPolicy,
   type OpenTypeFeaturesState,
 } from '@/lib/openTypeFeatures'
-import type { FontData } from '@/store'
+import type { FontData } from '@/domain'
 
 interface FontFeaturesTabProps {
   fontData: FontData | null

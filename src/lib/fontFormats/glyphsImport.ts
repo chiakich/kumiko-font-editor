@@ -19,7 +19,7 @@ import type {
   PathData,
   PathNode,
   PathSegmentType,
-} from '@/store'
+} from '@/domain'
 import { parseGlyphsLabelColor } from '@/lib/color/kumikoColor'
 import { normalizeUnicodeHex } from '@/lib/project/unicode'
 

@@ -24,7 +24,8 @@ import {
 import type { GlyphSelector } from '@/lib/openTypeFeatures'
 import { buildPairSpacingLayout } from '@/features/editor/rightPanel/kerning/pairSpacingLayout'
 import { getTextKerningValue } from '@/features/editor/canvas/workspace/layout/textKerning'
-import { useStore, type FontData } from '@/store'
+import type { FontData } from '@/domain'
+import { useStore } from '@/store'
 
 const STEP_OPTIONS = [1, 5, 10]
 

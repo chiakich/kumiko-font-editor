@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest'
 import opentype from 'opentype.js'
 import { exportGlyphListAsBinary } from './fontBinaryFormat'
-import type { GlyphComponentRef, GlyphData, PathNode } from '@/store'
+import type { GlyphComponentRef, GlyphData, PathNode } from '@/domain'
 
 const on = (
   x: number,

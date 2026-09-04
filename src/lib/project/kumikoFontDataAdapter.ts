@@ -19,10 +19,10 @@ import type {
   GlyphSourceData,
   PathData,
   PathSegmentType,
-} from '@/store'
+} from '@/domain'
 import { hashString } from '@/lib/hash'
 import { normalizeRawFeatureSnippets } from '@/lib/openTypeFeatures/rawFeatureSnippets'
-import { deterministicStringify } from '@/store/deterministicStringify'
+import { deterministicStringify } from '@/domain/deterministicStringify'
 import { normalizeUnicodeHex } from '@/lib/project/unicode'
 import {
   composeComponentMatrix,
@@ -30,7 +30,7 @@ import {
   type ComponentMatrix,
   getComponentMatrix,
   withComponentMatrix,
-} from '@/lib/components/componentTransform'
+} from '@/domain/componentTransform'
 
 const getGlyphUnicodes = (glyph: GlyphData) => {
   const values = glyph.unicodes ?? []

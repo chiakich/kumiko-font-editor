@@ -5,7 +5,7 @@ import {
 } from '@/lib/fontFormats/adapters/glyphs'
 import { importUfoWorkspace } from '@/lib/fontFormats/ufoFormat'
 import { getGlyphMasterLayerForSource } from '@/font/designspaceLocation'
-import type { FontData, GlyphData } from '@/store'
+import type { FontData, GlyphData } from '@/domain'
 
 const NORMALIZED_LAYER_ID = 'public.default'
 
